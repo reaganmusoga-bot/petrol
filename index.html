@@ -1,0 +1,1942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PetroManager - Station Management System</title>
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        /* ── Custom Styles ─────────────────────────────────────────────── */
+        :root {
+            --primary: #0d6efd;
+            --sidebar-width: 260px;
+            --header-height: 60px;
+            --bg-body: #f4f6f9;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: var(--bg-body);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            overflow-x: hidden;
+        }
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: #0b1a33;
+            color: #b0c4de;
+            padding: 0;
+            z-index: 1050;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-brand {
+            padding: 18px 20px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .sidebar-brand i {
+            font-size: 1.8rem;
+            color: #ffc107;
+        }
+        .sidebar .nav-link {
+            color: #b0c4de;
+            padding: 12px 22px;
+            border-radius: 0;
+            border-left: 3px solid transparent;
+            transition: 0.2s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+            border-left-color: #ffc107;
+        }
+        .sidebar .nav-link i {
+            width: 22px;
+            font-size: 1.15rem;
+        }
+        .sidebar .nav-link .badge {
+            margin-left: auto;
+            background: #ffc107;
+            color: #0b1a33;
+        }
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            font-size: 0.85rem;
+            color: #6c8ab0;
+        }
+        /* Main content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+        }
+        /* Header */
+        .top-header {
+            height: var(--header-height);
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1040;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+        }
+        .top-header .page-title {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #1a2a4a;
+        }
+        .top-header .user-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .top-header .user-info .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .top-header .user-info .role-badge {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: #e9ecef;
+            color: #495057;
+        }
+        /* Page content */
+        .page-content {
+            padding: 25px 30px;
+        }
+        /* Cards & widgets */
+        .stat-card {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px 22px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            border: 1px solid #eef0f3;
+            transition: 0.2s;
+            height: 100%;
+        }
+        .stat-card:hover {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        }
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #fff;
+        }
+        .stat-card .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a2a4a;
+        }
+        .stat-card .stat-label {
+            color: #6c7a8e;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        /* Tables */
+        .table-container {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px 22px;
+            border: 1px solid #eef0f3;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        .table-container .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .table-container .table-header h5 {
+            margin: 0;
+            font-weight: 600;
+            color: #1a2a4a;
+        }
+        /* Meter reading form */
+        .meter-box {
+            background: #f8f9fc;
+            border-radius: 12px;
+            padding: 18px 22px;
+            border: 1px solid #e9ecef;
+        }
+        .meter-box .meter-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0b1a33;
+            font-family: 'Courier New', monospace;
+        }
+        /* Shift badge */
+        .shift-badge-day {
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        .shift-badge-night {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .top-header {
+                padding: 0 16px;
+            }
+            .page-content {
+                padding: 16px;
+            }
+            .stat-card .stat-number {
+                font-size: 1.4rem;
+            }
+            .sidebar-toggle {
+                display: block !important;
+            }
+        }
+        @media (min-width: 769px) {
+            .sidebar-toggle {
+                display: none !important;
+            }
+        }
+        /* Misc */
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        .text-muted-light {
+            color: #8a9bb5;
+        }
+        .station-badge {
+            background: #e7edf5;
+            color: #1a2a4a;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #0b1a33 0%, #1a3a6a 100%);
+            padding: 20px;
+        }
+        .login-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 40px 36px;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .login-card .logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .login-card .logo i {
+            font-size: 3rem;
+            color: #ffc107;
+            background: #0b1a33;
+            padding: 14px;
+            border-radius: 16px;
+        }
+        .login-card .logo h4 {
+            margin-top: 12px;
+            font-weight: 700;
+            color: #0b1a33;
+        }
+        .login-card .logo p {
+            color: #6c7a8e;
+            font-size: 0.9rem;
+        }
+        /* toast */
+        .toast-container {
+            z-index: 9999;
+        }
+        /* hide sections by default */
+        .page-section {
+            display: none;
+        }
+        .page-section.active {
+            display: block;
+        }
+        /* scroll */
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #2a4a7a;
+            border-radius: 4px;
+        }
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        /* station selector in header */
+        .station-selector {
+            max-width: 200px;
+        }
+        .station-selector select {
+            background: #f1f4f9;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #1a2a4a;
+        }
+        .station-selector select:focus {
+            box-shadow: none;
+            background: #e9edf4;
+        }
+        /* inventory progress */
+        .inventory-bar {
+            height: 6px;
+            border-radius: 4px;
+            background: #e9ecef;
+            overflow: hidden;
+        }
+        .inventory-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            background: var(--primary);
+            transition: width 0.5s ease;
+        }
+        .inventory-bar .fill.warning {
+            background: #ffc107;
+        }
+        .inventory-bar .fill.danger {
+            background: #dc3545;
+        }
+        /* responsive table */
+        .table-responsive-custom {
+            overflow-x: auto;
+        }
+        /* shift active indicator */
+        .shift-active {
+            background: #d4edda;
+            color: #155724;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .shift-inactive {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 2px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        /* small */
+        .fs-small {
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══ LOGIN SCREEN ═══════════════════════════════════════════════ -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-card">
+            <div class="logo">
+                <i class="bi bi-fuel-pump"></i>
+                <h4>PetroManager</h4>
+                <p>Station Management System</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Username</label>
+                    <input type="text" id="loginUser" class="form-control form-control-lg" placeholder="Enter username" required autofocus />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Password</label>
+                    <input type="password" id="loginPass" class="form-control form-control-lg" placeholder="Enter password" required />
+                </div>
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">Sign In</button>
+                <div id="loginError" class="text-danger text-center mt-3 small" style="display:none;">Invalid credentials. Please try again.</div>
+            </form>
+            <div class="mt-3 text-center text-muted small">
+                <span class="d-block">Demo: admin / admin123  |  manager / manager123  |  cashier / cashier123</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MAIN APP ═══════════════════════════════════════════════════ -->
+    <div id="appMain" style="display:none;">
+
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="bi bi-fuel-pump"></i>
+                <span>PetroManager</span>
+            </div>
+            <div class="mt-2">
+                <a class="nav-link active" data-page="dashboard" href="#"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+                <a class="nav-link" data-page="sales" href="#"><i class="bi bi-cash-stack"></i> Daily Sales</a>
+                <a class="nav-link" data-page="shifts" href="#"><i class="bi bi-clock-history"></i> Shifts</a>
+                <a class="nav-link" data-page="inventory" href="#"><i class="bi bi-box-seam"></i> Inventory</a>
+                <a class="nav-link" data-page="stock" href="#"><i class="bi bi-truck"></i> Stock Receiving</a>
+                <a class="nav-link" data-page="adjustments" href="#"><i class="bi bi-sliders2"></i> Adjustments</a>
+                <a class="nav-link" data-page="vendors" href="#"><i class="bi bi-people"></i> Vendors</a>
+                <a class="nav-link" data-page="customers" href="#"><i class="bi bi-person-badge"></i> Customers</a>
+                <a class="nav-link" data-page="expenses" href="#"><i class="bi bi-receipt"></i> Expenses</a>
+                <a class="nav-link" data-page="payments" href="#"><i class="bi bi-credit-card"></i> Payments</a>
+                <a class="nav-link" data-page="reports" href="#"><i class="bi bi-bar-chart-fill"></i> Reports</a>
+                <a class="nav-link" data-page="users" href="#"><i class="bi bi-person-gear"></i> Users</a>
+            </div>
+            <div class="sidebar-footer">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-shield-check"></i>
+                    <span id="sidebarUser">—</span>
+                    <span class="ms-auto" id="sidebarRole" style="font-size:0.7rem;background:rgba(255,255,255,0.08);padding:2px 10px;border-radius:12px;">—</span>
+                </div>
+                <button id="logoutBtn" class="btn btn-sm btn-outline-light w-100 mt-2">
+                    <i class="bi bi-box-arrow-right"></i> Sign Out
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main -->
+        <div class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-light sidebar-toggle" id="sidebarToggle" style="border:none;background:transparent;font-size:1.4rem;">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <span class="page-title" id="pageTitle">Dashboard</span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Station selector (only for admin/top admin) -->
+                    <div class="station-selector" id="stationSelectorWrap">
+                        <select id="stationSelector" class="form-select form-select-sm">
+                            <option value="">All Stations</option>
+                        </select>
+                    </div>
+                    <div class="user-info">
+                        <span class="role-badge" id="headerRole">—</span>
+                        <span class="fw-semibold" id="headerUser">—</span>
+                        <div class="avatar" id="headerAvatar">U</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <div class="page-content" id="pageContent">
+                <!-- All page sections rendered here via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ TOAST CONTAINER ═══════════════════════════════════════════ -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+    <!-- ═══ BOOTSTRAP JS ══════════════════════════════════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
+    </script>
+
+    <!-- ═══ MAIN APPLICATION ══════════════════════════════════════════ -->
+    <script>
+        // ─────────────────────────────────────────────────────────────
+        //  PETROMANAGER — Full Application Logic
+        // ─────────────────────────────────────────────────────────────
+
+        // ── API Base (auto-detect) ──────────────────────────────────
+        const API_BASE = window.location.origin + '/api';
+
+        // ── State ────────────────────────────────────────────────────
+        let state = {
+            user: null, // { id, username, role, station_id, name }
+            token: null,
+            stations: [],
+            currentStationId: null, // null = all stations
+            currentPage: 'dashboard',
+            shifts: [],
+            inventory: [],
+            sales: [],
+            vendors: [],
+            customers: [],
+            expenses: [],
+            payments: [],
+            stockReceipts: [],
+            adjustments: [],
+            users: [],
+        };
+
+        // ── DOM refs ─────────────────────────────────────────────────
+        const $ = (sel) => document.querySelector(sel);
+        const $$ = (sel) => document.querySelectorAll(sel);
+
+        const loginScreen = $('#loginScreen');
+        const appMain = $('#appMain');
+        const loginForm = $('#loginForm');
+        const loginError = $('#loginError');
+        const pageContent = $('#pageContent');
+        const pageTitle = $('#pageTitle');
+        const sidebarUser = $('#sidebarUser');
+        const sidebarRole = $('#sidebarRole');
+        const headerUser = $('#headerUser');
+        const headerRole = $('#headerRole');
+        const headerAvatar = $('#headerAvatar');
+        const stationSelector = $('#stationSelector');
+        const stationSelectorWrap = $('#stationSelectorWrap');
+        const logoutBtn = $('#logoutBtn');
+        const sidebarToggle = $('#sidebarToggle');
+        const sidebar = $('#sidebar');
+
+        // ── Toast helper ─────────────────────────────────────────────
+        function showToast(message, type = 'success') {
+            const container = document.querySelector('.toast-container');
+            const colors = {
+                success: 'bg-success text-white',
+                danger: 'bg-danger text-white',
+                warning: 'bg-warning text-dark',
+                info: 'bg-info text-dark',
+            };
+            const html = `
+                <div class="toast align-items-center ${colors[type] || colors.info} border-0 show" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">${message}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+            setTimeout(() => {
+                const toasts = container.querySelectorAll('.toast');
+                if (toasts.length) toasts[0].remove();
+            }, 5000);
+        }
+
+        // ── Fetch wrapper ────────────────────────────────────────────
+        async function apiFetch(endpoint, options = {}) {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(state.token ? { 'Authorization': 'Bearer ' + state.token } : {}),
+                ...options.headers,
+            };
+            const res = await fetch(API_BASE + endpoint, { ...options, headers });
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.message || 'Request failed');
+            }
+            return res.json();
+        }
+
+        // ── Login ────────────────────────────────────────────────────
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = $('#loginUser').value.trim();
+            const password = $('#loginPass').value.trim();
+            loginError.style.display = 'none';
+            try {
+                const data = await apiFetch('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password }),
+                });
+                state.token = data.token;
+                state.user = data.user;
+                localStorage.setItem('petro_token', state.token);
+                localStorage.setItem('petro_user', JSON.stringify(state.user));
+                await initApp();
+            } catch (err) {
+                loginError.textContent = err.message || 'Invalid credentials';
+                loginError.style.display = 'block';
+            }
+        });
+
+        // ── Logout ────────────────────────────────────────────────────
+        logoutBtn.addEventListener('click', () => {
+            localStorage.removeItem('petro_token');
+            localStorage.removeItem('petro_user');
+            state.token = null;
+            state.user = null;
+            loginScreen.style.display = 'flex';
+            appMain.style.display = 'none';
+            showToast('Signed out', 'info');
+        });
+
+        // ── Sidebar toggle (mobile) ──────────────────────────────────
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // ── Sidebar navigation ───────────────────────────────────────
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.dataset.page;
+                if (page) navigateTo(page);
+                if (window.innerWidth <= 768) sidebar.classList.remove('open');
+            });
+        });
+
+        // ── Station selector ─────────────────────────────────────────
+        stationSelector.addEventListener('change', () => {
+            const val = stationSelector.value;
+            state.currentStationId = val ? parseInt(val) : null;
+            renderPage(state.currentPage);
+        });
+
+        // ── Navigation ──────────────────────────────────────────────
+        function navigateTo(page) {
+            state.currentPage = page;
+            // update sidebar active
+            document.querySelectorAll('.sidebar .nav-link').forEach(l => l.classList.remove('active'));
+            const activeLink = document.querySelector(`.sidebar .nav-link[data-page="${page}"]`);
+            if (activeLink) activeLink.classList.add('active');
+            // title
+            const titles = {
+                dashboard: 'Dashboard',
+                sales: 'Daily Sales',
+                shifts: 'Shifts',
+                inventory: 'Inventory',
+                stock: 'Stock Receiving',
+                adjustments: 'Stock Adjustments',
+                vendors: 'Vendors',
+                customers: 'Customers',
+                expenses: 'Expenses',
+                payments: 'Payments',
+                reports: 'Reports',
+                users: 'Users',
+            };
+            pageTitle.textContent = titles[page] || page;
+            renderPage(page);
+        }
+
+        // ── Render page ─────────────────────────────────────────────
+        function renderPage(page) {
+            switch (page) {
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                case 'sales':
+                    renderSales();
+                    break;
+                case 'shifts':
+                    renderShifts();
+                    break;
+                case 'inventory':
+                    renderInventory();
+                    break;
+                case 'stock':
+                    renderStockReceiving();
+                    break;
+                case 'adjustments':
+                    renderAdjustments();
+                    break;
+                case 'vendors':
+                    renderVendors();
+                    break;
+                case 'customers':
+                    renderCustomers();
+                    break;
+                case 'expenses':
+                    renderExpenses();
+                    break;
+                case 'payments':
+                    renderPayments();
+                    break;
+                case 'reports':
+                    renderReports();
+                    break;
+                case 'users':
+                    renderUsers();
+                    break;
+                default:
+                    pageContent.innerHTML = '<div class="alert alert-info">Page not found</div>';
+            }
+        }
+
+        // ── INIT ─────────────────────────────────────────────────────
+        async function initApp() {
+            // load stations
+            try {
+                const st = await apiFetch('/stations');
+                state.stations = st;
+                // populate station selector
+                stationSelector.innerHTML = '<option value="">All Stations</option>';
+                st.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name + ' (' + s.location + ')';
+                    stationSelector.appendChild(opt);
+                });
+                // if user has a station, select it
+                if (state.user.station_id) {
+                    stationSelector.value = state.user.station_id;
+                    state.currentStationId = state.user.station_id;
+                } else if (st.length) {
+                    // top admin sees all
+                    state.currentStationId = null;
+                }
+                // show/hide station selector based on role
+                if (state.user.role === 'top_admin' || state.user.role === 'admin') {
+                    stationSelectorWrap.style.display = 'block';
+                } else {
+                    stationSelectorWrap.style.display = 'none';
+                    // cashier/manager locked to their station
+                    if (state.user.station_id) {
+                        stationSelector.value = state.user.station_id;
+                        state.currentStationId = state.user.station_id;
+                    }
+                }
+            } catch (e) {
+                showToast('Failed to load stations: ' + e.message, 'danger');
+            }
+
+            // load initial data
+            await loadAllData();
+
+            // show app
+            loginScreen.style.display = 'none';
+            appMain.style.display = 'block';
+            // update user info
+            const u = state.user;
+            sidebarUser.textContent = u.name || u.username;
+            sidebarRole.textContent = u.role;
+            headerUser.textContent = u.name || u.username;
+            headerRole.textContent = u.role;
+            headerAvatar.textContent = (u.name || u.username).charAt(0).toUpperCase();
+
+            // navigate to dashboard
+            navigateTo('dashboard');
+            showToast('Welcome, ' + (u.name || u.username) + '!', 'success');
+        }
+
+        // ── Load all data ────────────────────────────────────────────
+        async function loadAllData() {
+            try {
+                const [inv, sh, sales, vendors, customers, exp, pay, stockRec, adj, users] = await Promise.all([
+                    apiFetch('/inventory'),
+                    apiFetch('/shifts'),
+                    apiFetch('/sales'),
+                    apiFetch('/vendors'),
+                    apiFetch('/customers'),
+                    apiFetch('/expenses'),
+                    apiFetch('/payments'),
+                    apiFetch('/stock'),
+                    apiFetch('/adjustments'),
+                    apiFetch('/users'),
+                ]);
+                state.inventory = inv || [];
+                state.shifts = sh || [];
+                state.sales = sales || [];
+                state.vendors = vendors || [];
+                state.customers = customers || [];
+                state.expenses = exp || [];
+                state.payments = pay || [];
+                state.stockReceipts = stockRec || [];
+                state.adjustments = adj || [];
+                state.users = users || [];
+            } catch (e) {
+                showToast('Error loading data: ' + e.message, 'danger');
+            }
+        }
+
+        // ── Filter by station ────────────────────────────────────────
+        function filterByStation(items, stationIdField = 'station_id') {
+            if (!state.currentStationId) return items;
+            return items.filter(item => item[stationIdField] === state.currentStationId);
+        }
+
+        function getStationName(id) {
+            const s = state.stations.find(st => st.id === id);
+            return s ? s.name : 'Unknown';
+        }
+
+        function getStationLocation(id) {
+            const s = state.stations.find(st => st.id === id);
+            return s ? s.location : '';
+        }
+
+        function getUserName(id) {
+            const u = state.users.find(usr => usr.id === id);
+            return u ? (u.name || u.username) : 'Unknown';
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  DASHBOARD
+        // ─────────────────────────────────────────────────────────────
+        async function renderDashboard() {
+            // get current station filter
+            const stId = state.currentStationId;
+            const inv = stId ? state.inventory.filter(i => i.station_id === stId) : state.inventory;
+            const sales = stId ? state.sales.filter(s => s.station_id === stId) : state.sales;
+            const shifts = stId ? state.shifts.filter(s => s.station_id === stId) : state.shifts;
+            const expenses = stId ? state.expenses.filter(e => e.station_id === stId) : state.expenses;
+
+            const totalLitres = inv.reduce((sum, i) => sum + (i.quantity || 0), 0);
+            const totalSales = sales.reduce((sum, s) => sum + (s.amount || 0), 0);
+            const todaySales = sales.filter(s => new Date(s.created_at).toDateString() === new Date().toDateString())
+                .reduce((sum, s) => sum + (s.amount || 0), 0);
+            const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+            const activeShifts = shifts.filter(s => s.status === 'active').length;
+
+            // station name
+            let stationLabel = 'All Stations';
+            if (stId) {
+                const st = state.stations.find(s => s.id === stId);
+                if (st) stationLabel = st.name + ' (' + st.location + ')';
+            }
+
+            const html = `
+                <div class="mb-4">
+                    <h5 class="fw-normal text-muted">Overview — ${stationLabel}</h5>
+                </div>
+                <div class="row g-4">
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card d-flex align-items-center gap-3">
+                            <div class="stat-icon" style="background:#0d6efd;"><i class="bi bi-box-seam"></i></div>
+                            <div><div class="stat-number">${totalLitres.toFixed(0)} L</div><div class="stat-label">Total Stock</div></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card d-flex align-items-center gap-3">
+                            <div class="stat-icon" style="background:#198754;"><i class="bi bi-cash-stack"></i></div>
+                            <div><div class="stat-number">UGX ${(totalSales).toLocaleString()}</div><div class="stat-label">Total Sales</div></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card d-flex align-items-center gap-3">
+                            <div class="stat-icon" style="background:#ffc107;"><i class="bi bi-calendar-day"></i></div>
+                            <div><div class="stat-number">UGX ${(todaySales).toLocaleString()}</div><div class="stat-label">Today's Sales</div></div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card d-flex align-items-center gap-3">
+                            <div class="stat-icon" style="background:#dc3545;"><i class="bi bi-clock-history"></i></div>
+                            <div><div class="stat-number">${activeShifts}</div><div class="stat-label">Active Shifts</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory by station -->
+                <div class="row mt-4 g-4">
+                    <div class="col-12 col-lg-6">
+                        <div class="table-container">
+                            <div class="table-header"><h5>📊 Inventory by Station</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Product</th><th>Qty (L)</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        ${state.inventory.length === 0 ? '<tr><td colspan="4" class="text-muted text-center">No inventory data</td></tr>' :
+                                        state.inventory.map(i => {
+                                            const pct = i.capacity ? (i.quantity / i.capacity * 100) : 0;
+                                            const cls = pct < 20 ? 'danger' : pct < 50 ? 'warning' : '';
+                                            return `<tr>
+                                                <td>${getStationName(i.station_id)}</td>
+                                                <td>${i.product_type || 'Petrol'}</td>
+                                                <td>${i.quantity.toFixed(0)}</td>
+                                                <td><div class="inventory-bar"><div class="fill ${cls}" style="width:${Math.min(pct,100)}%"></div></div></td>
+                                            </tr>`;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6">
+                        <div class="table-container">
+                            <div class="table-header"><h5>🕒 Recent Sales</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Liters</th><th>Amount</th><th>Cashier</th></tr></thead>
+                                    <tbody>
+                                        ${state.sales.slice(0, 8).length === 0 ? '<tr><td colspan="4" class="text-muted text-center">No sales yet</td></tr>' :
+                                        state.sales.slice(0, 8).map(s => `<tr>
+                                            <td>${getStationName(s.station_id)}</td>
+                                            <td>${s.quantity.toFixed(0)} L</td>
+                                            <td>UGX ${(s.amount || 0).toLocaleString()}</td>
+                                            <td>${getUserName(s.cashier_id)}</td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  SALES
+        // ─────────────────────────────────────────────────────────────
+        async function renderSales() {
+            // Get active shift for cashier
+            let activeShift = null;
+            if (state.user.role === 'cashier') {
+                activeShift = state.shifts.find(s => s.cashier_id === state.user.id && s.status === 'active');
+            }
+
+            const sales = filterByStation(state.sales);
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record Sale</h5>
+                            <form id="saleForm">
+                                <div class="mb-2">
+                                    <label class="form-label small">Station</label>
+                                    <select id="saleStation" class="form-select form-select-sm" ${state.user.role === 'cashier' ? 'disabled' : ''}>
+                                        ${state.stations.map(s => `<option value="${s.id}" ${state.currentStationId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Quantity (Liters)</label>
+                                    <input type="number" id="saleQty" class="form-control form-control-sm" step="0.1" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Amount (UGX)</label>
+                                    <input type="number" id="saleAmount" class="form-control form-control-sm" step="100" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Customer</label>
+                                    <select id="saleCustomer" class="form-select form-select-sm">
+                                        <option value="">— Walk-in —</option>
+                                        ${state.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Payment Method</label>
+                                    <select id="salePaymentMethod" class="form-select form-select-sm">
+                                        <option value="cash">Cash</option>
+                                        <option value="mobile">Mobile Money</option>
+                                        <option value="card">Card</option>
+                                        <option value="credit">Credit</option>
+                                    </select>
+                                </div>
+                                ${state.user.role === 'cashier' && activeShift ? `
+                                    <div class="alert alert-success py-1 small">✅ Active shift: ${activeShift.shift_type} (meter start: ${activeShift.start_meter_reading} L)</div>
+                                ` : ''}
+                                <button type="submit" class="btn btn-primary btn-sm w-100 mt-2">Record Sale</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h5>📋 Sales History</h5>
+                                <span class="badge bg-secondary">${sales.length} records</span>
+                            </div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Qty (L)</th><th>Amount</th><th>Cashier</th><th>Method</th><th>Date</th></tr></thead>
+                                    <tbody>
+                                        ${sales.length === 0 ? '<tr><td colspan="6" class="text-muted text-center">No sales recorded</td></tr>' :
+                                        sales.slice().reverse().map(s => `<tr>
+                                            <td>${getStationName(s.station_id)}</td>
+                                            <td>${s.quantity.toFixed(1)}</td>
+                                            <td>UGX ${(s.amount || 0).toLocaleString()}</td>
+                                            <td>${getUserName(s.cashier_id)}</td>
+                                            <td>${s.payment_method || 'cash'}</td>
+                                            <td class="fs-small">${new Date(s.created_at).toLocaleDateString()}</td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            // Sale form
+            const form = $('#saleForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const stationId = parseInt($('#saleStation').value);
+                    const qty = parseFloat($('#saleQty').value);
+                    const amount = parseFloat($('#saleAmount').value);
+                    const customerId = $('#saleCustomer').value ? parseInt($('#saleCustomer').value) : null;
+                    const paymentMethod = $('#salePaymentMethod').value;
+
+                    if (!qty || qty <= 0) { showToast('Enter valid quantity', 'warning'); return; }
+                    if (!amount || amount <= 0) { showToast('Enter valid amount', 'warning'); return; }
+
+                    try {
+                        const data = await apiFetch('/sales', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                station_id: stationId,
+                                quantity: qty,
+                                amount: amount,
+                                customer_id: customerId,
+                                payment_method: paymentMethod,
+                                cashier_id: state.user.id,
+                            }),
+                        });
+                        showToast('Sale recorded!', 'success');
+                        await loadAllData();
+                        renderSales();
+                    } catch (err) {
+                        showToast(err.message, 'danger');
+                    }
+                });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  SHIFTS
+        // ─────────────────────────────────────────────────────────────
+        async function renderShifts() {
+            const shifts = filterByStation(state.shifts);
+            const isCashier = state.user.role === 'cashier';
+            const hasActiveShift = state.shifts.some(s => s.cashier_id === state.user.id && s.status === 'active');
+
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-clock"></i> ${isCashier ? 'Start / End Shift' : 'Manage Shifts'}</h5>
+                            ${isCashier ? `
+                                ${!hasActiveShift ? `
+                                    <form id="startShiftForm">
+                                        <div class="mb-2">
+                                            <label class="form-label small">Station</label>
+                                            <select id="shiftStation" class="form-select form-select-sm" ${isCashier ? 'disabled' : ''}>
+                                                ${state.stations.map(s => `<option value="${s.id}" ${state.user.station_id === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small">Shift Type</label>
+                                            <select id="shiftType" class="form-select form-select-sm">
+                                                <option value="day">Day</option>
+                                                <option value="night">Night</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small">Meter Start Reading (Liters)</label>
+                                            <input type="number" id="shiftStartMeter" class="form-control form-control-sm" step="0.1" required />
+                                        </div>
+                                        <button type="submit" class="btn btn-success btn-sm w-100">Start Shift</button>
+                                    </form>
+                                ` : `
+                                    <form id="endShiftForm">
+                                        <div class="mb-2">
+                                            <label class="form-label small">Meter End Reading (Liters)</label>
+                                            <input type="number" id="shiftEndMeter" class="form-control form-control-sm" step="0.1" required />
+                                        </div>
+                                        <button type="submit" class="btn btn-danger btn-sm w-100">End Shift</button>
+                                    </form>
+                                `}
+                            ` : `
+                                <p class="text-muted small">Cashiers manage their own shifts. Admins can view all shifts.</p>
+                            `}
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h5>📋 Shifts</h5>
+                                <span class="badge bg-secondary">${shifts.length} records</span>
+                            </div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Cashier</th><th>Type</th><th>Start Meter</th><th>End Meter</th><th>Sold (L)</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        ${shifts.length === 0 ? '<tr><td colspan="7" class="text-muted text-center">No shifts</td></tr>' :
+                                        shifts.slice().reverse().map(s => {
+                                            const sold = s.end_meter_reading && s.start_meter_reading ? (s.end_meter_reading - s.start_meter_reading).toFixed(1) : '-';
+                                            const statusCls = s.status === 'active' ? 'shift-active' : 'shift-inactive';
+                                            return `<tr>
+                                                <td>${getStationName(s.station_id)}</td>
+                                                <td>${getUserName(s.cashier_id)}</td>
+                                                <td><span class="${s.shift_type === 'day' ? 'shift-badge-day' : 'shift-badge-night'}">${s.shift_type}</span></td>
+                                                <td>${s.start_meter_reading || '-'}</td>
+                                                <td>${s.end_meter_reading || '-'}</td>
+                                                <td>${sold}</td>
+                                                <td><span class="${statusCls}">${s.status}</span></td>
+                                            </tr>`;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            // Start shift
+            const startForm = $('#startShiftForm');
+            if (startForm) {
+                startForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const stationId = parseInt($('#shiftStation').value) || state.user.station_id;
+                    const shiftType = $('#shiftType').value;
+                    const startMeter = parseFloat($('#shiftStartMeter').value);
+                    if (isNaN(startMeter) || startMeter < 0) { showToast('Enter valid meter reading', 'warning'); return; }
+                    try {
+                        await apiFetch('/shifts', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                station_id: stationId,
+                                cashier_id: state.user.id,
+                                shift_type: shiftType,
+                                start_meter_reading: startMeter,
+                            }),
+                        });
+                        showToast('Shift started!', 'success');
+                        await loadAllData();
+                        renderShifts();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+
+            // End shift
+            const endForm = $('#endShiftForm');
+            if (endForm) {
+                endForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const endMeter = parseFloat($('#shiftEndMeter').value);
+                    if (isNaN(endMeter) || endMeter < 0) { showToast('Enter valid meter reading', 'warning'); return; }
+                    try {
+                        const active = state.shifts.find(s => s.cashier_id === state.user.id && s.status === 'active');
+                        if (!active) { showToast('No active shift found', 'warning'); return; }
+                        await apiFetch('/shifts/' + active.id, {
+                            method: 'PUT',
+                            body: JSON.stringify({ end_meter_reading: endMeter }),
+                        });
+                        showToast('Shift ended!', 'success');
+                        await loadAllData();
+                        renderShifts();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  INVENTORY
+        // ─────────────────────────────────────────────────────────────
+        async function renderInventory() {
+            const inv = filterByStation(state.inventory);
+            const html = `
+                <div class="table-container">
+                    <div class="table-header">
+                        <h5>📦 Inventory</h5>
+                        <button class="btn btn-sm btn-primary" id="addInventoryBtn"><i class="bi bi-plus"></i> Add Stock</button>
+                    </div>
+                    <div class="table-responsive-custom">
+                        <table class="table table-sm table-hover">
+                            <thead><tr><th>Station</th><th>Product</th><th>Quantity (L)</th><th>Capacity (L)</th><th>Status</th></tr></thead>
+                            <tbody>
+                                ${inv.length === 0 ? '<tr><td colspan="5" class="text-muted text-center">No inventory</td></tr>' :
+                                inv.map(i => {
+                                    const pct = i.capacity ? (i.quantity / i.capacity * 100) : 0;
+                                    const cls = pct < 20 ? 'danger' : pct < 50 ? 'warning' : '';
+                                    return `<tr>
+                                        <td>${getStationName(i.station_id)}</td>
+                                        <td>${i.product_type || 'Petrol'}</td>
+                                        <td>${i.quantity.toFixed(1)}</td>
+                                        <td>${i.capacity || '-'}</td>
+                                        <td><div class="inventory-bar" style="width:120px;"><div class="fill ${cls}" style="width:${Math.min(pct,100)}%"></div></div></td>
+                                    </tr>`;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            const btn = $('#addInventoryBtn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    // simple modal using prompt
+                    const stationId = prompt('Enter Station ID:');
+                    if (!stationId) return;
+                    const product = prompt('Product type (Petrol/Diesel):') || 'Petrol';
+                    const qty = prompt('Quantity in Liters:');
+                    if (!qty) return;
+                    const capacity = prompt('Capacity in Liters (optional):') || null;
+                    apiFetch('/inventory', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            station_id: parseInt(stationId),
+                            product_type: product,
+                            quantity: parseFloat(qty),
+                            capacity: capacity ? parseFloat(capacity) : null,
+                        }),
+                    }).then(() => {
+                        showToast('Inventory updated', 'success');
+                        loadAllData().then(() => renderInventory());
+                    }).catch(err => showToast(err.message, 'danger'));
+                });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  STOCK RECEIVING
+        // ─────────────────────────────────────────────────────────────
+        async function renderStockReceiving() {
+            const stock = filterByStation(state.stockReceipts);
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-truck"></i> Receive Stock</h5>
+                            <form id="stockReceiveForm">
+                                <div class="mb-2">
+                                    <label class="form-label small">Station</label>
+                                    <select id="recStation" class="form-select form-select-sm">
+                                        ${state.stations.map(s => `<option value="${s.id}" ${state.currentStationId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Product</label>
+                                    <input type="text" id="recProduct" class="form-control form-control-sm" value="Petrol" />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Quantity (L)</label>
+                                    <input type="number" id="recQty" class="form-control form-control-sm" step="0.1" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Supplier</label>
+                                    <select id="recSupplier" class="form-select form-select-sm">
+                                        <option value="">— Select —</option>
+                                        ${state.vendors.map(v => `<option value="${v.id}">${v.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Receipt #</label>
+                                    <input type="text" id="recReceiptNo" class="form-control form-control-sm" placeholder="Optional" />
+                                </div>
+                                <button type="submit" class="btn btn-success btn-sm w-100">Receive Stock</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="table-container">
+                            <div class="table-header"><h5>📋 Receiving History</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Product</th><th>Qty (L)</th><th>Supplier</th><th>Receipt #</th><th>Date</th></tr></thead>
+                                    <tbody>
+                                        ${stock.length === 0 ? '<tr><td colspan="6" class="text-muted text-center">No receipts</td></tr>' :
+                                        stock.slice().reverse().map(r => `<tr>
+                                            <td>${getStationName(r.station_id)}</td>
+                                            <td>${r.product_type || 'Petrol'}</td>
+                                            <td>${r.quantity.toFixed(1)}</td>
+                                            <td>${r.supplier_id ? state.vendors.find(v=>v.id===r.supplier_id)?.name || '-' : '-'}</td>
+                                            <td>${r.receipt_number || '-'}</td>
+                                            <td class="fs-small">${new Date(r.created_at).toLocaleDateString()}</td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            const form = $('#stockReceiveForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const stationId = parseInt($('#recStation').value);
+                    const product = $('#recProduct').value.trim() || 'Petrol';
+                    const qty = parseFloat($('#recQty').value);
+                    const supplierId = $('#recSupplier').value ? parseInt($('#recSupplier').value) : null;
+                    const receiptNo = $('#recReceiptNo').value.trim() || null;
+                    if (!qty || qty <= 0) { showToast('Enter valid quantity', 'warning'); return; }
+                    try {
+                        await apiFetch('/stock', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                station_id: stationId,
+                                product_type: product,
+                                quantity: qty,
+                                supplier_id: supplierId,
+                                receipt_number: receiptNo,
+                                created_by: state.user.id,
+                            }),
+                        });
+                        showToast('Stock received!', 'success');
+                        await loadAllData();
+                        renderStockReceiving();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  ADJUSTMENTS (manager + admin only)
+        // ─────────────────────────────────────────────────────────────
+        async function renderAdjustments() {
+            const canAdjust = state.user.role === 'manager' || state.user.role === 'top_admin' || state.user.role === 'admin';
+            const adj = filterByStation(state.adjustments);
+
+            const html = `
+                <div class="row g-4">
+                    ${canAdjust ? `
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-sliders2"></i> Stock Adjustment</h5>
+                            <form id="adjustForm">
+                                <div class="mb-2">
+                                    <label class="form-label small">Station</label>
+                                    <select id="adjStation" class="form-select form-select-sm">
+                                        ${state.stations.map(s => `<option value="${s.id}" ${state.currentStationId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Product</label>
+                                    <input type="text" id="adjProduct" class="form-control form-control-sm" value="Petrol" />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Quantity (L) — positive to add, negative to remove</label>
+                                    <input type="number" id="adjQty" class="form-control form-control-sm" step="0.1" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Reason</label>
+                                    <input type="text" id="adjReason" class="form-control form-control-sm" placeholder="e.g. spill, top-up" />
+                                </div>
+                                <button type="submit" class="btn btn-warning btn-sm w-100">Apply Adjustment</button>
+                            </form>
+                            <div class="mt-2 small text-muted">⚠️ Only managers & admins can adjust stock</div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="col-12">
+                        <div class="alert alert-info">Only managers and admins can perform stock adjustments.</div>
+                    </div>
+                    `}
+                    <div class="col-12 ${canAdjust ? 'col-lg-8' : ''}">
+                        <div class="table-container">
+                            <div class="table-header"><h5>📋 Adjustment History</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Product</th><th>Qty</th><th>Reason</th><th>By</th><th>Date</th></tr></thead>
+                                    <tbody>
+                                        ${adj.length === 0 ? '<tr><td colspan="6" class="text-muted text-center">No adjustments</td></tr>' :
+                                        adj.slice().reverse().map(a => `<tr>
+                                            <td>${getStationName(a.station_id)}</td>
+                                            <td>${a.product_type || 'Petrol'}</td>
+                                            <td class="${a.quantity < 0 ? 'text-danger' : 'text-success'}">${a.quantity.toFixed(1)}</td>
+                                            <td>${a.reason || '-'}</td>
+                                            <td>${getUserName(a.created_by)}</td>
+                                            <td class="fs-small">${new Date(a.created_at).toLocaleDateString()}</td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            const form = $('#adjustForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const stationId = parseInt($('#adjStation').value);
+                    const product = $('#adjProduct').value.trim() || 'Petrol';
+                    const qty = parseFloat($('#adjQty').value);
+                    const reason = $('#adjReason').value.trim() || 'Manual adjustment';
+                    if (isNaN(qty) || qty === 0) { showToast('Enter a non-zero quantity', 'warning'); return; }
+                    try {
+                        await apiFetch('/adjustments', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                station_id: stationId,
+                                product_type: product,
+                                quantity: qty,
+                                reason: reason,
+                                created_by: state.user.id,
+                            }),
+                        });
+                        showToast('Adjustment applied!', 'success');
+                        await loadAllData();
+                        renderAdjustments();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  VENDORS
+        // ─────────────────────────────────────────────────────────────
+        async function renderVendors() {
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Vendor</h5>
+                            <form id="vendorForm">
+                                <div class="mb-2">
+                                    <label class="form-label small">Name *</label>
+                                    <input type="text" id="venName" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Contact</label>
+                                    <input type="text" id="venContact" class="form-control form-control-sm" />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Address</label>
+                                    <input type="text" id="venAddress" class="form-control form-control-sm" />
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Add Vendor</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="table-container">
+                            <div class="table-header"><h5>📋 Vendors</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Name</th><th>Contact</th><th>Address</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        ${state.vendors.length === 0 ? '<tr><td colspan="4" class="text-muted text-center">No vendors</td></tr>' :
+                                        state.vendors.map(v => `<tr>
+                                            <td>${v.name}</td>
+                                            <td>${v.contact || '-'}</td>
+                                            <td>${v.address || '-'}</td>
+                                            <td><button class="btn btn-sm btn-outline-danger del-vendor" data-id="${v.id}"><i class="bi bi-trash"></i></button></td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            const form = $('#vendorForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const name = $('#venName').value.trim();
+                    const contact = $('#venContact').value.trim();
+                    const address = $('#venAddress').value.trim();
+                    if (!name) { showToast('Name is required', 'warning'); return; }
+                    try {
+                        await apiFetch('/vendors', {
+                            method: 'POST',
+                            body: JSON.stringify({ name, contact, address }),
+                        });
+                        showToast('Vendor added', 'success');
+                        await loadAllData();
+                        renderVendors();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+            document.querySelectorAll('.del-vendor').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (!confirm('Delete this vendor?')) return;
+                    const id = parseInt(btn.dataset.id);
+                    try {
+                        await apiFetch('/vendors/' + id, { method: 'DELETE' });
+                        showToast('Vendor deleted', 'info');
+                        await loadAllData();
+                        renderVendors();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  CUSTOMERS
+        // ─────────────────────────────────────────────────────────────
+        async function renderCustomers() {
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Customer</h5>
+                            <form id="customerForm">
+                                <div class="mb-2">
+                                    <label class="form-label small">Name *</label>
+                                    <input type="text" id="custName" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Contact</label>
+                                    <input type="text" id="custContact" class="form-control form-control-sm" />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Address</label>
+                                    <input type="text" id="custAddress" class="form-control form-control-sm" />
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Add Customer</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="table-container">
+                            <div class="table-header"><h5>📋 Customers</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Name</th><th>Contact</th><th>Address</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        ${state.customers.length === 0 ? '<tr><td colspan="4" class="text-muted text-center">No customers</td></tr>' :
+                                        state.customers.map(c => `<tr>
+                                            <td>${c.name}</td>
+                                            <td>${c.contact || '-'}</td>
+                                            <td>${c.address || '-'}</td>
+                                            <td><button class="btn btn-sm btn-outline-danger del-customer" data-id="${c.id}"><i class="bi bi-trash"></i></button></td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            const form = $('#customerForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const name = $('#custName').value.trim();
+                    const contact = $('#custContact').value.trim();
+                    const address = $('#custAddress').value.trim();
+                    if (!name) { showToast('Name is required', 'warning'); return; }
+                    try {
+                        await apiFetch('/customers', {
+                            method: 'POST',
+                            body: JSON.stringify({ name, contact, address }),
+                        });
+                        showToast('Customer added', 'success');
+                        await loadAllData();
+                        renderCustomers();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+            document.querySelectorAll('.del-customer').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (!confirm('Delete this customer?')) return;
+                    const id = parseInt(btn.dataset.id);
+                    try {
+                        await apiFetch('/customers/' + id, { method: 'DELETE' });
+                        showToast('Customer deleted', 'info');
+                        await loadAllData();
+                        renderCustomers();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  EXPENSES
+        // ─────────────────────────────────────────────────────────────
+        async function renderExpenses() {
+            const exp = filterByStation(state.expenses);
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Expense</h5>
+                            <form id="expenseForm">
+                                <div class="mb-2">
+                                    <label class="form-label small">Station</label>
+                                    <select id="expStation" class="form-select form-select-sm">
+                                        ${state.stations.map(s => `<option value="${s.id}" ${state.currentStationId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Category</label>
+                                    <input type="text" id="expCategory" class="form-control form-control-sm" placeholder="e.g. Maintenance" />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Description</label>
+                                    <input type="text" id="expDesc" class="form-control form-control-sm" placeholder="What is this for?" />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Amount (UGX)</label>
+                                    <input type="number" id="expAmount" class="form-control form-control-sm" step="100" required />
+                                </div>
+                                <button type="submit" class="btn btn-danger btn-sm w-100">Add Expense</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="table-container">
+                            <div class="table-header"><h5>📋 Expenses</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Category</th><th>Description</th><th>Amount</th><th>Date</th></tr></thead>
+                                    <tbody>
+                                        ${exp.length === 0 ? '<tr><td colspan="5" class="text-muted text-center">No expenses</td></tr>' :
+                                        exp.slice().reverse().map(e => `<tr>
+                                            <td>${getStationName(e.station_id)}</td>
+                                            <td>${e.category || '-'}</td>
+                                            <td>${e.description || '-'}</td>
+                                            <td>UGX ${(e.amount || 0).toLocaleString()}</td>
+                                            <td class="fs-small">${new Date(e.created_at).toLocaleDateString()}</td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            const form = $('#expenseForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const stationId = parseInt($('#expStation').value);
+                    const category = $('#expCategory').value.trim();
+                    const description = $('#expDesc').value.trim();
+                    const amount = parseFloat($('#expAmount').value);
+                    if (!amount || amount <= 0) { showToast('Enter valid amount', 'warning'); return; }
+                    try {
+                        await apiFetch('/expenses', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                station_id: stationId,
+                                category,
+                                description,
+                                amount,
+                                created_by: state.user.id,
+                            }),
+                        });
+                        showToast('Expense recorded', 'success');
+                        await loadAllData();
+                        renderExpenses();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  PAYMENTS
+        // ─────────────────────────────────────────────────────────────
+        async function renderPayments() {
+            const pay = filterByStation(state.payments);
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Record Payment</h5>
+                            <form id="paymentForm">
+                                <div class="mb-2">
+                                    <label class="form-label small">Station</label>
+                                    <select id="payStation" class="form-select form-select-sm">
+                                        ${state.stations.map(s => `<option value="${s.id}" ${state.currentStationId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Type</label>
+                                    <select id="payType" class="form-select form-select-sm">
+                                        <option value="expense">Expense</option>
+                                        <option value="supplier">Supplier</option>
+                                        <option value="salary">Salary</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Description</label>
+                                    <input type="text" id="payDesc" class="form-control form-control-sm" placeholder="Description" />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Amount (UGX)</label>
+                                    <input type="number" id="payAmount" class="form-control form-control-sm" step="100" required />
+                                </div>
+                                <button type="submit" class="btn btn-success btn-sm w-100">Record Payment</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="table-container">
+                            <div class="table-header"><h5>📋 Payment History</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Type</th><th>Description</th><th>Amount</th><th>Date</th></tr></thead>
+                                    <tbody>
+                                        ${pay.length === 0 ? '<tr><td colspan="5" class="text-muted text-center">No payments</td></tr>' :
+                                        pay.slice().reverse().map(p => `<tr>
+                                            <td>${getStationName(p.station_id)}</td>
+                                            <td>${p.type || '-'}</td>
+                                            <td>${p.description || '-'}</td>
+                                            <td>UGX ${(p.amount || 0).toLocaleString()}</td>
+                                            <td class="fs-small">${new Date(p.created_at).toLocaleDateString()}</td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            const form = $('#paymentForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const stationId = parseInt($('#payStation').value);
+                    const type = $('#payType').value;
+                    const description = $('#payDesc').value.trim();
+                    const amount = parseFloat($('#payAmount').value);
+                    if (!amount || amount <= 0) { showToast('Enter valid amount', 'warning'); return; }
+                    try {
+                        await apiFetch('/payments', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                station_id: stationId,
+                                type,
+                                description,
+                                amount,
+                                created_by: state.user.id,
+                            }),
+                        });
+                        showToast('Payment recorded', 'success');
+                        await loadAllData();
+                        renderPayments();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  REPORTS
+        // ─────────────────────────────────────────────────────────────
+        async function renderReports() {
+            const sales = filterByStation(state.sales);
+            const expenses = filterByStation(state.expenses);
+            const totalSales = sales.reduce((s, r) => s + (r.amount || 0), 0);
+            const totalExpenses = expenses.reduce((s, r) => s + (r.amount || 0), 0);
+            const profit = totalSales - totalExpenses;
+            const totalLiters = sales.reduce((s, r) => s + (r.quantity || 0), 0);
+
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card"><div class="stat-number">UGX ${totalSales.toLocaleString()}</div><div class="stat-label">Total Sales</div></div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card"><div class="stat-number">UGX ${totalExpenses.toLocaleString()}</div><div class="stat-label">Total Expenses</div></div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card"><div class="stat-number text-${profit >= 0 ? 'success' : 'danger'}">UGX ${profit.toLocaleString()}</div><div class="stat-label">Net Profit</div></div>
+                    </div>
+                    <div class="col-12 col-sm-6 col-xl-3">
+                        <div class="stat-card"><div class="stat-number">${totalLiters.toFixed(0)} L</div><div class="stat-label">Total Liters Sold</div></div>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="table-container">
+                            <div class="table-header"><h5>📊 Sales by Station</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Station</th><th>Total Sales (UGX)</th><th>Total Liters</th><th>Transactions</th></tr></thead>
+                                    <tbody>
+                                        ${state.stations.map(st => {
+                                            const s = state.sales.filter(r => r.station_id === st.id);
+                                            const total = s.reduce((sum, r) => sum + (r.amount || 0), 0);
+                                            const liters = s.reduce((sum, r) => sum + (r.quantity || 0), 0);
+                                            return `<tr><td>${st.name}</td><td>UGX ${total.toLocaleString()}</td><td>${liters.toFixed(0)} L</td><td>${s.length}</td></tr>`;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  USERS (admin only)
+        // ─────────────────────────────────────────────────────────────
+        async function renderUsers() {
+            if (state.user.role !== 'top_admin' && state.user.role !== 'admin') {
+                pageContent.innerHTML = '<div class="alert alert-danger">Access denied. Only administrators can manage users.</div>';
+                return;
+            }
+            const html = `
+                <div class="row g-4">
+                    <div class="col-12 col-lg-4">
+                        <div class="table-container">
+                            <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add User</h5>
+                            <form id="userForm">
+                                <div class="mb-2">
+                                    <label class="form-label small">Username *</label>
+                                    <input type="text" id="userUsername" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Password *</label>
+                                    <input type="text" id="userPassword" class="form-control form-control-sm" required />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Name</label>
+                                    <input type="text" id="userName" class="form-control form-control-sm" />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Role</label>
+                                    <select id="userRole" class="form-select form-select-sm">
+                                        <option value="cashier">Cashier</option>
+                                        <option value="manager">Manager</option>
+                                        <option value="top_admin">Top Admin</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label small">Station</label>
+                                    <select id="userStation" class="form-select form-select-sm">
+                                        <option value="">— All (admin only) —</option>
+                                        ${state.stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Add User</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-8">
+                        <div class="table-container">
+                            <div class="table-header"><h5>👥 Users</h5></div>
+                            <div class="table-responsive-custom">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Station</th><th>Action</th></tr></thead>
+                                    <tbody>
+                                        ${state.users.map(u => `<tr>
+                                            <td>${u.username}</td>
+                                            <td>${u.name || '-'}</td>
+                                            <td><span class="badge bg-secondary">${u.role}</span></td>
+                                            <td>${u.station_id ? getStationName(u.station_id) : 'All'}</td>
+                                            <td>
+                                                ${u.id !== state.user.id ? `<button class="btn btn-sm btn-outline-danger del-user" data-id="${u.id}"><i class="bi bi-trash"></i></button>` : '<span class="text-muted small">(you)</span>'}
+                                            </td>
+                                        </tr>`).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            pageContent.innerHTML = html;
+
+            const form = $('#userForm');
+            if (form) {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const username = $('#userUsername').value.trim();
+                    const password = $('#userPassword').value.trim();
+                    const name = $('#userName').value.trim();
+                    const role = $('#userRole').value;
+                    const stationId = $('#userStation').value ? parseInt($('#userStation').value) : null;
+                    if (!username || !password) { showToast('Username and password required', 'warning'); return; }
+                    try {
+                        await apiFetch('/users', {
+                            method: 'POST',
+                            body: JSON.stringify({ username, password, name, role, station_id: stationId }),
+                        });
+                        showToast('User created', 'success');
+                        await loadAllData();
+                        renderUsers();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            }
+            document.querySelectorAll('.del-user').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    if (!confirm('Delete this user?')) return;
+                    const id = parseInt(btn.dataset.id);
+                    try {
+                        await apiFetch('/users/' + id, { method: 'DELETE' });
+                        showToast('User deleted', 'info');
+                        await loadAllData();
+                        renderUsers();
+                    } catch (err) { showToast(err.message, 'danger'); }
+                });
+            });
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        //  AUTO-LOGIN on load
+        // ─────────────────────────────────────────────────────────────
+        (async function bootstrap() {
+            const token = localStorage.getItem('petro_token');
+            const userJson = localStorage.getItem('petro_user');
+            if (token && userJson) {
+                try {
+                    state.token = token;
+                    state.user = JSON.parse(userJson);
+                    // verify token by fetching stations
+                    await initApp();
+                    return;
+                } catch (e) {
+                    localStorage.removeItem('petro_token');
+                    localStorage.removeItem('petro_user');
+                }
+            }
+            loginScreen.style.display = 'flex';
+            appMain.style.display = 'none';
+        })();
+
+        // expose for debugging
+        window.__state = state;
+        console.log('🚀 PetroManager loaded. Use admin/admin123, manager/manager123, cashier/cashier123');
+    </script>
+
+</body>
+</html>
