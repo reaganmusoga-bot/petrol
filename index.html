@@ -1193,6 +1193,7 @@ async function renderDashboard() {
   const inv = await getAll('inventory');
   const sales = await getAll('sales');
   const shifts = await getAll('shifts');
+
   const fInv = inv.filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
   const fSales = sales.filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId);
   const fShifts = shifts.filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId);
