@@ -18,58 +18,139 @@
     }
     * { box-sizing: border-box; }
     body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; }
+    
+    /* ✅ FIXED: Sidebar with scrolling */
     .sidebar {
-      position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
-      background: var(--sidebar-bg); color: #b0c4de; z-index: 1050;
-      display: flex; flex-direction: column; transition: transform .3s;
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: var(--sidebar-w); 
+      height: 100vh;
+      background: var(--sidebar-bg); 
+      color: #b0c4de; 
+      z-index: 1050;
+      display: flex; 
+      flex-direction: column; 
+      transition: transform .3s;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
+    .sidebar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .sidebar::-webkit-scrollbar-track {
+      background: rgba(255,255,255,0.05);
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: #ffc107;
+      border-radius: 4px;
+    }
+    
     .sidebar-brand {
-      padding: 18px 20px; font-size: 1.25rem; font-weight: 700; color: #fff;
-      background: rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.08);
-      display: flex; align-items: center; gap: 10px;
+      padding: 18px 20px; 
+      font-size: 1.25rem; 
+      font-weight: 700; 
+      color: #fff;
+      background: rgba(255,255,255,.05); 
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex; 
+      align-items: center; 
+      gap: 10px;
+      flex-shrink: 0;
     }
     .sidebar-brand i { font-size: 1.7rem; color: #ffc107; }
     .sidebar .nav-link {
-      color: #b0c4de; padding: 11px 20px; border-left: 3px solid transparent;
-      display: flex; align-items: center; gap: 12px; font-weight: 500; cursor: pointer;
+      color: #b0c4de; 
+      padding: 10px 16px; 
+      border-left: 3px solid transparent;
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+      font-weight: 500; 
+      cursor: pointer;
+      font-size: 0.9rem;
+      white-space: nowrap;
     }
     .sidebar .nav-link:hover, .sidebar .nav-link.active {
-      background: rgba(255,255,255,.07); color: #fff; border-left-color: #ffc107;
+      background: rgba(255,255,255,.07); 
+      color: #fff; 
+      border-left-color: #ffc107;
     }
     .sidebar .nav-link i { width: 22px; font-size: 1.15rem; }
     .sidebar-footer {
-      margin-top: auto; padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.07); font-size: .85rem;
+      margin-top: auto; 
+      padding: 14px 18px; 
+      border-top: 1px solid rgba(255,255,255,.07); 
+      font-size: .85rem;
+      flex-shrink: 0;
     }
     .main-content { margin-left: var(--sidebar-w); min-height: 100vh; }
     .top-header {
-      height: var(--header-h); background: #fff; border-bottom: 1px solid #e9ecef;
-      padding: 0 24px; display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 1040;
+      height: var(--header-h); 
+      background: #fff; 
+      border-bottom: 1px solid #e9ecef;
+      padding: 0 24px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      position: sticky; 
+      top: 0; 
+      z-index: 1040;
     }
     .page-title { font-weight: 600; font-size: 1.15rem; color: #1a2a4a; }
     .page-content { padding: 22px 24px; }
     .card-box {
-      background: #fff; border-radius: 12px; padding: 18px 20px;
-      border: 1px solid #eef0f3; box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      background: #fff; 
+      border-radius: 12px; 
+      padding: 18px 20px;
+      border: 1px solid #eef0f3; 
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
     }
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
+    .stat-grid { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); 
+      gap: 14px; 
+      margin-bottom: 20px; 
+    }
     .stat-item {
-      background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eef0f3;
-      display: flex; align-items: center; gap: 14px;
+      background: #fff; 
+      border-radius: 12px; 
+      padding: 16px; 
+      border: 1px solid #eef0f3;
+      display: flex; 
+      align-items: center; 
+      gap: 14px;
     }
     .stat-item .icon {
-      width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center;
-      justify-content: center; color: #fff; font-size: 1.25rem;
+      width: 44px; 
+      height: 44px; 
+      border-radius: 10px; 
+      display: flex; 
+      align-items: center;
+      justify-content: center; 
+      color: #fff; 
+      font-size: 1.25rem;
     }
     .stat-item .num { font-size: 1.4rem; font-weight: 700; color: #1a2a4a; }
     .stat-item .lbl { font-size: .8rem; color: #6c7a8e; }
     .hero {
-      background: linear-gradient(135deg, #0b1a33, #1a3a6a); border-radius: 14px;
-      padding: 24px 28px; color: #fff; margin-bottom: 20px;
+      background: linear-gradient(135deg, #0b1a33, #1a3a6a); 
+      border-radius: 14px;
+      padding: 24px 28px; 
+      color: #fff; 
+      margin-bottom: 20px;
     }
     .hero .company { font-size: 1.55rem; font-weight: 700; color: #ffc107; }
     .hero .tag { opacity: .85; font-size: .9rem; }
-    .hero .details { display: flex; flex-wrap: wrap; gap: 14px 26px; margin-top: 10px; font-size: .87rem; }
+    .hero .details { 
+      display: grid; 
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+      gap: 8px 20px; 
+      margin-top: 12px; 
+      background: rgba(255,255,255,0.08); 
+      padding: 12px 16px; 
+      border-radius: 8px;
+    }
     .hero .details i { color: #ffc107; }
     .badge-day { background: #fff3cd; color: #856404; padding: 3px 11px; border-radius: 20px; font-size: .71rem; font-weight: 600; }
     .badge-night { background: #d1ecf1; color: #0c5460; padding: 3px 11px; border-radius: 20px; font-size: .71rem; font-weight: 600; }
@@ -80,23 +161,39 @@
     .product-badge.diesel { background: #f8d7da; color: #58151c; }
     .product-badge.gas { background: #d1ecf1; color: #0c5460; }
     .login-wrap {
-      min-height: 100vh; display: flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #0b1a33, #1a3a6a); padding: 20px;
+      min-height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      background: linear-gradient(135deg, #0b1a33, #1a3a6a); 
+      padding: 20px;
     }
     .login-card {
-      background: #fff; border-radius: 18px; padding: 36px 32px; max-width: 480px; width: 100%;
+      background: #fff; 
+      border-radius: 18px; 
+      padding: 36px 32px; 
+      max-width: 480px; 
+      width: 100%;
       box-shadow: 0 20px 50px rgba(0,0,0,.3);
     }
     .login-card .logo { text-align: center; margin-bottom: 24px; }
     .login-card .logo i { font-size: 2.8rem; color: #ffc107; background: #0b1a33; padding: 12px; border-radius: 14px; }
     .fs-xs { font-size: .78rem; }
     .loading-overlay {
-      position: fixed; inset: 0; background: rgba(255,255,255,.75); z-index: 9999;
-      display: flex; align-items: center; justify-content: center;
+      position: fixed; 
+      inset: 0; 
+      background: rgba(255,255,255,.75); 
+      z-index: 9999;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
     }
     .spinner {
-      width: 2.2rem; height: 2.2rem; border: .25em solid #0d6efd;
-      border-right-color: transparent; border-radius: 50%;
+      width: 2.2rem; 
+      height: 2.2rem; 
+      border: .25em solid #0d6efd;
+      border-right-color: transparent; 
+      border-radius: 50%;
       animation: spin .75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -113,9 +210,25 @@
     .table-report td { font-size: 0.85rem; }
     .profit-positive { color: #198754; font-weight: 700; }
     .profit-negative { color: #dc3545; font-weight: 700; }
+    .table-dark th { 
+      background: #0b1a33 !important; 
+      color: #fff !important;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
     #offlineBanner {
-      display: none; background: #dc3545; color: #fff; text-align: center;
-      padding: 8px; font-size: 0.9rem; position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
+      display: none; 
+      background: #dc3545; 
+      color: #fff; 
+      text-align: center;
+      padding: 8px; 
+      font-size: 0.9rem; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      z-index: 99999;
     }
     body.offline #offlineBanner { display: block; }
     body.offline .main-content { padding-top: 40px; }
@@ -249,7 +362,6 @@
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
 // ============================================================
 // Part 2: Firebase Config & Core Utilities
 // ============================================================
@@ -386,8 +498,9 @@ async function updateCompany(companyId, data) {
     ...data,
     updated_at: firebase.firestore.FieldValue.serverTimestamp(),
     updated_by: state.user ? state.user.id : null
-  }, { merge: true });  // ✅ This creates the document if it doesn't exist
+  }, { merge: true });
 }
+
 async function getAllCompanies() {
   const snap = await db.collection('companies').get();
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -733,8 +846,6 @@ window.addEventListener('offline', () => {
 updateOnlineStatus();
 
 console.log('Part 2 loaded');
-</script>
-<script>
 // ============================================================
 // Part 3: Authentication & Session
 // ============================================================
@@ -1055,9 +1166,7 @@ function updateStationDropdown() {
 }
 
 console.log('Part 3 loaded');
-</script>
-<script>
-// ============================================================
+          // ============================================================
 // Part 4: App Init, Sidebar & Navigation
 // ============================================================
 
@@ -1240,17 +1349,13 @@ $('#sidebarToggle').addEventListener('click', function() {
 
 checkSession();
 console.log('Part 4 loaded');
-</script>
-<script>
-// ============================================================
+          // ============================================================
 // Part 5: Dashboard, Sales, Shifts, Meters, Summary
 // ============================================================
 
 async function renderDashboard() {
-  // Get company from the companies collection
   const company = await getCompany(state.user.companyId);
   
-  // If no company data exists, use defaults
   const companyData = company || {
     name: 'PetroManager',
     tagline: 'Fuel Management System',
@@ -1283,9 +1388,7 @@ async function renderDashboard() {
   const lowStockItems = await checkLowStock();
   const lowCount = lowStockItems ? lowStockItems.length : 0;
 
-  // Build the hero section with ALL company details
   let html = `
-  <!-- COMPANY HERO SECTION -->
   <div class="hero">
     <div class="d-flex justify-content-between align-items-start flex-wrap">
       <div style="flex:1; min-width:250px;">
@@ -1295,8 +1398,7 @@ async function renderDashboard() {
         </div>
         <div class="tag">${companyData.tagline || ''}</div>
         
-        <!-- COMPANY DETAILS - DISPLAYED PROMINENTLY -->
-        <div class="details" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 20px; margin-top: 12px; background: rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 8px;">
+        <div class="details">
           ${companyData.address ? `<span><i class="bi bi-geo-alt"></i> ${companyData.address}</span>` : ''}
           ${companyData.phone ? `<span><i class="bi bi-telephone"></i> ${companyData.phone}</span>` : ''}
           ${companyData.email ? `<span><i class="bi bi-envelope"></i> ${companyData.email}</span>` : ''}
@@ -1313,7 +1415,6 @@ async function renderDashboard() {
     </div>
   </div>
 
-  <!-- STATS GRID -->
   <div class="stat-grid">
     <div class="stat-item"><div class="icon" style="background:#0d6efd;"><i class="bi bi-box-seam"></i></div>
       <div><div class="num">${totalLitres.toFixed(0)} L</div><div class="lbl">Total Stock</div></div></div>
@@ -1327,7 +1428,6 @@ async function renderDashboard() {
       <div><div class="num">${lowCount}</div><div class="lbl">Low Stock Items</div></div></div>
   </div>
 
-  <!-- QUICK ACTION BUTTONS -->
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-4 col-lg-2"><div class="card-box text-center" style="cursor:pointer;" onclick="navigate('sales')">
       <i class="bi bi-cart-plus fs-3 text-primary"></i><div class="fw-semibold mt-1">Sales</div></div></div>
@@ -1345,7 +1445,6 @@ async function renderDashboard() {
 
   $('#pageContent').innerHTML = html;
 
-  // --- Event Listeners ---
   const editBtn = $('#editCompanyBtn');
   if (editBtn) {
     editBtn.onclick = function() {
@@ -1358,7 +1457,6 @@ async function renderDashboard() {
     dailyBtn.onclick = sendDailyReportEmail;
   }
 
-  // --- Charts ---
   setTimeout(() => renderCharts(), 500);
 }
 
@@ -1451,11 +1549,16 @@ async function renderCharts() {
   }
 }
 
+// ============================================================
+// SALES - COMPLETE OVERHAUL (QuickBooks Style)
+// ============================================================
+
 async function renderSales() {
   let cart = [];
-  
   const inv = await getAll('inventory');
-  const sales = (await getAll('sales'))
+  
+  const allSales = await getAll('sales');
+  const sales = allSales
     .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
     .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
@@ -1465,11 +1568,19 @@ async function renderSales() {
     stationOptions += `<option value="${s.id}"${selected}>${s.name}</option>`;
   });
 
+  const today = new Date().toISOString().slice(0, 10);
+
   let html = `
   <div class="row g-4">
     <div class="col-lg-5">
       <div class="card-box">
-        <h5 class="mb-3"><i class="bi bi-cart-plus"></i> Add to Cart</h5>
+        <h5 class="mb-3"><i class="bi bi-cart-plus"></i> Point of Sale</h5>
+        
+        <div class="mb-2">
+          <label class="form-label small">Sale Date</label>
+          <input type="date" id="saleDate" class="form-control form-control-sm" value="${today}">
+        </div>
+        
         <form id="addToCartForm">
           <div class="mb-2">
             <label class="form-label small">Station</label>
@@ -1479,19 +1590,19 @@ async function renderSales() {
             <div class="col-6">
               <label class="form-label small">Product</label>
               <select id="saleProduct" class="form-select form-select-sm">
-                <option value="Petrol">Petrol</option>
-                <option value="Diesel">Diesel</option>
-                <option value="Gas">Gas</option>
+                <option value="Petrol">⛽ Petrol</option>
+                <option value="Diesel">🛢️ Diesel</option>
+                <option value="Gas">🔥 Gas</option>
               </select>
             </div>
             <div class="col-6">
               <label class="form-label small">Qty (L)</label>
-              <input type="number" id="saleQty" class="form-control form-control-sm" placeholder="e.g. 10" step="0.01" value="1" required>
+              <input type="number" id="saleQty" class="form-control form-control-sm" placeholder="0.00" step="0.01" value="1">
             </div>
           </div>
           <div class="mb-2 mt-2">
-            <label class="form-label small">Selling Price (auto-filled)</label>
-            <input type="number" id="salePrice" class="form-control form-control-sm" placeholder="Price/L" step="10" required>
+            <label class="form-label small">Selling Price</label>
+            <input type="number" id="salePrice" class="form-control form-control-sm" placeholder="Price/L" step="10">
           </div>
           <button type="button" class="btn btn-outline-primary w-100" id="addToCartBtn">
             <i class="bi bi-plus-circle"></i> Add to Cart
@@ -1500,12 +1611,29 @@ async function renderSales() {
 
         <div id="cartContainer" class="mt-3" style="display:none;">
           <hr>
-          <h6 class="d-flex justify-content-between">
-            <span>Your Cart (<span id="cartCount">0</span> items)</span>
-            <span class="text-success" id="cartTotal">UGX 0</span>
-          </h6>
-          <div id="cartItems" class="mb-2" style="max-height:200px; overflow-y:auto;"></div>
-          <div class="d-flex gap-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">🛒 Cart (<span id="cartCount">0</span> items)</h6>
+            <h5 class="text-success mb-0" id="cartTotal">UGX 0</h5>
+          </div>
+          <div id="cartItems" class="mb-2" style="max-height:250px; overflow-y:auto;"></div>
+          
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small">Payment Method</label>
+              <select id="salePayment" class="form-select form-select-sm">
+                <option value="cash">💵 Cash</option>
+                <option value="mobile">📱 Mobile Money</option>
+                <option value="credit">💳 Credit</option>
+                <option value="mixed">🔄 Mixed</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Customer</label>
+              <input type="text" id="saleCustomer" class="form-control form-control-sm" placeholder="Walk-in" value="Walk-in">
+            </div>
+          </div>
+          
+          <div class="d-flex gap-2 mt-2">
             <button class="btn btn-danger btn-sm flex-grow-1" id="clearCartBtn"><i class="bi bi-trash"></i> Clear</button>
             <button class="btn btn-success flex-grow-1" id="completeSaleBtn">
               <i class="bi bi-check-circle"></i> Complete Sale
@@ -1513,55 +1641,74 @@ async function renderSales() {
           </div>
         </div>
       </div>
-
-      <div class="card-box mt-3" id="paymentDetails" style="display:none;">
-        <div class="row g-2">
-          <div class="col-6">
-            <label class="form-label small">Payment Method</label>
-            <select id="salePayment" class="form-select form-select-sm">
-              <option value="cash">Cash</option>
-              <option value="mobile">Mobile Money</option>
-              <option value="credit">Credit</option>
-            </select>
-          </div>
-          <div class="col-6">
-            <label class="form-label small">Customer</label>
-            <input type="text" id="saleCustomer" class="form-control form-control-sm" placeholder="Walk-in" value="Walk-in">
-          </div>
-        </div>
-      </div>
     </div>
 
     <div class="col-lg-7">
       <div class="card-box">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="mb-0">Sales History</h5>
-          <span class="badge bg-secondary">${sales.length}</span>
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+          <h5 class="mb-0"><i class="bi bi-clock-history"></i> Sales History</h5>
+          <div class="d-flex gap-2 flex-wrap">
+            <input type="date" id="historyFrom" class="form-control form-control-sm" style="width:130px;" value="${new Date(Date.now() - 30*24*60*60*1000).toISOString().slice(0,10)}">
+            <input type="date" id="historyTo" class="form-control form-control-sm" style="width:130px;" value="${today}">
+            <button class="btn btn-sm btn-primary" id="filterHistoryBtn"><i class="bi bi-funnel"></i> Filter</button>
+          </div>
         </div>
-        <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
-          <table class="table table-sm table-hover">
-            <thead><tr><th>Station</th><th>Product</th><th>Qty</th><th>Price</th><th>Amount</th><th>Payment</th><th>Date</th>${isAdmin(state.user.role) ? '<th>Actions</th>' : ''}</tr></thead>
-            <tbody>`;
+        
+        <div class="table-responsive" style="max-height:450px; overflow-y:auto;">
+          <table class="table table-sm table-hover table-bordered">
+            <thead class="table-dark">
+              <tr>
+                <th>Date</th>
+                <th>Station</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Amount</th>
+                <th>Payment</th>
+                ${isAdmin(state.user.role) ? '<th>Actions</th>' : ''}
+              </tr>
+            </thead>
+            <tbody id="salesHistoryBody">`;
+  html += `</tbody></table></div></div></div></div>`;
+  $('#pageContent').innerHTML = html;
 
-  if (sales.length === 0) {
-    html += '<tr><td colspan="8" class="text-muted text-center">No sales yet</td></tr>';
-  } else {
-    sales.slice(0, 50).forEach(s => {
+  function renderSalesHistory() {
+    const from = $('#historyFrom').value;
+    const to = $('#historyTo').value;
+    const tbody = $('#salesHistoryBody');
+    
+    let filtered = sales.filter(s => {
+      const d = s.created_at ? (s.created_at.toDate ? s.created_at.toDate() : new Date(s.created_at)) : new Date();
+      const dateStr = d.toISOString().slice(0, 10);
+      return dateStr >= from && dateStr <= to;
+    });
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="${isAdmin(state.user.role) ? '8' : '7'}" class="text-center text-muted py-3">No sales in this period</td></tr>`;
+      return;
+    }
+
+    let html = '';
+    filtered.slice(0, 100).forEach(s => {
       html += `<tr>
+        <td class="fs-xs">${formatDate(s.created_at)}</td>
         <td>${stationName(s.station_id)}</td>
         <td><span class="product-badge ${(s.product_type || '').toLowerCase()}">${s.product_type}</span></td>
         <td>${Number(s.quantity).toFixed(2)}</td>
         <td>${formatMoney(s.selling_price)}</td>
         <td><strong>${formatMoney(s.amount)}</strong></td>
         <td><span class="badge bg-secondary">${s.payment_method || 'cash'}</span></td>
-        <td class="fs-xs">${formatDate(s.created_at)}</td>
-        ${isAdmin(state.user.role) ? `<td><button class="btn btn-sm btn-outline-danger delete-sale-btn" data-id="${s.id}" data-qty="${s.quantity}" data-product="${s.product_type}" data-station="${s.station_id}"><i class="bi bi-trash"></i></button></td>` : ''}
+        ${isAdmin(state.user.role) ? `<td>
+          <button class="btn btn-sm btn-outline-warning edit-sale-btn me-1" data-id="${s.id}" data-qty="${s.quantity}" data-price="${s.selling_price}" data-product="${s.product_type}" data-station="${s.station_id}" data-date="${s.created_at ? (s.created_at.toDate ? s.created_at.toDate().toISOString().slice(0,10) : new Date(s.created_at).toISOString().slice(0,10)) : ''}"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-outline-danger return-sale-btn" data-id="${s.id}" data-qty="${s.quantity}" data-product="${s.product_type}" data-station="${s.station_id}"><i class="bi bi-arrow-return-left"></i></button>
+          <button class="btn btn-sm btn-outline-danger delete-sale-btn" data-id="${s.id}" data-qty="${s.quantity}" data-product="${s.product_type}" data-station="${s.station_id}"><i class="bi bi-trash"></i></button>
+        </td>` : ''}
       </tr>`;
     });
+    tbody.innerHTML = html;
   }
 
-  html += `</tbody></table></div></div></div></div>`;
-  $('#pageContent').innerHTML = html;
+  $('#filterHistoryBtn').onclick = renderSalesHistory;
 
   async function updatePrice() {
     const stationId = Number($('#saleStation').value);
@@ -1584,17 +1731,13 @@ async function renderSales() {
     const itemsDiv = $('#cartItems');
     const countSpan = $('#cartCount');
     const totalSpan = $('#cartTotal');
-    const paymentDiv = $('#paymentDetails');
 
     if (cart.length === 0) {
       container.style.display = 'none';
-      paymentDiv.style.display = 'none';
       return;
     }
 
     container.style.display = 'block';
-    paymentDiv.style.display = 'block';
-
     let total = 0;
     let html2 = '<ul class="list-group list-group-flush">';
     cart.forEach((item, index) => {
@@ -1608,11 +1751,7 @@ async function renderSales() {
             × ${formatMoney(item.price)}
             <span class="text-success ms-2">${formatMoney(subtotal)}</span>
           </div>
-          <div>
-            <button class="btn btn-sm btn-outline-danger remove-item" data-index="${index}">
-              <i class="bi bi-x"></i>
-            </button>
-          </div>
+          <button class="btn btn-sm btn-outline-danger remove-item" data-index="${index}"><i class="bi bi-x"></i></button>
         </li>
       `;
     });
@@ -1671,6 +1810,7 @@ async function renderSales() {
     const stationId = cart[0].stationId;
     const payment = $('#salePayment').value;
     const customer = $('#saleCustomer').value.trim() || 'Walk-in';
+    const saleDate = $('#saleDate').value;
 
     const btn = this;
     btn.disabled = true;
@@ -1690,7 +1830,7 @@ async function renderSales() {
         cart.forEach((item, idx) => {
           const doc = inventoryDocs[idx];
           if (!doc.exists) {
-            throw new Error(`No inventory found for ${item.product} at this station`);
+            throw new Error(`No inventory found for ${item.product}`);
           }
           const currentQty = doc.data().quantity || 0;
           if (currentQty < item.qty) {
@@ -1708,6 +1848,8 @@ async function renderSales() {
         });
 
         const transactionId = 'TXN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+        const dateObj = saleDate ? new Date(saleDate) : new Date();
+        
         cart.forEach((item, idx) => {
           const saleRef = db.collection('sales').doc();
           const amount = item.qty * item.price;
@@ -1723,6 +1865,7 @@ async function renderSales() {
             transaction_id: transactionId,
             recorded_by: state.user.id,
             companyId: state.user.companyId,
+            sale_date: dateObj,
             created_at: firebase.firestore.FieldValue.serverTimestamp()
           });
         });
@@ -1731,7 +1874,6 @@ async function renderSales() {
       await logAudit('cart_sale', { station: stationId, items: cart.length });
       toast(`✅ Sale complete! ${cart.length} item(s) sold.`, 'success');
       
-      // Print receipt
       const receiptData = {
         transactionId: 'TXN_' + Date.now(),
         items: cart.map(item => ({ product: item.product, qty: item.qty, price: item.price })),
@@ -1739,7 +1881,7 @@ async function renderSales() {
         payment: payment,
         customer: customer,
         station: stationName(stationId),
-        date: new Date()
+        date: saleDate ? new Date(saleDate) : new Date()
       };
       printReceipt(receiptData);
       
@@ -1756,9 +1898,75 @@ async function renderSales() {
     }
   };
 
-  renderCart();
+  // Edit Sale
+  document.querySelectorAll('.edit-sale-btn').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.dataset.id;
+      const currentQty = parseFloat(this.dataset.qty);
+      const currentPrice = parseFloat(this.dataset.price);
+      const product = this.dataset.product;
+      const stationId = Number(this.dataset.station);
+      const currentDate = this.dataset.date;
 
-  // Delete sale handler
+      const newQty = prompt('Enter new quantity:', currentQty);
+      if (newQty === null) return;
+      const newPrice = prompt('Enter new selling price:', currentPrice);
+      if (newPrice === null) return;
+      const newDate = prompt('Enter new date (YYYY-MM-DD):', currentDate);
+      if (newDate === null) return;
+
+      const qtyVal = parseFloat(newQty);
+      const priceVal = parseFloat(newPrice);
+      const amount = qtyVal * priceVal;
+
+      if (isNaN(qtyVal) || qtyVal <= 0 || isNaN(priceVal) || priceVal <= 0) {
+        toast('Invalid values', 'danger');
+        return;
+      }
+
+      const diff = currentQty - qtyVal;
+      
+      updateDoc('sales', id, {
+        quantity: qtyVal,
+        selling_price: priceVal,
+        amount: amount,
+        sale_date: new Date(newDate)
+      }).then(async () => {
+        if (diff !== 0) {
+          await adjustInventory(stationId, product, diff);
+        }
+        toast('Sale updated!', 'success');
+        renderSales();
+      }).catch(err => {
+        toast('Error: ' + err.message, 'danger');
+      });
+    };
+  });
+
+  // Return Sale
+  document.querySelectorAll('.return-sale-btn').forEach(btn => {
+    btn.onclick = async function() {
+      const id = this.dataset.id;
+      const qty = parseFloat(this.dataset.qty);
+      const product = this.dataset.product;
+      const stationId = Number(this.dataset.station);
+      
+      if (!confirm(`🔄 Return ${qty}L of ${product}? This will add stock back to inventory.`)) return;
+      if (!confirm('Are you sure?')) return;
+      
+      try {
+        await adjustInventory(stationId, product, qty);
+        await updateDoc('sales', id, { returned: true, returned_at: firebase.firestore.FieldValue.serverTimestamp() });
+        await logAudit('return_sale', { saleId: id, product, qty });
+        toast('Sale returned. Stock restored.', 'success');
+        renderSales();
+      } catch (err) {
+        toast('Error: ' + err.message, 'danger');
+      }
+    };
+  });
+
+  // Delete Sale
   document.querySelectorAll('.delete-sale-btn').forEach(btn => {
     btn.onclick = async function() {
       const id = this.dataset.id;
@@ -1766,8 +1974,8 @@ async function renderSales() {
       const product = this.dataset.product;
       const stationId = Number(this.dataset.station);
       
-      if (!confirm(`⚠️ Delete sale of ${qty}L ${product}? This will ADD stock back to inventory.`)) return;
-      if (!confirm('Are you sure? This cannot be undone!')) return;
+      if (!confirm(`⚠️ Delete sale of ${qty}L ${product} permanently?`)) return;
+      if (!confirm('This cannot be undone! Are you sure?')) return;
       
       try {
         await adjustInventory(stationId, product, qty);
@@ -1780,13 +1988,22 @@ async function renderSales() {
       }
     };
   });
+
+  renderCart();
+  renderSalesHistory();
 }
+
+// ============================================================
+// SHIFTS - PROFESSIONAL TABLE
+// ============================================================
 
 async function renderShifts() {
   const shifts = (await getAll('shifts'))
     .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
     .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
+  const users = await getAll('users');
+  const inv = await getAll('inventory');
   const isCashier = roleNorm(state.user.role) === 'cashier';
   const myActive = shifts.find(s => s.cashier_id === state.user.id && s.status === 'active');
 
@@ -1799,53 +2016,125 @@ async function renderShifts() {
         const selected = Number(state.user.station_id) === s.id ? ' selected' : '';
         stationOpts += `<option value="${s.id}"${selected}>${s.name}</option>`;
       });
-      formHtml = `<form id="startShiftForm">
-        <div class="mb-2"><label class="form-label small">Station</label>
-          <select id="shiftStation" class="form-select form-select-sm" disabled>${stationOpts}</select></div>
-        <div class="mb-2"><label class="form-label small">Shift Type</label>
-          <select id="shiftType" class="form-select form-select-sm"><option value="day">Day</option><option value="night">Night</option></select></div>
-        <div class="mb-2"><label class="form-label small">Opening Meters (L)</label><div class="row g-1">
-          <div class="col-4"><input type="number" id="startPetrol" class="form-control form-control-sm" placeholder="Petrol" step="0.01" required></div>
-          <div class="col-4"><input type="number" id="startDiesel" class="form-control form-control-sm" placeholder="Diesel" step="0.01"></div>
-          <div class="col-4"><input type="number" id="startGas" class="form-control form-control-sm" placeholder="Gas" step="0.01"></div>
-        </div></div><button type="submit" class="btn btn-success w-100">Start Shift</button>
-      </form>`;
+      formHtml = `
+        <form id="startShiftForm" class="p-3 bg-light rounded">
+          <div class="mb-2"><label class="form-label small">Station</label>
+            <select id="shiftStation" class="form-select form-select-sm" disabled>${stationOpts}</select></div>
+          <div class="mb-2"><label class="form-label small">Shift Type</label>
+            <select id="shiftType" class="form-select form-select-sm"><option value="day">☀️ Day</option><option value="night">🌙 Night</option></select></div>
+          <div class="mb-2"><label class="form-label small">Opening Meters (L)</label>
+            <div class="row g-1">
+              <div class="col-4"><input type="number" id="startPetrol" class="form-control form-control-sm" placeholder="Petrol" step="0.01" required></div>
+              <div class="col-4"><input type="number" id="startDiesel" class="form-control form-control-sm" placeholder="Diesel" step="0.01"></div>
+              <div class="col-4"><input type="number" id="startGas" class="form-control form-control-sm" placeholder="Gas" step="0.01"></div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-success w-100"><i class="bi bi-play-circle"></i> Start Shift</button>
+        </form>`;
     } else {
-      formHtml = `<form id="endShiftForm">
-        <p class="small text-muted">Active ${myActive.shift_type} shift since ${formatDateTime(myActive.created_at)}</p>
-        <div class="mb-2"><label class="form-label small">Closing Meters (L)</label><div class="row g-1">
-          <div class="col-4"><input type="number" id="endPetrol" class="form-control form-control-sm" placeholder="Petrol" step="0.01" required></div>
-          <div class="col-4"><input type="number" id="endDiesel" class="form-control form-control-sm" placeholder="Diesel" step="0.01"></div>
-          <div class="col-4"><input type="number" id="endGas" class="form-control form-control-sm" placeholder="Gas" step="0.01"></div>
-        </div></div><button type="submit" class="btn btn-danger w-100">End Shift</button>
-      </form>`;
+      formHtml = `
+        <div class="p-3 bg-light rounded">
+          <div class="alert alert-success">✅ Active ${myActive.shift_type} shift since ${formatDateTime(myActive.created_at)}</div>
+          <form id="endShiftForm">
+            <div class="mb-2"><label class="form-label small">Closing Meters (L)</label>
+              <div class="row g-1">
+                <div class="col-4"><input type="number" id="endPetrol" class="form-control form-control-sm" placeholder="Petrol" step="0.01" required></div>
+                <div class="col-4"><input type="number" id="endDiesel" class="form-control form-control-sm" placeholder="Diesel" step="0.01"></div>
+                <div class="col-4"><input type="number" id="endGas" class="form-control form-control-sm" placeholder="Gas" step="0.01"></div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-danger w-100"><i class="bi bi-stop-circle"></i> End Shift</button>
+          </form>
+        </div>`;
     }
   } else {
-    formHtml = '<p class="text-muted small">Cashiers manage their own shifts. View history below.</p>';
+    formHtml = '<p class="text-muted small">Cashiers manage their own shifts. View detailed reports below.</p>';
   }
 
-  let html = `<div class="row g-4">
-    <div class="col-lg-4"><div class="card-box">
-      <h5 class="mb-3"><i class="bi bi-clock"></i> ${isCashier ? 'My Shift' : 'Shifts'}</h5>
-      ${formHtml}
-    </div></div>
-    <div class="col-lg-8"><div class="card-box"><h5 class="mb-3">Shift History</h5>
-      <div class="table-responsive"><table class="table table-sm table-hover">
-        <thead><tr><th>Station</th><th>Type</th><th>Start P/D/G</th><th>End P/D/G</th><th>Status</th>${isAdmin(state.user.role) ? '<th>Actions</th>' : ''}</tr></thead><tbody>`;
+  let html = `
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card-box">
+        <h5 class="mb-3"><i class="bi bi-clock"></i> ${isCashier ? 'My Shift' : 'Shift Management'}</h5>
+        ${formHtml}
+      </div>
+    </div>
+    <div class="col-lg-8">
+      <div class="card-box">
+        <h5 class="mb-3"><i class="bi bi-table"></i> Shift Reports</h5>
+        <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+          <table class="table table-sm table-hover table-bordered">
+            <thead class="table-dark">
+              <tr>
+                <th>Station</th>
+                <th>Cashier</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Petrol</th>
+                <th>Diesel</th>
+                <th>Gas</th>
+                <th>Expected</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>`;
 
   if (shifts.length === 0) {
-    html += '<tr><td colspan="6" class="text-muted text-center">No shifts</td></tr>';
+    html += '<tr><td colspan="9" class="text-center text-muted py-4">No shifts recorded yet</td></tr>';
   } else {
     shifts.slice(0, 30).forEach(s => {
-      const start = `${s.start_petrol || 0} / ${s.start_diesel || 0} / ${s.start_gas || 0}`;
-      const end = s.status === 'closed' ? `${s.end_petrol || 0} / ${s.end_diesel || 0} / ${s.end_gas || 0}` : '—';
+      const cashier = users.find(u => u.id === s.cashier_id);
+      const cashierName = cashier ? (cashier.name || cashier.username) : 'Unknown';
+      
+      const petrolSold = s.status === 'closed' ? Math.max(0, (s.end_petrol || 0) - (s.start_petrol || 0)) : 0;
+      const dieselSold = s.status === 'closed' ? Math.max(0, (s.end_diesel || 0) - (s.start_diesel || 0)) : 0;
+      const gasSold = s.status === 'closed' ? Math.max(0, (s.end_gas || 0) - (s.start_gas || 0)) : 0;
+      
+      const pPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Petrol') || {}).selling_price || 0;
+      const dPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Diesel') || {}).selling_price || 0;
+      const gPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Gas') || {}).selling_price || 0;
+      
+      const expectedAmount = (petrolSold * pPrice) + (dieselSold * dPrice) + (gasSold * gPrice);
+      
+      const statusClass = s.status === 'active' ? 'badge-active' : 'badge-closed';
+      const statusText = s.status === 'active' ? '🟢 Active' : '🔴 Closed';
+      
       html += `<tr>
-        <td>${stationName(s.station_id)}</td>
+        <td><strong>${stationName(s.station_id)}</strong><br><small class="text-muted">${formatDate(s.created_at)}</small></td>
+        <td>${cashierName}</td>
         <td><span class="${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${s.shift_type}</span></td>
-        <td class="fs-xs">${start}</td>
-        <td class="fs-xs">${end}</td>
-        <td><span class="${s.status === 'active' ? 'badge-active' : 'badge-closed'}">${s.status}</span></td>
-        ${isAdmin(state.user.role) && s.status === 'active' ? `<td><button class="btn btn-sm btn-outline-warning edit-shift-btn" data-id="${s.id}" data-start-p="${s.start_petrol}" data-start-d="${s.start_diesel}" data-start-g="${s.start_gas}"><i class="bi bi-pencil"></i></button></td>` : ''}
+        <td><span class="${statusClass}">${statusText}</span></td>
+        <td>
+          ${s.status === 'closed' ? `
+            <div><small>Open: ${s.start_petrol || 0}</small></div>
+            <div><small>Close: ${s.end_petrol || 0}</small></div>
+            <div><strong>Sold: ${petrolSold.toFixed(2)}L</strong></div>
+          ` : '—'}
+        </td>
+        <td>
+          ${s.status === 'closed' ? `
+            <div><small>Open: ${s.start_diesel || 0}</small></div>
+            <div><small>Close: ${s.end_diesel || 0}</small></div>
+            <div><strong>Sold: ${dieselSold.toFixed(2)}L</strong></div>
+          ` : '—'}
+        </td>
+        <td>
+          ${s.status === 'closed' ? `
+            <div><small>Open: ${s.start_gas || 0}</small></div>
+            <div><small>Close: ${s.end_gas || 0}</small></div>
+            <div><strong>Sold: ${gasSold.toFixed(2)}L</strong></div>
+          ` : '—'}
+        </td>
+        <td>
+          ${s.status === 'closed' ? `
+            <strong>${formatMoney(expectedAmount)}</strong>
+          ` : '—'}
+        </td>
+        <td>
+          ${isAdmin(state.user.role) && s.status === 'active' ? 
+            `<button class="btn btn-sm btn-outline-warning edit-shift-btn" data-id="${s.id}" data-start-p="${s.start_petrol}" data-start-d="${s.start_diesel}" data-start-g="${s.start_gas}"><i class="bi bi-pencil"></i></button>` 
+            : '—'}
+        </td>
       </tr>`;
     });
   }
@@ -1875,7 +2164,7 @@ async function renderShifts() {
         status: 'active'
       });
       await logAudit('start_shift', { station: stationId, type: shiftType });
-      toast('Shift started');
+      toast('✅ Shift started successfully!');
       renderShifts();
     };
   }
@@ -1887,6 +2176,12 @@ async function renderShifts() {
       const endPetrol = parseFloat($('#endPetrol').value) || 0;
       const endDiesel = parseFloat($('#endDiesel').value) || 0;
       const endGas = parseFloat($('#endGas').value) || 0;
+      
+      if (endPetrol < (myActive.start_petrol || 0)) {
+        toast('Closing Petrol reading cannot be less than opening', 'warning');
+        return;
+      }
+      
       await updateDoc('shifts', myActive.id, {
         end_petrol: endPetrol,
         end_diesel: endDiesel,
@@ -1895,12 +2190,11 @@ async function renderShifts() {
         ended_at: firebase.firestore.FieldValue.serverTimestamp()
       });
       await logAudit('end_shift', { shift: myActive.id });
-      toast('Shift closed');
+      toast('✅ Shift closed successfully!');
       renderShifts();
     };
   }
 
-  // Edit shift handler
   document.querySelectorAll('.edit-shift-btn').forEach(btn => {
     btn.onclick = function() {
       const id = this.dataset.id;
@@ -1928,6 +2222,10 @@ async function renderShifts() {
     };
   });
 }
+
+// ============================================================
+// METERS
+// ============================================================
 
 async function renderMeters() {
   const shifts = await getAll('shifts');
@@ -2000,6 +2298,10 @@ async function renderMeters() {
     if (timerInterval) clearInterval(timerInterval);
   });
 }
+
+// ============================================================
+// SHIFT SUMMARY
+// ============================================================
 
 async function renderShiftSummary() {
   const role = roleNorm(state.user.role);
@@ -2150,32 +2452,58 @@ async function renderShiftSummary() {
 }
 
 console.log('Part 5 loaded');
-</script>
-<script>
-// ============================================================
+          // ============================================================
 // Part 6: Balancing, Inventory, Stock, Adjustments
+// ============================================================
+
+// ============================================================
+// BALANCING - PROFESSIONAL TABLE
 // ============================================================
 
 async function renderBalancing() {
   const shifts = (await getAll('shifts'))
-    .filter(s => s.status === 'closed' && (!state.currentStationId || Number(s.station_id) === state.currentStationId));
+    .filter(s => s.status === 'closed' && (!state.currentStationId || Number(s.station_id) === state.currentStationId))
+    .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
   const recons = await getAll('reconciliations');
   const inv = await getAll('inventory');
+  const users = await getAll('users');
 
-  let html = '<div class="card-box">' +
-    '<h5 class="mb-3"><i class="bi bi-balance-scale"></i> Cashier Reconciliation</h5>' +
-    '<p class="text-muted small">Expected revenue = meter difference × current selling prices from inventory.</p>' +
-    '<div class="table-responsive"><table class="table table-sm table-bordered">' +
-    '<thead><tr>' +
-    '<th>Station</th><th>Shift</th><th>Petrol</th><th>Diesel</th><th>Gas</th>' +
-    '<th>Expected</th><th>Cash</th><th>Mobile</th><th>Credit</th><th>Diff</th><th>Status</th><th></th>' +
-    '</tr></thead><tbody>';
+  let html = `
+  <div class="card-box">
+    <h5 class="mb-3"><i class="bi bi-balance-scale"></i> Cashier Reconciliation</h5>
+    <p class="text-muted small">Select a closed shift to reconcile. Expected amount is calculated from meter readings × selling prices.</p>
+    
+    <div class="table-responsive" style="max-height:600px; overflow-y:auto;">
+      <table class="table table-sm table-hover table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Station</th>
+            <th>Cashier</th>
+            <th>Shift</th>
+            <th>Date</th>
+            <th>Petrol</th>
+            <th>Diesel</th>
+            <th>Gas</th>
+            <th>Expected</th>
+            <th>Cash</th>
+            <th>Mobile</th>
+            <th>Credit</th>
+            <th>Total</th>
+            <th>Difference</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>`;
 
   if (shifts.length === 0) {
-    html += '<tr><td colspan="12" class="text-muted text-center">No closed shifts available</td></tr>';
+    html += `<tr><td colspan="15" class="text-center text-muted py-4">No closed shifts available for reconciliation</td></tr>`;
   } else {
     for (let s of shifts) {
+      const cashier = users.find(u => u.id === s.cashier_id);
+      const cashierName = cashier ? (cashier.name || cashier.username) : 'Unknown';
+      
       const petrolSold = Math.max(0, (s.end_petrol || 0) - (s.start_petrol || 0));
       const dieselSold = Math.max(0, (s.end_diesel || 0) - (s.start_diesel || 0));
       const gasSold = Math.max(0, (s.end_gas || 0) - (s.start_gas || 0));
@@ -2184,46 +2512,106 @@ async function renderBalancing() {
       const dPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Diesel') || {}).selling_price || 0;
       const gPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Gas') || {}).selling_price || 0;
 
-      const expected = petrolSold * pPrice + dieselSold * dPrice + gasSold * gPrice;
+      const expectedAmount = (petrolSold * pPrice) + (dieselSold * dPrice) + (gasSold * gPrice);
       const recon = recons.find(r => r.shift_id === s.id);
       const done = !!recon;
+      
       const cash = recon ? (recon.cash_actual || 0) : 0;
       const mobile = recon ? (recon.mobile_actual || 0) : 0;
       const credit = recon ? (recon.credit_actual || 0) : 0;
-      const total = cash + mobile + credit;
-      const diff = total - expected;
-      const diffClass = Math.abs(diff) < 1 ? 'text-success' : (diff > 0 ? 'text-warning' : 'text-danger');
+      const totalActual = cash + mobile + credit;
+      const difference = totalActual - expectedAmount;
+      const diffClass = Math.abs(difference) < 1 ? 'text-success' : (difference > 0 ? 'text-warning' : 'text-danger');
 
-      html += '<tr class="' + (done ? 'table-secondary' : '') + '">' +
-        '<td>' + stationName(s.station_id) + '</td>' +
-        '<td>' + s.shift_type + '<br><small class="text-muted">' + formatDate(s.created_at) + '</small></td>' +
-        '<td>' + petrolSold.toFixed(2) + '</td>' +
-        '<td>' + dieselSold.toFixed(2) + '</td>' +
-        '<td>' + gasSold.toFixed(2) + '</td>' +
-        '<td><strong>' + formatMoney(expected) + '</strong></td>';
+      html += `<tr class="${done ? 'table-success' : ''}" id="recon_row_${s.id}">
+        <td><strong>${stationName(s.station_id)}</strong></td>
+        <td>${cashierName}</td>
+        <td><span class="${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${s.shift_type}</span></td>
+        <td class="fs-xs">${formatDate(s.created_at)}</td>
+        <td>
+          <div><small>Sold: <strong>${petrolSold.toFixed(2)}L</strong></small></div>
+          <div><small>@ ${formatMoney(pPrice)}</small></div>
+          <div><small>= ${formatMoney(petrolSold * pPrice)}</small></div>
+        </td>
+        <td>
+          <div><small>Sold: <strong>${dieselSold.toFixed(2)}L</strong></small></div>
+          <div><small>@ ${formatMoney(dPrice)}</small></div>
+          <div><small>= ${formatMoney(dieselSold * dPrice)}</small></div>
+        </td>
+        <td>
+          <div><small>Sold: <strong>${gasSold.toFixed(2)}L</strong></small></div>
+          <div><small>@ ${formatMoney(gPrice)}</small></div>
+          <div><small>= ${formatMoney(gasSold * gPrice)}</small></div>
+        </td>
+        <td><strong>${formatMoney(expectedAmount)}</strong></td>`;
 
       if (done) {
-        html += '<td>' + formatMoney(cash) + '</td><td>' + formatMoney(mobile) + '</td><td>' + formatMoney(credit) + '</td>';
+        html += `
+          <td>${formatMoney(cash)}</td>
+          <td>${formatMoney(mobile)}</td>
+          <td>${formatMoney(credit)}</td>
+          <td><strong>${formatMoney(totalActual)}</strong></td>
+          <td class="${diffClass}"><strong>${formatMoney(difference)}</strong></td>
+          <td><span class="badge bg-success">✅ Done</span></td>
+          <td>—</td>`;
       } else {
-        html += '<td><input type="number" class="form-control form-control-sm rec-cash" style="width:90px" step="100"></td>' +
-                '<td><input type="number" class="form-control form-control-sm rec-mobile" style="width:90px" step="100"></td>' +
-                '<td><input type="number" class="form-control form-control-sm rec-credit" style="width:90px" step="100"></td>';
+        html += `
+          <td><input type="number" class="form-control form-control-sm rec-cash" style="width:90px" step="100" placeholder="0"></td>
+          <td><input type="number" class="form-control form-control-sm rec-mobile" style="width:90px" step="100" placeholder="0"></td>
+          <td><input type="number" class="form-control form-control-sm rec-credit" style="width:90px" step="100" placeholder="0"></td>
+          <td><span id="total_${s.id}">0</span></td>
+          <td><span id="diff_${s.id}" class="text-muted">0</span></td>
+          <td><span class="badge bg-warning text-dark">⏳ Pending</span></td>
+          <td>
+            <button class="btn btn-sm btn-success recon-btn" data-id="${s.id}" data-expected="${expectedAmount}">
+              <i class="bi bi-check-circle"></i> Save
+            </button>
+          </td>`;
       }
 
-      html += '<td class="' + diffClass + '">' + formatMoney(diff) + '</td>' +
-        '<td>' + (done ? '<span class="badge bg-success">Done</span>' : '<span class="badge bg-warning text-dark">Pending</span>') + '</td>' +
-        '<td>' + (done ? '—' : '<button class="btn btn-sm btn-primary recon-btn" data-id="' + s.id + '">Save</button>') + '</td>' +
-        '</tr>';
+      html += `</tr>`;
+      
+      // Live calculation for pending rows
+      if (!done) {
+        html += `
+        <script>
+          (function() {
+            const row = document.getElementById('recon_row_${s.id}');
+            const cashInput = row.querySelector('.rec-cash');
+            const mobileInput = row.querySelector('.rec-mobile');
+            const creditInput = row.querySelector('.rec-credit');
+            const totalSpan = document.getElementById('total_${s.id}');
+            const diffSpan = document.getElementById('diff_${s.id}');
+            const expected = ${expectedAmount};
+            
+            function updateTotals() {
+              const cash = parseFloat(cashInput.value) || 0;
+              const mobile = parseFloat(mobileInput.value) || 0;
+              const credit = parseFloat(creditInput.value) || 0;
+              const total = cash + mobile + credit;
+              const diff = total - expected;
+              totalSpan.textContent = formatMoney(total);
+              diffSpan.textContent = formatMoney(diff);
+              diffSpan.className = Math.abs(diff) < 1 ? 'text-success' : (diff > 0 ? 'text-warning' : 'text-danger');
+            }
+            
+            cashInput.oninput = updateTotals;
+            mobileInput.oninput = updateTotals;
+            creditInput.oninput = updateTotals;
+          })();
+        <\/script>`;
+      }
     }
   }
 
-  html += '</tbody></table></div></div>';
+  html += `</tbody></table></div></div>`;
   $('#pageContent').innerHTML = html;
 
   document.querySelectorAll('.recon-btn').forEach(btn => {
     btn.onclick = async function() {
-      const shiftId = btn.getAttribute('data-id');
-      const row = btn.closest('tr');
+      const shiftId = this.dataset.id;
+      const expected = parseFloat(this.dataset.expected);
+      const row = document.getElementById('recon_row_' + shiftId);
       const cash = parseFloat(row.querySelector('.rec-cash').value) || 0;
       const mobile = parseFloat(row.querySelector('.rec-mobile').value) || 0;
       const credit = parseFloat(row.querySelector('.rec-credit').value) || 0;
@@ -2234,7 +2622,7 @@ async function renderBalancing() {
       }
 
       btn.disabled = true;
-      btn.textContent = 'Saving...';
+      btn.innerHTML = '<i class="bi bi-hourglass"></i> Saving...';
 
       try {
         await addDoc('reconciliations', {
@@ -2242,19 +2630,25 @@ async function renderBalancing() {
           cash_actual: cash,
           mobile_actual: mobile,
           credit_actual: credit,
+          expected_amount: expected,
+          difference: (cash + mobile + credit) - expected,
           reconciled_by: state.user.id
         });
         await logAudit('reconcile_shift', { shift: shiftId, cash, mobile, credit });
-        toast('Reconciliation saved');
+        toast('✅ Reconciliation saved successfully!');
         renderBalancing();
       } catch (err) {
         toast('Error: ' + err.message, 'danger');
         btn.disabled = false;
-        btn.textContent = 'Save';
+        btn.innerHTML = '<i class="bi bi-check-circle"></i> Save';
       }
     };
   });
 }
+
+// ============================================================
+// INVENTORY - COMPLETE OVERHAUL
+// ============================================================
 
 async function renderInventory() {
   const inv = (await getAll('inventory'))
@@ -2262,75 +2656,133 @@ async function renderInventory() {
 
   const canEdit = isAdmin(state.user.role);
 
-  let html = '<div class="card-box">' +
-    '<div class="d-flex justify-content-between align-items-center mb-3">' +
-    '<h5 class="mb-0"><i class="bi bi-box-seam"></i> Inventory</h5>' +
-    '<span class="badge bg-secondary">' + inv.length + ' items</span>' +
-    '</div>' +
-    '<div class="table-responsive"><table class="table table-sm table-hover">' +
-    '<thead><tr><th>Station</th><th>Product</th><th>Quantity (L)</th><th>Cost/L</th><th>Sell/L</th>' +
-    (canEdit ? '<th>Actions</th>' : '') +
-    '</tr></thead><tbody>';
+  let html = `
+  <div class="card-box">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+      <h5 class="mb-0"><i class="bi bi-box-seam"></i> Inventory Management</h5>
+      <div>
+        <span class="badge bg-secondary me-2">${inv.length} items</span>
+        ${canEdit ? `<button class="btn btn-sm btn-success" id="addInventoryBtn"><i class="bi bi-plus-circle"></i> Add Item</button>` : ''}
+      </div>
+    </div>
+    
+    <div class="table-responsive">
+      <table class="table table-sm table-hover table-bordered">
+        <thead class="table-dark">
+          <tr>
+            <th>Station</th>
+            <th>Product</th>
+            <th>Quantity (L)</th>
+            <th>Cost/L</th>
+            <th>Sell/L</th>
+            ${canEdit ? '<th>Actions</th>' : ''}
+          </tr>
+        </thead>
+        <tbody>`;
 
   if (inv.length === 0) {
-    html += '<tr><td colspan="' + (canEdit ? '6' : '5') + '" class="text-muted text-center">No inventory</td></tr>';
+    html += `<tr><td colspan="${canEdit ? '6' : '5'}" class="text-center text-muted py-4">No inventory items found. Click "Add Item" to get started.</td></tr>`;
   } else {
     inv.forEach(i => {
-      const docId = i.id;
-      html += '<tr id="row_' + docId + '">' +
-        '<td>' + stationName(i.station_id) + '</td>' +
-        '<td><span class="product-badge ' + (i.product_type || '').toLowerCase() + '">' + i.product_type + '</span></td>' +
-        '<td><strong>' + (i.quantity || 0).toFixed(2) + '</strong></td>' +
-        '<td class="cost-display">' + formatMoney(i.cost_price || 0) + '</td>' +
-        '<td class="sell-display">' + formatMoney(i.selling_price || 0) + '</td>';
-
-      if (canEdit) {
-        html += '<td>' +
-          '<button class="btn btn-sm btn-outline-primary edit-inv-btn" data-id="' + docId + '" data-cost="' + (i.cost_price || 0) + '" data-sell="' + (i.selling_price || 0) + '">' +
-          '<i class="bi bi-pencil"></i> Edit</button>' +
-          '</td>';
-      }
-      html += '</tr>';
+      html += `<tr id="row_${i.id}">
+        <td>${stationName(i.station_id)}</td>
+        <td><span class="product-badge ${(i.product_type || '').toLowerCase()}">${i.product_type}</span></td>
+        <td><strong>${(i.quantity || 0).toFixed(2)}</strong></td>
+        <td class="cost-display">${formatMoney(i.cost_price || 0)}</td>
+        <td class="sell-display">${formatMoney(i.selling_price || 0)}</td>
+        ${canEdit ? `<td>
+          <button class="btn btn-sm btn-outline-primary edit-inv-btn me-1" data-id="${i.id}" data-cost="${i.cost_price || 0}" data-sell="${i.selling_price || 0}"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-outline-danger delete-inv-btn" data-id="${i.id}" data-product="${i.product_type}"><i class="bi bi-trash"></i></button>
+        </td>` : ''}
+      </tr>`;
     });
   }
 
-  html += '</tbody></table></div></div>';
+  html += `</tbody></table></div></div>`;
   $('#pageContent').innerHTML = html;
 
-  if (canEdit) {
-    document.querySelectorAll('.edit-inv-btn').forEach(btn => {
-      btn.onclick = function() {
-        const id = this.dataset.id;
-        const currentCost = parseFloat(this.dataset.cost);
-        const currentSell = parseFloat(this.dataset.sell);
-        const row = document.getElementById('row_' + id);
+  const addBtn = $('#addInventoryBtn');
+  if (addBtn) {
+    addBtn.onclick = function() {
+      const stationId = prompt('Enter Station ID:');
+      if (!stationId) return;
+      const product = prompt('Enter Product Type (Petrol/Diesel/Gas):');
+      if (!product) return;
+      const quantity = prompt('Enter Initial Quantity (L):');
+      if (!quantity) return;
+      const costPrice = prompt('Enter Cost Price per Liter:');
+      if (!costPrice) return;
+      const sellPrice = prompt('Enter Selling Price per Liter:');
+      if (!sellPrice) return;
 
-        const newCost = prompt('Enter new Cost Price:', currentCost);
-        if (newCost === null) return;
-        const newSell = prompt('Enter new Selling Price:', currentSell);
-        if (newSell === null) return;
-
-        const costVal = parseFloat(newCost);
-        const sellVal = parseFloat(newSell);
-
-        if (isNaN(costVal) || isNaN(sellVal) || costVal < 0 || sellVal < 0) {
-          toast('Invalid prices', 'danger');
-          return;
-        }
-
-        updateDoc('inventory', id, {
-          cost_price: costVal,
-          selling_price: sellVal
-        }).then(() => {
-          toast('Inventory updated!', 'success');
-          renderInventory();
-        }).catch(err => {
-          toast('Error: ' + err.message, 'danger');
-        });
-      };
-    });
+      const docId = stationId + '_' + product;
+      db.collection('inventory').doc(docId).set({
+        station_id: Number(stationId),
+        product_type: product,
+        quantity: parseFloat(quantity) || 0,
+        cost_price: parseFloat(costPrice) || 0,
+        selling_price: parseFloat(sellPrice) || 0,
+        companyId: state.user.companyId,
+        last_updated: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        toast('Inventory item added!', 'success');
+        renderInventory();
+      }).catch(err => {
+        toast('Error: ' + err.message, 'danger');
+      });
+    };
   }
+
+  document.querySelectorAll('.edit-inv-btn').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.dataset.id;
+      const currentCost = parseFloat(this.dataset.cost);
+      const currentSell = parseFloat(this.dataset.sell);
+
+      const newCost = prompt('Enter new Cost Price:', currentCost);
+      if (newCost === null) return;
+      const newSell = prompt('Enter new Selling Price:', currentSell);
+      if (newSell === null) return;
+
+      const costVal = parseFloat(newCost);
+      const sellVal = parseFloat(newSell);
+
+      if (isNaN(costVal) || isNaN(sellVal) || costVal < 0 || sellVal < 0) {
+        toast('Invalid prices', 'danger');
+        return;
+      }
+
+      updateDoc('inventory', id, {
+        cost_price: costVal,
+        selling_price: sellVal
+      }).then(() => {
+        toast('Inventory updated!', 'success');
+        renderInventory();
+      }).catch(err => {
+        toast('Error: ' + err.message, 'danger');
+      });
+    };
+  });
+
+  document.querySelectorAll('.delete-inv-btn').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.dataset.id;
+      const product = this.dataset.product;
+      if (!confirm(`⚠️ Delete ${product} inventory item permanently?`)) return;
+      
+      deleteDoc('inventory', id).then(() => {
+        toast('Item deleted', 'success');
+        renderInventory();
+      }).catch(err => {
+        toast('Error: ' + err.message, 'danger');
+      });
+    };
+  });
 }
+
+// ============================================================
+// STOCK RECEIVING - OVERHAUL
+// ============================================================
 
 async function renderStock() {
   const stock = (await getAll('stock'))
@@ -2343,56 +2795,100 @@ async function renderStock() {
     stationOptions += '<option value="' + s.id + '"' + selected + '>' + s.name + '</option>';
   });
 
-  let html = '<div class="row g-4">' +
-    '<div class="col-lg-5"><div class="card-box">' +
-    '<h5 class="mb-3"><i class="bi bi-truck"></i> Receive Stock</h5>' +
-    '<form id="stockForm">' +
-    '<div class="mb-2"><label class="form-label small">Station</label>' +
-    '<select id="recStation" class="form-select form-select-sm">' + stationOptions + '</select></div>' +
-    '<div class="mb-2"><label class="form-label small">Invoice #</label>' +
-    '<input type="text" id="recInvoice" class="form-control form-control-sm"></div>' +
-    '<div class="mb-2"><label class="form-label small">Date</label>' +
-    '<input type="date" id="recDate" class="form-control form-control-sm" value="' + new Date().toISOString().slice(0,10) + '"></div>' +
-    '<div id="recItems"></div>' +
-    '<button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="addRecItem"><i class="bi bi-plus"></i> Add Item</button>' +
-    '<button type="submit" class="btn btn-success w-100">Receive Stock & Update Inventory</button>' +
-    '</form></div></div>' +
-    '<div class="col-lg-7"><div class="card-box">' +
-    '<h5 class="mb-3">Receiving History</h5>' +
-    '<div class="table-responsive"><table class="table table-sm table-hover">' +
-    '<thead><tr><th>Station</th><th>Invoice</th><th>Items</th><th>Date</th></tr></thead><tbody>';
+  let html = `
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card-box">
+        <h5 class="mb-3"><i class="bi bi-truck"></i> Receive Stock</h5>
+        <form id="stockForm" class="p-3 bg-light rounded">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small">Station *</label>
+              <select id="recStation" class="form-select form-select-sm">${stationOptions}</select>
+            </div>
+            <div class="col-6">
+              <label class="form-label small">Invoice #</label>
+              <input type="text" id="recInvoice" class="form-control form-control-sm" placeholder="INV-001">
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Date</label>
+            <input type="date" id="recDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}">
+          </div>
+          
+          <div id="recItems" class="mb-2"></div>
+          
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="addRecItem"><i class="bi bi-plus-circle"></i> Add Item</button>
+            <button type="submit" class="btn btn-success flex-grow-1"><i class="bi bi-check-circle"></i> Receive Stock</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card-box">
+        <h5 class="mb-3"><i class="bi bi-clock-history"></i> Receiving History</h5>
+        <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+          <table class="table table-sm table-hover table-bordered">
+            <thead class="table-dark">
+              <tr>
+                <th>Date</th>
+                <th>Station</th>
+                <th>Invoice</th>
+                <th>Items</th>
+                <th>Total Qty</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>`;
 
   if (stock.length === 0) {
-    html += '<tr><td colspan="4" class="text-muted text-center">No receipts</td></tr>';
+    html += '<tr><td colspan="6" class="text-center text-muted py-4">No receiving records found</td></tr>';
   } else {
-    stock.slice(0, 20).forEach(r => {
+    stock.slice(0, 30).forEach(r => {
       const items = (r.items || []).map(it => it.product_type + ' ' + it.quantity + 'L').join(', ');
-      html += '<tr>' +
-        '<td>' + stationName(r.station_id) + '</td>' +
-        '<td>' + (r.invoice_number || '—') + '</td>' +
-        '<td class="fs-xs">' + items + '</td>' +
-        '<td class="fs-xs">' + formatDate(r.received_date || r.created_at) + '</td>' +
-        '</tr>';
+      const totalQty = (r.items || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
+      html += `<tr>
+        <td class="fs-xs">${formatDate(r.received_date || r.created_at)}</td>
+        <td>${stationName(r.station_id)}</td>
+        <td><strong>${r.invoice_number || '—'}</strong></td>
+        <td class="fs-xs">${items}</td>
+        <td><strong>${totalQty.toFixed(2)}L</strong></td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary edit-stock-btn" data-id="${r.id}" data-invoice="${r.invoice_number || ''}" data-date="${r.received_date || ''}"><i class="bi bi-pencil"></i></button>
+          <button class="btn btn-sm btn-outline-danger delete-stock-btn" data-id="${r.id}"><i class="bi bi-trash"></i></button>
+        </td>
+      </tr>`;
     });
   }
 
-  html += '</tbody></table></div></div></div></div>';
+  html += `</tbody></table></div></div></div></div>`;
   $('#pageContent').innerHTML = html;
 
   const container = $('#recItems');
 
   function addRecRow() {
     const row = document.createElement('div');
-    row.className = 'row g-1 mb-2 rec-row';
-    row.innerHTML = 
-      '<div class="col-4">' +
-      '<select class="form-select form-select-sm rec-product">' +
-      '<option>Petrol</option><option>Diesel</option><option>Gas</option>' +
-      '</select></div>' +
-      '<div class="col-3"><input type="number" class="form-control form-control-sm rec-qty" placeholder="Qty" step="0.01"></div>' +
-      '<div class="col-3"><input type="number" class="form-control form-control-sm rec-cost" placeholder="Cost/L" step="10"></div>' +
-      '<div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100 remove-rec"><i class="bi bi-x"></i></button></div>';
-    
+    row.className = 'row g-1 mb-2 rec-row align-items-center';
+    row.innerHTML = `
+      <div class="col-4">
+        <select class="form-select form-select-sm rec-product">
+          <option value="Petrol">⛽ Petrol</option>
+          <option value="Diesel">🛢️ Diesel</option>
+          <option value="Gas">🔥 Gas</option>
+        </select>
+      </div>
+      <div class="col-3">
+        <input type="number" class="form-control form-control-sm rec-qty" placeholder="Qty" step="0.01">
+      </div>
+      <div class="col-3">
+        <input type="number" class="form-control form-control-sm rec-cost" placeholder="Cost/L" step="10">
+      </div>
+      <div class="col-2">
+        <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-rec"><i class="bi bi-x"></i></button>
+      </div>
+    `;
     container.appendChild(row);
     row.querySelector('.remove-rec').onclick = function() {
       if (container.children.length > 1) row.remove();
@@ -2428,32 +2924,71 @@ async function renderStock() {
 
     try {
       showLoading(true);
-      const batch = db.batch();
-      const stockRef = db.collection('stock').doc();
-      batch.set(stockRef, {
+      
+      await addDoc('stock', {
         station_id: stationId,
         invoice_number: invoice,
         received_date: date,
         items: items,
-        created_by: state.user.id,
-        companyId: state.user.companyId,
-        created_at: firebase.firestore.FieldValue.serverTimestamp()
+        created_by: state.user.id
       });
 
       for (let item of items) {
         await adjustInventory(stationId, item.product_type, item.quantity, item.cost_price);
       }
-      await batch.commit();
+      
       await logAudit('receive_stock', { station: stationId, items });
-      toast('Stock received. Inventory updated.');
+      toast('✅ Stock received successfully! Inventory updated.');
       renderStock();
     } catch (err) {
-      toast(err.message, 'danger');
+      toast('Error: ' + err.message, 'danger');
     } finally {
       showLoading(false);
     }
   };
+
+  document.querySelectorAll('.edit-stock-btn').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.dataset.id;
+      const currentInvoice = this.dataset.invoice;
+      const currentDate = this.dataset.date;
+
+      const newInvoice = prompt('Edit Invoice Number:', currentInvoice);
+      if (newInvoice === null) return;
+      const newDate = prompt('Edit Date (YYYY-MM-DD):', currentDate);
+      if (newDate === null) return;
+
+      updateDoc('stock', id, {
+        invoice_number: newInvoice.trim() || null,
+        received_date: newDate
+      }).then(() => {
+        toast('Stock record updated!', 'success');
+        renderStock();
+      }).catch(err => {
+        toast('Error: ' + err.message, 'danger');
+      });
+    };
+  });
+
+  document.querySelectorAll('.delete-stock-btn').forEach(btn => {
+    btn.onclick = async function() {
+      const id = this.dataset.id;
+      if (!confirm('⚠️ Delete this stock receipt? This will NOT remove inventory items.')) return;
+      
+      try {
+        await deleteDoc('stock', id);
+        toast('Stock record deleted', 'success');
+        renderStock();
+      } catch (err) {
+        toast('Error: ' + err.message, 'danger');
+      }
+    };
+  });
 }
+
+// ============================================================
+// ADJUSTMENTS - OVERHAUL
+// ============================================================
 
 async function renderAdjustments() {
   const canAdjust = isAdmin(state.user.role);
@@ -2461,93 +2996,228 @@ async function renderAdjustments() {
     .filter(a => !state.currentStationId || Number(a.station_id) === state.currentStationId)
     .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
+  const inv = await getAll('inventory');
+
   let stationOptions = '';
   state.stations.forEach(s => {
     const selected = state.currentStationId === s.id ? ' selected' : '';
     stationOptions += '<option value="' + s.id + '"' + selected + '>' + s.name + '</option>';
   });
 
-  let html = '<div class="row g-4">';
-
-  if (canAdjust) {
-    html += '<div class="col-lg-4"><div class="card-box">' +
-      '<h5 class="mb-3">Stock Adjustment</h5>' +
-      '<form id="adjForm">' +
-      '<div class="mb-2"><label class="form-label small">Station</label>' +
-      '<select id="adjStation" class="form-select form-select-sm">' + stationOptions + '</select></div>' +
-      '<div class="mb-2"><label class="form-label small">Product</label>' +
-      '<select id="adjProduct" class="form-select form-select-sm">' +
-      '<option>Petrol</option><option>Diesel</option><option>Gas</option></select></div>' +
-      '<div class="mb-2"><label class="form-label small">Quantity (+ add / - remove)</label>' +
-      '<input type="number" id="adjQty" class="form-control form-control-sm" step="0.01" required></div>' +
-      '<div class="mb-2"><label class="form-label small">Reason</label>' +
-      '<input type="text" id="adjReason" class="form-control form-control-sm" placeholder="e.g. spill, leakage"></div>' +
-      '<button type="submit" class="btn btn-warning w-100">Apply Adjustment</button>' +
-      '</form></div></div>';
+  let productOptions = '';
+  const products = [...new Set(inv.map(i => i.product_type))];
+  products.forEach(p => {
+    productOptions += '<option value="' + p + '">' + p + '</option>';
+  });
+  if (!productOptions) {
+    productOptions = '<option value="Petrol">Petrol</option><option value="Diesel">Diesel</option><option value="Gas">Gas</option>';
   }
 
-  html += '<div class="col-lg-' + (canAdjust ? '8' : '12') + '"><div class="card-box">' +
-    '<h5 class="mb-3">Adjustment History</h5>' +
-    '<div class="table-responsive"><table class="table table-sm table-hover">' +
-    '<thead><tr><th>Station</th><th>Product</th><th>Qty</th><th>Reason</th><th>Date</th></tr></thead><tbody>';
+  let html = `
+  <div class="row g-4">
+    ${canAdjust ? `
+    <div class="col-lg-4">
+      <div class="card-box">
+        <h5 class="mb-3"><i class="bi bi-sliders"></i> Stock Adjustment</h5>
+        <form id="adjForm" class="p-3 bg-light rounded">
+          <div class="mb-2">
+            <label class="form-label small">Station *</label>
+            <select id="adjStation" class="form-select form-select-sm">${stationOptions}</select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Product *</label>
+            <select id="adjProduct" class="form-select form-select-sm">${productOptions}</select>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small">Current Quantity</label>
+              <input type="text" id="adjCurrentQty" class="form-control form-control-sm" readonly>
+            </div>
+            <div class="col-6">
+              <label class="form-label small">New Quantity *</label>
+              <input type="number" id="adjNewQty" class="form-control form-control-sm" step="0.01" required placeholder="0.00">
+            </div>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Reason *</label>
+            <select id="adjReason" class="form-select form-select-sm">
+              <option value="Stock count adjustment">📊 Stock count adjustment</option>
+              <option value="Damaged goods">💔 Damaged goods</option>
+              <option value="Expired product">⏰ Expired product</option>
+              <option value="Theft/loss">🔒 Theft/loss</option>
+              <option value="Correction">✏️ Correction</option>
+              <option value="Other">📁 Other</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Notes</label>
+            <input type="text" id="adjNotes" class="form-control form-control-sm" placeholder="Additional notes...">
+          </div>
+          <button type="submit" class="btn btn-warning w-100"><i class="bi bi-check-circle"></i> Apply Adjustment</button>
+        </form>
+        <div id="adjPreview" class="mt-2 small text-muted"></div>
+      </div>
+    </div>
+    ` : ''}
+
+    <div class="col-lg-${canAdjust ? '8' : '12'}">
+      <div class="card-box">
+        <h5 class="mb-3"><i class="bi bi-clock-history"></i> Adjustment History</h5>
+        <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+          <table class="table table-sm table-hover table-bordered">
+            <thead class="table-dark">
+              <tr>
+                <th>Date</th>
+                <th>Station</th>
+                <th>Product</th>
+                <th>Old Qty</th>
+                <th>New Qty</th>
+                <th>Change</th>
+                <th>Reason</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>`;
 
   if (adj.length === 0) {
-    html += '<tr><td colspan="5" class="text-muted text-center">No adjustments</td></tr>';
+    html += '<tr><td colspan="8" class="text-center text-muted py-4">No adjustments recorded</td></tr>';
   } else {
     adj.slice(0, 30).forEach(a => {
       const qtyClass = a.quantity < 0 ? 'text-danger' : 'text-success';
-      html += '<tr>' +
-        '<td>' + stationName(a.station_id) + '</td>' +
-        '<td><span class="product-badge ' + (a.product_type || '').toLowerCase() + '">' + a.product_type + '</span></td>' +
-        '<td class="' + qtyClass + '">' + Number(a.quantity).toFixed(2) + '</td>' +
-        '<td>' + (a.reason || '—') + '</td>' +
-        '<td class="fs-xs">' + formatDate(a.created_at) + '</td>' +
-        '</tr>';
+      const change = a.quantity;
+      const oldQty = a.old_quantity || (a.new_quantity - a.quantity);
+      const newQty = a.new_quantity || (a.old_quantity + a.quantity);
+      
+      html += `<tr>
+        <td class="fs-xs">${formatDate(a.created_at)}</td>
+        <td>${stationName(a.station_id)}</td>
+        <td><span class="product-badge ${(a.product_type || '').toLowerCase()}">${a.product_type}</span></td>
+        <td>${oldQty.toFixed(2)}</td>
+        <td><strong>${newQty.toFixed(2)}</strong></td>
+        <td class="${qtyClass}"><strong>${change > 0 ? '+' : ''}${change.toFixed(2)}</strong></td>
+        <td><span class="badge bg-secondary">${a.reason || '—'}</span></td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary edit-adj-btn" 
+            data-id="${a.id}" 
+            data-reason="${a.reason || ''}" 
+            data-notes="${a.notes || ''}">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-sm btn-outline-danger delete-adj-btn" data-id="${a.id}"><i class="bi bi-trash"></i></button>
+        </td>
+      </tr>`;
     });
   }
 
-  html += '</tbody></table></div></div></div></div>';
+  html += `</tbody></table></div></div></div></div>`;
   $('#pageContent').innerHTML = html;
 
   if (canAdjust) {
+    async function updateCurrentQty() {
+      const stationId = Number($('#adjStation').value);
+      const product = $('#adjProduct').value;
+      if (!stationId || !product) {
+        $('#adjCurrentQty').value = '';
+        return;
+      }
+      const invData = await getAll('inventory');
+      const item = invData.find(i => Number(i.station_id) === stationId && i.product_type === product);
+      if (item) {
+        $('#adjCurrentQty').value = (item.quantity || 0).toFixed(2);
+      } else {
+        $('#adjCurrentQty').value = '0.00 (No inventory)';
+      }
+    }
+
+    $('#adjStation').onchange = updateCurrentQty;
+    $('#adjProduct').onchange = updateCurrentQty;
+    setTimeout(updateCurrentQty, 200);
+
     $('#adjForm').onsubmit = async function(e) {
       e.preventDefault();
       const stationId = Number($('#adjStation').value);
       const product = $('#adjProduct').value;
-      const qty = parseFloat($('#adjQty').value);
-      const reason = $('#adjReason').value.trim() || 'Manual adjustment';
+      const currentQty = parseFloat($('#adjCurrentQty').value) || 0;
+      const newQty = parseFloat($('#adjNewQty').value);
+      const reason = $('#adjReason').value;
+      const notes = $('#adjNotes').value.trim();
 
-      if (!qty) {
-        toast('Enter a non-zero quantity', 'warning');
+      if (!stationId) { toast('Select a station', 'warning'); return; }
+      if (!product) { toast('Select a product', 'warning'); return; }
+      if (isNaN(newQty) || newQty < 0) { toast('Enter a valid new quantity', 'warning'); return; }
+
+      const change = newQty - currentQty;
+
+      if (change === 0) {
+        toast('No change in quantity', 'warning');
         return;
       }
 
       try {
         showLoading(true);
-        await adjustInventory(stationId, product, qty);
+        await adjustInventory(stationId, product, change);
         await addDoc('adjustments', {
           station_id: stationId,
           product_type: product,
-          quantity: qty,
+          quantity: change,
+          old_quantity: currentQty,
+          new_quantity: newQty,
           reason: reason,
+          notes: notes,
           created_by: state.user.id
         });
-        await logAudit('stock_adjustment', { station: stationId, product, qty, reason });
-        toast('Adjustment applied. Inventory updated.');
+        await logAudit('stock_adjustment', { station: stationId, product, change, reason });
+        toast('✅ Adjustment applied successfully!');
         renderAdjustments();
       } catch (err) {
-        toast(err.message, 'danger');
+        toast('Error: ' + err.message, 'danger');
       } finally {
         showLoading(false);
       }
     };
   }
+
+  document.querySelectorAll('.edit-adj-btn').forEach(btn => {
+    btn.onclick = function() {
+      const id = this.dataset.id;
+      const currentReason = this.dataset.reason;
+      const currentNotes = this.dataset.notes;
+
+      const newReason = prompt('Edit Reason:', currentReason);
+      if (newReason === null) return;
+      const newNotes = prompt('Edit Notes:', currentNotes);
+      if (newNotes === null) return;
+
+      updateDoc('adjustments', id, {
+        reason: newReason || 'Stock adjustment',
+        notes: newNotes || ''
+      }).then(() => {
+        toast('Adjustment updated!', 'success');
+        renderAdjustments();
+      }).catch(err => {
+        toast('Error: ' + err.message, 'danger');
+      });
+    };
+  });
+
+  document.querySelectorAll('.delete-adj-btn').forEach(btn => {
+    btn.onclick = async function() {
+      const id = this.dataset.id;
+      if (!confirm('⚠️ Delete this adjustment record?')) return;
+      
+      try {
+        await deleteDoc('adjustments', id);
+        toast('Adjustment deleted', 'success');
+        renderAdjustments();
+      } catch (err) {
+        toast('Error: ' + err.message, 'danger');
+      }
+    };
+  });
 }
 
 console.log('Part 6 loaded');
-</script>
-<script>
-// ============================================================
+          // ============================================================
 // Part 7: Users, Activity Log, Financials, Company, Customers, Receipts
 // ============================================================
 
@@ -2936,9 +3606,7 @@ async function renderCompanyProfile() {
       email: $('#compEmail').value.trim(),
       tax_id: $('#compTax').value.trim(),
       website: $('#compWebsite').value.trim(),
-      logo_url: $('#compLogo').value.trim(),
-      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
-      updated_by: state.user.id
+      logo_url: $('#compLogo').value.trim()
     };
 
     if (!data.name) {
@@ -3498,9 +4166,7 @@ async function renderCustomers() {
 }
 
 console.log('Part 7 loaded – COMPLETE VERSION');
-</script>
-<script>
-// ============================================================
+          // ============================================================
 // Part 8: Reports (COMPLETE)
 // ============================================================
 
@@ -3933,6 +4599,5 @@ async function renderReports() {
 }
 
 console.log('Part 8 loaded – Reports complete');
-</script>
-</body>
+          </body>
 </html>
