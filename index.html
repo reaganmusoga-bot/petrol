@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PetroManager Pro</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <!-- Load Firebase and Bootstrap from CDN -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
+    /* All your CSS (sidebar, etc.) – copy from your existing CSS */
     :root {
       --sidebar-w: 260px;
       --header-h: 60px;
@@ -18,138 +21,71 @@
     }
     * { box-sizing: border-box; }
     body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; }
-    
-    /* ✅ FIXED: Sidebar with scrolling */
     .sidebar {
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      width: var(--sidebar-w); 
-      height: 100vh;
-      background: var(--sidebar-bg); 
-      color: #b0c4de; 
-      z-index: 1050;
-      display: flex; 
-      flex-direction: column; 
-      transition: transform .3s;
-      overflow-y: auto;
-      overflow-x: hidden;
+      position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
+      background: var(--sidebar-bg); color: #b0c4de; z-index: 1050;
+      display: flex; flex-direction: column; transition: transform .3s;
+      overflow-y: auto; overflow-x: hidden;
     }
-    .sidebar::-webkit-scrollbar {
-      width: 4px;
-    }
-    .sidebar::-webkit-scrollbar-track {
-      background: rgba(255,255,255,0.05);
-    }
-    .sidebar::-webkit-scrollbar-thumb {
-      background: #ffc107;
-      border-radius: 4px;
-    }
-    
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+    .sidebar::-webkit-scrollbar-thumb { background: #ffc107; border-radius: 4px; }
     .sidebar-brand {
-      padding: 18px 20px; 
-      font-size: 1.25rem; 
-      font-weight: 700; 
-      color: #fff;
-      background: rgba(255,255,255,.05); 
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      display: flex; 
-      align-items: center; 
-      gap: 10px;
-      flex-shrink: 0;
+      padding: 18px 20px; font-size: 1.25rem; font-weight: 700; color: #fff;
+      background: rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
     }
     .sidebar-brand i { font-size: 1.7rem; color: #ffc107; }
     .sidebar .nav-link {
-      color: #b0c4de; 
-      padding: 10px 16px; 
-      border-left: 3px solid transparent;
-      display: flex; 
-      align-items: center; 
-      gap: 12px; 
-      font-weight: 500; 
-      cursor: pointer;
-      font-size: 0.9rem;
-      white-space: nowrap;
+      color: #b0c4de; padding: 10px 16px; border-left: 3px solid transparent;
+      display: flex; align-items: center; gap: 12px; font-weight: 500; cursor: pointer;
+      font-size: 0.9rem; white-space: nowrap;
     }
     .sidebar .nav-link:hover, .sidebar .nav-link.active {
-      background: rgba(255,255,255,.07); 
-      color: #fff; 
-      border-left-color: #ffc107;
+      background: rgba(255,255,255,.07); color: #fff; border-left-color: #ffc107;
     }
     .sidebar .nav-link i { width: 22px; font-size: 1.15rem; }
     .sidebar-footer {
-      margin-top: auto; 
-      padding: 14px 18px; 
-      border-top: 1px solid rgba(255,255,255,.07); 
-      font-size: .85rem;
-      flex-shrink: 0;
+      margin-top: auto; padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.07);
+      font-size: .85rem; flex-shrink: 0;
     }
     .main-content { margin-left: var(--sidebar-w); min-height: 100vh; }
     .top-header {
-      height: var(--header-h); 
-      background: #fff; 
-      border-bottom: 1px solid #e9ecef;
-      padding: 0 24px; 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between;
-      position: sticky; 
-      top: 0; 
-      z-index: 1040;
+      height: var(--header-h); background: #fff; border-bottom: 1px solid #e9ecef;
+      padding: 0 24px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 1040;
     }
     .page-title { font-weight: 600; font-size: 1.15rem; color: #1a2a4a; }
     .page-content { padding: 22px 24px; }
     .card-box {
-      background: #fff; 
-      border-radius: 12px; 
-      padding: 18px 20px;
-      border: 1px solid #eef0f3; 
-      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      background: #fff; border-radius: 12px; padding: 18px 20px;
+      border: 1px solid #eef0f3; box-shadow: 0 2px 8px rgba(0,0,0,.04);
     }
-    .stat-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); 
-      gap: 14px; 
-      margin-bottom: 20px; 
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 14px; margin-bottom: 20px;
     }
     .stat-item {
-      background: #fff; 
-      border-radius: 12px; 
-      padding: 16px; 
-      border: 1px solid #eef0f3;
-      display: flex; 
-      align-items: center; 
-      gap: 14px;
+      background: #fff; border-radius: 12px; padding: 16px;
+      border: 1px solid #eef0f3; display: flex; align-items: center; gap: 14px;
     }
     .stat-item .icon {
-      width: 44px; 
-      height: 44px; 
-      border-radius: 10px; 
-      display: flex; 
-      align-items: center;
-      justify-content: center; 
-      color: #fff; 
-      font-size: 1.25rem;
+      width: 44px; height: 44px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 1.25rem;
     }
     .stat-item .num { font-size: 1.4rem; font-weight: 700; color: #1a2a4a; }
     .stat-item .lbl { font-size: .8rem; color: #6c7a8e; }
     .hero {
-      background: linear-gradient(135deg, #0b1a33, #1a3a6a); 
-      border-radius: 14px;
-      padding: 24px 28px; 
-      color: #fff; 
-      margin-bottom: 20px;
+      background: linear-gradient(135deg, #0b1a33, #1a3a6a);
+      border-radius: 14px; padding: 24px 28px; color: #fff; margin-bottom: 20px;
     }
     .hero .company { font-size: 1.55rem; font-weight: 700; color: #ffc107; }
     .hero .tag { opacity: .85; font-size: .9rem; }
-    .hero .details { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-      gap: 8px 20px; 
-      margin-top: 12px; 
-      background: rgba(255,255,255,0.08); 
-      padding: 12px 16px; 
-      border-radius: 8px;
+    .hero .details {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 8px 20px; margin-top: 12px;
+      background: rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 8px;
     }
     .hero .details i { color: #ffc107; }
     .badge-day { background: #fff3cd; color: #856404; padding: 3px 11px; border-radius: 20px; font-size: .71rem; font-weight: 600; }
@@ -161,39 +97,23 @@
     .product-badge.diesel { background: #f8d7da; color: #58151c; }
     .product-badge.gas { background: #d1ecf1; color: #0c5460; }
     .login-wrap {
-      min-height: 100vh; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
-      background: linear-gradient(135deg, #0b1a33, #1a3a6a); 
-      padding: 20px;
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #0b1a33, #1a3a6a); padding: 20px;
     }
     .login-card {
-      background: #fff; 
-      border-radius: 18px; 
-      padding: 36px 32px; 
-      max-width: 480px; 
-      width: 100%;
-      box-shadow: 0 20px 50px rgba(0,0,0,.3);
+      background: #fff; border-radius: 18px; padding: 36px 32px;
+      max-width: 480px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,.3);
     }
     .login-card .logo { text-align: center; margin-bottom: 24px; }
     .login-card .logo i { font-size: 2.8rem; color: #ffc107; background: #0b1a33; padding: 12px; border-radius: 14px; }
     .fs-xs { font-size: .78rem; }
     .loading-overlay {
-      position: fixed; 
-      inset: 0; 
-      background: rgba(255,255,255,.75); 
-      z-index: 9999;
-      display: flex; 
-      align-items: center; 
-      justify-content: center;
+      position: fixed; inset: 0; background: rgba(255,255,255,.75); z-index: 9999;
+      display: flex; align-items: center; justify-content: center;
     }
     .spinner {
-      width: 2.2rem; 
-      height: 2.2rem; 
-      border: .25em solid #0d6efd;
-      border-right-color: transparent; 
-      border-radius: 50%;
+      width: 2.2rem; height: 2.2rem; border: .25em solid #0d6efd;
+      border-right-color: transparent; border-radius: 50%;
       animation: spin .75s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -210,25 +130,10 @@
     .table-report td { font-size: 0.85rem; }
     .profit-positive { color: #198754; font-weight: 700; }
     .profit-negative { color: #dc3545; font-weight: 700; }
-    .table-dark th { 
-      background: #0b1a33 !important; 
-      color: #fff !important;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
+    .table-dark th { background: #0b1a33 !important; color: #fff !important; position: sticky; top: 0; z-index: 10; }
     #offlineBanner {
-      display: none; 
-      background: #dc3545; 
-      color: #fff; 
-      text-align: center;
-      padding: 8px; 
-      font-size: 0.9rem; 
-      position: fixed; 
-      top: 0; 
-      left: 0; 
-      right: 0; 
-      z-index: 99999;
+      display: none; background: #dc3545; color: #fff; text-align: center;
+      padding: 8px; font-size: 0.9rem; position: fixed; top: 0; left: 0; right: 0; z-index: 99999;
     }
     body.offline #offlineBanner { display: block; }
     body.offline .main-content { padding-top: 40px; }
@@ -333,7 +238,6 @@
         <select id="stationSelector" class="form-select form-select-sm" style="max-width:180px;">
           <option value="">All Stations</option>
         </select>
-        
         <div class="dropdown">
           <div class="d-flex align-items-center gap-2" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="cursor:pointer;">
             <span class="fw-semibold d-none d-md-inline" id="headerUser">—</span>
@@ -361,9 +265,9 @@
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
 // ============================================================
-// Part 2: Firebase Config & Core Utilities
+// PART 2: FIREBASE CONFIG & CORE UTILITIES
 // ============================================================
 
 const firebaseConfig = {
@@ -467,10 +371,6 @@ async function hashPassword(password) {
   return 'pm_' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ============================================================
-// MULTI-TENANT: Company Management Functions
-// ============================================================
-
 async function createCompany(companyData) {
   const ref = await db.collection('companies').add({
     name: companyData.name,
@@ -560,8 +460,7 @@ async function adjustInventory(stationId, product, delta, costPrice = null) {
   const ref = db.collection('inventory').doc(`${stationId}_${product}`);
   return db.runTransaction(async (tx) => {
     const doc = await tx.get(ref);
-    let currentQty = 0;
-    let currentCost = 0;
+    let currentQty = 0, currentCost = 0;
     if (doc.exists) {
       currentQty = doc.data().quantity || 0;
       currentCost = doc.data().cost_price || 0;
@@ -612,63 +511,48 @@ function exportPDF(headers, rows, filename = 'report.pdf') {
     toast('No data to export', 'warning');
     return;
   }
-
   const pdfWindow = window.open('', '_blank', 'width=800,height=600');
   if (!pdfWindow) {
     toast('Please allow popups for this site', 'warning');
     return;
   }
-
   const now = new Date();
   const dateStr = now.toLocaleString('en-GB');
-
   let tableHtml = '<table border="1" cellpadding="8" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:12px;">';
   tableHtml += '<thead><tr style="background:#0b1a33;color:#fff;">';
   headers.forEach(h => tableHtml += '<th style="padding:8px;text-align:left;">' + h + '</th>');
   tableHtml += '</tr></thead><tbody>';
-  
   rows.forEach(row => {
     tableHtml += '<tr>';
     row.forEach(cell => tableHtml += '<td style="padding:6px;border-bottom:1px solid #ddd;">' + cell + '</td>');
     tableHtml += '</tr>';
   });
   tableHtml += '</tbody></table>';
-
   pdfWindow.document.write(`
     <html>
-    <head>
-      <title>${filename}</title>
-      <style>
-        body { font-family: Arial, sans-serif; padding: 30px; }
-        .header { text-align: center; border-bottom: 2px solid #0b1a33; padding-bottom: 10px; margin-bottom: 20px; }
-        .header h1 { margin: 0; color: #0b1a33; }
-        .header p { margin: 2px 0; color: #666; font-size: 12px; }
-        .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #999; border-top: 1px solid #ddd; padding-top: 10px; }
-        .no-print { text-align: center; margin: 20px 0; }
-        button { padding: 10px 30px; margin: 0 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .btn-print { background: #0b1a33; color: #fff; }
-        .btn-close { background: #dc3545; color: #fff; }
-        @media print { .no-print { display: none; } body { padding: 10px; } }
-      </style>
+    <head><title>${filename}</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 30px; }
+      .header { text-align: center; border-bottom: 2px solid #0b1a33; padding-bottom: 10px; margin-bottom: 20px; }
+      .header h1 { margin: 0; color: #0b1a33; }
+      .header p { margin: 2px 0; color: #666; font-size: 12px; }
+      .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #999; border-top: 1px solid #ddd; padding-top: 10px; }
+      .no-print { text-align: center; margin: 20px 0; }
+      button { padding: 10px 30px; margin: 0 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+      .btn-print { background: #0b1a33; color: #fff; }
+      .btn-close { background: #dc3545; color: #fff; }
+      @media print { .no-print { display: none; } body { padding: 10px; } }
+    </style>
     </head>
     <body>
-      <div class="header">
-        <h1>📊 PetroManager Report</h1>
-        <p>Generated: ${dateStr}</p>
-        <p><strong>${filename.replace('.pdf', '').replace(/_/g, ' ').toUpperCase()}</strong></p>
-      </div>
+      <div class="header"><h1>📊 PetroManager Report</h1><p>Generated: ${dateStr}</p><p><strong>${filename.replace('.pdf', '').replace(/_/g, ' ').toUpperCase()}</strong></p></div>
       ${tableHtml}
-      <div class="footer">
-        <p>PetroManager Pro - Fuel Management System</p>
-        <p>${dateStr}</p>
-      </div>
+      <div class="footer"><p>PetroManager Pro - Fuel Management System</p><p>${dateStr}</p></div>
       <div class="no-print">
         <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
         <button class="btn-close" onclick="window.close()">Close</button>
       </div>
-      <script>
-        setTimeout(() => { window.print(); }, 1000);
-      <\/script>
+      <script>setTimeout(() => { window.print(); }, 1000);<\/script>
     </body>
     </html>
   `);
@@ -681,10 +565,8 @@ function printReceipt(saleData) {
     toast('Please allow popups for this site', 'warning');
     return;
   }
-
   const now = new Date();
   const dateStr = now.toLocaleString('en-GB');
-  
   let itemsHtml = '';
   saleData.items.forEach(item => {
     itemsHtml += `
@@ -696,7 +578,6 @@ function printReceipt(saleData) {
       </tr>
     `;
   });
-
   receiptWindow.document.write(`
     <html>
     <head>
@@ -724,39 +605,18 @@ function printReceipt(saleData) {
         <p>${dateStr}</p>
         <p><strong>Receipt #${saleData.transactionId}</strong></p>
       </div>
-
       <p><span class="label">Customer:</span> ${saleData.customer || 'Walk-in'}</p>
       <p><span class="label">Payment:</span> ${saleData.payment || 'Cash'}</p>
-
       <table>
-        <thead>
-          <tr>
-            <th>Product</th>
-            <th class="right">Qty</th>
-            <th class="right">Price</th>
-            <th class="right">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHtml}
-        </tbody>
-        <tfoot>
-          <tr class="total-row">
-            <td colspan="3"><strong>TOTAL</strong></td>
-            <td class="right"><strong>${formatMoney(saleData.total)}</strong></td>
-          </tr>
-        </tfoot>
+        <thead><tr><th>Product</th><th class="right">Qty</th><th class="right">Price</th><th class="right">Total</th></tr></thead>
+        <tbody>${itemsHtml}</tbody>
+        <tfoot><tr class="total-row"><td colspan="3"><strong>TOTAL</strong></td><td class="right"><strong>${formatMoney(saleData.total)}</strong></td></tr></tfoot>
       </table>
-
       <div class="thankyou">Thank You!</div>
       <div class="footer">
         <p>Visit us again!<br>Fueling Uganda's Future</p>
-        <button class="no-print" onclick="window.print()" style="margin-top:10px;padding:8px 20px;background:#0d6efd;color:#fff;border:none;border-radius:4px;cursor:pointer;">
-          🖨️ Print Receipt
-        </button>
-        <button class="no-print" onclick="window.close()" style="margin-top:10px;padding:8px 20px;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:5px;">
-          Close
-        </button>
+        <button class="no-print" onclick="window.print()" style="margin-top:10px;padding:8px 20px;background:#0d6efd;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨️ Print Receipt</button>
+        <button class="no-print" onclick="window.close()" style="margin-top:10px;padding:8px 20px;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:5px;">Close</button>
       </div>
     </body>
     </html>
@@ -771,7 +631,6 @@ async function checkLowStock() {
     if (state.currentStationId && Number(i.station_id) !== state.currentStationId) return false;
     return (i.quantity || 0) < threshold;
   });
-
   if (lowItems.length > 0) {
     const message = lowItems.map(i => 
       `${i.product_type} at ${stationName(i.station_id)}: ${(i.quantity || 0).toFixed(2)}L`
@@ -787,15 +646,12 @@ async function sendDailyReportEmail() {
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
-
   const todaySales = sales.filter(s => {
     const d = s.created_at ? (s.created_at.toDate ? s.created_at.toDate() : new Date(s.created_at)) : new Date();
     return d >= today && d < tomorrow;
   });
-
   let totalQty = 0, totalRevenue = 0;
   const byProduct = {};
-
   todaySales.forEach(s => {
     const qty = Number(s.quantity) || 0;
     const amt = Number(s.amount) || 0;
@@ -806,7 +662,6 @@ async function sendDailyReportEmail() {
     byProduct[p].qty += qty;
     byProduct[p].revenue += amt;
   });
-
   let emailBody = `📊 DAILY SALES REPORT\n`;
   emailBody += `📅 ${today.toLocaleDateString('en-GB')}\n`;
   emailBody += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
@@ -814,15 +669,12 @@ async function sendDailyReportEmail() {
   emailBody += `⛽ Total Quantity: ${totalQty.toFixed(2)}L\n`;
   emailBody += `📋 Transactions: ${todaySales.length}\n\n`;
   emailBody += `📦 By Product:\n`;
-  
   Object.keys(byProduct).forEach(p => {
     const d = byProduct[p];
     emailBody += `  • ${p}: ${d.qty.toFixed(2)}L – ${formatMoney(d.revenue)}\n`;
   });
-
   emailBody += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
   emailBody += `Generated by PetroManager Pro\n`;
-
   try {
     await navigator.clipboard.writeText(emailBody);
     toast('📋 Daily report copied to clipboard!', 'success');
@@ -846,8 +698,11 @@ window.addEventListener('offline', () => {
 updateOnlineStatus();
 
 console.log('Part 2 loaded');
+</script>
+
+<script>
 // ============================================================
-// Part 3: Authentication & Session
+// PART 3: AUTHENTICATION & SESSION
 // ============================================================
 
 async function loadCompaniesForLogin() {
@@ -919,26 +774,13 @@ $('#createCompanyBtn').addEventListener('click', async function() {
   const address = $('#newCompAddress').value.trim();
   const adminUser = $('#newCompAdminUser').value.trim().toLowerCase();
   const adminPass = $('#newCompAdminPass').value;
-
   const resultEl = $('#createCompanyResult');
   resultEl.innerHTML = '';
-
   if (!name) { resultEl.innerHTML = '<span class="text-danger">Company name is required</span>'; return; }
   if (!adminUser) { resultEl.innerHTML = '<span class="text-danger">Admin username is required</span>'; return; }
   if (!adminPass || adminPass.length < 4) { resultEl.innerHTML = '<span class="text-danger">Password must be at least 4 characters</span>'; return; }
-
   try {
-    const companyId = await createCompany({
-      name: name,
-      tagline: tagline,
-      address: address,
-      phone: '',
-      email: '',
-      tax_id: '',
-      website: '',
-      logo_url: ''
-    });
-
+    const companyId = await createCompany({ name, tagline, address, phone: '', email: '', tax_id: '', website: '', logo_url: '' });
     const hashed = await hashPassword(adminPass);
     await db.collection('users').add({
       username: adminUser,
@@ -949,9 +791,7 @@ $('#createCompanyBtn').addEventListener('click', async function() {
       station_id: null,
       active: true
     });
-
     resultEl.innerHTML = `<span class="text-success">✅ Company "${name}" created!<br>Admin user: <strong>${adminUser}</strong><br>You can now log in.</span>`;
-    
     setTimeout(() => {
       $('#createCompanyForm').style.display = 'none';
       $('#normalLogin').style.display = 'block';
@@ -971,7 +811,6 @@ $('#loginForm').addEventListener('submit', async function(e) {
   const password = $('#loginPassword').value;
   const errorEl = $('#loginError');
   errorEl.style.display = 'none';
-
   if (!companyId) {
     errorEl.textContent = 'Please select a company';
     errorEl.style.display = 'block';
@@ -987,11 +826,9 @@ $('#loginForm').addEventListener('submit', async function(e) {
     errorEl.style.display = 'block';
     return;
   }
-
   try {
     $('#loginBtn').disabled = true;
     $('#loginBtn').textContent = 'Signing in...';
-
     const userDoc = await getDoc('users', userId);
     if (!userDoc) {
       errorEl.textContent = 'User not found';
@@ -1008,14 +845,12 @@ $('#loginForm').addEventListener('submit', async function(e) {
       errorEl.style.display = 'block';
       return;
     }
-
     const hashedInput = await hashPassword(password);
     if (userDoc.password !== hashedInput) {
       errorEl.textContent = 'Incorrect password';
       errorEl.style.display = 'block';
       return;
     }
-
     state.user = { ...userDoc, id: userDoc.id, companyId: companyId };
     localStorage.setItem('petro_user', JSON.stringify({
       id: userDoc.id,
@@ -1025,17 +860,16 @@ $('#loginForm').addEventListener('submit', async function(e) {
       station_id: userDoc.station_id,
       companyId: companyId
     }));
-
     await loadStations();
     initApp();
     toast('Welcome, ' + (userDoc.name || userDoc.username) + '!');
     await logAudit('login', { username: userDoc.username, companyId: companyId });
-
+    $('#loginBtn').disabled = false;
+    $('#loginBtn').textContent = 'Sign In';
   } catch (err) {
     console.error(err);
     errorEl.textContent = err.message || 'Login failed';
     errorEl.style.display = 'block';
-  } finally {
     $('#loginBtn').disabled = false;
     $('#loginBtn').textContent = 'Sign In';
   }
@@ -1089,13 +923,11 @@ async function checkSession() {
 async function seedData() {
   const existing = await db.collection('stations').get();
   if (existing.size > 0) return;
-
   const companyId = state.user ? state.user.companyId : null;
   if (!companyId) {
     toast('No company selected', 'warning');
     return;
   }
-
   const stations = [
     { id: 1, name: 'Lwaba', location: 'Lwaba', companyId: companyId },
     { id: 2, name: 'Bugiri Town', location: 'Bugiri', companyId: companyId },
@@ -1105,7 +937,6 @@ async function seedData() {
   for (let s of stations) {
     await db.collection('stations').doc(String(s.id)).set(s);
   }
-
   const products = [
     { type: 'Petrol', cost: 3800, sell: 4200, base: 5000 },
     { type: 'Diesel', cost: 3600, sell: 4000, base: 3000 },
@@ -1130,7 +961,6 @@ async function seedData() {
 async function loadStations() {
   const companyId = state.user ? state.user.companyId : null;
   let stations = [];
-  
   if (companyId) {
     const snap = await db.collection('stations')
       .where('companyId', '==', companyId)
@@ -1140,7 +970,6 @@ async function loadStations() {
     const snap = await db.collection('stations').get();
     stations = snap.docs.map(d => ({ id: Number(d.id), ...d.data() }));
   }
-  
   if (stations.length === 0 && state.user && state.user.role === 'top_admin') {
     await seedData();
     const snap = await db.collection('stations')
@@ -1148,7 +977,6 @@ async function loadStations() {
       .get();
     stations = snap.docs.map(d => ({ id: Number(d.id), ...d.data() }));
   }
-  
   state.stations = stations;
   updateStationDropdown();
 }
@@ -1166,27 +994,26 @@ function updateStationDropdown() {
 }
 
 console.log('Part 3 loaded');
-          // ============================================================
-// Part 4: App Init, Sidebar & Navigation
+</script>
+
+<script>
+// ============================================================
+// PART 4: APP INIT, SIDEBAR & NAVIGATION
 // ============================================================
 
 function initApp() {
   const role = roleNorm(state.user.role);
   const name = state.user.name || state.user.username || 'User';
-
   $('#sidebarUser').textContent = name;
   $('#sidebarRole').textContent = state.user.role;
   $('#headerUser').textContent = name;
   $('#headerRole').textContent = state.user.role;
   $('#headerAvatar').textContent = name.charAt(0).toUpperCase();
-  
-  // Show company in header
   if (state.user.companyId) {
     getCompany(state.user.companyId).then(c => {
       if (c) $('#headerCompany').textContent = '🏢 ' + c.name;
     });
   }
-
   if (role === 'cashier') {
     if (!state.user.station_id) {
       toast('No station assigned to this cashier', 'warning');
@@ -1200,12 +1027,10 @@ function initApp() {
     $('#stationSelector').style.display = 'block';
     updateStationDropdown();
   }
-
   buildSidebar();
   $('#loginScreen').style.display = 'none';
   $('#appMain').style.display = 'block';
   navigate('dashboard');
-
   $('#stationSelector').onchange = function() {
     const v = $('#stationSelector').value;
     state.currentStationId = v ? Number(v) : null;
@@ -1216,7 +1041,6 @@ function initApp() {
 function buildSidebar() {
   const role = roleNorm(state.user.role);
   let links = [];
-
   if (role === 'cashier') {
     links = [
       { page: 'dashboard', icon: 'bi-grid-1x2-fill', label: 'Dashboard' },
@@ -1242,7 +1066,6 @@ function buildSidebar() {
       { page: 'activity', icon: 'bi-activity', label: 'Activity Log' }
     ];
   }
-
   const nav = $('#sidebarNav');
   nav.innerHTML = '';
   links.forEach(l => {
@@ -1264,12 +1087,11 @@ function navigate(page) {
   document.querySelectorAll('.sidebar .nav-link').forEach(el => el.classList.remove('active'));
   const active = document.querySelector(`.sidebar .nav-link[data-page="${page}"]`);
   if (active) active.classList.add('active');
-
   const titles = {
     dashboard: 'Dashboard', sales: 'Sales', shifts: 'Shifts', meters: 'Meter Readings',
     balancing: 'Cashier Balancing', inventory: 'Inventory', stock: 'Stock Receiving',
-    adjustments: 'Adjustments', financials: 'Financials', reports: 'Reports', 
-    users: 'Users', company: 'Company', activity: 'Activity Log', 
+    adjustments: 'Adjustments', financials: 'Financials', reports: 'Reports',
+    users: 'Users', company: 'Company', activity: 'Activity Log',
     receipts: 'Receipts', customers: 'Customers', mysummary: 'My Summary'
   };
   $('#pageTitle').textContent = titles[page] || page;
@@ -1294,7 +1116,6 @@ async function renderPage(page) {
     toast('Only Admins can manage company', 'warning');
     return navigate('dashboard');
   }
-
   showLoading(true);
   try {
     if (page === 'dashboard') await renderDashboard();
@@ -1349,13 +1170,15 @@ $('#sidebarToggle').addEventListener('click', function() {
 
 checkSession();
 console.log('Part 4 loaded');
-          // ============================================================
+</script>
+
+// ============================================================
 // Part 5: Dashboard, Sales, Shifts, Meters, Summary
 // ============================================================
 
 async function renderDashboard() {
   const company = await getCompany(state.user.companyId);
-  
+
   const companyData = company || {
     name: 'PetroManager',
     tagline: 'Fuel Management System',
@@ -1370,7 +1193,6 @@ async function renderDashboard() {
   const inv = await getAll('inventory');
   const sales = await getAll('sales');
   const shifts = await getAll('shifts');
-
   const fInv = inv.filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
   const fSales = sales.filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId);
   const fShifts = shifts.filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId);
