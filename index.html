@@ -4,10 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PetroManager Pro</title>
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <!-- Bootstrap 5 CSS & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <!-- Bootstrap 5 JS & Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
@@ -18,11 +21,11 @@
       --sidebar-bg: #0b1a33;
     }
     * { box-sizing: border-box; }
-    body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; }
+    body { background: var(--bg); font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; margin: 0; }
     .sidebar {
       position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh;
       background: var(--sidebar-bg); color: #b0c4de; z-index: 1050;
-      display: flex; flex-direction: column; transition: transform .3s;
+      display: flex; flex-direction: column; transition: transform .3s ease;
       overflow-y: auto; overflow-x: hidden;
     }
     .sidebar::-webkit-scrollbar { width: 4px; }
@@ -37,7 +40,7 @@
     .sidebar .nav-link {
       color: #b0c4de; padding: 10px 16px; border-left: 3px solid transparent;
       display: flex; align-items: center; gap: 12px; font-weight: 500; cursor: pointer;
-      font-size: 0.9rem; white-space: nowrap;
+      font-size: 0.9rem; white-space: nowrap; transition: all 0.2s ease;
     }
     .sidebar .nav-link:hover, .sidebar .nav-link.active {
       background: rgba(255,255,255,.07); color: #fff; border-left-color: #ffc107;
@@ -47,33 +50,34 @@
       margin-top: auto; padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.07);
       font-size: .85rem; flex-shrink: 0;
     }
-    .main-content { margin-left: var(--sidebar-w); min-height: 100vh; }
+    .main-content { margin-left: var(--sidebar-w); min-height: 100vh; transition: margin-left .3s ease; }
     .top-header {
       height: var(--header-h); background: #fff; border-bottom: 1px solid #e9ecef;
       padding: 0 24px; display: flex; align-items: center; justify-content: space-between;
-      position: sticky; top: 0; z-index: 1040;
+      position: sticky; top: 0; z-index: 1040; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
     }
     .page-title { font-weight: 600; font-size: 1.15rem; color: #1a2a4a; }
     .page-content { padding: 22px 24px; }
     .card-box {
       background: #fff; border-radius: 12px; padding: 18px 20px;
-      border: 1px solid #eef0f3; box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      border: 1px solid #eef0f3; box-shadow: 0 2px 8px rgba(0,0,0,.04); margin-bottom: 20px;
     }
     .stat-grid {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 14px; margin-bottom: 20px;
     }
     .stat-item {
       background: #fff; border-radius: 12px; padding: 16px;
       border: 1px solid #eef0f3; display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.02);
     }
     .stat-item .icon {
       width: 44px; height: 44px; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      color: #fff; font-size: 1.25rem;
+      color: #fff; font-size: 1.25rem; flex-shrink: 0;
     }
-    .stat-item .num { font-size: 1.4rem; font-weight: 700; color: #1a2a4a; }
-    .stat-item .lbl { font-size: .8rem; color: #6c7a8e; }
+    .stat-item .num { font-size: 1.35rem; font-weight: 700; color: #1a2a4a; line-height: 1.2; }
+    .stat-item .lbl { font-size: .78rem; color: #6c7a8e; margin-top: 2px; }
     .hero {
       background: linear-gradient(135deg, #0b1a33, #1a3a6a);
       border-radius: 14px; padding: 24px 28px; color: #fff; margin-bottom: 20px;
@@ -141,6 +145,7 @@
 
 <div id="offlineBanner"><i class="bi bi-wifi-off"></i> You are offline – showing cached data only</div>
 
+<!-- LOGIN SCREEN -->
 <div id="loginScreen" class="login-wrap">
   <div class="login-card">
     <div class="logo">
@@ -209,6 +214,7 @@
   </div>
 </div>
 
+<!-- MAIN APP -->
 <div id="appMain" style="display:none;">
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-brand"><i class="bi bi-fuel-pump"></i> PetroManager</div>
@@ -260,7 +266,17 @@
 </div>
 
 <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;"></div>
-<script>
+
+<!-- MODAL CONTAINERS -->
+<div class="modal fade" id="companyModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" id="companyModalContent"></div></div></div>
+<div class="modal fade" id="userModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" id="userModalContent"></div></div></div>
+<div class="modal fade" id="stationModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" id="stationModalContent"></div></div></div>
+<div class="modal fade" id="productModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" id="productModalContent"></div></div></div>
+<div class="modal fade" id="shiftModal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content" id="shiftModalContent"></div></div></div>
+<div class="modal fade" id="expenseModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" id="expenseModalContent"></div></div></div>
+<div class="modal fade" id="adjustmentModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" id="adjustmentModalContent"></div></div></div>
+<div class="modal fade" id="customerModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" id="customerModalContent"></div></div></div>
+<div class="modal fade" id="receiptModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content" id="receiptModalContent"></div></div></div>
 // ============================================================
 // PART 2: FIREBASE CONFIG & CORE UTILITIES
 // ============================================================
@@ -306,7 +322,9 @@ function toast(msg, type = 'success') {
   setTimeout(() => el.remove(), 4500);
 }
 
-function formatMoney(n) { return 'UGX ' + (Number(n) || 0).toLocaleString(); }
+function formatMoney(n) {
+  return 'UGX ' + (Number(n) || 0).toLocaleString();
+}
 function formatDate(d) {
   if (!d) return '—';
   const dt = d.toDate ? d.toDate() : new Date(d);
@@ -327,10 +345,15 @@ function roleNorm(r) {
   if (x === 'manager') return 'manager';
   return 'cashier';
 }
-function isAdmin(r) { return ['super_admin', 'top_admin', 'admin', 'manager'].includes(roleNorm(r)); }
-function canManageUsers(r) { return ['super_admin', 'top_admin'].includes(roleNorm(r)); }
-function canManageCompany(r) { return ['super_admin', 'top_admin'].includes(roleNorm(r)); }
-
+function isAdmin(r) {
+  return ['super_admin', 'top_admin', 'admin', 'manager'].includes(roleNorm(r));
+}
+function canManageUsers(r) {
+  return ['super_admin', 'top_admin'].includes(roleNorm(r));
+}
+function canManageCompany(r) {
+  return ['super_admin', 'top_admin'].includes(roleNorm(r));
+}
 function stationName(id) {
   const s = state.stations.find(st => Number(st.id) === Number(id));
   return s ? s.name : 'Unknown';
@@ -395,7 +418,9 @@ async function getAllCompanies() {
 }
 
 function getCompanyFilter() {
-  if (state.user && state.user.role === 'super_admin') return null;
+  if (state.user && state.user.role === 'super_admin') {
+    return null;
+  }
   return state.user ? state.user.companyId : null;
 }
 
@@ -536,23 +561,152 @@ function exportPDF(headers, rows, filename = 'report.pdf') {
         <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
         <button class="btn-close" onclick="window.close()">Close</button>
       </div>
+      <script>setTimeout(() => { window.print(); }, 1000);<\/script>
     </body>
     </html>
   `);
   pdfWindow.document.close();
 }
 
+function printReceipt(saleData) {
+  const receiptWindow = window.open('', '_blank', 'width=400,height=600');
+  if (!receiptWindow) {
+    toast('Please allow popups for this site', 'warning');
+    return;
+  }
+  const now = new Date();
+  const dateStr = now.toLocaleString('en-GB');
+  let itemsHtml = '';
+  saleData.items.forEach(item => {
+    itemsHtml += `
+      <tr>
+        <td>${item.product}</td>
+        <td style="text-align:right;">${item.qty.toFixed(2)}L</td>
+        <td style="text-align:right;">${formatMoney(item.price)}</td>
+        <td style="text-align:right;">${formatMoney(item.qty * item.price)}</td>
+      </tr>
+    `;
+  });
+  receiptWindow.document.write(`
+    <html>
+    <head>
+      <title>Receipt #${saleData.transactionId}</title>
+      <style>
+        body { font-family: 'Courier New', monospace; font-size: 14px; padding: 20px; max-width: 350px; margin: 0 auto; }
+        .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 10px; }
+        .header h2 { margin: 0; font-size: 18px; }
+        .header p { margin: 2px 0; font-size: 12px; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th { text-align: left; font-size: 12px; border-bottom: 1px solid #ddd; }
+        td { padding: 4px 0; }
+        .total-row { border-top: 2px solid #333; font-weight: bold; }
+        .footer { text-align: center; border-top: 2px dashed #333; padding-top: 10px; margin-top: 10px; font-size: 12px; color: #666; }
+        .thankyou { font-size: 16px; font-weight: bold; text-align: center; margin: 10px 0; }
+        .label { color: #666; font-size: 12px; }
+        .right { text-align: right; }
+        @media print { body { padding: 10px; } .no-print { display: none; } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h2>🏪 PetroManager</h2>
+        <p>${saleData.station || 'PetroManager Station'}</p>
+        <p>${dateStr}</p>
+        <p><strong>Receipt #${saleData.transactionId}</strong></p>
+      </div>
+      <p><span class="label">Customer:</span> ${saleData.customer || 'Walk-in'}</p>
+      <p><span class="label">Payment:</span> ${saleData.payment || 'Cash'}</p>
+      <table>
+        <thead><tr><th>Product</th><th class="right">Qty</th><th class="right">Price</th><th class="right">Total</th></tr></thead>
+        <tbody>${itemsHtml}</tbody>
+        <tfoot><tr class="total-row"><td colspan="3"><strong>TOTAL</strong></td><td class="right"><strong>${formatMoney(saleData.total)}</strong></td></tr></tfoot>
+      </table>
+      <div class="thankyou">Thank You!</div>
+      <div class="footer">
+        <p>Visit us again!<br>Fueling Uganda's Future</p>
+        <button class="no-print" onclick="window.print()" style="margin-top:10px;padding:8px 20px;background:#0d6efd;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨️ Print Receipt</button>
+        <button class="no-print" onclick="window.close()" style="margin-top:10px;padding:8px 20px;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:5px;">Close</button>
+      </div>
+    </body>
+    </html>
+  `);
+  receiptWindow.document.close();
+}
+
+async function checkLowStock() {
+  const threshold = 100;
+  const inv = await getAll('inventory');
+  const lowItems = inv.filter(i => {
+    if (state.currentStationId && Number(i.station_id) !== state.currentStationId) return false;
+    return (i.quantity || 0) < threshold;
+  });
+  if (lowItems.length > 0) {
+    const message = lowItems.map(i => 
+      `${i.product_type} at ${stationName(i.station_id)}: ${(i.quantity || 0).toFixed(2)}L`
+    ).join(' | ');
+    toast('⚠️ LOW STOCK: ' + message, 'warning');
+  }
+  return lowItems;
+}
+
+async function sendDailyReportEmail() {
+  const sales = await getAll('sales');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const todaySales = sales.filter(s => {
+    const d = s.created_at ? (s.created_at.toDate ? s.created_at.toDate() : new Date(s.created_at)) : new Date();
+    return d >= today && d < tomorrow;
+  });
+  let totalQty = 0, totalRevenue = 0;
+  const byProduct = {};
+  todaySales.forEach(s => {
+    const qty = Number(s.quantity) || 0;
+    const amt = Number(s.amount) || 0;
+    totalQty += qty;
+    totalRevenue += amt;
+    const p = s.product_type || 'Unknown';
+    if (!byProduct[p]) byProduct[p] = { qty: 0, revenue: 0 };
+    byProduct[p].qty += qty;
+    byProduct[p].revenue += amt;
+  });
+  let emailBody = `📊 DAILY SALES REPORT\n`;
+  emailBody += `📅 ${today.toLocaleDateString('en-GB')}\n`;
+  emailBody += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+  emailBody += `💰 Total Revenue: ${formatMoney(totalRevenue)}\n`;
+  emailBody += `⛽ Total Quantity: ${totalQty.toFixed(2)}L\n`;
+  emailBody += `📋 Transactions: ${todaySales.length}\n\n`;
+  emailBody += `📦 By Product:\n`;
+  Object.keys(byProduct).forEach(p => {
+    const d = byProduct[p];
+    emailBody += `  • ${p}: ${d.qty.toFixed(2)}L – ${formatMoney(d.revenue)}\n`;
+  });
+  emailBody += `\n━━━━━━━━━━━━━━━━━━━━━\n`;
+  emailBody += `Generated by PetroManager Pro\n`;
+  try {
+    await navigator.clipboard.writeText(emailBody);
+    toast('📋 Daily report copied to clipboard!', 'success');
+  } catch (err) {
+    alert(emailBody);
+  }
+}
+
 function updateOnlineStatus() {
   state.isOnline = navigator.onLine;
   document.body.classList.toggle('offline', !state.isOnline);
 }
-window.addEventListener('online', () => { updateOnlineStatus(); toast('Back online', 'success'); });
-window.addEventListener('offline', () => { updateOnlineStatus(); toast('You are offline – cached data only', 'warning'); });
+window.addEventListener('online', () => {
+  updateOnlineStatus();
+  toast('Back online', 'success');
+});
+window.addEventListener('offline', () => {
+  updateOnlineStatus();
+  toast('You are offline – cached data only', 'warning');
+});
 updateOnlineStatus();
-</script>
-<script>
 // ============================================================
-// PART 3: AUTHENTICATION & NAVIGATION
+// PART 3: AUTHENTICATION & SESSION MANAGEMENT
 // ============================================================
 
 async function loadCompaniesForLogin() {
@@ -566,7 +720,11 @@ async function loadCompaniesForLogin() {
       opt.textContent = c.name;
       select.appendChild(opt);
     });
+    if (companies.length === 0) {
+      select.innerHTML = '<option value="">No companies yet – create first company</option>';
+    }
   } catch (e) {
+    console.error(e);
     select.innerHTML = '<option value="">Error loading companies</option>';
   }
 }
@@ -574,483 +732,1981 @@ async function loadCompaniesForLogin() {
 async function loadUsersForLogin(companyId = null) {
   const select = $('#loginUsername');
   select.innerHTML = '<option value="">— Select User —</option>';
-  if (!companyId) return;
+  if (!companyId) {
+    select.innerHTML = '<option value="">Select a company first</option>';
+    return;
+  }
   try {
-    const snap = await db.collection('users').where('companyId', '==', companyId).get();
+    const snap = await db.collection('users')
+      .where('companyId', '==', companyId)
+      .get();
     const users = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     users.sort((a, b) => (a.name || a.username || '').localeCompare(b.name || b.username || ''));
     users.forEach(u => {
       const opt = document.createElement('option');
       opt.value = u.id;
-      opt.textContent = `${u.name || u.username} (${u.role})`;
+      opt.textContent = (u.name || u.username) + ' (' + u.role + ')';
       select.appendChild(opt);
     });
+    if (users.length === 0) {
+      select.innerHTML = '<option value="">No users yet</option>';
+    }
   } catch (e) {
+    console.error(e);
     select.innerHTML = '<option value="">Error loading users</option>';
   }
 }
 
-$('#loginCompany').addEventListener('change', function() { loadUsersForLogin(this.value); });
-$('#showCreateCompanyBtn').addEventListener('click', () => {
+$('#loginCompany').addEventListener('change', function() {
+  loadUsersForLogin(this.value);
+});
+
+$('#showCreateCompanyBtn').addEventListener('click', function() {
   $('#normalLogin').style.display = 'none';
   $('#createCompanyForm').style.display = 'block';
 });
-$('#cancelCreateCompanyBtn').addEventListener('click', () => {
-  $('#createCompanyForm').style.display = 'block' ? $('#createCompanyForm').style.display = 'none' : null;
+
+$('#cancelCreateCompanyBtn').addEventListener('click', function() {
+  $('#createCompanyForm').style.display = 'none';
   $('#normalLogin').style.display = 'block';
+  $('#createCompanyResult').textContent = '';
 });
 
-$('#createCompanyBtn').addEventListener('click', async () => {
+$('#createCompanyBtn').addEventListener('click', async function() {
   const name = $('#newCompName').value.trim();
+  const tagline = $('#newCompTagline').value.trim();
+  const address = $('#newCompAddress').value.trim();
   const adminUser = $('#newCompAdminUser').value.trim().toLowerCase();
   const adminPass = $('#newCompAdminPass').value;
   const resultEl = $('#createCompanyResult');
-  
-  if (!name || !adminUser || !adminPass) {
-    resultEl.innerHTML = '<span class="text-danger">Please fill required fields</span>';
-    return;
-  }
-  
+  resultEl.innerHTML = '';
+
+  if (!name) { resultEl.innerHTML = '<span class="text-danger">Company name is required</span>'; return; }
+  if (!adminUser) { resultEl.innerHTML = '<span class="text-danger">Admin username is required</span>'; return; }
+  if (!adminPass || adminPass.length < 4) { resultEl.innerHTML = '<span class="text-danger">Password must be at least 4 characters</span>'; return; }
+
+  showLoading(true);
   try {
-    const compId = await createCompany({ name, tagline: $('#newCompTagline').value, address: $('#newCompAddress').value });
+    const companyId = await createCompany({ name, tagline, address });
     const hashed = await hashPassword(adminPass);
+    
     await db.collection('users').add({
       username: adminUser,
       name: 'System Admin',
       password: hashed,
-      role: 'top_admin',
-      companyId: compId,
-      active: true
+      role: 'super_admin',
+      companyId: companyId,
+      active: true,
+      created_at: firebase.firestore.FieldValue.serverTimestamp()
     });
-    toast('Company and Admin created!', 'success');
-    $('#createCompanyForm').style.display = 'none';
-    $('#normalLogin').style.display = 'block';
-    await loadCompaniesForLogin();
+
+    resultEl.innerHTML = '<span class="text-success">✅ Company and Admin created! Please login now.</span>';
+    setTimeout(() => {
+      $('#createCompanyForm').style.display = 'none';
+      $('#normalLogin').style.display = 'block';
+      loadCompaniesForLogin();
+    }, 1500);
   } catch (err) {
-    resultEl.innerHTML = `<span class="text-danger">Error: ${err.message}</span>`;
+    console.error(err);
+    resultEl.innerHTML = '<span class="text-danger">❌ Error: ' + err.message + '</span>';
+  } finally {
+    showLoading(false);
   }
 });
 
-$('#loginForm').addEventListener('submit', async (e) => {
+$('#loginForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+  const companyId = $('#loginCompany').value;
   const userId = $('#loginUsername').value;
-  const pass = $('#loginPassword').value;
-  const errBox = $('#loginError');
-  errBox.style.display = 'none';
-  
+  const password = $('#loginPassword').value;
+  const errEl = $('#loginError');
+  errEl.style.display = 'none';
+
+  if (!companyId || !userId || !password) {
+    errEl.textContent = 'Please fill in all fields';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  showLoading(true);
   try {
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (!userDoc.exists) throw new Error('User does not exist');
-    const uData = { id: userDoc.id, ...userDoc.data() };
-    const hashed = await hashPassword(pass);
-    
-    if (uData.password !== hashed) throw new Error('Invalid password');
-    state.user = uData;
-    localStorage.setItem('pm_user', JSON.stringify(uData));
+    const userDoc = await getDoc('users', userId);
+    if (!userDoc) {
+      errEl.textContent = 'User not found';
+      errEl.style.display = 'block';
+      showLoading(false);
+      return;
+    }
+
+    const hashedInput = await hashPassword(password);
+    if (userDoc.password !== hashedInput) {
+      errEl.textContent = 'Invalid password';
+      errEl.style.display = 'block';
+      showLoading(false);
+      return;
+    }
+
+    state.user = userDoc;
+    sessionStorage.setItem('petro_user_id', userDoc.id);
+
+    await logAudit('login', { username: userDoc.username });
+    $('#loginScreen').style.display = 'none';
+    $('#appMain').style.display = 'block';
+
     await initApp();
-  } catch(err) {
-    errBox.textContent = err.message;
-    errBox.style.display = 'block';
+  } catch (err) {
+    console.error(err);
+    errEl.textContent = 'Login failed: ' + err.message;
+    errEl.style.display = 'block';
+  } finally {
+    showLoading(false);
   }
 });
+
+function logout() {
+  sessionStorage.removeItem('petro_user_id');
+  state.user = null;
+  $('#appMain').style.display = 'none';
+  $('#loginScreen').style.display = 'flex';
+  loadCompaniesForLogin();
+  toast('Signed out successfully', 'info');
+}
+
+$('#headerLogout').addEventListener('click', logout);
+$('#headerSwitchUser').addEventListener('click', logout);
+
+async function checkSession() {
+  const savedUserId = sessionStorage.getItem('petro_user_id');
+  if (savedUserId) {
+    try {
+      const user = await getDoc('users', savedUserId);
+      if (user) {
+        state.user = user;
+        $('#loginScreen').style.display = 'none';
+        $('#appMain').style.display = 'block';
+        await initApp();
+        return;
+      }
+    } catch (e) {
+      console.warn('Session restoration failed:', e);
+    }
+  }
+  $('#loginScreen').style.display = 'flex';
+  $('#appMain').style.display = 'none';
+  loadCompaniesForLogin();
+}
+
+console.log('Part 3 loaded');
+// ============================================================
+// PART 4: MAIN APP INITIALIZATION & ROUTING
+// ============================================================
 
 async function initApp() {
-  $('#loginScreen').style.display = 'none';
-  $('#appMain').style.display = 'block';
-  
-  state.stations = await getAll('stations');
-  buildSidebar();
-  
+  if (!state.user) return;
+
+  // Update header and sidebar user display
   $('#sidebarUser').textContent = state.user.name || state.user.username;
   $('#sidebarRole').textContent = state.user.role;
   $('#headerUser').textContent = state.user.name || state.user.username;
-  $('#headerRole').textContent = state.user.role;
+  $('#headerRole').textContent = 'Role: ' + state.user.role;
   
-  renderPage();
-}
-
-function buildSidebar() {
-  const isAdm = isAdmin(state.user.role);
-  let nav = `
-    <a class="nav-link active" onclick="navigateTo('dashboard')"><i class="bi bi-speedometer2"></i> Dashboard</a>
-    <a class="nav-link" onclick="navigateTo('pos')"><i class="bi bi-cart"></i> POS & Sales</a>
-    <a class="nav-link" onclick="navigateTo('balancing')"><i class="bi bi-journal-check"></i> Shift Balancing</a>
-    <a class="nav-link" onclick="navigateTo('inventory')"><i class="bi bi-box-seam"></i> Inventory</a>
-    <a class="nav-link" onclick="navigateTo('adjustments')"><i class="bi bi-sliders"></i> Adjustments</a>
-    <a class="nav-link" onclick="navigateTo('financials')"><i class="bi bi-cash-stack"></i> Financials</a>
-    <a class="nav-link" onclick="navigateTo('reports')"><i class="bi bi-bar-chart"></i> Reports</a>
-  `;
-  if (isAdm) {
-    nav += `<a class="nav-link" onclick="navigateTo('users')"><i class="bi bi-people"></i> Users</a>`;
-    nav += `<a class="nav-link" onclick="navigateTo('company')"><i class="bi bi-building"></i> Company Profile</a>`;
-    nav += `<a class="nav-link" onclick="navigateTo('activity')"><i class="bi bi-activity"></i> Activity Log</a>`;
+  if (state.user.companyId) {
+    const comp = await getCompany(state.user.companyId);
+    $('#headerCompany').textContent = 'Company: ' + (comp ? comp.name : 'Unknown');
+  } else {
+    $('#headerCompany').textContent = 'Company: Super Admin';
   }
-  $('#sidebarNav').innerHTML = nav;
-}
 
-function navigateTo(page) {
-  state.currentPage = page;
-  $$('#sidebarNav .nav-link').forEach(el => el.classList.remove('active'));
-  renderPage();
-}
-
-$('#headerLogout').addEventListener('click', () => {
-  localStorage.removeItem('pm_user');
-  location.reload();
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  loadCompaniesForLogin();
-  const saved = localStorage.getItem('pm_user');
-  if (saved) {
-    state.user = JSON.parse(saved);
-    initApp();
-  }
-});
-</script>
-<script>
-// ============================================================
-// PART 4: ROUTER & DASHBOARD
-// ============================================================
-
-async function renderPage() {
-  const page = state.currentPage;
-  $('#pageTitle').textContent = page.charAt(0).toUpperCase() + page.slice(1);
+  // Load available stations
+  state.stations = await getAll('stations');
+  populateStationSelector();
+  renderSidebarNav();
   
-  switch(page) {
-    case 'dashboard': await renderDashboard(); break;
-    case 'pos': await renderPOS(); break;
-    case 'balancing': await renderBalancing(); break;
-    case 'inventory': await renderInventory(); break;
-    case 'adjustments': await renderAdjustments(); break;
-    case 'financials': await renderFinancials(); break;
-    case 'reports': await renderReports(); break;
-    case 'users': await renderUsers(); break;
-    case 'company': await renderCompanyProfile(); break;
-    case 'activity': await renderActivityLog(); break;
-    default: renderDashboard();
-  }
+  // Set default starting view
+  navigateTo('dashboard');
+  
+  // Check for stock alerts automatically
+  checkLowStock();
 }
 
-async function renderDashboard() {
-  const sales = await getAll('sales');
-  const inventory = await getAll('inventory');
+function populateStationSelector() {
+  const select = $('#stationSelector');
+  select.innerHTML = '<option value="">All Stations</option>';
   
-  let totalSalesAmt = sales.reduce((acc, s) => acc + (Number(s.amount) || 0), 0);
-  let totalLiters = sales.reduce((acc, s) => acc + (Number(s.quantity) || 0), 0);
-
-  let html = `
-    <div class="hero">
-      <div class="company">${state.user ? state.user.companyId : 'PetroManager'}</div>
-      <div class="tag">Real-time Station Overview</div>
-    </div>
-    
-    <div class="stat-grid">
-      <div class="stat-item">
-        <div class="icon bg-primary"><i class="bi bi-currency-dollar"></i></div>
-        <div><div class="num">${formatMoney(totalSalesAmt)}</div><div class="lbl">Total Gross Sales</div></div>
-      </div>
-      <div class="stat-item">
-        <div class="icon bg-success"><i class="bi bi-fuel-pump"></i></div>
-        <div><div class="num">${totalLiters.toFixed(2)} L</div><div class="lbl">Volume Dispensed</div></div>
-      </div>
-      <div class="stat-item">
-        <div class="icon bg-warning text-dark"><i class="bi bi-box-seam"></i></div>
-        <div><div class="num">${inventory.length}</div><div class="lbl">Tracked Products</div></div>
-      </div>
-    </div>
-
-    <div class="card-box">
-      <h5><i class="bi bi-graph-up"></i> Sales Performance</h5>
-      <canvas id="dashboardChart" style="max-height: 300px;"></canvas>
-    </div>
-  `;
-
-  $('#pageContent').innerHTML = html;
-
-  // Chart Rendering
-  const ctx = $('#dashboardChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: sales.slice(-7).map(s => formatDate(s.created_at)),
-      datasets: [{
-        label: 'Revenue (UGX)',
-        data: sales.slice(-7).map(s => s.amount || 0),
-        borderColor: '#0d6efd',
-        tension: 0.3
-      }]
+  state.stations.forEach(st => {
+    const opt = document.createElement('option');
+    opt.value = st.id;
+    opt.textContent = st.name;
+    if (state.currentStationId && Number(state.currentStationId) === Number(st.id)) {
+      opt.selected = true;
     }
+    select.appendChild(opt);
   });
 }
-</script>
-<script>
+
+$('#stationSelector').addEventListener('change', function() {
+  state.currentStationId = this.value ? Number(this.value) : null;
+  toast('Station changed to: ' + (state.currentStationId ? stationName(state.currentStationId) : 'All Stations'), 'info');
+  navigateTo(state.currentPage);
+});
+
+// Mobile Sidebar Toggle
+$('#sidebarToggle').addEventListener('click', function() {
+  $('#sidebar').classList.toggle('open');
+});
+
+// Close mobile sidebar when clicking main content
+$('.main-content').addEventListener('click', function(e) {
+  if (window.innerWidth <= 768 && $('#sidebar').classList.contains('open')) {
+    if (!e.target.closest('#sidebarToggle')) {
+      $('#sidebar').classList.remove('open');
+    }
+  }
+});
+
+function renderSidebarNav() {
+  const role = roleNorm(state.user ? state.user.role : '');
+  const navContainer = $('#sidebarNav');
+  
+  let navItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: 'bi-speedometer2', roles: ['cashier', 'manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'pos', label: 'POS / Direct Sales', icon: 'bi-cart-check', roles: ['cashier', 'manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'shifts', label: 'Shift Management', icon: 'bi-clock-history', roles: ['cashier', 'manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'inventory', label: 'Inventory Stock', icon: 'bi-box-seam', roles: ['manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'balancing', label: 'Shift Balancing', icon: 'bi-calculator', roles: ['manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'adjustments', label: 'Stock Adjustments', icon: 'bi-sliders', roles: ['manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'expenses', label: 'Expenses Log', icon: 'bi-wallet2', roles: ['manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'reports', label: 'Reports & Analytics', icon: 'bi-bar-chart-line', roles: ['manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'customers', label: 'Customer Debtors', icon: 'bi-people', roles: ['manager', 'admin', 'top_admin', 'super_admin'] },
+    { id: 'users', label: 'User Management', icon: 'bi-person-badge', roles: ['top_admin', 'super_admin'] },
+    { id: 'company', label: 'Company Settings', icon: 'bi-building', roles: ['top_admin', 'super_admin'] },
+    { id: 'activity', label: 'Audit Logs', icon: 'bi-journal-text', roles: ['top_admin', 'super_admin'] }
+  ];
+
+  let html = '';
+  navItems.forEach(item => {
+    if (item.roles.includes(role)) {
+      const activeClass = state.currentPage === item.id ? 'active' : '';
+      html += `
+        <a class="nav-link ${activeClass}" onclick="navigateTo('${item.id}')">
+          <i class="bi ${item.icon}"></i>
+          <span>${item.label}</span>
+        </a>
+      `;
+    }
+  });
+
+  navContainer.innerHTML = html;
+}
+
+function navigateTo(pageId) {
+  state.currentPage = pageId;
+  renderSidebarNav();
+
+  const titleMap = {
+    dashboard: 'Dashboard Overview',
+    pos: 'Point of Sale (POS)',
+    shifts: 'Shift Management',
+    inventory: 'Inventory & Stock Management',
+    balancing: 'Shift Reconciliation & Balancing',
+    adjustments: 'Stock Adjustments & Tank Logs',
+    expenses: 'Expense Tracker',
+    reports: 'Reports & Analytics',
+    customers: 'Debtors & Customer Accounts',
+    users: 'User Management',
+    company: 'Company Profile & Stations',
+    activity: 'Audit Activity Logs'
+  };
+
+  $('#pageTitle').textContent = titleMap[pageId] || 'PetroManager';
+
+  // Mobile sidebar auto-close
+  if (window.innerWidth <= 768) {
+    $('#sidebar').classList.remove('open');
+  }
+
+  // Render appropriate page content
+  switch (pageId) {
+    case 'dashboard':
+      renderDashboard();
+      break;
+    case 'pos':
+      renderPOS();
+      break;
+    case 'shifts':
+      renderShifts();
+      break;
+    case 'inventory':
+      renderInventory();
+      break;
+    case 'balancing':
+      renderBalancing();
+      break;
+    case 'adjustments':
+      renderAdjustments();
+      break;
+    case 'expenses':
+      renderExpenses();
+      break;
+    case 'reports':
+      renderReports();
+      break;
+    case 'customers':
+      renderCustomers();
+      break;
+    case 'users':
+      renderUsers();
+      break;
+    case 'company':
+      renderCompanyProfile();
+      break;
+    case 'activity':
+      renderActivityLog();
+      break;
+    default:
+      renderDashboard();
+  }
+}
+
 // ============================================================
-// PART 5: SHIFT BALANCING & RECONCILIATION
+// DASHBOARD VIEW RENDERER
 // ============================================================
 
-async function renderBalancing() {
-  const shifts = await getAll('shifts');
-  const reconciliations = await getAll('reconciliations');
-  const closedShifts = shifts.filter(s => s.status === 'closed');
+async function renderDashboard() {
+  showLoading(true);
+  try {
+    const sales = await getAll('sales');
+    const expenses = await getAll('expenses');
+    const inventory = await getAll('inventory');
+    const company = state.user.companyId ? await getCompany(state.user.companyId) : null;
+
+    let totalRevenue = 0;
+    let totalLiters = 0;
+    let totalExpenses = 0;
+
+    sales.forEach(s => {
+      if (!state.currentStationId || Number(s.station_id) === state.currentStationId) {
+        totalRevenue += Number(s.amount) || 0;
+        totalLiters += Number(s.quantity) || 0;
+      }
+    });
+
+    expenses.forEach(e => {
+      if (!state.currentStationId || Number(e.station_id) === state.currentStationId) {
+        totalExpenses += Number(e.amount) || 0;
+      }
+    });
+
+    const compName = company ? company.name : 'PetroManager Enterprise';
+    const compTagline = company ? company.tagline : 'Fuel Management System';
+
+    let html = `
+      <div class="hero">
+        <div class="company">${compName}</div>
+        <div class="tag">${compTagline}</div>
+        <div class="details">
+          <div><i class="bi bi-geo-alt"></i> Active Station: <strong>${state.currentStationId ? stationName(state.currentStationId) : 'All Stations'}</strong></div>
+          <div><i class="bi bi-person"></i> Logged in as: <strong>${state.user.name || state.user.username}</strong></div>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-item">
+          <div class="icon" style="background: #0d6efd;"><i class="bi bi-cash-stack"></i></div>
+          <div>
+            <div class="num">${formatMoney(totalRevenue)}</div>
+            <div class="lbl">Total Sales Revenue</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="icon" style="background: #198754;"><i class="bi bi-fuel-pump"></i></div>
+          <div>
+            <div class="num">${totalLiters.toFixed(2)} L</div>
+            <div class="lbl">Total Fuel Sold</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="icon" style="background: #dc3545;"><i class="bi bi-wallet2"></i></div>
+          <div>
+            <div class="num">${formatMoney(totalExpenses)}</div>
+            <div class="lbl">Total Expenses</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="icon" style="background: #ffc107; color: #000;"><i class="bi bi-graph-up-arrow"></i></div>
+          <div>
+            <div class="num">${formatMoney(totalRevenue - totalExpenses)}</div>
+            <div class="lbl">Net Cash Balance</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4 mt-2">
+        <div class="col-lg-8">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-box-seam"></i> Current Inventory Levels</h5>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Station</th>
+                    <th>Product</th>
+                    <th>Available Stock</th>
+                    <th>Selling Price</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+    `;
+
+    const filteredInv = inventory.filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
+    
+    if (filteredInv.length === 0) {
+      html += `<tr><td colspan="5" class="text-center text-muted py-3">No inventory records found.</td></tr>`;
+    } else {
+      filteredInv.forEach(i => {
+        const qty = Number(i.quantity) || 0;
+        const statusBadge = qty < 100 
+          ? '<span class="badge bg-danger">Low Stock</span>' 
+          : '<span class="badge bg-success">Optimal</span>';
+          
+        html += `
+          <tr>
+            <td>${stationName(i.station_id)}</td>
+            <td><span class="product-badge ${(i.product_type || '').toLowerCase()}">${i.product_type}</span></td>
+            <td><strong>${qty.toFixed(2)} L</strong></td>
+            <td>${formatMoney(i.selling_price || 0)}</td>
+            <td>${statusBadge}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-lightning-charge"></i> Quick Actions</h5>
+            <div class="d-grid gap-2">
+              <button class="btn btn-primary" onclick="navigateTo('pos')"><i class="bi bi-cart-plus me-2"></i> New Sale (POS)</button>
+              <button class="btn btn-outline-dark" onclick="sendDailyReportEmail()"><i class="bi bi-clipboard-check me-2"></i> Copy Daily Summary</button>
+              <button class="btn btn-outline-secondary" onclick="checkLowStock()"><i class="bi bi-bell me-2"></i> Run Stock Diagnostic</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    $('#pageContent').innerHTML = html;
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Failed to load dashboard data: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+// Initial session check on execution
+checkSession();
+        // ============================================================
+// PART 5: POINT OF SALE (POS) & DIRECT SALES
+// ============================================================
+
+let posCart = [];
+
+async function renderPOS() {
+  showLoading(true);
+  try {
+    const inventory = await getAll('inventory');
+    const customers = await getAll('customers');
+
+    let stationOptions = '';
+    state.stations.forEach(s => {
+      const selected = Number(state.currentStationId) === Number(s.id) ? 'selected' : '';
+      stationOptions += `<option value="${s.id}" ${selected}>${s.name}</option>`;
+    });
+
+    let customerOptions = '<option value="">Walk-in Customer</option>';
+    customers.forEach(c => {
+      customerOptions += `<option value="${c.id}">${c.name} (${c.phone || 'No phone'})</option>`;
+    });
+
+    let html = `
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-cart-plus"></i> New Transaction</h5>
+            <form id="posForm">
+              <div class="mb-2">
+                <label class="form-label small">Station</label>
+                <select id="saleStation" class="form-select form-select-sm">${stationOptions}</select>
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label small">Product</label>
+                  <select id="saleProduct" class="form-select form-select-sm">
+                    <option value="Petrol">⛽ Petrol</option>
+                    <option value="Diesel">🛢️ Diesel</option>
+                    <option value="Gas">🔥 Gas</option>
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Qty (L)</label>
+                  <input type="number" id="saleQty" class="form-control form-control-sm" placeholder="0.00" step="0.01" value="1">
+                </div>
+              </div>
+              <div class="mb-2 mt-2">
+                <label class="form-label small">Selling Price / Liter</label>
+                <input type="number" id="salePrice" class="form-control form-control-sm" placeholder="Price/L" step="10">
+              </div>
+              <button type="button" class="btn btn-outline-primary w-100" id="addToCartBtn">
+                <i class="bi bi-plus-circle"></i> Add to Cart
+              </button>
+            </form>
+
+            <div id="cartContainer" class="mt-3" style="display:none;">
+              <hr>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">🛒 Cart (<span id="cartCount">0</span>)</h6>
+                <h5 class="text-success mb-0" id="cartTotal">UGX 0</h5>
+              </div>
+              <div id="cartItems" class="mb-3"></div>
+
+              <div class="mb-2">
+                <label class="form-label small">Customer</label>
+                <select id="saleCustomer" class="form-select form-select-sm">${customerOptions}</select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">Payment Method</label>
+                <select id="salePayment" class="form-select form-select-sm">
+                  <option value="Cash">💵 Cash</option>
+                  <option value="Mobile Money">📱 Mobile Money</option>
+                  <option value="Credit / Account">💳 Credit Account</option>
+                </select>
+              </div>
+
+              <button type="button" class="btn btn-success w-100" id="checkoutBtn">
+                <i class="bi bi-check-circle"></i> Complete Sale & Print
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="card-box">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0"><i class="bi bi-receipt"></i> Recent Sales</h5>
+              <button class="btn btn-sm btn-outline-secondary" onclick="renderPOS()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            </div>
+            <div id="salesHistoryTable"></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    $('#pageContent').innerHTML = html;
+
+    // Auto-fill price based on inventory item selected
+    const updateAutoPrice = () => {
+      const stId = $('#saleStation').value;
+      const prod = $('#saleProduct').value;
+      const match = inventory.find(i => Number(i.station_id) === Number(stId) && i.product_type === prod);
+      $('#salePrice').value = match ? (match.selling_price || 0) : 0;
+    };
+
+    $('#saleStation').addEventListener('change', updateAutoPrice);
+    $('#saleProduct').addEventListener('change', updateAutoPrice);
+    updateAutoPrice();
+
+    $('#addToCartBtn').onclick = function() {
+      const stId = Number($('#saleStation').value);
+      const prod = $('#saleProduct').value;
+      const qty = parseFloat($('#saleQty').value);
+      const price = parseFloat($('#salePrice').value);
+
+      if (!stId) { toast('Please select a station', 'warning'); return; }
+      if (isNaN(qty) || qty <= 0) { toast('Enter a valid quantity', 'warning'); return; }
+      if (isNaN(price) || price <= 0) { toast('Enter a valid price', 'warning'); return; }
+
+      // Check available stock
+      const invDoc = inventory.find(i => Number(i.station_id) === stId && i.product_type === prod);
+      const avail = invDoc ? (invDoc.quantity || 0) : 0;
+
+      const existingCartQty = posCart.filter(i => i.stationId === stId && i.product === prod).reduce((a, b) => a + b.qty, 0);
+      if (avail < (existingCartQty + qty)) {
+        toast(`Insufficient stock! Stock available: ${avail.toFixed(2)}L`, 'danger');
+        return;
+      }
+
+      posCart.push({ stationId: stId, product: prod, qty, price });
+      toast(`Added ${qty}L ${prod} to cart`, 'info');
+      renderCart();
+    };
+
+    renderCart();
+    renderSalesHistory();
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error loading POS: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+function renderCart() {
+  const container = $('#cartContainer');
+  const itemsContainer = $('#cartItems');
+  if (!container || !itemsContainer) return;
+
+  if (posCart.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+  $('#cartCount').textContent = posCart.length;
+
+  let total = 0;
+  let html = '<ul class="list-group list-group-flush small mb-2">';
+  posCart.forEach((item, index) => {
+    const sub = item.qty * item.price;
+    total += sub;
+    html += `
+      <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+        <div>
+          <strong>${item.product}</strong> (${item.qty.toFixed(2)}L @ ${item.price})
+          <div class="text-muted fs-xs">${stationName(item.stationId)}</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="fw-bold">${formatMoney(sub)}</span>
+          <button class="btn btn-sm btn-link text-danger p-0" onclick="removeFromCart(${index})"><i class="bi bi-x-circle"></i></button>
+        </div>
+      </li>
+    `;
+  });
+  html += '</ul>';
+
+  itemsContainer.innerHTML = html;
+  $('#cartTotal').textContent = formatMoney(total);
+
+  $('#checkoutBtn').onclick = async function() {
+    if (posCart.length === 0) return;
+
+    const customerId = $('#saleCustomer').value;
+    const custSelect = $('#saleCustomer');
+    const customerName = custSelect.options[custSelect.selectedIndex].text;
+    const payment = $('#salePayment').value;
+    const txId = 'TX' + Math.floor(100000 + Math.random() * 900000);
+
+    showLoading(true);
+    try {
+      let grandTotal = 0;
+
+      for (let item of posCart) {
+        const itemTotal = item.qty * item.price;
+        grandTotal += itemTotal;
+
+        // Deduct inventory
+        await adjustInventory(item.stationId, item.product, -item.qty);
+
+        // Record sale doc
+        await addDoc('sales', {
+          transaction_id: txId,
+          station_id: item.stationId,
+          product_type: item.product,
+          quantity: item.qty,
+          selling_price: item.price,
+          amount: itemTotal,
+          customer_id: customerId || null,
+          customer_name: customerName,
+          payment_method: payment,
+          cashier_id: state.user.id,
+          sale_date: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      await logAudit('pos_sale', { txId, amount: grandTotal, itemsCount: posCart.length });
+
+      toast('Sale completed successfully!', 'success');
+      
+      // Print Receipt
+      printReceipt({
+        transactionId: txId,
+        station: stationName(posCart[0].stationId),
+        customer: customerName,
+        payment: payment,
+        items: posCart,
+        total: grandTotal
+      });
+
+      posCart = [];
+      renderPOS();
+    } catch (err) {
+      console.error(err);
+      toast('Transaction failed: ' + err.message, 'danger');
+    } finally {
+      showLoading(false);
+    }
+  };
+}
+
+function removeFromCart(index) {
+  posCart.splice(index, 1);
+  renderCart();
+}
+
+async function renderSalesHistory() {
+  const container = $('#salesHistoryTable');
+  if (!container) return;
+
+  const sales = (await getAll('sales'))
+    .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
+    .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
   let html = `
-    <div class="card-box">
-      <h5 class="mb-3"><i class="bi bi-journal-check"></i> Shift Balancing & Reconciliation</h5>
-      <div class="table-responsive">
-        <table class="table table-sm table-hover table-bordered">
-          <thead class="table-dark">
-            <tr>
-              <th>Date</th>
-              <th>Shift ID</th>
-              <th>Cashier</th>
-              <th>Expected Cash</th>
-              <th>Actual Cash</th>
-              <th>Mobile Money</th>
-              <th>Variance</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>`;
+    <div class="table-responsive" style="max-height:450px; overflow-y:auto;">
+      <table class="table table-sm table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Date</th>
+            <th>Station</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Amount</th>
+            <th>Payment</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
 
-  if (closedShifts.length === 0) {
-    html += `<tr><td colspan="8" class="text-center text-muted py-4">No closed shifts available for reconciliation</td></tr>`;
+  if (sales.length === 0) {
+    html += `<tr><td colspan="7" class="text-center text-muted py-3">No recent sales recorded</td></tr>`;
   } else {
-    closedShifts.forEach(s => {
-      const rec = reconciliations.find(r => r.shift_id === s.id) || {};
-      const expected = s.expected_amount || 0;
-      const actualCash = rec.cash_actual || 0;
-      const actualMobile = rec.mobile_actual || 0;
-      const diff = (actualCash + actualMobile) - expected;
-
+    sales.slice(0, 50).forEach(s => {
+      const isReturned = s.returned ? true : false;
       html += `
-        <tr>
-          <td>${formatDate(s.created_at)}</td>
-          <td>#${s.id.slice(0, 6)}</td>
-          <td>${s.cashier_name || 'Cashier'}</td>
-          <td>${formatMoney(expected)}</td>
-          <td>${formatMoney(actualCash)}</td>
-          <td>${formatMoney(actualMobile)}</td>
-          <td class="${diff < 0 ? 'profit-negative' : 'profit-positive'}">${formatMoney(diff)}</td>
+        <tr class="${isReturned ? 'table-danger text-muted' : ''}">
+          <td class="fs-xs">${formatDateTime(s.sale_date || s.created_at)}</td>
+          <td>${stationName(s.station_id)}</td>
+          <td><span class="product-badge ${(s.product_type || '').toLowerCase()}">${s.product_type}</span></td>
+          <td>${(s.quantity || 0).toFixed(2)} L</td>
+          <td><strong>${formatMoney(s.amount)}</strong></td>
+          <td><span class="badge bg-light text-dark border">${s.payment_method || 'Cash'}</span></td>
           <td>
-            <button class="btn btn-sm btn-outline-primary reconcile-btn" data-id="${s.id}" data-expected="${expected}">
-              <i class="bi bi-calculator"></i> Reconcile
-            </button>
+            ${isReturned 
+              ? '<span class="badge bg-danger">Returned</span>' 
+              : `<button class="btn btn-sm btn-outline-danger return-sale-btn" data-id="${s.id}" data-station="${s.station_id}" data-product="${s.product_type}" data-qty="${s.quantity}"><i class="bi bi-arrow-counterclockwise"></i></button>`
+            }
           </td>
-        </tr>`;
+        </tr>
+      `;
     });
   }
 
-  html += `</tbody></table></div></div>`;
-  $('#pageContent').innerHTML = html;
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
 
-  $$('.reconcile-btn').forEach(btn => {
+  // Handle return sale action
+  document.querySelectorAll('.return-sale-btn').forEach(btn => {
     btn.onclick = async function() {
       const id = this.dataset.id;
-      const expected = parseFloat(this.dataset.expected);
-      const cash = parseFloat(prompt('Enter Total Cash Collected:') || 0);
-      const mobile = parseFloat(prompt('Enter Mobile Money Received:') || 0);
+      const qty = parseFloat(this.dataset.qty);
+      const product = this.dataset.product;
+      const stationId = Number(this.dataset.station);
+
+      if (!confirm(`🔄 Return ${qty}L of ${product}? This will restore stock into inventory.`)) return;
 
       try {
-        await addDoc('reconciliations', {
-          shift_id: id,
-          cash_actual: cash,
-          mobile_actual: mobile,
-          expected_amount: expected,
-          difference: (cash + mobile) - expected,
-          reconciled_by: state.user.id
+        await adjustInventory(stationId, product, qty);
+        await updateDoc('sales', id, { 
+          returned: true, 
+          returned_at: firebase.firestore.FieldValue.serverTimestamp() 
         });
-        toast('Reconciliation updated successfully!');
-        renderBalancing();
+        await logAudit('return_sale', { saleId: id, product, qty });
+        toast('Sale returned and stock restored.', 'success');
+        renderPOS();
       } catch (err) {
         toast('Error: ' + err.message, 'danger');
       }
     };
   });
 }
-</script>
-<script>
-// ============================================================
-// PART 6: POS & SALES TRANSACTIONS
+
+console.log('Part 5 loaded');
+        // ============================================================
+// PART 6: SHIFT BALANCING, INVENTORY & STOCK ADJUSTMENTS
 // ============================================================
 
-async function renderPOS() {
-  const inventory = await getAll('inventory');
-  
-  let html = `
-    <div class="row g-4">
-      <div class="col-md-5">
-        <div class="card-box">
-          <h5><i class="bi bi-cart"></i> New Sale Transaction</h5>
-          <form id="posForm">
-            <div class="mb-3">
-              <label class="form-label">Product</label>
-              <select id="posProduct" class="form-select">
-                ${inventory.map(i => `<option value="${i.product_type}" data-price="${i.selling_price}">${i.product_type} (${formatMoney(i.selling_price)}/L)</option>`).join('')}
-              </select>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Quantity (Liters)</label>
-              <input type="number" id="posQty" class="form-control" step="0.01" value="1.00">
-            </div>
-            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-circle"></i> Add To Sale</button>
-          </form>
+// --- SHIFT RECONCILIATION & BALANCING ---
+async function renderBalancing() {
+  showLoading(true);
+  try {
+    const shifts = (await getAll('shifts'))
+      .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
+      .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+    const inv = await getAll('inventory');
+    const users = await getAll('users');
+
+    let html = `
+      <div class="card-box">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0"><i class="bi bi-calculator"></i> Shift Reconciliation & Balancing</h5>
+          <button class="btn btn-sm btn-outline-secondary" onclick="renderBalancing()"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
         </div>
-      </div>
-      <div class="col-md-7">
-        <div class="card-box">
-          <h5><i class="bi bi-receipt"></i> Active Terminal Cart</h5>
-          <div id="cartItems" class="py-3">
-            ${state.cart.length === 0 ? '<p class="text-muted">No items in cart</p>' : ''}
-          </div>
-          <div class="d-flex justify-content-between align-items-center mt-3 border-top pt-2">
-            <h5>Total:</h5>
-            <h4 class="text-success" id="cartTotal UGX">UGX 0</h4>
-          </div>
-          <button class="btn btn-success w-100 mt-3" id="checkoutBtn" ${state.cart.length === 0 ? 'disabled' : ''}>Complete Transaction</button>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  $('#pageContent').innerHTML = html;
+        <p class="text-muted small">Compare expected cash revenue from meter differences against actual collected cash and expenses.</p>
+        
+        <div class="table-responsive" style="max-height:550px; overflow-y:auto;">
+          <table class="table table-sm table-hover align-middle border">
+            <thead class="table-dark">
+              <tr>
+                <th>Shift ID / Date</th>
+                <th>Station</th>
+                <th>Cashier</th>
+                <th>Sales Value</th>
+                <th>Cash Collected</th>
+                <th>Expenses</th>
+                <th>Variance / Shortage</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
 
-  $('#posForm').onsubmit = (e) => {
-    e.preventDefault();
-    const prod = $('#posProduct').value;
-    const qty = parseFloat($('#posQty').value);
-    const sel = $('#posProduct').options[$('#posProduct').selectedIndex];
-    const price = parseFloat(sel.dataset.price || 0);
+    const closedShifts = shifts.filter(s => s.status === 'closed');
 
-    state.cart.push({ product: prod, qty, price, total: qty * price });
-    renderPOS();
-  };
-}
-</script>
-<script>
-// ============================================================
-// PART 7: INVENTORY & STOCK ADJUSTMENTS
-// ============================================================
+    if (closedShifts.length === 0) {
+      html += `<tr><td colspan="9" class="text-center text-muted py-4">No closed shifts available for balancing</td></tr>`;
+    } else {
+      for (let s of closedShifts) {
+        const cashier = users.find(u => u.id === s.cashier_id);
+        const cashierName = cashier ? (cashier.name || cashier.username) : 'Unknown';
 
-async function renderInventory() {
-  const inv = await getAll('inventory');
-  let html = `
-    <div class="card-box">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0"><i class="bi bi-box-seam"></i> Stock Control</h5>
-        <button class="btn btn-sm btn-success" id="addInvBtn"><i class="bi bi-plus"></i> Add Item</button>
-      </div>
-      <table class="table table-bordered">
-        <thead>
-          <tr><th>Station</th><th>Product</th><th>Quantity</th><th>Unit Cost</th><th>Selling Price</th></tr>
-        </thead>
-        <tbody>
-          ${inv.map(i => `
-            <tr>
-              <td>${stationName(i.station_id)}</td>
-              <td>${i.product_type}</td>
-              <td>${i.quantity} L</td>
-              <td>${formatMoney(i.cost_price)}</td>
-              <td>${formatMoney(i.selling_price)}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-  $('#pageContent').innerHTML = html;
-}
+        const pSold = Math.max(0, (s.end_petrol || 0) - (s.start_petrol || 0));
+        const dSold = Math.max(0, (s.end_diesel || 0) - (s.start_diesel || 0));
+        const gSold = Math.max(0, (s.end_gas || 0) - (s.start_gas || 0));
 
-async function renderAdjustments() {
-  const adjustments = await getAll('adjustments');
-  let html = `
-    <div class="card-box">
-      <h5><i class="bi bi-sliders"></i> Stock Adjustments</h5>
-      <table class="table table-striped mt-3">
-        <thead><tr><th>Date</th><th>Product</th><th>Adjustment Delta</th><th>Reason</th></tr></thead>
-        <tbody>
-          ${adjustments.map(a => `
-            <tr>
-              <td>${formatDate(a.created_at)}</td>
-              <td>${a.product}</td>
-              <td class="${a.delta < 0 ? 'text-danger' : 'text-success'}">${a.delta} L</td>
-              <td>${a.reason}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-  $('#pageContent').innerHTML = html;
-}
-</script>
-<script>
-// ============================================================
-// PART 8: FINANCIALS, REPORTS, USER MANAGEMENT & UTILITIES
-// ============================================================
+        const pPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Petrol') || {}).selling_price || 0;
+        const dPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Diesel') || {}).selling_price || 0;
+        const gPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Gas') || {}).selling_price || 0;
 
-async function renderFinancials() {
-  $('#pageContent').innerHTML = `
-    <div class="card-box">
-      <h5><i class="bi bi-cash-stack"></i> Financial Statements</h5>
-      <p class="text-muted">Profit and Loss metric generation engine running.</p>
-    </div>
-  `;
-}
+        const expectedAmt = (pSold * pPrice) + (dSold * dPrice) + (gSold * gPrice);
+        const cashHanded = Number(s.cash_collected) || 0;
+        const expensesAmt = Number(s.expenses_amount) || 0;
+        const variance = (cashHanded + expensesAmt) - expectedAmt;
 
-async function renderReports() {
-  $('#pageContent').innerHTML = `
-    <div class="card-box">
-      <h5><i class="bi bi-bar-chart"></i> System Reporting</h5>
-      <div class="d-flex gap-2 mb-3">
-        <button class="btn btn-primary btn-sm" onclick="sendDailyReportEmail()"><i class="bi bi-envelope"></i> Generate Summary Email</button>
-        <button class="btn btn-outline-secondary btn-sm" onclick="exportCSV(['Type', 'Value'], [['Sales', '1000']], 'report.csv')">Export CSV</button>
-      </div>
-    </div>
-  `;
-}
+        let varBadge = `<span class="badge bg-success">Balanced</span>`;
+        if (variance < 0) {
+          varBadge = `<span class="badge bg-danger">Short: ${formatMoney(Math.abs(variance))}</span>`;
+        } else if (variance > 0) {
+          varBadge = `<span class="badge bg-warning text-dark">Over: ${formatMoney(variance)}</span>`;
+        }
 
-async function renderUsers() {
-  if (!canManageUsers(state.user.role)) {
-    $('#pageContent').innerHTML = '<div class="alert alert-danger">Access Denied</div>';
-    return;
+        html += `
+          <tr>
+            <td class="fs-xs">
+              <strong>#${s.id.slice(0, 6)}</strong><br>
+              ${formatDateTime(s.ended_at || s.created_at)}
+            </td>
+            <td>${stationName(s.station_id)}</td>
+            <td>${cashierName}</td>
+            <td><strong>${formatMoney(expectedAmt)}</strong></td>
+            <td>${formatMoney(cashHanded)}</td>
+            <td>${formatMoney(expensesAmt)}</td>
+            <td>${varBadge}</td>
+            <td>
+              ${s.balanced 
+                ? '<span class="badge bg-outline-success border border-success text-success">Verified</span>' 
+                : '<span class="badge bg-secondary">Pending</span>'}
+            </td>
+            <td>
+              <button class="btn btn-sm btn-outline-primary verify-shift-btn" data-id="${s.id}" data-expected="${expectedAmt}">
+                <i class="bi bi-pencil-square"></i> Balance
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    html += `</tbody></table></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    document.querySelectorAll('.verify-shift-btn').forEach(btn => {
+      btn.onclick = async function() {
+        const id = this.dataset.id;
+        const expected = parseFloat(this.dataset.expected);
+
+        const cashInput = prompt(`Expected Revenue: ${formatMoney(expected)}\nEnter actual cash collected:`, '0');
+        if (cashInput === null) return;
+
+        const expInput = prompt(`Enter shift expense total:`, '0');
+        if (expInput === null) return;
+
+        const cash = parseFloat(cashInput) || 0;
+        const exp = parseFloat(expInput) || 0;
+
+        try {
+          await updateDoc('shifts', id, {
+            cash_collected: cash,
+            expenses_amount: exp,
+            balanced: true,
+            balanced_by: state.user.id,
+            balanced_at: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          await logAudit('balance_shift', { shiftId: id, cash, exp, expected });
+          toast('Shift balanced successfully!', 'success');
+          renderBalancing();
+        } catch (err) {
+          toast('Error balancing shift: ' + err.message, 'danger');
+        }
+      };
+    });
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
   }
-  const users = await getAll('users');
-  $('#pageContent').innerHTML = `
-    <div class="card-box">
-      <h5><i class="bi bi-people"></i> User Administration</h5>
-      <ul class="list-group list-group-flush mt-3">
-        ${users.map(u => `<li class="list-group-item d-flex justify-content-between">${u.username} <span>${u.role}</span></li>`).join('')}
-      </ul>
-    </div>
-  `;
 }
 
+// --- INVENTORY MANAGEMENT MODULE ---
+async function renderInventory() {
+  showLoading(true);
+  try {
+    const inventory = await getAll('inventory');
+
+    let stationOpts = '';
+    state.stations.forEach(s => {
+      stationOpts += `<option value="${s.id}">${s.name}</option>`;
+    });
+
+    let html = `
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-box-seam"></i> Price & Stock Config</h5>
+            <form id="invConfigForm">
+              <div class="mb-2">
+                <label class="form-label small">Station</label>
+                <select id="invStation" class="form-select form-select-sm">${stationOpts}</select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Product</label>
+                <select id="invProduct" class="form-select form-select-sm">
+                  <option value="Petrol">⛽ Petrol</option>
+                  <option value="Diesel">🛢️ Diesel</option>
+                  <option value="Gas">🔥 Gas</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Selling Price / Liter (UGX)</label>
+                <input type="number" id="invSellingPrice" class="form-control form-control-sm" placeholder="4200" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">Cost Price / Liter (UGX)</label>
+                <input type="number" id="invCostPrice" class="form-control form-control-sm" placeholder="3800">
+              </div>
+              <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Pricing</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-list-check"></i> Stock Overview & Tank Levels</h5>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Station</th>
+                    <th>Product</th>
+                    <th>Available Quantity</th>
+                    <th>Cost Price</th>
+                    <th>Selling Price</th>
+                    <th>Estimated Stock Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+    `;
+
+    const filtered = inventory.filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
+
+    if (filtered.length === 0) {
+      html += `<tr><td colspan="6" class="text-center text-muted py-3">No inventory items found.</td></tr>`;
+    } else {
+      filtered.forEach(i => {
+        const qty = Number(i.quantity) || 0;
+        const sell = Number(i.selling_price) || 0;
+        const cost = Number(i.cost_price) || 0;
+        const totalVal = qty * sell;
+
+        html += `
+          <tr>
+            <td><strong>${stationName(i.station_id)}</strong></td>
+            <td><span class="product-badge ${(i.product_type || '').toLowerCase()}">${i.product_type}</span></td>
+            <td><strong>${qty.toFixed(2)} L</strong></td>
+            <td>${formatMoney(cost)}</td>
+            <td>${formatMoney(sell)}</td>
+            <td class="text-success fw-bold">${formatMoney(totalVal)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div></div></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    $('#invConfigForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const stId = Number($('#invStation').value);
+      const prod = $('#invProduct').value;
+      const sellPrice = parseFloat($('#invSellingPrice').value);
+      const costPrice = parseFloat($('#invCostPrice').value) || 0;
+
+      try {
+        const docRef = db.collection('inventory').doc(`${stId}_${prod}`);
+        await docRef.set({
+          station_id: stId,
+          product_type: prod,
+          selling_price: sellPrice,
+          cost_price: costPrice,
+          companyId: state.user.companyId,
+          last_updated: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        await logAudit('update_pricing', { station: stId, product: prod, sellPrice });
+        toast('Pricing updated successfully!');
+        renderInventory();
+      } catch (err) {
+        toast('Error: ' + err.message, 'danger');
+      }
+    };
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+// --- STOCK ADJUSTMENTS & TANK LOGS ---
+async function renderAdjustments() {
+  showLoading(true);
+  try {
+    const adjustments = (await getAll('adjustments'))
+      .filter(a => !state.currentStationId || Number(a.station_id) === state.currentStationId)
+      .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+
+    let stationOpts = '';
+    state.stations.forEach(s => {
+      stationOpts += `<option value="${s.id}">${s.name}</option>`;
+    });
+
+    let html = `
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-sliders"></i> Manual Stock Adjustment</h5>
+            <form id="adjForm">
+              <div class="mb-2">
+                <label class="form-label small">Station</label>
+                <select id="adjStation" class="form-select form-select-sm">${stationOpts}</select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Product</label>
+                <select id="adjProduct" class="form-select form-select-sm">
+                  <option value="Petrol">⛽ Petrol</option>
+                  <option value="Diesel">🛢️ Diesel</option>
+                  <option value="Gas">🔥 Gas</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Adjustment Type</label>
+                <select id="adjType" class="form-select form-select-sm">
+                  <option value="add">➕ Stock Addition (Delivery / Top-up)</option>
+                  <option value="subtract">➖ Stock Reduction (Evaporation / Leak / Dip Loss)</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Liters</label>
+                <input type="number" id="adjQty" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">Reason / Reference Notes</label>
+                <textarea id="adjReason" class="form-control form-control-sm" rows="2" placeholder="e.g. Tank delivery receipt #1234"></textarea>
+              </div>
+              <button type="submit" class="btn btn-warning w-100"><i class="bi bi-arrow-down-up"></i> Apply Adjustment</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-journal-text"></i> Adjustment Logs</h5>
+            <div class="table-responsive" style="max-height:450px; overflow-y:auto;">
+              <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Station</th>
+                    <th>Product</th>
+                    <th>Type</th>
+                    <th>Quantity</th>
+                    <th>Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+    `;
+
+    if (adjustments.length === 0) {
+      html += `<tr><td colspan="6" class="text-center text-muted py-3">No adjustment logs recorded</td></tr>`;
+    } else {
+      adjustments.slice(0, 40).forEach(a => {
+        const isAdd = a.type === 'add';
+        html += `
+          <tr>
+            <td class="fs-xs">${formatDateTime(a.created_at)}</td>
+            <td>${stationName(a.station_id)}</td>
+            <td><span class="product-badge ${(a.product_type || '').toLowerCase()}">${a.product_type}</span></td>
+            <td><span class="badge ${isAdd ? 'bg-success' : 'bg-danger'}">${isAdd ? 'Addition' : 'Reduction'}</span></td>
+            <td><strong>${isAdd ? '+' : '-'}${Number(a.quantity).toFixed(2)} L</strong></td>
+            <td class="fs-xs text-muted">${a.reason || 'N/A'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div></div></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    $('#adjForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const stId = Number($('#adjStation').value);
+      const prod = $('#adjProduct').value;
+      const type = $('#adjType').value;
+      const qty = parseFloat($('#adjQty').value);
+      const reason = $('#adjReason').value.trim();
+
+      if (isNaN(qty) || qty <= 0) {
+        toast('Please enter a valid quantity', 'warning');
+        return;
+      }
+
+      const delta = type === 'add' ? qty : -qty;
+
+      try {
+        await adjustInventory(stId, prod, delta);
+        await addDoc('adjustments', {
+          station_id: stId,
+          product_type: prod,
+          type: type,
+          quantity: qty,
+          reason: reason,
+          user_id: state.user.id
+        });
+        await logAudit('stock_adjustment', { station: stId, product: prod, delta, reason });
+        toast('Stock adjusted successfully!', 'success');
+        renderAdjustments();
+      } catch (err) {
+        toast('Adjustment failed: ' + err.message, 'danger');
+      }
+    };
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+console.log('Part 6 loaded');
+        // ============================================================
+// PART 7: SHIFTS, EXPENSES, REPORTS, DEBTORS, USERS & SYSTEM LOGS
+// ============================================================
+
+// --- SHIFT MANAGEMENT ---
+async function renderShifts() {
+  showLoading(true);
+  try {
+    const shifts = (await getAll('shifts'))
+      .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
+      .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+    const activeShift = shifts.find(s => s.status === 'open');
+
+    let stationOpts = '';
+    state.stations.forEach(s => {
+      stationOpts += `<option value="${s.id}">${s.name}</option>`;
+    });
+
+    let html = `
+      <div class="row g-4">
+        <div class="col-lg-5">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-clock-history"></i> Active Shift Control</h5>
+            ${activeShift ? `
+              <div class="alert alert-info border-info">
+                <strong>🟢 Active Shift Running</strong><br>
+                <small>Station: ${stationName(activeShift.station_id)} | Shift Type: ${activeShift.type || 'Day'}</small><br>
+                <small>Started: ${formatDateTime(activeShift.started_at || activeShift.created_at)}</small>
+              </div>
+              <form id="closeShiftForm">
+                <h6 class="fw-bold mt-3">Closing Meter Readings</h6>
+                <div class="mb-2">
+                  <label class="form-label small">End Petrol Meter (L)</label>
+                  <input type="number" id="endPetrol" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label small">End Diesel Meter (L)</label>
+                  <input type="number" id="endDiesel" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label small">End Gas Meter (L)</label>
+                  <input type="number" id="endGas" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small">Cash Collected Handover (UGX)</label>
+                  <input type="number" id="cashHanded" class="form-control form-control-sm" placeholder="0" required>
+                </div>
+                <button type="submit" class="btn btn-danger w-100"><i class="bi bi-stop-circle"></i> Close & Reconcile Shift</button>
+              </form>
+            ` : `
+              <form id="startShiftForm">
+                <div class="mb-2">
+                  <label class="form-label small">Station</label>
+                  <select id="shiftStation" class="form-select form-select-sm">${stationOpts}</select>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label small">Shift Type</label>
+                  <select id="shiftType" class="form-select form-select-sm">
+                    <option value="Day">☀️ Day Shift</option>
+                    <option value="Night">🌙 Night Shift</option>
+                  </select>
+                </div>
+                <h6 class="fw-bold mt-3">Opening Meter Readings</h6>
+                <div class="mb-2">
+                  <label class="form-label small">Start Petrol Meter (L)</label>
+                  <input type="number" id="startPetrol" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="mb-2">
+                  <label class="form-label small">Start Diesel Meter (L)</label>
+                  <input type="number" id="startDiesel" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label small">Start Gas Meter (L)</label>
+                  <input type="number" id="startGas" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100"><i class="bi bi-play-circle"></i> Open New Shift</button>
+              </form>
+            `}
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-journal-check"></i> Shift Log History</h5>
+            <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+              <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date / Time</th>
+                    <th>Station</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Cash Handed</th>
+                  </tr>
+                </thead>
+                <tbody>
+    `;
+
+    if (shifts.length === 0) {
+      html += `<tr><td colspan="5" class="text-center text-muted py-3">No shifts recorded</td></tr>`;
+    } else {
+      shifts.forEach(s => {
+        const isOpen = s.status === 'open';
+        html += `
+          <tr>
+            <td class="fs-xs">${formatDateTime(s.started_at || s.created_at)}</td>
+            <td>${stationName(s.station_id)}</td>
+            <td><span class="${s.type === 'Day' ? 'badge-day' : 'badge-night'}">${s.type || 'Day'}</span></td>
+            <td><span class="${isOpen ? 'badge-active' : 'badge-closed'}">${s.status || 'closed'}</span></td>
+            <td>${formatMoney(s.cash_collected || 0)}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div></div></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    if (activeShift) {
+      $('#closeShiftForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const endP = parseFloat($('#endPetrol').value);
+        const endD = parseFloat($('#endDiesel').value);
+        const endG = parseFloat($('#endGas').value);
+        const cash = parseFloat($('#cashHanded').value);
+
+        try {
+          await updateDoc('shifts', activeShift.id, {
+            end_petrol: endP,
+            end_diesel: endD,
+            end_gas: endG,
+            cash_collected: cash,
+            status: 'closed',
+            ended_at: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          await logAudit('close_shift', { shiftId: activeShift.id, cashHanded: cash });
+          toast('Shift closed and saved!', 'success');
+          renderShifts();
+        } catch (err) {
+          toast('Failed to close shift: ' + err.message, 'danger');
+        }
+      };
+    } else {
+      $('#startShiftForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const stId = Number($('#shiftStation').value);
+        const type = $('#shiftType').value;
+        const startP = parseFloat($('#startPetrol').value);
+        const startD = parseFloat($('#startDiesel').value);
+        const startG = parseFloat($('#startGas').value);
+
+        try {
+          await addDoc('shifts', {
+            station_id: stId,
+            type: type,
+            cashier_id: state.user.id,
+            start_petrol: startP,
+            start_diesel: startD,
+            start_gas: startG,
+            status: 'open',
+            started_at: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          await logAudit('open_shift', { station: stId, type });
+          toast('New shift opened successfully!', 'success');
+          renderShifts();
+        } catch (err) {
+          toast('Failed to open shift: ' + err.message, 'danger');
+        }
+      };
+    }
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+// --- EXPENSES LOG ---
+async function renderExpenses() {
+  showLoading(true);
+  try {
+    const expenses = (await getAll('expenses'))
+      .filter(e => !state.currentStationId || Number(e.station_id) === state.currentStationId)
+      .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+
+    let stationOpts = '';
+    state.stations.forEach(s => {
+      stationOpts += `<option value="${s.id}">${s.name}</option>`;
+    });
+
+    let html = `
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-wallet2"></i> Record Expense</h5>
+            <form id="expForm">
+              <div class="mb-2">
+                <label class="form-label small">Station</label>
+                <select id="expStation" class="form-select form-select-sm">${stationOpts}</select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Category</label>
+                <select id="expCategory" class="form-select form-select-sm">
+                  <option value="Utilities">💡 Utilities (Electricity/Water)</option>
+                  <option value="Salaries">👥 Staff Salaries / Allowances</option>
+                  <option value="Maintenance">🔧 Maintenance & Repairs</option>
+                  <option value="Transport">🚚 Fuel Transport & Logistics</option>
+                  <option value="Miscellaneous">📦 Miscellaneous</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Amount (UGX)</label>
+                <input type="number" id="expAmount" class="form-control form-control-sm" placeholder="0" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">Description / Note</label>
+                <textarea id="expNote" class="form-control form-control-sm" rows="2" placeholder="Expense description..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-danger w-100"><i class="bi bi-plus-circle"></i> Log Expense</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-receipt-cutoff"></i> Expense Logs</h5>
+            <div class="table-responsive" style="max-height:450px; overflow-y:auto;">
+              <table class="table table-sm table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Date</th>
+                    <th>Station</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+    `;
+
+    if (expenses.length === 0) {
+      html += `<tr><td colspan="5" class="text-center text-muted py-3">No expenses recorded</td></tr>`;
+    } else {
+      expenses.forEach(e => {
+        html += `
+          <tr>
+            <td class="fs-xs">${formatDateTime(e.created_at)}</td>
+            <td>${stationName(e.station_id)}</td>
+            <td><span class="badge bg-light text-dark border">${e.category || 'General'}</span></td>
+            <td><strong class="text-danger">${formatMoney(e.amount)}</strong></td>
+            <td class="fs-xs text-muted">${e.description || 'N/A'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div></div></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    $('#expForm').onsubmit = async function(ev) {
+      ev.preventDefault();
+      const stId = Number($('#expStation').value);
+      const cat = $('#expCategory').value;
+      const amt = parseFloat($('#expAmount').value);
+      const desc = $('#expNote').value.trim();
+
+      try {
+        await addDoc('expenses', {
+          station_id: stId,
+          category: cat,
+          amount: amt,
+          description: desc,
+          logged_by: state.user.id
+        });
+        await logAudit('log_expense', { station: stId, category: cat, amount: amt });
+        toast('Expense logged successfully!', 'success');
+        renderExpenses();
+      } catch (err) {
+        toast('Error logging expense: ' + err.message, 'danger');
+      }
+    };
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+// --- REPORTS & ANALYTICS ---
+async function renderReports() {
+  showLoading(true);
+  try {
+    const sales = await getAll('sales');
+    const expenses = await getAll('expenses');
+
+    let totalRev = 0;
+    let totalLiters = 0;
+    let totalExp = 0;
+
+    sales.forEach(s => {
+      if (!state.currentStationId || Number(s.station_id) === state.currentStationId) {
+        totalRev += Number(s.amount) || 0;
+        totalLiters += Number(s.quantity) || 0;
+      }
+    });
+
+    expenses.forEach(e => {
+      if (!state.currentStationId || Number(e.station_id) === state.currentStationId) {
+        totalExp += Number(e.amount) || 0;
+      }
+    });
+
+    let html = `
+      <div class="card-box">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="mb-0"><i class="bi bi-bar-chart-line"></i> Performance & Financial Reports</h5>
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-success" id="exportCsvBtn"><i class="bi bi-file-earmark-excel"></i> Export CSV</button>
+            <button class="btn btn-sm btn-outline-danger" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i> Printable Summary</button>
+          </div>
+        </div>
+
+        <div class="row text-center mb-4 g-3">
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded border">
+              <div class="text-muted small">Total Sales Revenue</div>
+              <h4 class="fw-bold text-primary mb-0">${formatMoney(totalRev)}</h4>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded border">
+              <div class="text-muted small">Total Volume Sold</div>
+              <h4 class="fw-bold text-success mb-0">${totalLiters.toFixed(2)} L</h4>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="p-3 bg-light rounded border">
+              <div class="text-muted small">Net Operating Profit</div>
+              <h4 class="fw-bold ${totalRev - totalExp >= 0 ? 'text-success' : 'text-danger'} mb-0">${formatMoney(totalRev - totalExp)}</h4>
+            </div>
+          </div>
+        </div>
+
+        <h6 class="fw-bold mb-3">Sales Breakdown Log</h6>
+        <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
+          <table class="table table-sm table-striped border align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Station</th>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    const filteredSales = sales.filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId);
+
+    if (filteredSales.length === 0) {
+      html += `<tr><td colspan="6" class="text-center text-muted py-3">No sales records available</td></tr>`;
+    } else {
+      filteredSales.forEach(s => {
+        html += `
+          <tr>
+            <td class="fs-xs">${formatDateTime(s.sale_date || s.created_at)}</td>
+            <td>${stationName(s.station_id)}</td>
+            <td>${s.product_type}</td>
+            <td>${(s.quantity || 0).toFixed(2)} L</td>
+            <td>${formatMoney(s.selling_price || 0)}</td>
+            <td><strong>${formatMoney(s.amount)}</strong></td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    $('#exportCsvBtn').onclick = () => {
+      const headers = ['Date', 'Station', 'Product', 'Quantity (L)', 'Price/L', 'Total Amount'];
+      const rows = filteredSales.map(s => [
+        formatDateTime(s.sale_date || s.created_at),
+        stationName(s.station_id),
+        s.product_type,
+        s.quantity,
+        s.selling_price,
+        s.amount
+      ]);
+      exportCSV(headers, rows, 'Sales_Report.csv');
+    };
+
+    $('#exportPdfBtn').onclick = () => {
+      const headers = ['Date', 'Station', 'Product', 'Quantity (L)', 'Total Amount'];
+      const rows = filteredSales.map(s => [
+        formatDateTime(s.sale_date || s.created_at),
+        stationName(s.station_id),
+        s.product_type,
+        s.quantity + ' L',
+        formatMoney(s.amount)
+      ]);
+      exportPDF(headers, rows, 'Financial_Summary_Report');
+    };
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+// --- DEBTORS & CUSTOMER ACCOUNTS ---
+async function renderCustomers() {
+  showLoading(true);
+  try {
+    const customers = await getAll('customers');
+
+    let html = `
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-person-plus"></i> Register Customer Account</h5>
+            <form id="custForm">
+              <div class="mb-2">
+                <label class="form-label small">Customer / Company Name</label>
+                <input type="text" id="custName" class="form-control form-control-sm" placeholder="e.g. ABC Logistics" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Phone Number</label>
+                <input type="text" id="custPhone" class="form-control form-control-sm" placeholder="0700000000">
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">Credit Limit / Initial Debt (UGX)</label>
+                <input type="number" id="custDebt" class="form-control form-control-sm" value="0">
+              </div>
+              <button type="submit" class="btn btn-primary w-100"><i class="bi bi-save"></i> Save Account</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-people"></i> Debtor Accounts Directory</h5>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Current Outstanding Debt</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+    `;
+
+    if (customers.length === 0) {
+      html += `<tr><td colspan="4" class="text-center text-muted py-3">No debtor accounts registered</td></tr>`;
+    } else {
+      customers.forEach(c => {
+        const debt = Number(c.outstanding_debt) || 0;
+        html += `
+          <tr>
+            <td><strong>${c.name}</strong></td>
+            <td>${c.phone || 'N/A'}</td>
+            <td><span class="fw-bold ${debt > 0 ? 'text-danger' : 'text-success'}">${formatMoney(debt)}</span></td>
+            <td>
+              <button class="btn btn-sm btn-outline-success pay-debt-btn" data-id="${c.id}" data-name="${c.name}" data-debt="${debt}">
+                <i class="bi bi-cash"></i> Record Payment
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div></div></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    $('#custForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const name = $('#custName').value.trim();
+      const phone = $('#custPhone').value.trim();
+      const debt = parseFloat($('#custDebt').value) || 0;
+
+      try {
+        await addDoc('customers', {
+          name: name,
+          phone: phone,
+          outstanding_debt: debt
+        });
+        await logAudit('add_customer', { name, debt });
+        toast('Customer account created!', 'success');
+        renderCustomers();
+      } catch (err) {
+        toast('Error: ' + err.message, 'danger');
+      }
+    };
+
+    document.querySelectorAll('.pay-debt-btn').forEach(btn => {
+      btn.onclick = async function() {
+        const id = this.dataset.id;
+        const name = this.dataset.name;
+        const curDebt = parseFloat(this.dataset.debt);
+
+        const amtStr = prompt(`Record debt payment for ${name}.\nCurrent Outstanding: ${formatMoney(curDebt)}\nEnter Payment Amount:`);
+        if (!amtStr) return;
+
+        const pAmt = parseFloat(amtStr);
+        if (isNaN(pAmt) || pAmt <= 0) { toast('Invalid amount', 'warning'); return; }
+
+        const newDebt = Math.max(0, curDebt - pAmt);
+
+        try {
+          await updateDoc('customers', id, { outstanding_debt: newDebt });
+          await logAudit('debt_payment', { customerId: id, name, paid: pAmt, newDebt });
+          toast(`Payment of ${formatMoney(pAmt)} recorded!`, 'success');
+          renderCustomers();
+        } catch (err) {
+          toast('Error updating account: ' + err.message, 'danger');
+        }
+      };
+    });
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+// --- USER MANAGEMENT ---
+async function renderUsers() {
+  showLoading(true);
+  try {
+    const users = await getAll('users');
+
+    let html = `
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-person-plus"></i> Add New System User</h5>
+            <form id="userCreateForm">
+              <div class="mb-2">
+                <label class="form-label small">Full Name</label>
+                <input type="text" id="newUserName" class="form-control form-control-sm" placeholder="John Doe" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Username</label>
+                <input type="text" id="newUserUsername" class="form-control form-control-sm" placeholder="johndoe" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Password</label>
+                <input type="password" id="newUserPassword" class="form-control form-control-sm" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label small">User Role</label>
+                <select id="newUserRole" class="form-select form-select-sm">
+                  <option value="cashier">Cashier</option>
+                  <option value="manager">Manager</option>
+                  <option value="admin">Admin</option>
+                  <option value="top_admin">Top Admin</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-circle"></i> Create User</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-8">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-people-fill"></i> Active User Directory</h5>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+    `;
+
+    users.forEach(u => {
+      html += `
+        <tr>
+          <td><strong>${u.name || 'N/A'}</strong></td>
+          <td>${u.username}</td>
+          <td><span class="badge bg-secondary">${u.role}</span></td>
+          <td><span class="badge bg-success">Active</span></td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table></div></div></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    $('#userCreateForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const name = $('#newUserName').value.trim();
+      const username = $('#newUserUsername').value.trim().toLowerCase();
+      const pass = $('#newUserPassword').value;
+      const role = $('#newUserRole').value;
+
+      try {
+        const hashed = await hashPassword(pass);
+        await addDoc('users', {
+          name: name,
+          username: username,
+          password: hashed,
+          role: role,
+          active: true
+        });
+        await logAudit('create_user', { username, role });
+        toast('User created successfully!', 'success');
+        renderUsers();
+      } catch (err) {
+        toast('Failed to create user: ' + err.message, 'danger');
+      }
+    };
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
+}
+
+// --- COMPANY PROFILE & STATIONS ---
 async function renderCompanyProfile() {
-  $('#pageContent').innerHTML = `
-    <div class="card-box">
-      <h5><i class="bi bi-building"></i> Company Profile & Station Setup</h5>
-      <p class="text-muted">Manage global configuration options here.</p>
-    </div>
-  `;
+  showLoading(true);
+  try {
+    const comp = state.user.companyId ? await getCompany(state.user.companyId) : null;
+    const stations = await getAll('stations');
+
+    let html = `
+      <div class="row g-4">
+        <div class="col-lg-6">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-building"></i> Company Information</h5>
+            <form id="compProfileForm">
+              <div class="mb-2">
+                <label class="form-label small">Company Name</label>
+                <input type="text" id="compProfileName" class="form-control form-control-sm" value="${comp ? comp.name : ''}" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Tagline</label>
+                <input type="text" id="compProfileTagline" class="form-control form-control-sm" value="${comp ? comp.tagline || '' : ''}">
+              </div>
+              <div class="mb-2">
+                <label class="form-label small">Address</label>
+                <input type="text" id="compProfileAddress" class="form-control form-control-sm" value="${comp ? comp.address || '' : ''}">
+              </div>
+              <button type="submit" class="btn btn-warning w-100"><i class="bi bi-save"></i> Save Company Profile</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="col-lg-6">
+          <div class="card-box">
+            <h5 class="mb-3"><i class="bi bi-geo-alt"></i> Fuel Stations Directory</h5>
+            <form id="addStationForm" class="row g-2 mb-3">
+              <div class="col-8">
+                <input type="text" id="newStationName" class="form-control form-control-sm" placeholder="New Station Name" required>
+              </div>
+              <div class="col-4">
+                <button type="submit" class="btn btn-sm btn-primary w-100">+ Add Station</button>
+              </div>
+            </form>
+            <ul class="list-group">
+    `;
+
+    stations.forEach(s => {
+      html += `<li class="list-group-item d-flex justify-content-between align-items-center">${s.name} <span class="badge bg-primary rounded-pill">ID: ${s.id}</span></li>`;
+    });
+
+    html += `</ul></div></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+    $('#compProfileForm').onsubmit = async function(e) {
+      e.preventDefault();
+      if (!state.user.companyId) return;
+      try {
+        await updateCompany(state.user.companyId, {
+          name: $('#compProfileName').value.trim(),
+          tagline: $('#compProfileTagline').value.trim(),
+          address: $('#compProfileAddress').value.trim()
+        });
+        toast('Company profile updated!', 'success');
+      } catch (err) {
+        toast('Error updating profile: ' + err.message, 'danger');
+      }
+    };
+
+    $('#addStationForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const sName = $('#newStationName').value.trim();
+      try {
+        await addDoc('stations', { name: sName });
+        toast('Station added successfully!', 'success');
+        state.stations = await getAll('stations');
+        populateStationSelector();
+        renderCompanyProfile();
+      } catch (err) {
+        toast('Error adding station: ' + err.message, 'danger');
+      }
+    };
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
 }
 
+// --- AUDIT ACTIVITY LOGS ---
 async function renderActivityLog() {
-  const logs = await getAll('audit_logs');
-  $('#pageContent').innerHTML = `
-    <div class="card-box">
-      <h5><i class="bi bi-activity"></i> Audit Log Trail</h5>
-      <div class="table-responsive" style="max-height:400px;">
-        <table class="table table-sm">
-          <thead><tr><th>Time</th><th>User</th><th>Action</th></tr></thead>
-          <tbody>
-            ${logs.map(l => `<tr><td>${formatDateTime(l.timestamp)}</td><td>${l.username}</td><td>${l.action}</td></tr>`).join('')}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
+  showLoading(true);
+  try {
+    const logs = (await getAll('audit_logs'))
+      .sort((a, b) => (b.timestamp && b.timestamp.seconds || 0) - (a.timestamp && a.timestamp.seconds || 0));
+
+    let html = `
+      <div class="card-box">
+        <h5 class="mb-3"><i class="bi bi-journal-text"></i> System Audit Activity Logs</h5>
+        <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
+          <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    if (logs.length === 0) {
+      html += `<tr><td colspan="4" class="text-center text-muted py-3">No activity logs recorded</td></tr>`;
+    } else {
+      logs.slice(0, 100).forEach(l => {
+        html += `
+          <tr>
+            <td class="fs-xs">${formatDateTime(l.timestamp)}</td>
+            <td><strong>${l.username || 'System'}</strong></td>
+            <td><span class="badge bg-light text-dark border">${l.action}</span></td>
+            <td class="fs-xs text-muted">${JSON.stringify(l.details || {})}</td>
+          </tr>
+        `;
+      });
+    }
+
+    html += `</tbody></table></div></div>`;
+    $('#pageContent').innerHTML = html;
+
+  } catch (err) {
+    console.error(err);
+    $('#pageContent').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+  } finally {
+    showLoading(false);
+  }
 }
+
+console.log('Part 7 loaded successfully - PetroManager Pro fully initialized.');
 </script>
 </body>
 </html>
