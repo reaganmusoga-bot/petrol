@@ -560,8 +560,7 @@ function exportPDF(headers, rows, filename = 'report.pdf') {
       <div class="no-print">
         <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
         <button class="btn-close" onclick="window.close()">Close</button>
-      </div>
-      <script>setTimeout(() => { window.print(); }, 1000);<\/script>
+      </div><script>setTimeout(() => { window.print(); }, 1000);<\/script>
     </body>
     </html>
   `);
