@@ -780,6 +780,42 @@ $('#createCompanyBtn').addEventListener('click', async function() {
   const resultEl = $('#createCompanyResult');
   resultEl.innerHTML = '';
 
+  if (!name) { 
+    resultEl.innerHTML = '<span class="text-danger">Company name is required.</span>';
+    return;
+  }
+  if (!adminUser || !adminPass) {
+    resultEl.innerHTML = '<span class="text-danger">Admin username and password are required.</span>';
+    return;
+  }
+
+  try {
+    showLoading(true);
+    const companyId = await createCompany({ name, tagline, address });
+    const passwordHash = await hashPassword(adminPass);
+    
+    await addDoc('users', {
+      username: adminUser,
+      name: 'Company Admin',
+      passwordHash: passwordHash,
+      role: 'top_admin',
+      companyId: companyId
+    });
+
+    resultEl.innerHTML = '<span class="text-success">Company created! You can now log in.</span>';
+    setTimeout(() => {
+      $('#createCompanyForm').style.display = 'none';
+      $('#normalLogin').style.display = 'block';
+      loadCompaniesForLogin();
+    }, 1500);
+  } catch (err) {
+    resultEl.innerHTML = `<span class="text-danger">Error: ${err.message}</span>`;
+  } finally {
+    showLoading(false);
+  }
+});
+</script>
+
   if (!name) { resultEl.innerHTML = '<span class="text-danger">Company name is required</span>'; return; }
   if (!adminUser) { resultEl.innerHTML = '<span class="text-danger">Admin username is required</span>'; return; }
   if (!adminPass || adminPass.length < 4) { resultEl.innerHTML = '<span class="text-danger">Password must be at least 4 characters</span>'; return; }
