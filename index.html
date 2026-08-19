@@ -4868,5 +4868,11 @@ const matches = allUsernames.filter(u =>
 
         console.log('Part 11 loaded');
     </script>
+    <script>
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+        .then(() => console.log('Service Worker registered'));
+}
+</script>
 </body>
 </html>
