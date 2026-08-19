@@ -13,6 +13,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js">
     </script>
     <style>
+        /* --- all styles (full) --- */
         :root {
             --sidebar-w: 260px;
             --header-h: 60px;
@@ -57,10 +58,103 @@
         .product-badge.diesel { background: #f8d7da; color: #58151c; }
         .product-badge.gas { background: #d1ecf1; color: #0c5460; }
         .product-badge.paraffin { background: #e2d9f3; color: #4a2d7a; }
-        .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0b1a33, #1a3a6a); padding: 20px; }
-        .login-card { background: #fff; border-radius: 18px; padding: 36px 32px; max-width: 480px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,.3); }
-        .login-card .logo { text-align: center; margin-bottom: 24px; }
-        .login-card .logo i { font-size: 2.8rem; color: #ffc107; background: #0b1a33; padding: 12px; border-radius: 14px; }
+        .login-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #e0e5ec 0%, #f5f7fa 100%);
+            padding: 20px;
+            position: relative;
+        }
+        .login-wrap::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.05"><path d="M20 20 L80 20 L80 80 L20 80 Z"/><path d="M40 40 L60 40 L60 60 L40 60 Z"/></svg>') repeat;
+            background-size: 100px 100px;
+            pointer-events: none;
+        }
+        .login-card {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 40px 36px;
+            max-width: 460px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06);
+            border: 1px solid rgba(255,255,255,0.5);
+            position: relative;
+            z-index: 1;
+        }
+        .login-card .logo { text-align: center; margin-bottom: 28px; }
+        .login-card .logo i { font-size: 3.2rem; color: #ffc107; background: #0b1a33; padding: 16px; border-radius: 18px; box-shadow: 0 8px 20px rgba(11,26,51,0.2); }
+        .login-card .logo h4 { margin-top: 12px; font-weight: 700; color: #0b1a33; letter-spacing: -0.5px; }
+        .login-card .logo p { color: #6c7a8e; font-size: 0.9rem; margin-bottom: 0; }
+        .login-card .form-floating { margin-bottom: 16px; }
+        .login-card .form-floating>select { padding-top: 1.6rem; padding-bottom: 0.4rem; }
+        .login-card .form-floating>label { padding-left: 1rem; }
+        .login-card .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c7a8e; z-index: 10; cursor: pointer; }
+        .login-card .btn-primary { background: linear-gradient(135deg, #0b1a33, #1a3a6a); border: none; padding: 12px; font-weight: 600; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; }
+        .login-card .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(11,26,51,0.3); }
+        .login-card .btn-outline-warning { border-radius: 30px; padding: 4px 16px; font-size: 0.8rem; }
+        .login-card .btn-outline-secondary { border-radius: 30px; padding: 4px 16px; font-size: 0.8rem; }
+        .login-card .form-control:focus, .login-card .form-select:focus { border-color: #0b1a33; box-shadow: 0 0 0 0.25rem rgba(11,26,51,0.15); }
+        .login-card .form-floating>.form-control:focus~label, .login-card .form-floating>.form-select:focus~label { color: #0b1a33; }
+
+        /* --- Autocomplete dropdown styles --- */
+        .autocomplete-wrapper {
+            position: relative;
+        }
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ced4da;
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1060;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            margin-top: -1px;
+        }
+        .autocomplete-dropdown .item {
+            padding: 10px 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.95rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .autocomplete-dropdown .item:last-child {
+            border-bottom: none;
+        }
+        .autocomplete-dropdown .item:hover,
+        .autocomplete-dropdown .item.active {
+            background: #f0f4ff;
+        }
+        .autocomplete-dropdown .item .username {
+            font-weight: 500;
+            color: #0b1a33;
+        }
+        .autocomplete-dropdown .item .company-name {
+            font-size: 0.75rem;
+            color: #6c7a8e;
+            margin-left: 8px;
+        }
+        .autocomplete-dropdown .no-results {
+            padding: 12px 16px;
+            color: #6c7a8e;
+            font-style: italic;
+            font-size: 0.9rem;
+        }
+
         .fs-xs { font-size: .78rem; }
         .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,.75); z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .spinner { width: 2.2rem; height: 2.2rem; border: .25em solid #0d6efd; border-right-color: transparent; border-radius: 50%; animation: spin .75s linear infinite; }
@@ -88,44 +182,54 @@
         .quick-action-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
         .quick-action-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
         .discount-row { background: #fff8e1; border-radius: 8px; padding: 10px; margin-top: 8px; }
+        .chat-messages { max-height: 400px; overflow-y: auto; background: #f8f9fa; border-radius: 8px; padding: 12px; }
+        .chat-message { padding: 6px 12px; margin-bottom: 6px; border-radius: 18px; max-width: 80%; word-break: break-word; background: #e9ecef; }
+        .chat-message.sent { background: #0d6efd; color: #fff; margin-left: auto; text-align: right; }
+        .chat-message .sender { font-weight: 600; font-size: .8rem; }
+        .chat-message .time { font-size: .7rem; opacity: .7; }
+        .balancing-result .table th { background: #e9ecef; }
+        .diff-negative { color: #dc3545; font-weight: 700; }
+        .diff-positive { color: #198754; font-weight: 700; }
+        .diff-zero { color: #0d6efd; font-weight: 700; }
+        .price-missing { color: #856404; font-style: italic; }
     </style>
 </head>
 <body>
 
     <div id="offlineBanner"><i class="bi bi-wifi-off"></i> You are offline – showing cached data only</div>
 
-    <!-- LOGIN SCREEN -->
+    <!-- ============================================================
+    LOGIN SCREEN (with username autocomplete)
+    ============================================================ -->
     <div id="loginScreen" class="login-wrap">
         <div class="login-card">
             <div class="logo">
                 <i class="bi bi-fuel-pump"></i>
-                <h4 class="mt-2 mb-0 fw-bold">PetroManager Pro</h4>
-                <p class="text-muted small mb-0">Multi-Company Fuel Management</p>
+                <h4>PetroManager Pro</h4>
+                <p>Multi-Company Fuel Management</p>
             </div>
             <div id="normalLogin">
                 <form id="loginForm" autocomplete="off">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Company</label>
-                        <select id="loginCompany" class="form-select form-select-lg" required>
-                            <option value="">— Select Company —</option>
-                        </select>
+                    <div class="form-floating autocomplete-wrapper">
+                        <input type="text" id="loginUsername" class="form-control" required placeholder=" " autocomplete="off" />
+                        <label for="loginUsername">Username</label>
+                        <div id="usernameSuggestions" class="autocomplete-dropdown"></div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Username</label>
-                        <select id="loginUsername" class="form-select form-select-lg" required>
-                            <option value="">— Select User —</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Password</label>
-                        <input type="password" id="loginPassword" class="form-control form-control-lg" required placeholder="Enter password" autocomplete="current-password">
+                    <div class="form-floating position-relative">
+                        <input type="password" id="loginPassword" class="form-control" required placeholder=" " autocomplete="current-password" />
+                        <label for="loginPassword">Password</label>
+                        <button type="button" class="password-toggle" id="togglePassword" tabindex="-1">
+                            <i class="bi bi-eye"></i>
+                        </button>
                     </div>
                     <button type="submit" class="btn btn-primary btn-lg w-100" id="loginBtn">Sign In</button>
                     <div id="loginError" class="text-danger text-center mt-3 small" style="display:none;"></div>
                 </form>
-                <div class="mt-4 text-center">
+                <div class="mt-4 text-center d-flex flex-wrap gap-2 justify-content-center">
                     <button type="button" id="showCreateCompanyBtn" class="btn btn-outline-warning btn-sm">Create First Company</button>
+                    <button type="button" id="diagnoseBtn" class="btn btn-outline-info btn-sm">Diagnose</button>
                 </div>
+                <div id="diagnoseBox" class="mt-3 p-2 bg-light rounded small" style="display:none;"></div>
             </div>
             <div id="createCompanyForm" style="display:none;">
                 <h5 class="mb-3 text-center">Create First Company</h5>
@@ -153,14 +257,12 @@
                 <button type="button" id="cancelCreateCompanyBtn" class="btn btn-outline-secondary w-100 mt-2">Cancel</button>
                 <div id="createCompanyResult" class="text-center mt-3 small"></div>
             </div>
-            <div class="mt-3 d-flex gap-2 justify-content-center">
-                <button type="button" id="diagnoseBtn" class="btn btn-sm btn-outline-info">Diagnose</button>
-            </div>
-            <div id="diagnoseBox" class="mt-3 p-2 bg-light rounded small" style="display:none;"></div>
         </div>
     </div>
 
-    <!-- MAIN APP -->
+    <!-- ============================================================
+    MAIN APP
+    ============================================================ -->
     <div id="appMain" style="display:none;">
         <nav class="sidebar" id="sidebar">
             <div class="sidebar-brand"><i class="bi bi-fuel-pump"></i> PetroManager</div>
@@ -233,10 +335,11 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js">
     </script>
+
+    <!-- ============================================================
+    PART 2: FIREBASE CONFIG & CORE UTILITIES
+    ============================================================ -->
     <script>
-        // ============================================================
-        // Part 2: Firebase Config & Core Utilities
-        // ============================================================
         const firebaseConfig = {
             apiKey: "AIzaSyCWyrW4xa4i1X3D6uzEPbKfFbwEBU0UVbk",
             authDomain: "petrol-59a19.firebaseapp.com",
@@ -256,7 +359,8 @@
             currentPage: 'dashboard',
             isOnline: navigator.onLine,
             companies: [],
-            cashiers: []
+            cashiers: [],
+            allUsers: []
         };
 
         function $(sel) { return document.querySelector(sel); }
@@ -621,11 +725,10 @@
         window.addEventListener('offline', () => { updateOnlineStatus(); toast('You are offline – cached data only', 'warning'); });
         updateOnlineStatus();
 
-        // BACKUP & RESTORE
         const BACKUP_COLLECTIONS = [
             'stations', 'users', 'inventory', 'sales', 'shifts', 'stock',
             'adjustments', 'reconciliations', 'bank_accounts', 'bankings',
-            'expenses', 'customers', 'audit_logs'
+            'expenses', 'customers', 'audit_logs', 'messages'
         ];
         async function downloadCompanyBackup() {
             if (!state.user || !state.user.companyId) throw new Error('No company selected');
@@ -700,72 +803,163 @@
 
         console.log('Part 2 loaded');
     </script>
+
+    <!-- ============================================================
+    PART 3: AUTHENTICATION & SESSION (with autocomplete support)
+    ============================================================ -->
     <script>
-        // ============================================================
-        // Part 3: Authentication & Session
-        // ============================================================
-        async function loadCompaniesForLogin() {
+        // Stores all usernames for autocomplete
+        let allUsernames = [];
+
+        // Fetch all users for autocomplete (called once on login page load)
+        async function loadUsernamesForAutocomplete() {
             try {
+                const snap = await db.collection('users').where('active', '==', true).get();
+                // Also fetch companies to show company name in dropdown
                 const companies = await getAllCompanies();
-                state.companies = companies.filter(c => c.active !== false);
-                const sel = $('#loginCompany');
-                sel.innerHTML = '<option value="">— Select Company —</option>';
-                state.companies.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.id;
-                    opt.textContent = c.name || c.id;
-                    sel.appendChild(opt);
-                });
+                const companyMap = {};
+                companies.forEach(c => companyMap[c.id] = c.name || c.id);
+
+                allUsernames = snap.docs.map(doc => {
+                    const data = doc.data();
+                    const companyName = companyMap[data.companyId] || 'Unknown Company';
+                    return {
+                        id: doc.id,
+                        username: data.username || '',
+                        name: data.name || '',
+                        companyId: data.companyId,
+                        companyName: companyName,
+                        displayName: data.name || data.username || ''
+                    };
+                }).filter(u => u.username).sort((a, b) => a.username.localeCompare(b.username));
+                console.log('Usernames loaded for autocomplete:', allUsernames.length);
             } catch (err) {
-                console.error('loadCompaniesForLogin', err);
-                toast('Could not load companies: ' + err.message, 'danger');
+                console.error('Error loading usernames:', err);
+                // If we can't load, try again later
+                setTimeout(loadUsernamesForAutocomplete, 5000);
             }
         }
 
-        async function loadUsersForCompany(companyId) {
-            const sel = $('#loginUsername');
-            sel.innerHTML = '<option value="">— Select User —</option>';
-            if (!companyId) return;
-            try {
-                const snap = await db.collection('users').where('companyId', '==', companyId).get();
-                snap.docs.forEach(d => {
-                    const u = d.data();
-                    if (u.active === false) return;
-                    const opt = document.createElement('option');
-                    opt.value = d.id;
-                    opt.textContent = (u.name || u.username || d.id) + ' (' + (u.role || 'cashier') + ')';
-                    opt.dataset.username = u.username || '';
-                    sel.appendChild(opt);
+        // Autocomplete logic
+        let selectedIndex = -1;
+
+        function setupAutocomplete() {
+            const input = $('#loginUsername');
+            const dropdown = $('#usernameSuggestions');
+            if (!input || !dropdown) return;
+
+            input.addEventListener('input', function() {
+                const value = this.value.trim().toLowerCase();
+                if (value.length === 0) {
+                    dropdown.style.display = 'none';
+                    selectedIndex = -1;
+                    return;
+                }
+
+                // Filter usernames that start with typed text
+const matches = allUsernames.filter(u =>
+    u.username.toLowerCase().includes(value) ||
+    (u.name && u.name.toLowerCase().includes(value))
+).slice(0, 12);
+
+                if (matches.length === 0) {
+                    dropdown.innerHTML = '<div class="no-results">No matching usernames</div>';
+                    dropdown.style.display = 'block';
+                    selectedIndex = -1;
+                    return;
+                }
+
+                let html = '';
+                matches.forEach((u, idx) => {
+                    const activeClass = idx === selectedIndex ? 'active' : '';
+                    html += `
+                        <div class="item ${activeClass}" data-index="${idx}" data-username="${u.username}" data-id="${u.id}">
+                            <span class="username">${u.username}</span>
+                            <span class="company-name">${u.companyName}</span>
+                        </div>
+                    `;
                 });
-            } catch (err) {
-                console.error('loadUsersForCompany', err);
-                toast('Could not load users: ' + err.message, 'danger');
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+
+                // Click handler on items
+                dropdown.querySelectorAll('.item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        const username = this.dataset.username;
+                        input.value = username;
+                        dropdown.style.display = 'none';
+                        selectedIndex = -1;
+                        input.focus();
+                    });
+                });
+            });
+
+            // Keyboard navigation
+            input.addEventListener('keydown', function(e) {
+                const items = dropdown.querySelectorAll('.item');
+                if (items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+                    updateActiveItem(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateActiveItem(items);
+                } else if (e.key === 'Enter') {
+                    if (selectedIndex >= 0 && items[selectedIndex]) {
+                        e.preventDefault();
+                        const username = items[selectedIndex].dataset.username;
+                        input.value = username;
+                        dropdown.style.display = 'none';
+                        selectedIndex = -1;
+                        // Submit form automatically after selecting
+                        document.getElementById('loginForm').dispatchEvent(new Event('submit'));
+                    }
+                } else if (e.key === 'Escape') {
+                    dropdown.style.display = 'none';
+                    selectedIndex = -1;
+                }
+            });
+
+            // Click outside to close
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.autocomplete-wrapper')) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            function updateActiveItem(items) {
+                items.forEach((el, idx) => {
+                    el.classList.toggle('active', idx === selectedIndex);
+                });
+                if (selectedIndex >= 0 && items[selectedIndex]) {
+                    items[selectedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
             }
         }
 
-        async function doLogin(companyId, userId, password) {
+        // ----- LOGIN -----
+        async function doLogin(username, password) {
             const errEl = $('#loginError');
             errEl.style.display = 'none';
             errEl.textContent = '';
-            if (!companyId || !userId || !password) {
-                errEl.textContent = 'Please fill all fields';
+            if (!username || !password) {
+                errEl.textContent = 'Please fill in all fields';
                 errEl.style.display = 'block';
                 return false;
             }
             try {
                 showLoading(true);
-                const doc = await db.collection('users').doc(userId).get();
-                if (!doc.exists) {
+                const snap = await db.collection('users').where('username', '==', username.toLowerCase().trim()).get();
+                if (snap.empty) {
                     errEl.textContent = 'User not found';
                     errEl.style.display = 'block';
                     return false;
                 }
+                const doc = snap.docs[0];
                 const user = { id: doc.id, ...doc.data() };
-                if (user.companyId !== companyId) {
-                    errEl.textContent = 'User does not belong to this company';
-                    errEl.style.display = 'block';
-                    return false;
-                }
                 if (user.active === false) {
                     errEl.textContent = 'This account is disabled';
                     errEl.style.display = 'block';
@@ -778,7 +972,7 @@
                     return false;
                 }
                 if (user.password === password) {
-                    await db.collection('users').doc(userId).update({ password: hashed });
+                    await db.collection('users').doc(user.id).update({ password: hashed });
                     user.password = hashed;
                 }
                 state.user = user;
@@ -789,6 +983,7 @@
                 }));
                 await loadStations();
                 await loadCashiers();
+                await loadAllUsers();
                 initApp();
                 await logAudit('login', { username: user.username });
                 return true;
@@ -825,6 +1020,7 @@
                 state.user = user;
                 await loadStations();
                 await loadCashiers();
+                await loadAllUsers();
                 initApp();
                 return true;
             } catch (e) {
@@ -838,11 +1034,12 @@
             state.user = null;
             state.stations = [];
             state.cashiers = [];
+            state.allUsers = [];
             state.currentStationId = null;
             $('#appMain').style.display = 'none';
             $('#loginScreen').style.display = 'flex';
             $('#loginPassword').value = '';
-            loadCompaniesForLogin();
+            $('#loginUsername').value = '';
         }
 
         async function loadStations() {
@@ -865,6 +1062,15 @@
             }
         }
 
+        async function loadAllUsers() {
+            try {
+                state.allUsers = await getAll('users');
+            } catch (e) {
+                console.error('loadAllUsers', e);
+                state.allUsers = [];
+            }
+        }
+
         function updateStationDropdown() {
             const sel = $('#stationSelector');
             if (!sel) return;
@@ -883,7 +1089,7 @@
             const name = ($('#newCompName').value || '').trim();
             const tagline = ($('#newCompTagline').value || '').trim();
             const address = ($('#newCompAddress').value || '').trim();
-            const adminUser = ($('#newCompAdminUser').value || '').trim();
+            const adminUser = ($('#newCompAdminUser').value || '').trim().toLowerCase();
             const adminPass = ($('#newCompAdminPass').value || '').trim();
             const result = $('#createCompanyResult');
             result.innerHTML = '';
@@ -893,6 +1099,12 @@
             }
             try {
                 showLoading(true);
+                const existingUser = await db.collection('users').where('username', '==', adminUser).get();
+                if (!existingUser.empty) {
+                    result.innerHTML = '<span class="text-danger">Username already taken. Please choose another.</span>';
+                    showLoading(false);
+                    return;
+                }
                 const companyId = await createCompany({ name, tagline, address });
                 const hashed = await hashPassword(adminPass);
                 await db.collection('users').add({
@@ -914,9 +1126,8 @@
                 toast('Company created successfully', 'success');
                 $('#createCompanyForm').style.display = 'none';
                 $('#normalLogin').style.display = 'block';
-                await loadCompaniesForLogin();
-                $('#loginCompany').value = companyId;
-                await loadUsersForCompany(companyId);
+                // Reload autocomplete usernames
+                await loadUsernamesForAutocomplete();
             } catch (err) {
                 result.innerHTML = '<span class="text-danger">❌ ' + err.message + '</span>';
                 toast('Error: ' + err.message, 'danger');
@@ -942,20 +1153,35 @@
             }
         }
 
+        // ----- DOM INIT -----
         document.addEventListener('DOMContentLoaded', async function() {
-            await loadCompaniesForLogin();
+            // Load usernames for autocomplete
+            await loadUsernamesForAutocomplete();
+
             const restored = await tryRestoreSession();
             if (!restored) {
                 $('#loginScreen').style.display = 'flex';
+                setupAutocomplete();
             }
-            $('#loginCompany').onchange = function() { loadUsersForCompany(this.value); };
+
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('loginPassword');
+            if (togglePassword && passwordInput) {
+                togglePassword.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    this.querySelector('i').classList.toggle('bi-eye');
+                    this.querySelector('i').classList.toggle('bi-eye-slash');
+                });
+            }
+
             $('#loginForm').onsubmit = async function(e) {
                 e.preventDefault();
-                const companyId = $('#loginCompany').value;
-                const userId = $('#loginUsername').value;
+                const username = $('#loginUsername').value.trim();
                 const password = $('#loginPassword').value;
-                await doLogin(companyId, userId, password);
+                await doLogin(username, password);
             };
+
             $('#showCreateCompanyBtn').onclick = function() {
                 $('#normalLogin').style.display = 'none';
                 $('#createCompanyForm').style.display = 'block';
@@ -966,22 +1192,25 @@
             };
             $('#createCompanyBtn').onclick = createFirstCompany;
             $('#diagnoseBtn').onclick = runDiagnose;
+
             document.body.addEventListener('click', function(e) {
                 if (e.target.closest('#headerLogout')) { e.preventDefault(); logout(); }
                 if (e.target.closest('#headerSwitchUser')) { e.preventDefault(); logout(); }
             });
+
             const toggle = $('#sidebarToggle');
             if (toggle) {
                 toggle.onclick = function() { $('#sidebar').classList.toggle('open'); };
             }
         });
 
-        console.log('Part 3 loaded');
+        console.log('Part 3 loaded – with username autocomplete');
     </script>
+
+    <!-- ============================================================
+    PART 4: APP INIT, SIDEBAR & NAVIGATION
+    ============================================================ -->
     <script>
-        // ============================================================
-        // Part 4: App Init, Sidebar & Navigation
-        // ============================================================
         function initApp() {
             const role = roleNorm(state.user.role);
             const name = state.user.name || state.user.username || 'User';
@@ -1029,7 +1258,8 @@
                     { page: 'shifts', icon: 'bi-clock-history', label: 'My Shifts' },
                     { page: 'meters', icon: 'bi-speedometer2', label: 'Meter Readings' },
                     { page: 'sales', icon: 'bi-cart-check', label: 'Sales' },
-                    { page: 'summary', icon: 'bi-clipboard-data', label: 'Shift Summary' }
+                    { page: 'summary', icon: 'bi-clipboard-data', label: 'Shift Summary' },
+                    { page: 'messages', icon: 'bi-chat-dots', label: 'Messages' }
                 ];
             } else {
                 links = [
@@ -1048,7 +1278,8 @@
                     { page: 'reports', icon: 'bi-bar-chart-line', label: 'Reports' },
                     { page: 'users', icon: 'bi-person-gear', label: 'Users' },
                     { page: 'activity', icon: 'bi-journal-text', label: 'Activity Log' },
-                    { page: 'company', icon: 'bi-building', label: 'Company' }
+                    { page: 'company', icon: 'bi-building', label: 'Company' },
+                    { page: 'messages', icon: 'bi-chat-dots', label: 'Messages' }
                 ];
                 if (role === 'super_admin') {
                     links.push({ page: 'companies', icon: 'bi-buildings', label: 'All Companies' });
@@ -1080,7 +1311,7 @@
                 shifts: 'Shifts',
                 meters: 'Meter Readings',
                 summary: 'Shift Summary',
-                balancing: 'Tank Balancing',
+                balancing: 'Cashier Balancing',
                 inventory: 'Inventory',
                 stock: 'Offloading',
                 adjustments: 'Stock Adjustments',
@@ -1091,7 +1322,8 @@
                 users: 'Users',
                 activity: 'Activity Log',
                 company: 'Company Profile',
-                companies: 'All Companies'
+                companies: 'All Companies',
+                messages: 'Messages'
             };
             $('#pageTitle').textContent = titles[page] || page;
             renderPage(page);
@@ -1119,6 +1351,7 @@
                     case 'activity': await renderActivity(); break;
                     case 'company': await renderCompanyProfile(); break;
                     case 'companies': await renderAllCompanies(); break;
+                    case 'messages': await renderMessages(); break;
                     default: content.innerHTML = '<div class="alert alert-warning">Page not found</div>';
                 }
             } catch (err) {
@@ -1129,10 +1362,17 @@
 
         console.log('Part 4 loaded');
     </script>
+
+    <!-- ============================================================
+    PART 5-11: All other modules (Dashboard, Sales, Shifts, Balancing, 
+    Inventory, Reports, Users, Company, Messages, etc.)
+    ============================================================ -->
+    <!-- These are the same as in the previous complete version – all included below. -->
+    <!-- I'll now include the full implementation for each module. -->
+
+    <!-- PART 5: DASHBOARD, SALES, SHIFTS, METERS, SUMMARY -->
     <script>
-        // ============================================================
-        // Part 5a: Dashboard with product breakdown
-        // ============================================================
+        // ----- DASHBOARD -----
         async function renderDashboard() {
             const company = await getCompany(state.user.companyId);
             const companyData = company || {
@@ -1151,7 +1391,6 @@
             const fInv = inv.filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
             const fSales = sales.filter(s => s.status !== 'reversed' && (!state.currentStationId || Number(s.station_id) === state.currentStationId));
             const fShifts = shifts.filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId);
-            // Product-wise stock
             const productTypes = ['Petrol', 'Diesel', 'Gas', 'Paraffin'];
             const stockByProduct = {};
             productTypes.forEach(p => stockByProduct[p] = 0);
@@ -1211,7 +1450,6 @@
                 <div><div class="num">${lowCount}</div><div class="lbl">Low Stock Items</div></div></div>
             </div>
 
-            <!-- Stock breakdown by product -->
             <div class="stat-grid mb-3">
               ${Object.keys(stockByProduct).map(p => `
                 <div class="stat-item">
@@ -1299,9 +1537,7 @@
             }
         }
 
-        // ============================================================
-        // Part 5b: Sales (auto-price included)
-        // ============================================================
+        // ----- SALES -----
         async function renderSales() {
             const inv = await getAll('inventory');
             const sales = (await getAll('sales'))
@@ -1449,7 +1685,6 @@
             html += `</tbody></table></div></div></div></div>`;
             $('#pageContent').innerHTML = html;
 
-            // Auto price updater
             async function updatePrice() {
                 const stationId = Number($('#saleStation').value);
                 const product = $('#saleProduct').value;
@@ -1631,7 +1866,7 @@
             });
         }
 
-        // ---- Shifts ----
+        // ----- SHIFTS (with Paraffin) -----
         async function renderShifts() {
             const shifts = (await getAll('shifts'))
                 .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
@@ -1651,9 +1886,10 @@
                       <select id="shiftType" class="form-select form-select-sm"><option value="day">Day</option><option value="night">Night</option></select></div>
                     <div class="mb-2"><label class="form-label small">Opening Meters (L)</label>
                       <div class="row g-1">
-                        <div class="col-4"><input type="number" id="startPetrol" class="form-control form-control-sm" placeholder="Petrol" step="0.01" required></div>
-                        <div class="col-4"><input type="number" id="startDiesel" class="form-control form-control-sm" placeholder="Diesel" step="0.01"></div>
-                        <div class="col-4"><input type="number" id="startGas" class="form-control form-control-sm" placeholder="Gas" step="0.01"></div>
+                        <div class="col-3"><input type="number" id="startPetrol" class="form-control form-control-sm" placeholder="Petrol" step="0.01" required></div>
+                        <div class="col-3"><input type="number" id="startDiesel" class="form-control form-control-sm" placeholder="Diesel" step="0.01"></div>
+                        <div class="col-3"><input type="number" id="startGas" class="form-control form-control-sm" placeholder="Gas" step="0.01"></div>
+                        <div class="col-3"><input type="number" id="startParaffin" class="form-control form-control-sm" placeholder="Paraffin" step="0.01"></div>
                       </div></div>
                     <button type="submit" class="btn btn-success w-100">Start Shift</button></form>`;
                 } else {
@@ -1661,9 +1897,10 @@
                     <p class="small text-muted">Active ${myActive.shift_type} shift since ${formatDateTime(myActive.created_at)}</p>
                     <div class="mb-2"><label class="form-label small">Closing Meters (L)</label>
                       <div class="row g-1">
-                        <div class="col-4"><input type="number" id="endPetrol" class="form-control form-control-sm" placeholder="Petrol" step="0.01" required></div>
-                        <div class="col-4"><input type="number" id="endDiesel" class="form-control form-control-sm" placeholder="Diesel" step="0.01"></div>
-                        <div class="col-4"><input type="number" id="endGas" class="form-control form-control-sm" placeholder="Gas" step="0.01"></div>
+                        <div class="col-3"><input type="number" id="endPetrol" class="form-control form-control-sm" placeholder="Petrol" step="0.01" required></div>
+                        <div class="col-3"><input type="number" id="endDiesel" class="form-control form-control-sm" placeholder="Diesel" step="0.01"></div>
+                        <div class="col-3"><input type="number" id="endGas" class="form-control form-control-sm" placeholder="Gas" step="0.01"></div>
+                        <div class="col-3"><input type="number" id="endParaffin" class="form-control form-control-sm" placeholder="Paraffin" step="0.01"></div>
                       </div></div>
                     <button type="submit" class="btn btn-danger w-100">End Shift</button></form>`;
                 }
@@ -1675,14 +1912,14 @@
                 <div class="col-lg-4"><div class="card-box"><h5 class="mb-3"><i class="bi bi-clock"></i> ${isCashier ? 'My Shift' : 'Shifts'}</h5> ${formHtml}</div></div>
                 <div class="col-lg-8"><div class="card-box"><h5 class="mb-3">Shift History</h5>
                   <div class="table-responsive"><table class="table table-sm table-hover">
-                    <thead><tr><th>Station</th><th>Type</th><th>Start P/D/G</th><th>End P/D/G</th><th>Status</th></tr></thead><tbody>`;
+                    <thead><tr><th>Station</th><th>Type</th><th>Start P/D/G/Pf</th><th>End P/D/G/Pf</th><th>Status</th></tr></thead><tbody>`;
 
             if (!shifts.length) {
                 html += '<tr><td colspan="5" class="text-muted text-center">No shifts</td></tr>';
             } else {
-                shifts.slice(0,30).forEach(s => {
-                    const start = (s.start_petrol || 0) + ' / ' + (s.start_diesel || 0) + ' / ' + (s.start_gas || 0);
-                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + ' / ' + (s.end_diesel || 0) + ' / ' + (s.end_gas || 0)) : '—';
+                shifts.slice(0, 30).forEach(s => {
+                    const start = (s.start_petrol || 0) + ' / ' + (s.start_diesel || 0) + ' / ' + (s.start_gas || 0) + ' / ' + (s.start_paraffin || 0);
+                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + ' / ' + (s.end_diesel || 0) + ' / ' + (s.end_gas || 0) + ' / ' + (s.end_paraffin || 0)) : '—';
                     html += `<tr>
                     <td>${stationName(s.station_id)}</td>
                     <td><span class="${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${s.shift_type}</span></td>
@@ -1706,7 +1943,8 @@
                         start_petrol: parseFloat($('#startPetrol').value) || 0,
                         start_diesel: parseFloat($('#startDiesel').value) || 0,
                         start_gas: parseFloat($('#startGas').value) || 0,
-                        end_petrol: null, end_diesel: null, end_gas: null,
+                        start_paraffin: parseFloat($('#startParaffin').value) || 0,
+                        end_petrol: null, end_diesel: null, end_gas: null, end_paraffin: null,
                         status: 'active'
                     });
                     await logAudit('start_shift', {});
@@ -1722,6 +1960,7 @@
                         end_petrol: parseFloat($('#endPetrol').value) || 0,
                         end_diesel: parseFloat($('#endDiesel').value) || 0,
                         end_gas: parseFloat($('#endGas').value) || 0,
+                        end_paraffin: parseFloat($('#endParaffin').value) || 0,
                         status: 'closed',
                         ended_at: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -1732,24 +1971,26 @@
             }
         }
 
-        // ---- Meters ----
+        // ----- METERS -----
         async function renderMeters() {
             const shifts = (await getAll('shifts'))
                 .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
                 .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
             let html = `<div class="card-box"><h5 class="mb-3">Meter Readings (from shifts)</h5>
                   <div class="table-responsive"><table class="table table-sm table-hover">
-                    <thead><tr><th>Station</th><th>Shift</th><th>Status</th><th>Start P/D/G</th><th>End P/D/G</th><th>Date</th></tr></thead><tbody>`;
+                    <thead><tr><th>Station</th><th>Shift</th><th>Status</th><th>Start P/D/G/Pf</th><th>End P/D/G/Pf</th><th>Date</th></tr></thead><tbody>`;
             if (!shifts.length) {
                 html += '<tr><td colspan="6" class="text-muted text-center">No meter data</td></tr>';
             } else {
-                shifts.slice(0,40).forEach(s => {
+                shifts.slice(0, 40).forEach(s => {
+                    const start = (s.start_petrol || 0) + '/' + (s.start_diesel || 0) + '/' + (s.start_gas || 0) + '/' + (s.start_paraffin || 0);
+                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + '/' + (s.end_diesel || 0) + '/' + (s.end_gas || 0) + '/' + (s.end_paraffin || 0)) : '—';
                     html += `<tr>
                     <td>${stationName(s.station_id)}</td>
                     <td><span class="${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${s.shift_type}</span></td>
                     <td><span class="${s.status === 'active' ? 'badge-active' : 'badge-closed'}">${s.status}</span></td>
-                    <td class="fs-xs">${s.start_petrol || 0} / ${s.start_diesel || 0} / ${s.start_gas || 0}</td>
-                    <td class="fs-xs">${s.status === 'closed' ? ((s.end_petrol || 0) + ' / ' + (s.end_diesel || 0) + ' / ' + (s.end_gas || 0)) : '—'}</td>
+                    <td class="fs-xs">${start}</td>
+                    <td class="fs-xs">${end}</td>
                     <td class="fs-xs">${formatDateTime(s.created_at)}</td>
                   </tr>`;
                 });
@@ -1758,7 +1999,7 @@
             $('#pageContent').innerHTML = html;
         }
 
-        // ---- Shift Summary ----
+        // ----- SHIFT SUMMARY -----
         async function renderShiftSummary() {
             const role = roleNorm(state.user.role);
             const isCashier = role === 'cashier';
@@ -1803,103 +2044,346 @@
 
         console.log('Part 5 loaded');
     </script>
+
+    <!-- PART 6: BALANCING (Start - End logic) -->
     <script>
-        // ============================================================
-        // Part 6: Balancing, Inventory (with Add Item), Stock, Adjustments
-        // ============================================================
-
         async function renderBalancing() {
-            const shifts = (await getAll('shifts'))
-                .filter(s => s.status === 'closed' && (!state.currentStationId || Number(s.station_id) === state.currentStationId));
-            const recons = await getAll('reconciliations');
-            const inv = await getAll('inventory');
-
-            let html = `<div class="card-box">
-                <h5 class="mb-3"><i class="bi bi-balance-scale"></i> Cashier Reconciliation</h5>
-                <p class="text-muted small">Expected revenue = meter difference × current selling prices from inventory.</p>
-                <div class="table-responsive"><table class="table table-sm table-bordered">
-                  <thead><tr>
-                    <th>Station</th><th>Shift</th><th>Petrol</th><th>Diesel</th><th>Gas</th>
-                    <th>Expected</th><th>Cash</th><th>Mobile</th><th>Credit</th><th>Diff</th><th>Status</th><th></th>
-                  </tr></thead><tbody>`;
-
-            if (shifts.length === 0) {
-                html += '<tr><td colspan="12" class="text-muted text-center">No closed shifts available</td></tr>';
-            } else {
-                for (let s of shifts) {
-                    const petrolSold = Math.max(0, (s.end_petrol || 0) - (s.start_petrol || 0));
-                    const dieselSold = Math.max(0, (s.end_diesel || 0) - (s.start_diesel || 0));
-                    const gasSold = Math.max(0, (s.end_gas || 0) - (s.start_gas || 0));
-                    const pPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Petrol') || {}).selling_price || 0;
-                    const dPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Diesel') || {}).selling_price || 0;
-                    const gPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Gas') || {}).selling_price || 0;
-                    const expected = petrolSold * pPrice + dieselSold * dPrice + gasSold * gPrice;
-                    const recon = recons.find(r => r.shift_id === s.id);
-                    const done = !!recon;
-                    const cash = recon ? (recon.cash_actual || 0) : 0;
-                    const mobile = recon ? (recon.mobile_actual || 0) : 0;
-                    const credit = recon ? (recon.credit_actual || 0) : 0;
-                    const total = cash + mobile + credit;
-                    const diff = total - expected;
-                    const diffClass = Math.abs(diff) < 1 ? 'text-success' : (diff > 0 ? 'text-warning' : 'text-danger');
-
-                    html += `<tr class="${done ? 'table-secondary' : ''}">
-                        <td>${stationName(s.station_id)}</td>
-                        <td>${s.shift_type}<br><small class="text-muted">${formatDate(s.created_at)}</small></td>
-                        <td>${petrolSold.toFixed(2)}</td>
-                        <td>${dieselSold.toFixed(2)}</td>
-                        <td>${gasSold.toFixed(2)}</td>
-                        <td><strong>${formatMoney(expected)}</strong></td>`;
-
-                    if (done) {
-                        html += `<td>${formatMoney(cash)}</td><td>${formatMoney(mobile)}</td><td>${formatMoney(credit)}</td>`;
-                    } else {
-                        html += `<td><input type="number" class="form-control form-control-sm rec-cash" style="width:90px" step="100"></td>
-                             <td><input type="number" class="form-control form-control-sm rec-mobile" style="width:90px" step="100"></td>
-                             <td><input type="number" class="form-control form-control-sm rec-credit" style="width:90px" step="100"></td>`;
-                    }
-
-                    html += `<td class="${diffClass}">${formatMoney(diff)}</td>
-                             <td>${done ? '<span class="badge bg-success">Done</span>' : '<span class="badge bg-warning text-dark">Pending</span>'}</td>
-                             <td>${done ? '—' : `<button class="btn btn-sm btn-primary recon-btn" data-id="${s.id}">Save</button>`}</td>
-                           </tr>`;
-                }
+            if (!isAdmin(state.user.role)) {
+                $('#pageContent').innerHTML = '<div class="alert alert-danger">Access denied. Only managers and admins can balance cashiers.</div>';
+                return;
             }
 
-            html += `</tbody></table></div></div>`;
+            const allUsers = await getAll('users');
+            const cashierOptions = allUsers
+                .filter(u => u.active !== false)
+                .map(u => `<option value="${u.id}">${u.name || u.username}</option>`)
+                .join('');
+
+            const stationOptions = state.stations
+                .map(s => `<option value="${s.id}">${s.name}</option>`)
+                .join('');
+
+            const today = new Date();
+            const startDate = new Date(today);
+            startDate.setDate(startDate.getDate() - 7);
+            const endDate = today;
+
+            const html = `
+            <div class="card-box">
+              <h5 class="mb-3"><i class="bi bi-scales"></i> Cashier Balancing</h5>
+              <p class="text-muted small">Select station, cashier, and date range. All shift meter readings are shown.</p>
+              <form id="balancingFilter" class="row g-2 mb-3">
+                <div class="col-md-3">
+                  <label class="form-label small">Station</label>
+                  <select id="balStation" class="form-select form-select-sm" required>
+                    <option value="">— Select Station —</option>
+                    ${stationOptions}
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label small">Cashier</label>
+                  <select id="balCashier" class="form-select form-select-sm" required>
+                    <option value="">— Select Cashier —</option>
+                    ${cashierOptions}
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small">From</label>
+                  <input type="date" id="balFrom" class="form-control form-control-sm" value="${startDate.toISOString().slice(0,10)}">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small">To</label>
+                  <input type="date" id="balTo" class="form-control form-control-sm" value="${endDate.toISOString().slice(0,10)}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Load Shifts</button>
+                </div>
+              </form>
+              <div id="balancingResult" class="balancing-result">
+                <div class="text-center text-muted py-4">Select filters and click <strong>Load Shifts</strong>.</div>
+              </div>
+            </div>
+            `;
+
             $('#pageContent').innerHTML = html;
 
-            document.querySelectorAll('.recon-btn').forEach(btn => {
-                btn.onclick = async function() {
-                    const shiftId = btn.getAttribute('data-id');
-                    const row = btn.closest('tr');
-                    const cash = parseFloat(row.querySelector('.rec-cash').value) || 0;
-                    const mobile = parseFloat(row.querySelector('.rec-mobile').value) || 0;
-                    const credit = parseFloat(row.querySelector('.rec-credit').value) || 0;
-                    if (cash + mobile + credit === 0) { toast('Enter at least one amount', 'warning'); return; }
-                    btn.disabled = true;
-                    btn.textContent = 'Saving...';
+            $('#balancingFilter').onsubmit = async function(e) {
+                e.preventDefault();
+                const stationId = Number($('#balStation').value);
+                const cashierId = $('#balCashier').value;
+                const fromDate = $('#balFrom').value;
+                const toDate = $('#balTo').value;
+
+                if (!stationId || !cashierId || !fromDate || !toDate) {
+                    toast('Please fill all fields', 'warning');
+                    return;
+                }
+
+                const start = new Date(fromDate);
+                start.setHours(0,0,0,0);
+                const end = new Date(toDate);
+                end.setHours(23,59,59,999);
+
+                const shiftsSnap = await db.collection('shifts')
+                    .where('station_id', '==', stationId)
+                    .where('cashier_id', '==', cashierId)
+                    .where('status', '==', 'closed')
+                    .get();
+
+                const shifts = [];
+                shiftsSnap.forEach(doc => {
+                    const data = doc.data();
+                    const createdAt = data.created_at && data.created_at.toDate ? data.created_at.toDate() : new Date(data.created_at);
+                    if (createdAt >= start && createdAt <= end) {
+                        shifts.push({ id: doc.id, ...data });
+                    }
+                });
+
+                if (shifts.length === 0) {
+                    $('#balancingResult').innerHTML = '<div class="alert alert-info">No closed shifts found for this cashier in the selected date range.</div>';
+                    return;
+                }
+
+                shifts.sort((a,b) => (a.created_at && a.created_at.seconds || 0) - (b.created_at && b.created_at.seconds || 0));
+
+                const inv = await getAll('inventory');
+                const stationInv = inv.filter(i => Number(i.station_id) === stationId);
+                const getPrice = (product) => {
+                    const item = stationInv.find(i => i.product_type === product);
+                    return item ? (item.selling_price || 0) : 0;
+                };
+                const prices = {
+                    Petrol: getPrice('Petrol'),
+                    Diesel: getPrice('Diesel'),
+                    Gas: getPrice('Gas'),
+                    Paraffin: getPrice('Paraffin')
+                };
+
+                const missingPriceProducts = Object.keys(prices).filter(p => prices[p] === 0);
+                if (missingPriceProducts.length > 0) {
+                    toast('⚠️ Selling price not set for: ' + missingPriceProducts.join(', ') + '. Please set prices in Inventory.', 'warning');
+                }
+
+                const productList = ['Petrol', 'Diesel', 'Gas', 'Paraffin'];
+
+                let shiftData = shifts.map((shift, idx) => {
+                    const startP = shift.start_petrol || 0;
+                    const endP = shift.end_petrol || 0;
+                    const startD = shift.start_diesel || 0;
+                    const endD = shift.end_diesel || 0;
+                    const startG = shift.start_gas || 0;
+                    const endG = shift.end_gas || 0;
+                    const startPf = shift.start_paraffin || 0;
+                    const endPf = shift.end_paraffin || 0;
+
+                    const diffs = {
+                        Petrol: startP - endP,
+                        Diesel: startD - endD,
+                        Gas: startG - endG,
+                        Paraffin: startPf - endPf
+                    };
+
+                    return {
+                        shiftNum: idx + 1,
+                        start: { Petrol: startP, Diesel: startD, Gas: startG, Paraffin: startPf },
+                        end: { Petrol: endP, Diesel: endD, Gas: endG, Paraffin: endPf },
+                        diffs: diffs,
+                        expected: {}
+                    };
+                });
+
+                shiftData.forEach(s => {
+                    productList.forEach(p => {
+                        s.expected[p] = s.diffs[p] * prices[p];
+                    });
+                });
+
+                let meterRows = '';
+                shiftData.forEach(s => {
+                    let cells = `<td><strong>Shift ${s.shiftNum}</strong></td>`;
+                    productList.forEach(p => {
+                        cells += `<td>${s.start[p].toFixed(2)}</td>`;
+                        cells += `<td>${s.end[p].toFixed(2)}</td>`;
+                    });
+                    meterRows += `<tr>${cells}</tr>`;
+                });
+
+                let diffRows = '';
+                shiftData.forEach(s => {
+                    let cells = `<td><strong>Shift ${s.shiftNum}</strong></td>`;
+                    productList.forEach(p => {
+                        const diff = s.diffs[p];
+                        const cls = diff < 0 ? 'diff-negative' : (diff > 0 ? 'diff-positive' : 'diff-zero');
+                        cells += `<td class="${cls}">${diff.toFixed(2)}</td>`;
+                    });
+                    diffRows += `<tr>${cells}</tr>`;
+                });
+
+                let priceRow = '<tr><td><strong>Price / L</strong></td>';
+                productList.forEach(p => {
+                    const price = prices[p];
+                    const display = price === 0 ? `<span class="price-missing">Not set</span>` : formatMoney(price);
+                    priceRow += `<td>${display}</td>`;
+                });
+                priceRow += '</tr>';
+
+                let expectedRows = '';
+                let grandTotal = 0;
+                shiftData.forEach(s => {
+                    let cells = `<td><strong>Shift ${s.shiftNum}</strong></td>`;
+                    let shiftTotal = 0;
+                    productList.forEach(p => {
+                        const exp = s.expected[p] || 0;
+                        shiftTotal += exp;
+                        const cls = exp < 0 ? 'diff-negative' : (exp > 0 ? 'diff-positive' : 'diff-zero');
+                        cells += `<td class="${cls}">${formatMoney(exp)}</td>`;
+                    });
+                    cells += `<td><strong>${formatMoney(shiftTotal)}</strong></td>`;
+                    expectedRows += `<tr>${cells}</tr>`;
+                    grandTotal += shiftTotal;
+                });
+
+                let resultHtml = `
+                <div class="table-responsive mb-4">
+                  <h6>1. Meter Readings (Start / End) per Shift</h6>
+                  <table class="table table-sm table-bordered">
+                    <thead>
+                      <tr><th>Shift</th>
+                        ${productList.map(p => `<th colspan="2">${p}</th>`).join('')}
+                      </tr>
+                      <tr><th></th>
+                        ${productList.map(p => `<th>Start</th><th>End</th>`).join('')}
+                      </tr>
+                    </thead>
+                    <tbody>${meterRows}</tbody>
+                  </table>
+                </div>
+
+                <div class="table-responsive mb-4">
+                  <h6>2. Quantities Sold (Difference = Start − End) per Shift</h6>
+                  <p class="text-muted small">Positive values indicate fuel sold (start higher than end).</p>
+                  <table class="table table-sm table-bordered">
+                    <thead><tr><th>Shift</th>${productList.map(p => `<th>${p} (L)</th>`).join('')}</tr></thead>
+                    <tbody>${diffRows}</tbody>
+                  </table>
+                </div>
+
+                <div class="table-responsive mb-4">
+                  <h6>3. Selling Price per Litre</h6>
+                  <table class="table table-sm table-bordered">
+                    <thead><tr><th>Product</th>${productList.map(p => `<th>${p}</th>`).join('')}</tr></thead>
+                    <tbody>${priceRow}</tbody>
+                  </table>
+                </div>
+
+                <div class="table-responsive mb-4">
+                  <h6>4. Expected Cash per Shift (Qty × Price)</h6>
+                  <table class="table table-sm table-bordered">
+                    <thead><tr><th>Shift</th>${productList.map(p => `<th>${p}</th>`).join('')}<th>Total</th></tr></thead>
+                    <tbody>${expectedRows}</tbody>
+                    <tfoot>
+                      <tr class="table-secondary fw-bold">
+                        <td colspan="${productList.length + 1}" class="text-end">Grand Total Expected:</td>
+                        <td>${formatMoney(grandTotal)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+
+                <hr>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-bold">Actual Cash Presented by Cashier</label>
+                    <input type="number" id="actualCashInput" class="form-control" step="100" min="0" placeholder="Enter amount in UGX">
+                  </div>
+                  <div class="col-md-6 d-flex align-items-end">
+                    <button class="btn btn-success w-100" id="saveReconciliationBtn"><i class="bi bi-save"></i> Save Reconciliation</button>
+                  </div>
+                </div>
+                <div id="reconciliationResult" class="mt-3"></div>
+              `;
+
+                $('#balancingResult').innerHTML = resultHtml;
+
+                document.getElementById('actualCashInput').oninput = function() {
+                    const actual = parseFloat(this.value) || 0;
+                    const diff = actual - grandTotal;
+                    const resultDiv = document.getElementById('reconciliationResult');
+                    if (isNaN(actual) || actual === 0) {
+                        resultDiv.innerHTML = '';
+                        return;
+                    }
+                    let comment = '', cls = '';
+                    if (Math.abs(diff) < 1) {
+                        comment = 'Accurate';
+                        cls = 'diff-zero';
+                    } else if (diff < 0) {
+                        comment = 'Shortage';
+                        cls = 'diff-negative';
+                    } else {
+                        comment = 'Excess';
+                        cls = 'diff-positive';
+                    }
+                    const sign = diff >= 0 ? '+' : '';
+                    resultDiv.innerHTML = `
+                      <div class="alert alert-secondary">
+                        <strong>Preview:</strong><br>
+                        Expected: ${formatMoney(grandTotal)}<br>
+                        Actual: ${formatMoney(actual)}<br>
+                        <span class="${cls}">Difference: ${sign}${formatMoney(diff)} (${comment})</span>
+                      </div>
+                    `;
+                };
+
+                document.getElementById('saveReconciliationBtn').onclick = async function() {
+                    const actual = parseFloat(document.getElementById('actualCashInput').value);
+                    if (isNaN(actual) || actual < 0) {
+                        toast('Please enter a valid amount', 'warning');
+                        return;
+                    }
+                    const diff = actual - grandTotal;
+                    let comment = '';
+                    if (Math.abs(diff) < 1) comment = 'Accurate';
+                    else if (diff < 0) comment = 'Shortage';
+                    else comment = 'Excess';
+
                     try {
                         await addDoc('reconciliations', {
-                            shift_id: shiftId,
-                            cash_actual: cash,
-                            mobile_actual: mobile,
-                            credit_actual: credit,
-                            reconciled_by: state.user.id
+                            station_id: stationId,
+                            cashier_id: cashierId,
+                            date_from: fromDate,
+                            date_to: toDate,
+                            expected_total: grandTotal,
+                            actual_cash: actual,
+                            difference: diff,
+                            comment: comment,
+                            reconciled_by: state.user.id,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        await logAudit('reconcile_shift', { shift: shiftId, cash, mobile, credit });
-                        toast('Reconciliation saved');
-                        renderBalancing();
+                        const resultDiv = document.getElementById('reconciliationResult');
+                        const sign = diff >= 0 ? '+' : '';
+                        const cls = Math.abs(diff) < 1 ? 'diff-zero' : (diff < 0 ? 'diff-negative' : 'diff-positive');
+                        resultDiv.innerHTML = `
+                        <div class="alert alert-info">
+                          <strong>Reconciliation saved!</strong><br>
+                          Expected: ${formatMoney(grandTotal)}<br>
+                          Actual: ${formatMoney(actual)}<br>
+                          <span class="${cls}">Difference: ${sign}${formatMoney(diff)} (${comment})</span>
+                        </div>
+                      `;
+                        toast('Reconciliation saved successfully', 'success');
                     } catch (err) {
-                        toast('Error: ' + err.message, 'danger');
-                        btn.disabled = false;
-                        btn.textContent = 'Save';
+                        toast('Error saving reconciliation: ' + err.message, 'danger');
                     }
                 };
-            });
+            };
         }
+        console.log('Part 6 loaded – Balancing with Start − End');
+    </script>
 
-        // ========== INVENTORY with ADD ITEM ==========
+    <!-- PART 7: INVENTORY, STOCK, ADJUSTMENTS -->
+    <script>
+        // ----- INVENTORY (with Add Item) -----
         async function renderInventory() {
             const inv = (await getAll('inventory'))
                 .filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
@@ -1982,7 +2466,6 @@
             html += '</tbody></table></div></div>';
             $('#pageContent').innerHTML = html;
 
-            // Add inventory item
             const addBtn = $('#invAddBtn');
             if (addBtn) {
                 addBtn.onclick = async function() {
@@ -2059,7 +2542,7 @@
             }
         }
 
-        // ----- OFFLOADING (Stock) -----
+        // ----- STOCK (Offloading) -----
         async function renderStock() {
             const stock = (await getAll('stock'))
                 .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
@@ -2543,12 +3026,12 @@
             }
         }
 
-        console.log('Part 6 loaded');
+        console.log('Part 7 loaded');
     </script>
+
+    <!-- PART 8: USERS, ACTIVITY, FINANCIALS, CUSTOMERS, RECEIPTS -->
     <script>
-        // ============================================================
-        // Part 7a: Users – with self password change
-        // ============================================================
+        // ----- USERS (with self password change) -----
         async function renderUsers() {
             if (!canManageUsers(state.user.role)) {
                 $('#pageContent').innerHTML =
@@ -2562,8 +3045,7 @@
             });
 
             let html = '<div class="row g-4">';
-
-            // Change My Password section
+            // Change My Password
             html += `
             <div class="col-lg-12">
               <div class="card-box mb-3">
@@ -2591,7 +3073,7 @@
               </div>
             </div>`;
 
-            // Add New User form
+            // Add User
             html += `
             <div class="col-lg-4">
               <div class="card-box">
@@ -2650,7 +3132,7 @@
             html += '</tbody></table></div></div></div></div>';
             $('#pageContent').innerHTML = html;
 
-            // --- Change Password handler ---
+            // Change Password handler
             $('#changePasswordForm').onsubmit = async function(e) {
                 e.preventDefault();
                 const oldPass = $('#oldPass').value;
@@ -2695,7 +3177,7 @@
                 }
             };
 
-            // --- Rest of user management (unchanged) ---
+            // User create/edit/delete/reset
             $('#userForm').onsubmit = async function(e) {
                 e.preventDefault();
                 $('#userResult').innerHTML = '';
@@ -2714,9 +3196,9 @@
                         submitBtn.textContent = 'Create User';
                         return;
                     }
-                    const existing = await getAll('users');
-                    if (existing.some(u => u.username === username)) {
-                        toast('Username already exists', 'warning');
+                    const existing = await db.collection('users').where('username', '==', username).get();
+                    if (!existing.empty) {
+                        toast('Username already exists. Please choose another.', 'warning');
                         submitBtn.disabled = false;
                         submitBtn.textContent = 'Create User';
                         return;
@@ -2817,7 +3299,7 @@
             });
         }
 
-        // ---- Activity Log ----
+        // ----- ACTIVITY LOG -----
         async function renderActivityLog() {
             if (!canManageUsers(state.user.role)) {
                 $('#pageContent').innerHTML =
@@ -2886,16 +3368,9 @@
                 }
             };
         }
-
         async function renderActivity() { return renderActivityLog(); }
 
-        console.log('Part 7 loaded');
-    </script>
-    <script>
-        // ============================================================
-        // Part 7b: Financials, Customers, Receipts
-        // ============================================================
-
+        // ----- FINANCIALS -----
         async function renderFinancials() {
             const accounts = await getAll('bank_accounts');
             const bankings = (await getAll('bankings'))
@@ -3144,7 +3619,7 @@
             };
         }
 
-        // ---- Receipts ----
+        // ----- RECEIPTS -----
         async function renderReceipts() {
             const sales = (await getAll('sales'))
                 .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
@@ -3233,7 +3708,7 @@
             });
         }
 
-        // ---- Customers ----
+        // ----- CUSTOMERS -----
         async function renderCustomers() {
             const customers = await getAll('customers');
             const sales = await getAll('sales');
@@ -3363,12 +3838,11 @@
             };
         }
 
-        console.log('Part 7b loaded');
+        console.log('Part 8 loaded');
     </script>
+
+    <!-- PART 9: REPORTS -->
     <script>
-        // ============================================================
-        // Part 8: Reports (full)
-        // ============================================================
         async function renderReports() {
             const inv = await getAll('inventory');
             const sales = await getAll('sales');
@@ -3379,6 +3853,7 @@
             const stock = await getAll('stock');
             const adjustments = await getAll('adjustments');
             const users = await getAll('users');
+            const accounts = await getAll('bank_accounts');
 
             const today = new Date();
             const thirtyDaysAgo = new Date(today);
@@ -3407,6 +3882,8 @@
                 '<option value="stock">Offloading</option>' +
                 '<option value="adjustments">Adjustments</option>' +
                 '<option value="eop">End of Procedure (per Station)</option>' +
+                '<option value="cashier_performance">Cashier Performance</option>' +
+                '<option value="deposits">Deposits (Bankings)</option>' +
                 '</select></div>' +
                 '<div class="col-md-2"><label class="form-label">Station</label>' +
                 '<select id="rptStation" class="form-select form-select-sm">' + stationOpts + '</select></div>' +
@@ -3419,7 +3896,9 @@
                 '<option value="">All Products</option>' +
                 '<option value="Petrol">Petrol</option>' +
                 '<option value="Diesel">Diesel</option>' +
-                '<option value="Gas">Gas</option></select></div>' +
+                '<option value="Gas">Gas</option>' +
+                '<option value="Paraffin">Paraffin</option>' +
+                '</select></div>' +
                 '<div class="col-md-2"><label class="form-label">Search</label>' +
                 '<input type="text" id="rptSearch" class="form-control form-control-sm" placeholder="Search..."></div>' +
                 '<div class="col-md-12 d-flex gap-2 mt-2">' +
@@ -3483,37 +3962,97 @@
                 return tableHtml;
             }
 
+            // SALES SUMMARY (product-wise)
             function genSales(f) {
                 const data = filterByCommon(sales, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
-                let totalQty = 0, totalAmt = 0;
-                const headers = ['Station', 'Cashier', 'Product', 'Qty (L)', 'Unit Price', 'Amount', 'Discount', 'Payment', 'Status', 'Date'];
+                let totalPetrol = 0, totalDiesel = 0, totalGas = 0, totalParaffin = 0;
+                let totalAmt = 0;
+                const headers = ['Station', 'Cashier', 'Petrol (L)', 'Diesel (L)', 'Gas (L)', 'Paraffin (L)', 'Total Qty (L)', 'Total Amount', 'Discount', 'Payment', 'Status', 'Date'];
                 const rows = [];
                 data.forEach(s => {
                     const qty = Number(s.quantity) || 0;
                     const amt = Number(s.amount) || 0;
                     const isRev = s.status === 'reversed';
-                    if (!isRev) { totalQty += qty; totalAmt += amt; }
+                    const product = s.product_type || '';
+                    let petrol = 0, diesel = 0, gas = 0, paraffin = 0;
+                    if (product === 'Petrol') petrol = qty;
+                    else if (product === 'Diesel') diesel = qty;
+                    else if (product === 'Gas') gas = qty;
+                    else if (product === 'Paraffin') paraffin = qty;
+                    if (!isRev) {
+                        totalPetrol += petrol;
+                        totalDiesel += diesel;
+                        totalGas += gas;
+                        totalParaffin += paraffin;
+                        totalAmt += amt;
+                    }
                     const cashier = users.find(u => u.id === s.recorded_by);
                     const cashierName = cashier ? (cashier.name || cashier.username) : '—';
                     rows.push([
-                        stationName(s.station_id), cashierName, s.product_type || '—', qty.toFixed(2),
-                        formatMoney(s.selling_price || 0), formatMoney(amt),
-                        s.discount ? formatMoney(s.discount) : '—', s.payment_method || 'cash',
-                        isRev ? 'REVERSED' : 'Active', formatDate(s.sale_date || s.created_at)
+                        stationName(s.station_id), cashierName,
+                        petrol.toFixed(2), diesel.toFixed(2), gas.toFixed(2), paraffin.toFixed(2),
+                        qty.toFixed(2),
+                        formatMoney(amt),
+                        s.discount ? formatMoney(s.discount) : '—',
+                        s.payment_method || 'cash',
+                        isRev ? 'REVERSED' : 'Active',
+                        formatDate(s.sale_date || s.created_at)
                     ]);
                 });
                 let body = '<div class="d-flex justify-content-between align-items-center mb-3">' +
                     '<h5 class="mb-0">Sales Summary <span class="badge bg-primary">' + data.length + '</span></h5>' +
                     '<div class="text-end"><div class="fw-bold">' + formatMoney(totalAmt) +
-                    '</div><small class="text-muted">' + totalQty.toFixed(2) + ' L total (excl. reversed)</small></div></div>';
+                    '</div><small class="text-muted">Petrol: ' + totalPetrol.toFixed(2) + 'L | Diesel: ' + totalDiesel.toFixed(2) +
+                    'L | Gas: ' + totalGas.toFixed(2) + 'L | Paraffin: ' + totalParaffin.toFixed(2) + 'L</small></div></div>';
                 body += regenerateTable(headers, rows);
                 if (data.length > 0) {
                     body += '<div class="mt-3"><strong>Grand Total (excl. reversed):</strong> ' + formatMoney(totalAmt) +
-                        ' | <strong>Total Qty:</strong> ' + totalQty.toFixed(2) + ' L</div>';
+                        ' | <strong>Total Qty:</strong> ' + (totalPetrol + totalDiesel + totalGas + totalParaffin).toFixed(2) + ' L' +
+                        ' (Petrol: ' + totalPetrol.toFixed(2) + 'L, Diesel: ' + totalDiesel.toFixed(2) +
+                        'L, Gas: ' + totalGas.toFixed(2) + 'L, Paraffin: ' + totalParaffin.toFixed(2) + 'L)</div>';
                 }
                 return { html: body, headers: headers, rows: rows, filename: 'sales_report' };
             }
 
+            // DEPOSITS
+            function genDeposits(f) {
+                const data = bankings.filter(b => {
+                    if (f.stationId && Number(b.station_id) !== f.stationId) return false;
+                    if (b.created_at && !dateInRange(b.created_at, f.from, f.to)) return false;
+                    return true;
+                }).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+
+                let total = 0;
+                const headers = ['Source', 'Destination Account', 'Depositor', 'Amount', 'Date'];
+                const rows = [];
+                data.forEach(b => {
+                    const amount = Number(b.amount) || 0;
+                    total += amount;
+                    let sourceLabel = 'Unknown';
+                    if (b.source_account === 'cash_till') sourceLabel = 'Cash Till';
+                    else if (b.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
+                    else {
+                        const srcAcc = accounts.find(a => a.id === b.source_account);
+                        if (srcAcc) sourceLabel = srcAcc.bank_name + ' (' + srcAcc.account_number + ')';
+                    }
+                    const destAcc = accounts.find(a => a.id === b.bank_account_id);
+                    const destLabel = destAcc ? destAcc.bank_name + ' (' + destAcc.account_number + ')' : '—';
+                    rows.push([
+                        sourceLabel,
+                        destLabel,
+                        b.depositor || '—',
+                        formatMoney(amount),
+                        formatDate(b.created_at)
+                    ]);
+                });
+                let body = '<div class="d-flex justify-content-between mb-3">' +
+                    '<h5 class="mb-0">Deposits (Bankings) <span class="badge bg-info">' + data.length + '</span></h5>' +
+                    '<div class="fw-bold">Total Deposited: ' + formatMoney(total) + '</div></div>';
+                body += regenerateTable(headers, rows);
+                return { html: body, headers: headers, rows: rows, filename: 'deposits_report' };
+            }
+
+            // PROFIT
             function genProfit(f) {
                 const data = filterByCommon(sales, f).filter(s => s.status !== 'reversed');
                 let totalRev = 0, totalCost = 0, totalQty = 0;
@@ -3551,6 +4090,7 @@
                 return { html: body, headers: headers, rows: rows, filename: 'profit_report' };
             }
 
+            // INVENTORY
             function genInventory(f) {
                 const data = inv.filter(i => {
                     if (f.stationId && Number(i.station_id) !== f.stationId) return false;
@@ -3578,25 +4118,27 @@
                 return { html: body, headers: headers, rows: rows, filename: 'inventory_report' };
             }
 
+            // SHIFTS
             function genShifts(f) {
                 const data = shifts.filter(s => {
                     if (f.stationId && Number(s.station_id) !== f.stationId) return false;
                     if (s.created_at && !dateInRange(s.created_at, f.from, f.to)) return false;
                     return true;
                 }).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
-                const headers = ['Station', 'Cashier', 'Type', 'Status', 'Start P/D/G', 'End P/D/G', 'Sold P/D/G', 'Date'];
+                const headers = ['Station', 'Cashier', 'Type', 'Status', 'Start P/D/G/Pf', 'End P/D/G/Pf', 'Sold P/D/G/Pf', 'Date'];
                 const rows = [];
                 data.forEach(s => {
                     const cashier = users.find(u => u.id === s.cashier_id);
                     const name = cashier ? (cashier.name || cashier.username) : '—';
-                    const start = (s.start_petrol || 0) + '/' + (s.start_diesel || 0) + '/' + (s.start_gas || 0);
-                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + '/' + (s.end_diesel || 0) + '/' + (s.end_gas || 0)) : '—';
-                    const soldP = s.status === 'closed' ? Math.max(0, (s.end_petrol || 0) - (s.start_petrol || 0)).toFixed(1) : '—';
-                    const soldD = s.status === 'closed' ? Math.max(0, (s.end_diesel || 0) - (s.start_diesel || 0)).toFixed(1) : '—';
-                    const soldG = s.status === 'closed' ? Math.max(0, (s.end_gas || 0) - (s.start_gas || 0)).toFixed(1) : '—';
+                    const start = (s.start_petrol || 0) + '/' + (s.start_diesel || 0) + '/' + (s.start_gas || 0) + '/' + (s.start_paraffin || 0);
+                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + '/' + (s.end_diesel || 0) + '/' + (s.end_gas || 0) + '/' + (s.end_paraffin || 0)) : '—';
+                    const soldP = s.status === 'closed' ? Math.max(0, (s.start_petrol || 0) - (s.end_petrol || 0)).toFixed(1) : '—';
+                    const soldD = s.status === 'closed' ? Math.max(0, (s.start_diesel || 0) - (s.end_diesel || 0)).toFixed(1) : '—';
+                    const soldG = s.status === 'closed' ? Math.max(0, (s.start_gas || 0) - (s.end_gas || 0)).toFixed(1) : '—';
+                    const soldPf = s.status === 'closed' ? Math.max(0, (s.start_paraffin || 0) - (s.end_paraffin || 0)).toFixed(1) : '—';
                     rows.push([
                         stationName(s.station_id), name, s.shift_type, s.status, start, end,
-                        soldP + '/' + soldD + '/' + soldG, formatDate(s.created_at)
+                        soldP + '/' + soldD + '/' + soldG + '/' + soldPf, formatDate(s.created_at)
                     ]);
                 });
                 let body = '<div class="d-flex justify-content-between mb-3">' +
@@ -3605,6 +4147,7 @@
                 return { html: body, headers: headers, rows: rows, filename: 'shifts_report' };
             }
 
+            // RECONCILIATION
             function genReconciliation(f) {
                 let closed = shifts.filter(s => s.status === 'closed');
                 if (f.stationId) closed = closed.filter(s => Number(s.station_id) === f.stationId);
@@ -3612,13 +4155,15 @@
                 const headers = ['Station', 'Shift', 'Date', 'Expected', 'Cash', 'Mobile', 'Credit', 'Total Actual', 'Difference', 'Status'];
                 const rows = [];
                 closed.forEach(s => {
-                    const petrolSold = Math.max(0, (s.end_petrol || 0) - (s.start_petrol || 0));
-                    const dieselSold = Math.max(0, (s.end_diesel || 0) - (s.start_diesel || 0));
-                    const gasSold = Math.max(0, (s.end_gas || 0) - (s.start_gas || 0));
+                    const petrolSold = Math.max(0, (s.start_petrol || 0) - (s.end_petrol || 0));
+                    const dieselSold = Math.max(0, (s.start_diesel || 0) - (s.end_diesel || 0));
+                    const gasSold = Math.max(0, (s.start_gas || 0) - (s.end_gas || 0));
+                    const paraffinSold = Math.max(0, (s.start_paraffin || 0) - (s.end_paraffin || 0));
                     const pPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Petrol') || {}).selling_price || 0;
                     const dPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Diesel') || {}).selling_price || 0;
                     const gPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Gas') || {}).selling_price || 0;
-                    const expected = petrolSold * pPrice + dieselSold * dPrice + gasSold * gPrice;
+                    const pfPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Paraffin') || {}).selling_price || 0;
+                    const expected = petrolSold * pPrice + dieselSold * dPrice + gasSold * gPrice + paraffinSold * pfPrice;
                     const recon = recons.find(r => r.shift_id === s.id);
                     const cash = recon ? (recon.cash_actual || 0) : 0;
                     const mobile = recon ? (recon.mobile_actual || 0) : 0;
@@ -3636,6 +4181,7 @@
                 return { html: body, headers: headers, rows: rows, filename: 'reconciliation_report' };
             }
 
+            // EXPENSES
             function genExpenses(f) {
                 const data = filterByCommon(expenses, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
                 let total = 0;
@@ -3656,6 +4202,7 @@
                 return { html: body, headers: headers, rows: rows, filename: 'expenses_report' };
             }
 
+            // STOCK
             function genStock(f) {
                 const data = stock.filter(s => {
                     if (f.stationId && Number(s.station_id) !== f.stationId) return false;
@@ -3683,6 +4230,7 @@
                 return { html: body, headers: headers, rows: rows, filename: 'offloading_report' };
             }
 
+            // ADJUSTMENTS
             function genAdjustments(f) {
                 const data = filterByCommon(adjustments, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
                 const headers = ['Station', 'Product', 'Type', 'Change', 'Reason', 'Date'];
@@ -3720,6 +4268,7 @@
                 return { html: body, headers: headers, rows: rows, filename: 'adjustments_report' };
             }
 
+            // EOP
             function genEOP(f) {
                 const stationsToReport = f.stationId ?
                     state.stations.filter(s => Number(s.id) === f.stationId) :
@@ -3828,6 +4377,64 @@
                 return { html: body, headers: allHeaders, rows: allRows, filename: 'end_of_procedure_report' };
             }
 
+            // CASHIER PERFORMANCE
+            function genCashierPerformance(f) {
+                const data = recons.filter(r => {
+                    if (f.stationId && Number(r.station_id) !== f.stationId) return false;
+                    if (r.timestamp && !dateInRange(r.timestamp, f.from, f.to)) return false;
+                    return true;
+                });
+
+                const grouped = {};
+                data.forEach(r => {
+                    const cid = r.cashier_id;
+                    if (!grouped[cid]) {
+                        grouped[cid] = {
+                            cashierId: cid,
+                            totalShortage: 0,
+                            totalExcess: 0,
+                            count: 0
+                        };
+                    }
+                    const diff = Number(r.difference) || 0;
+                    if (diff < 0) grouped[cid].totalShortage += diff;
+                    else grouped[cid].totalExcess += diff;
+                    grouped[cid].count += 1;
+                });
+
+                const headers = ['Cashier', 'Total Shortage', 'Total Excess', 'Net Difference', 'Reconciliations', 'Status'];
+                const rows = [];
+                Object.keys(grouped).forEach(cid => {
+                    const g = grouped[cid];
+                    const net = g.totalShortage + g.totalExcess;
+                    const user = users.find(u => u.id === cid);
+                    const name = user ? (user.name || user.username) : 'Unknown';
+                    let status = 'Balanced';
+                    if (net < 0) status = '⚠️ Shortage (deduct from salary)';
+                    else if (net > 0) status = '✅ Excess';
+                    else status = '✅ Accurate';
+                    rows.push([
+                        name,
+                        formatMoney(Math.abs(g.totalShortage)),
+                        formatMoney(g.totalExcess),
+                        formatMoney(net),
+                        g.count,
+                        status
+                    ]);
+                });
+
+                if (rows.length === 0) {
+                    rows.push(['No reconciliations found', '', '', '', '', '']);
+                }
+
+                let body = '<div class="d-flex justify-content-between mb-3">' +
+                    '<h5 class="mb-0">Cashier Performance <span class="badge bg-info">' + data.length + ' reconciliations</span></h5>' +
+                    '</div>';
+                body += regenerateTable(headers, rows);
+                return { html: body, headers: headers, rows: rows, filename: 'cashier_performance' };
+            }
+
+            // MAIN
             let lastReport = null;
 
             function runReport() {
@@ -3843,6 +4450,8 @@
                     case 'stock': result = genStock(f); break;
                     case 'adjustments': result = genAdjustments(f); break;
                     case 'eop': result = genEOP(f); break;
+                    case 'cashier_performance': result = genCashierPerformance(f); break;
+                    case 'deposits': result = genDeposits(f); break;
                     default: result = { html: '<div class="alert alert-info">Unknown report type</div>', headers: [], rows: [], filename: 'report' };
                 }
                 if (f.search && result.rows && result.rows.length > 0 && f.type !== 'eop') {
@@ -3900,12 +4509,11 @@
             runReport();
         }
 
-        console.log('Part 8 loaded');
+        console.log('Part 9 loaded');
     </script>
+
+    <!-- PART 10: COMPANY PROFILE & ALL COMPANIES -->
     <script>
-        // ============================================================
-        // Part 9: Company Profile (full)
-        // ============================================================
         async function renderCompanyProfile() {
             const companyId = state.user.companyId;
             if (!companyId) {
@@ -4015,7 +4623,6 @@
 
                 $('#pageContent').innerHTML = html;
 
-                // ---- Company Edit ----
                 $('#companyEditForm').onsubmit = async function(e) {
                     e.preventDefault();
                     const data = {
@@ -4040,7 +4647,6 @@
                     }
                 };
 
-                // ---- Backup ----
                 $('#backupDownloadBtn').onclick = async function() {
                     try {
                         await downloadCompanyBackup();
@@ -4072,7 +4678,6 @@
                     reader.readAsText(file);
                 };
 
-                // ---- Station Add ----
                 $('#stationForm').onsubmit = async function(e) {
                     e.preventDefault();
                     const name = $('#stationNameInput').value.trim();
@@ -4094,7 +4699,6 @@
                     }
                 };
 
-                // ---- Station Delete ----
                 document.querySelectorAll('.delete-station-btn').forEach(btn => {
                     btn.onclick = async function() {
                         const id = this.dataset.id;
@@ -4122,7 +4726,6 @@
             }
         }
 
-        // ---- All Companies (super_admin only) ----
         async function renderAllCompanies() {
             if (roleNorm(state.user.role) !== 'super_admin') {
                 $('#pageContent').innerHTML = '<div class="alert alert-danger">Access denied</div>';
@@ -4137,7 +4740,132 @@
             $('#pageContent').innerHTML = html;
         }
 
-        console.log('Part 9 loaded');
+        console.log('Part 10 loaded');
+    </script>
+
+    <!-- PART 11: MESSAGES (real-time chat) -->
+    <script>
+        async function renderMessages() {
+            const currentUser = state.user;
+            if (!currentUser) {
+                $('#pageContent').innerHTML = '<div class="alert alert-danger">You must be logged in.</div>';
+                return;
+            }
+
+            const users = state.allUsers.filter(u => u.id !== currentUser.id && u.active !== false);
+            let recipientOptions = '<option value="all">Everyone</option>';
+            users.forEach(u => {
+                recipientOptions += `<option value="${u.id}">${u.name || u.username}</option>`;
+            });
+
+            let html = `
+            <div class="card-box">
+              <h5 class="mb-3"><i class="bi bi-chat-dots"></i> Company Chat</h5>
+              <div id="chatMessages" class="chat-messages mb-3" style="max-height:400px; overflow-y:auto;">
+                <div class="text-muted text-center">Loading messages...</div>
+              </div>
+              <form id="chatForm" class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label small">Send to</label>
+                  <select id="chatRecipient" class="form-select form-select-sm">${recipientOptions}</select>
+                </div>
+                <div class="col-md-7">
+                  <label class="form-label small">Message</label>
+                  <input type="text" id="chatInput" class="form-control form-control-sm" placeholder="Type your message..." required>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-send"></i> Send</button>
+                </div>
+              </form>
+            </div>`;
+
+            $('#pageContent').innerHTML = html;
+
+            const companyId = currentUser.companyId;
+            const messagesRef = db.collection('messages')
+                .where('companyId', '==', companyId)
+                .orderBy('timestamp', 'asc');
+
+            let unsubscribe = null;
+
+            function renderMessagesList(snapshot) {
+                const container = document.getElementById('chatMessages');
+                if (!container) return;
+                if (snapshot.empty) {
+                    container.innerHTML = '<div class="text-muted text-center">No messages yet. Start the conversation!</div>';
+                    return;
+                }
+                let msgs = '';
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const senderName = data.senderName || 'Unknown';
+                    const recipient = data.recipientId;
+                    let recipientLabel = '';
+                    if (recipient === 'all') recipientLabel = ' (to Everyone)';
+                    else if (recipient === currentUser.id) recipientLabel = ' (to you)';
+                    else if (data.senderId === currentUser.id && recipient !== 'all') {
+                        const rec = state.allUsers.find(u => u.id === recipient);
+                        recipientLabel = ` (to ${rec ? (rec.name || rec.username) : 'Unknown'})`;
+                    }
+                    const isMine = data.senderId === currentUser.id;
+                    const time = data.timestamp ? formatDateTime(data.timestamp) : '';
+                    msgs += `
+                    <div class="chat-message ${isMine ? 'sent' : ''}">
+                      <div class="sender">${senderName}${recipientLabel} <span class="time">${time}</span></div>
+                      <div>${data.content}</div>
+                    </div>
+                  `;
+                });
+                container.innerHTML = msgs;
+                container.scrollTop = container.scrollHeight;
+            }
+
+            unsubscribe = messagesRef.onSnapshot((snapshot) => {
+                renderMessagesList(snapshot);
+            }, (error) => {
+                console.error('Chat listener error:', error);
+                toast('Error loading messages: ' + error.message, 'danger');
+            });
+
+            const chatForm = document.getElementById('chatForm');
+            chatForm.onsubmit = async function(e) {
+                e.preventDefault();
+                const input = document.getElementById('chatInput');
+                const content = input.value.trim();
+                if (!content) return;
+                const recipient = document.getElementById('chatRecipient').value;
+                input.value = '';
+                try {
+                    await addDoc('messages', {
+                        companyId: companyId,
+                        senderId: currentUser.id,
+                        senderName: currentUser.name || currentUser.username || 'User',
+                        recipientId: recipient,
+                        content: content,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch (err) {
+                    toast('Failed to send message: ' + err.message, 'danger');
+                }
+            };
+
+            if (window._chatUnsubscribe) {
+                window._chatUnsubscribe();
+                window._chatUnsubscribe = null;
+            }
+            window._chatUnsubscribe = unsubscribe;
+        }
+
+        const originalRenderPage = renderPage;
+        renderPage = async function(page) {
+            if (page !== 'messages' && window._chatUnsubscribe) {
+                window._chatUnsubscribe();
+                window._chatUnsubscribe = null;
+            }
+            await originalRenderPage(page);
+        };
+
+        console.log('Part 11 loaded');
     </script>
 </body>
 </html>
