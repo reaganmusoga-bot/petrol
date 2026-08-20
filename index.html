@@ -21,44 +21,251 @@
             --bg: #f0f2f6;
             --sidebar-bg: #0b1a33;
         }
-        * { box-sizing: border-box; }
-        body { background: var(--bg); font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; }
-        .sidebar { position: fixed; top: 0; left: 0; width: var(--sidebar-w); height: 100vh; height: 100dvh; background: var(--sidebar-bg); color: #b0c4de; z-index: 1050; display: flex; flex-direction: column; transition: transform .3s; overflow: hidden; }
-        .sidebar-brand { padding: 18px 20px; font-size: 1.25rem; font-weight: 700; color: #fff; background: rgba(255,255,255,.05); border-bottom: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
-        .sidebar-brand i { font-size: 1.7rem; color: #ffc107; }
-        #sidebarNav { flex: 1 1 0; overflow-y: auto !important; overflow-x: hidden; min-height: 0; max-height: 100%; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; padding-top: 8px; padding-bottom: 12px; }
-        #sidebarNav::-webkit-scrollbar { width: 6px; }
-        #sidebarNav::-webkit-scrollbar-track { background: transparent; }
-        #sidebarNav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); border-radius: 3px; }
-        #sidebarNav::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
-        .sidebar .nav-link { color: #b0c4de; padding: 11px 20px; border-left: 3px solid transparent; display: flex; align-items: center; gap: 12px; font-weight: 500; cursor: pointer; flex-shrink: 0; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background: rgba(255,255,255,.07); color: #fff; border-left-color: #ffc107; }
-        .sidebar .nav-link i { width: 22px; font-size: 1.15rem; }
-        .sidebar-footer { margin-top: 0; padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.07); font-size: .85rem; flex: 0 0 auto; background: var(--sidebar-bg); }
-        .main-content { margin-left: var(--sidebar-w); min-height: 100vh; }
-        .top-header { height: var(--header-h); background: #fff; border-bottom: 1px solid #e9ecef; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1040; }
-        .page-title { font-weight: 600; font-size: 1.15rem; color: #1a2a4a; }
-        .page-content { padding: 22px 24px; }
-        .card-box { background: #fff; border-radius: 12px; padding: 18px 20px; border: 1px solid #eef0f3; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
-        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 20px; }
-        .stat-item { background: #fff; border-radius: 12px; padding: 16px; border: 1px solid #eef0f3; display: flex; align-items: center; gap: 14px; }
-        .stat-item .icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.25rem; }
-        .stat-item .num { font-size: 1.4rem; font-weight: 700; color: #1a2a4a; }
-        .stat-item .lbl { font-size: .8rem; color: #6c7a8e; }
-        .hero { background: linear-gradient(135deg, #0b1a33, #1a3a6a); border-radius: 14px; padding: 24px 28px; color: #fff; margin-bottom: 20px; }
-        .hero .company { font-size: 1.55rem; font-weight: 700; color: #ffc107; }
-        .hero .tag { opacity: .85; font-size: .9rem; }
-        .hero .details { display: flex; flex-wrap: wrap; gap: 14px 26px; margin-top: 10px; font-size: .87rem; }
-        .hero .details i { color: #ffc107; }
-        .badge-day { background: #fff3cd; color: #856404; padding: 3px 11px; border-radius: 20px; font-size: .71rem; font-weight: 600; }
-        .badge-night { background: #d1ecf1; color: #0c5460; padding: 3px 11px; border-radius: 20px; font-size: .71rem; font-weight: 600; }
-        .badge-active { background: #d4edda; color: #155724; padding: 2px 10px; border-radius: 20px; font-size: .7rem; font-weight: 600; }
-        .badge-closed { background: #f8d7da; color: #721c24; padding: 2px 10px; border-radius: 20px; font-size: .7rem; font-weight: 600; }
-        .product-badge { padding: 2px 10px; border-radius: 12px; font-size: .72rem; font-weight: 600; }
-        .product-badge.petrol { background: #cfe2ff; color: #084298; }
-        .product-badge.diesel { background: #f8d7da; color: #58151c; }
-        .product-badge.gas { background: #d1ecf1; color: #0c5460; }
-        .product-badge.paraffin { background: #e2d9f3; color: #4a2d7a; }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-w);
+            height: 100vh;
+            height: 100dvh;
+            background: var(--sidebar-bg);
+            color: #b0c4de;
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            transition: transform .3s;
+            overflow: hidden;
+        }
+        .sidebar-brand {
+            padding: 18px 20px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fff;
+            background: rgba(255, 255, 255, .05);
+            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 0 0 auto;
+        }
+        .sidebar-brand i {
+            font-size: 1.7rem;
+            color: #ffc107;
+        }
+        #sidebarNav {
+            flex: 1 1 0;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            min-height: 0;
+            max-height: 100%;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior: contain;
+            padding-top: 8px;
+            padding-bottom: 12px;
+        }
+        #sidebarNav::-webkit-scrollbar {
+            width: 6px;
+        }
+        #sidebarNav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #sidebarNav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 3px;
+        }
+        #sidebarNav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        .sidebar .nav-link {
+            color: #b0c4de;
+            padding: 11px 20px;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .sidebar .nav-link:hover,
+        .sidebar .nav-link.active {
+            background: rgba(255, 255, 255, .07);
+            color: #fff;
+            border-left-color: #ffc107;
+        }
+        .sidebar .nav-link i {
+            width: 22px;
+            font-size: 1.15rem;
+        }
+        .sidebar-footer {
+            margin-top: 0;
+            padding: 14px 18px;
+            border-top: 1px solid rgba(255, 255, 255, .07);
+            font-size: .85rem;
+            flex: 0 0 auto;
+            background: var(--sidebar-bg);
+        }
+        .main-content {
+            margin-left: var(--sidebar-w);
+            min-height: 100vh;
+        }
+        .top-header {
+            height: var(--header-h);
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1040;
+        }
+        .page-title {
+            font-weight: 600;
+            font-size: 1.15rem;
+            color: #1a2a4a;
+        }
+        .page-content {
+            padding: 22px 24px;
+        }
+        .card-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px 20px;
+            border: 1px solid #eef0f3;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .stat-item {
+            background: #fff;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #eef0f3;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .stat-item .icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.25rem;
+        }
+        .stat-item .num {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #1a2a4a;
+        }
+        .stat-item .lbl {
+            font-size: .8rem;
+            color: #6c7a8e;
+        }
+        .hero {
+            background: linear-gradient(135deg, #0b1a33, #1a3a6a);
+            border-radius: 14px;
+            padding: 24px 28px;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .hero .company {
+            font-size: 1.55rem;
+            font-weight: 700;
+            color: #ffc107;
+        }
+        .hero .tag {
+            opacity: .85;
+            font-size: .9rem;
+        }
+        .hero .details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 26px;
+            margin-top: 10px;
+            font-size: .87rem;
+        }
+        .hero .details i {
+            color: #ffc107;
+        }
+        .badge-day {
+            background: #fff3cd;
+            color: #856404;
+            padding: 3px 11px;
+            border-radius: 20px;
+            font-size: .71rem;
+            font-weight: 600;
+        }
+        .badge-night {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 3px 11px;
+            border-radius: 20px;
+            font-size: .71rem;
+            font-weight: 600;
+        }
+        .badge-active {
+            background: #d4edda;
+            color: #155724;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+        .badge-closed {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+        .badge-reconciled {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+        .product-badge {
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: .72rem;
+            font-weight: 600;
+        }
+        .product-badge.petrol {
+            background: #cfe2ff;
+            color: #084298;
+        }
+        .product-badge.diesel {
+            background: #f8d7da;
+            color: #58151c;
+        }
+        .product-badge.gas {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .product-badge.paraffin {
+            background: #e2d9f3;
+            color: #4a2d7a;
+        }
         .login-wrap {
             min-height: 100vh;
             display: flex;
@@ -80,31 +287,92 @@
             pointer-events: none;
         }
         .login-card {
-            background: rgba(255,255,255,0.9);
+            background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(10px);
             border-radius: 24px;
             padding: 40px 36px;
             max-width: 460px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06);
-            border: 1px solid rgba(255,255,255,0.5);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.5);
             position: relative;
             z-index: 1;
         }
-        .login-card .logo { text-align: center; margin-bottom: 28px; }
-        .login-card .logo i { font-size: 3.2rem; color: #ffc107; background: #0b1a33; padding: 16px; border-radius: 18px; box-shadow: 0 8px 20px rgba(11,26,51,0.2); }
-        .login-card .logo h4 { margin-top: 12px; font-weight: 700; color: #0b1a33; letter-spacing: -0.5px; }
-        .login-card .logo p { color: #6c7a8e; font-size: 0.9rem; margin-bottom: 0; }
-        .login-card .form-floating { margin-bottom: 16px; }
-        .login-card .form-floating>select { padding-top: 1.6rem; padding-bottom: 0.4rem; }
-        .login-card .form-floating>label { padding-left: 1rem; }
-        .login-card .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #6c7a8e; z-index: 10; cursor: pointer; }
-        .login-card .btn-primary { background: linear-gradient(135deg, #0b1a33, #1a3a6a); border: none; padding: 12px; font-weight: 600; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; }
-        .login-card .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(11,26,51,0.3); }
-        .login-card .btn-outline-warning { border-radius: 30px; padding: 4px 16px; font-size: 0.8rem; }
-        .login-card .btn-outline-secondary { border-radius: 30px; padding: 4px 16px; font-size: 0.8rem; }
-        .login-card .form-control:focus, .login-card .form-select:focus { border-color: #0b1a33; box-shadow: 0 0 0 0.25rem rgba(11,26,51,0.15); }
-        .login-card .form-floating>.form-control:focus~label, .login-card .form-floating>.form-select:focus~label { color: #0b1a33; }
+        .login-card .logo {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .login-card .logo i {
+            font-size: 3.2rem;
+            color: #ffc107;
+            background: #0b1a33;
+            padding: 16px;
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(11, 26, 51, 0.2);
+        }
+        .login-card .logo h4 {
+            margin-top: 12px;
+            font-weight: 700;
+            color: #0b1a33;
+            letter-spacing: -0.5px;
+        }
+        .login-card .logo p {
+            color: #6c7a8e;
+            font-size: 0.9rem;
+            margin-bottom: 0;
+        }
+        .login-card .form-floating {
+            margin-bottom: 16px;
+        }
+        .login-card .form-floating>select {
+            padding-top: 1.6rem;
+            padding-bottom: 0.4rem;
+        }
+        .login-card .form-floating>label {
+            padding-left: 1rem;
+        }
+        .login-card .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #6c7a8e;
+            z-index: 10;
+            cursor: pointer;
+        }
+        .login-card .btn-primary {
+            background: linear-gradient(135deg, #0b1a33, #1a3a6a);
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .login-card .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(11, 26, 51, 0.3);
+        }
+        .login-card .btn-outline-warning {
+            border-radius: 30px;
+            padding: 4px 16px;
+            font-size: 0.8rem;
+        }
+        .login-card .btn-outline-secondary {
+            border-radius: 30px;
+            padding: 4px 16px;
+            font-size: 0.8rem;
+        }
+        .login-card .form-control:focus,
+        .login-card .form-select:focus {
+            border-color: #0b1a33;
+            box-shadow: 0 0 0 0.25rem rgba(11, 26, 51, 0.15);
+        }
+        .login-card .form-floating>.form-control:focus~label,
+        .login-card .form-floating>.form-select:focus~label {
+            color: #0b1a33;
+        }
 
         /* --- Autocomplete dropdown styles --- */
         .autocomplete-wrapper {
@@ -123,7 +391,7 @@
             overflow-y: auto;
             z-index: 1060;
             display: none;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
             margin-top: -1px;
         }
         .autocomplete-dropdown .item {
@@ -156,43 +424,259 @@
             font-size: 0.9rem;
         }
 
-        .fs-xs { font-size: .78rem; }
-        .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,.75); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .spinner { width: 2.2rem; height: 2.2rem; border: .25em solid #0d6efd; border-right-color: transparent; border-radius: 50%; animation: spin .75s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 768px) { .sidebar { transform: translateX(-100%); } .sidebar.open { transform: translateX(0); } .main-content { margin-left: 0; } .sidebar-toggle { display: inline-block !important; } }
-        @media (min-width: 769px) { .sidebar-toggle { display: none !important; } }
-        .report-filter .form-label { font-weight: 600; font-size: 0.8rem; margin-bottom: 2px; }
-        .report-filter .form-control, .report-filter .form-select { font-size: 0.85rem; }
-        .table-report thead th { background: #f8f9fa; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .table-report td { font-size: 0.85rem; }
-        .profit-positive { color: #198754; font-weight: 700; }
-        .profit-negative { color: #dc3545; font-weight: 700; }
-        #offlineBanner { display: none; background: #dc3545; color: #fff; text-align: center; padding: 8px; font-size: 0.9rem; position: fixed; top: 0; left: 0; right: 0; z-index: 99999; }
-        body.offline #offlineBanner { display: block; }
-        body.offline .main-content { padding-top: 40px; }
-        .edit-inline { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-        .edit-inline input { width: 70px; padding: 2px 4px; font-size: 0.8rem; border: 1px solid #ced4da; border-radius: 4px; }
-        .edit-inline .btn-sm { font-size: 0.7rem; padding: 2px 8px; }
-        .cart-edit-mode td { background: #fff9e6; }
-        .item-edit-actions { display: flex; gap: 4px; flex-wrap: wrap; }
-        .item-edit-actions .btn { font-size: 0.7rem; padding: 2px 8px; }
-        .modal-content { border-radius: 14px; }
-        .modal-header { background: #0b1a33; color: #fff; border-radius: 14px 14px 0 0; }
-        .modal-header .btn-close { filter: brightness(0) invert(1); }
-        .quick-action-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
-        .quick-action-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        .discount-row { background: #fff8e1; border-radius: 8px; padding: 10px; margin-top: 8px; }
-        .chat-messages { max-height: 400px; overflow-y: auto; background: #f8f9fa; border-radius: 8px; padding: 12px; }
-        .chat-message { padding: 6px 12px; margin-bottom: 6px; border-radius: 18px; max-width: 80%; word-break: break-word; background: #e9ecef; }
-        .chat-message.sent { background: #0d6efd; color: #fff; margin-left: auto; text-align: right; }
-        .chat-message .sender { font-weight: 600; font-size: .8rem; }
-        .chat-message .time { font-size: .7rem; opacity: .7; }
-        .balancing-result .table th { background: #e9ecef; }
-        .diff-negative { color: #dc3545; font-weight: 700; }
-        .diff-positive { color: #198754; font-weight: 700; }
-        .diff-zero { color: #0d6efd; font-weight: 700; }
-        .price-missing { color: #856404; font-style: italic; }
+        .fs-xs {
+            font-size: .78rem;
+        }
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, .75);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .spinner {
+            width: 2.2rem;
+            height: 2.2rem;
+            border: .25em solid #0d6efd;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin .75s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .sidebar-toggle {
+                display: inline-block !important;
+            }
+        }
+        @media (min-width: 769px) {
+            .sidebar-toggle {
+                display: none !important;
+            }
+        }
+        .report-filter .form-label {
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+        .report-filter .form-control,
+        .report-filter .form-select {
+            font-size: 0.85rem;
+        }
+        .table-report thead th {
+            background: #f8f9fa;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .table-report td {
+            font-size: 0.85rem;
+        }
+        .profit-positive {
+            color: #198754;
+            font-weight: 700;
+        }
+        .profit-negative {
+            color: #dc3545;
+            font-weight: 700;
+        }
+        #offlineBanner {
+            display: none;
+            background: #dc3545;
+            color: #fff;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.9rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 99999;
+        }
+        body.offline #offlineBanner {
+            display: block;
+        }
+        body.offline .main-content {
+            padding-top: 40px;
+        }
+        .edit-inline {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .edit-inline input {
+            width: 70px;
+            padding: 2px 4px;
+            font-size: 0.8rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        .edit-inline .btn-sm {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+        }
+        .cart-edit-mode td {
+            background: #fff9e6;
+        }
+        .item-edit-actions {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .item-edit-actions .btn {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+        }
+        .modal-content {
+            border-radius: 14px;
+        }
+        .modal-header {
+            background: #0b1a33;
+            color: #fff;
+            border-radius: 14px 14px 0 0;
+        }
+        .modal-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+        .quick-action-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .quick-action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+        }
+        .discount-row {
+            background: #fff8e1;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 8px;
+        }
+        .chat-messages {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .chat-message {
+            padding: 6px 12px;
+            margin-bottom: 6px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-break: break-word;
+            background: #e9ecef;
+        }
+        .chat-message.sent {
+            background: #0d6efd;
+            color: #fff;
+            margin-left: auto;
+            text-align: right;
+        }
+        .chat-message .sender {
+            font-weight: 600;
+            font-size: .8rem;
+        }
+        .chat-message .time {
+            font-size: .7rem;
+            opacity: .7;
+        }
+        .balancing-result .table th {
+            background: #e9ecef;
+        }
+        .diff-negative {
+            color: #dc3545;
+            font-weight: 700;
+        }
+        .diff-positive {
+            color: #198754;
+            font-weight: 700;
+        }
+        .diff-zero {
+            color: #0d6efd;
+            font-weight: 700;
+        }
+        .price-missing {
+            color: #856404;
+            font-style: italic;
+        }
+
+        .badge-unreconciled {
+            background: #fff3cd;
+            color: #856404;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+        .badge-reconciled {
+            background: #d4edda;
+            color: #155724;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: .7rem;
+            font-weight: 600;
+        }
+        .shift-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            background: #fafbfc;
+        }
+        .shift-card .shift-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 24px;
+            font-size: 0.9rem;
+        }
+        .shift-card .shift-meta .label {
+            color: #6c7a8e;
+            font-weight: 500;
+        }
+        .shift-card .shift-meta .value {
+            font-weight: 600;
+            color: #1a2a4a;
+        }
+        .shift-nav {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .shift-nav .counter {
+            font-size: 0.85rem;
+            color: #6c7a8e;
+            padding: 4px 12px;
+            background: #f0f2f6;
+            border-radius: 20px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c7a8e;
+        }
+        .empty-state i {
+            font-size: 3rem;
+            opacity: 0.3;
+            display: block;
+            margin-bottom: 12px;
+        }
     </style>
 </head>
 <body>
@@ -365,6 +849,7 @@
         };
 
         function $(sel) { return document.querySelector(sel); }
+
         function $$(sel) { return document.querySelectorAll(sel); }
 
         function toast(msg, type = 'success') {
@@ -379,7 +864,9 @@
         }
 
         function formatMoney(n) { return 'UGX ' + (Number(n) || 0).toLocaleString(); }
+
         function formatDate(d) { if (!d) return '—'; const dt = d.toDate ? d.toDate() : new Date(d); return dt.toLocaleDateString('en-GB'); }
+
         function formatDateTime(d) { if (!d) return '—'; const dt = d.toDate ? d.toDate() : new Date(d); return dt.toLocaleString('en-GB'); }
 
         function roleNorm(r) {
@@ -391,8 +878,11 @@
             if (x === 'manager') return 'manager';
             return 'cashier';
         }
+
         function isAdmin(r) { return ['super_admin', 'top_admin', 'admin', 'manager'].includes(roleNorm(r)); }
+
         function canManageUsers(r) { return ['super_admin', 'top_admin'].includes(roleNorm(r)); }
+
         function canManageCompany(r) { return ['super_admin', 'top_admin'].includes(roleNorm(r)); }
 
         function stationName(id) {
@@ -504,8 +994,10 @@
             const ref = db.collection('inventory').doc(`${stationId}_${product}`);
             return db.runTransaction(async (tx) => {
                 const doc = await tx.get(ref);
-                let currentQty = 0, currentCost = 0;
-                if (doc.exists) { currentQty = doc.data().quantity || 0; currentCost = doc.data().cost_price || 0; }
+                let currentQty = 0,
+                    currentCost = 0;
+                if (doc.exists) { currentQty = doc.data().quantity || 0;
+                    currentCost = doc.data().cost_price || 0; }
                 const newQty = currentQty + delta;
                 if (newQty < 0) throw new Error(`Insufficient stock for ${product}. Available: ${currentQty.toFixed(2)} L`);
                 const newCost = (costPrice !== null && costPrice !== undefined) ? costPrice : currentCost;
@@ -686,22 +1178,27 @@
 
         async function sendDailyReportEmail() {
             const sales = await getAll('sales');
-            const today = new Date(); today.setHours(0,0,0,0);
-            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
             const todaySales = sales.filter(s => {
                 if (s.status === 'reversed') return false;
                 const d = s.created_at ? (s.created_at.toDate ? s.created_at.toDate() : new Date(s.created_at)) : new Date();
                 return d >= today && d < tomorrow;
             });
-            let totalQty = 0, totalRevenue = 0;
+            let totalQty = 0,
+                totalRevenue = 0;
             const byProduct = {};
             todaySales.forEach(s => {
                 const qty = Number(s.quantity) || 0;
                 const amt = Number(s.amount) || 0;
-                totalQty += qty; totalRevenue += amt;
+                totalQty += qty;
+                totalRevenue += amt;
                 const p = s.product_type || 'Unknown';
                 if (!byProduct[p]) byProduct[p] = { qty: 0, revenue: 0 };
-                byProduct[p].qty += qty; byProduct[p].revenue += amt;
+                byProduct[p].qty += qty;
+                byProduct[p].revenue += amt;
             });
             let emailBody = `📊 DAILY SALES REPORT\n📅 ${today.toLocaleDateString('en-GB')}\n━━━━━━━━━━━━━━━━━━━━━\n\n`;
             emailBody += `💰 Total Revenue: ${formatMoney(totalRevenue)}\n⛽ Total Quantity: ${totalQty.toFixed(2)}L\n📋 Transactions: ${todaySales.length}\n\n📦 By Product:\n`;
@@ -722,8 +1219,10 @@
             state.isOnline = navigator.onLine;
             document.body.classList.toggle('offline', !state.isOnline);
         }
-        window.addEventListener('online', () => { updateOnlineStatus(); toast('Back online', 'success'); });
-        window.addEventListener('offline', () => { updateOnlineStatus(); toast('You are offline – cached data only', 'warning'); });
+        window.addEventListener('online', () => { updateOnlineStatus();
+            toast('Back online', 'success'); });
+        window.addEventListener('offline', () => { updateOnlineStatus();
+            toast('You are offline – cached data only', 'warning'); });
         updateOnlineStatus();
 
         const BACKUP_COLLECTIONS = [
@@ -731,6 +1230,7 @@
             'adjustments', 'reconciliations', 'bank_accounts', 'bankings',
             'expenses', 'customers', 'audit_logs', 'messages'
         ];
+
         async function downloadCompanyBackup() {
             if (!state.user || !state.user.companyId) throw new Error('No company selected');
             const companyId = state.user.companyId;
@@ -742,7 +1242,7 @@
             const json = JSON.stringify(payload, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const safeName = (company && company.name) ? company.name.replace(/[^a-z0-9]/gi, '_') : companyId;
-            const name = 'petromanager_backup_' + safeName + '_' + new Date().toISOString().slice(0,10) + '.json';
+            const name = 'petromanager_backup_' + safeName + '_' + new Date().toISOString().slice(0, 10) + '.json';
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
             link.download = name;
@@ -751,6 +1251,7 @@
             await logAudit('backup_download', { collections: BACKUP_COLLECTIONS.length });
             toast('Backup downloaded', 'success');
         }
+
         async function importCompanyBackup(jsonText) {
             if (!state.user || !state.user.companyId) throw new Error('No company selected');
             let data;
@@ -764,9 +1265,14 @@
                 if (data.company) {
                     const { id, ...rest } = data.company;
                     await updateCompany(targetCompanyId, {
-                        name: rest.name, tagline: rest.tagline, address: rest.address,
-                        phone: rest.phone, email: rest.email, tax_id: rest.tax_id,
-                        website: rest.website, logo_url: rest.logo_url
+                        name: rest.name,
+                        tagline: rest.tagline,
+                        address: rest.address,
+                        phone: rest.phone,
+                        email: rest.email,
+                        tax_id: rest.tax_id,
+                        website: rest.website,
+                        logo_url: rest.logo_url
                     });
                 }
                 for (const col of BACKUP_COLLECTIONS) {
@@ -785,17 +1291,19 @@
         }
 
         let _backupReminderTimer = null;
+
         function setupBackupReminder() {
-            if (_backupReminderTimer) { clearInterval(_backupReminderTimer); _backupReminderTimer = null; }
+            if (_backupReminderTimer) { clearInterval(_backupReminderTimer);
+                _backupReminderTimer = null; }
             let pref = null;
             try { pref = JSON.parse(localStorage.getItem('petro_backup_reminder') || 'null'); } catch (e) {}
             if (!pref || !pref.enabled || !pref.time) return;
             _backupReminderTimer = setInterval(() => {
                 const now = new Date();
-                const hh = String(now.getHours()).padStart(2,'0');
-                const mm = String(now.getMinutes()).padStart(2,'0');
-                if ((hh+':'+mm) !== pref.time) return;
-                const todayKey = 'petro_backup_reminded_' + now.toISOString().slice(0,10);
+                const hh = String(now.getHours()).padStart(2, '0');
+                const mm = String(now.getMinutes()).padStart(2, '0');
+                if ((hh + ':' + mm) !== pref.time) return;
+                const todayKey = 'petro_backup_reminded_' + now.toISOString().slice(0, 10);
                 if (localStorage.getItem(todayKey)) return;
                 localStorage.setItem(todayKey, '1');
                 toast('⏰ Daily backup reminder – open Company → Download Backup', 'warning');
@@ -809,14 +1317,11 @@
     PART 3: AUTHENTICATION & SESSION (with autocomplete support)
     ============================================================ -->
     <script>
-        // Stores all usernames for autocomplete
         let allUsernames = [];
 
-        // Fetch all users for autocomplete (called once on login page load)
         async function loadUsernamesForAutocomplete() {
             try {
                 const snap = await db.collection('users').where('active', '==', true).get();
-                // Also fetch companies to show company name in dropdown
                 const companies = await getAllCompanies();
                 const companyMap = {};
                 companies.forEach(c => companyMap[c.id] = c.name || c.id);
@@ -836,12 +1341,10 @@
                 console.log('Usernames loaded for autocomplete:', allUsernames.length);
             } catch (err) {
                 console.error('Error loading usernames:', err);
-                // If we can't load, try again later
                 setTimeout(loadUsernamesForAutocomplete, 5000);
             }
         }
 
-        // Autocomplete logic
         let selectedIndex = -1;
 
         function setupAutocomplete() {
@@ -857,11 +1360,10 @@
                     return;
                 }
 
-                // Filter usernames that start with typed text
-const matches = allUsernames.filter(u =>
-    u.username.toLowerCase().includes(value) ||
-    (u.name && u.name.toLowerCase().includes(value))
-).slice(0, 12);
+                const matches = allUsernames.filter(u =>
+                    u.username.toLowerCase().includes(value) ||
+                    (u.name && u.name.toLowerCase().includes(value))
+                ).slice(0, 12);
 
                 if (matches.length === 0) {
                     dropdown.innerHTML = '<div class="no-results">No matching usernames</div>';
@@ -883,7 +1385,6 @@ const matches = allUsernames.filter(u =>
                 dropdown.innerHTML = html;
                 dropdown.style.display = 'block';
 
-                // Click handler on items
                 dropdown.querySelectorAll('.item').forEach(el => {
                     el.addEventListener('click', function() {
                         const username = this.dataset.username;
@@ -895,7 +1396,6 @@ const matches = allUsernames.filter(u =>
                 });
             });
 
-            // Keyboard navigation
             input.addEventListener('keydown', function(e) {
                 const items = dropdown.querySelectorAll('.item');
                 if (items.length === 0) return;
@@ -915,7 +1415,6 @@ const matches = allUsernames.filter(u =>
                         input.value = username;
                         dropdown.style.display = 'none';
                         selectedIndex = -1;
-                        // Submit form automatically after selecting
                         document.getElementById('loginForm').dispatchEvent(new Event('submit'));
                     }
                 } else if (e.key === 'Escape') {
@@ -924,7 +1423,6 @@ const matches = allUsernames.filter(u =>
                 }
             });
 
-            // Click outside to close
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.autocomplete-wrapper')) {
                     dropdown.style.display = 'none';
@@ -941,7 +1439,6 @@ const matches = allUsernames.filter(u =>
             }
         }
 
-        // ----- LOGIN -----
         async function doLogin(username, password) {
             const errEl = $('#loginError');
             errEl.style.display = 'none';
@@ -1047,7 +1544,7 @@ const matches = allUsernames.filter(u =>
             try {
                 const list = await getAll('stations');
                 state.stations = list.map(s => ({ ...s, id: s.id != null ? s.id : s.station_id }))
-                    .sort((a,b) => String(a.name || '').localeCompare(String(b.name || '')));
+                    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
             } catch (e) {
                 console.error('loadStations', e);
                 state.stations = [];
@@ -1127,7 +1624,6 @@ const matches = allUsernames.filter(u =>
                 toast('Company created successfully', 'success');
                 $('#createCompanyForm').style.display = 'none';
                 $('#normalLogin').style.display = 'block';
-                // Reload autocomplete usernames
                 await loadUsernamesForAutocomplete();
             } catch (err) {
                 result.innerHTML = '<span class="text-danger">❌ ' + err.message + '</span>';
@@ -1154,9 +1650,7 @@ const matches = allUsernames.filter(u =>
             }
         }
 
-        // ----- DOM INIT -----
         document.addEventListener('DOMContentLoaded', async function() {
-            // Load usernames for autocomplete
             await loadUsernamesForAutocomplete();
 
             const restored = await tryRestoreSession();
@@ -1195,8 +1689,10 @@ const matches = allUsernames.filter(u =>
             $('#diagnoseBtn').onclick = runDiagnose;
 
             document.body.addEventListener('click', function(e) {
-                if (e.target.closest('#headerLogout')) { e.preventDefault(); logout(); }
-                if (e.target.closest('#headerSwitchUser')) { e.preventDefault(); logout(); }
+                if (e.target.closest('#headerLogout')) { e.preventDefault();
+                    logout(); }
+                if (e.target.closest('#headerSwitchUser')) { e.preventDefault();
+                    logout(); }
             });
 
             const toggle = $('#sidebarToggle');
@@ -1335,25 +1831,62 @@ const matches = allUsernames.filter(u =>
             content.innerHTML = '<div class="text-center py-5"><div class="spinner text-primary"></div><p class="mt-3 text-muted">Loading...</p></div>';
             try {
                 switch (page) {
-                    case 'dashboard': await renderDashboard(); break;
-                    case 'sales': await renderSales(); break;
-                    case 'shifts': await renderShifts(); break;
-                    case 'meters': await renderMeters(); break;
-                    case 'summary': await renderShiftSummary(); break;
-                    case 'balancing': await renderBalancing(); break;
-                    case 'inventory': await renderInventory(); break;
-                    case 'stock': await renderStock(); break;
-                    case 'adjustments': await renderAdjustments(); break;
-                    case 'financials': await renderFinancials(); break;
-                    case 'customers': await renderCustomers(); break;
-                    case 'receipts': await renderReceipts(); break;
-                    case 'reports': await renderReports(); break;
-                    case 'users': await renderUsers(); break;
-                    case 'activity': await renderActivity(); break;
-                    case 'company': await renderCompanyProfile(); break;
-                    case 'companies': await renderAllCompanies(); break;
-                    case 'messages': await renderMessages(); break;
-                    default: content.innerHTML = '<div class="alert alert-warning">Page not found</div>';
+                    case 'dashboard':
+                        await renderDashboard();
+                        break;
+                    case 'sales':
+                        await renderSales();
+                        break;
+                    case 'shifts':
+                        await renderShifts();
+                        break;
+                    case 'meters':
+                        await renderMeters();
+                        break;
+                    case 'summary':
+                        await renderShiftSummary();
+                        break;
+                    case 'balancing':
+                        await renderBalancing();
+                        break;
+                    case 'inventory':
+                        await renderInventory();
+                        break;
+                    case 'stock':
+                        await renderStock();
+                        break;
+                    case 'adjustments':
+                        await renderAdjustments();
+                        break;
+                    case 'financials':
+                        await renderFinancials();
+                        break;
+                    case 'customers':
+                        await renderCustomers();
+                        break;
+                    case 'receipts':
+                        await renderReceipts();
+                        break;
+                    case 'reports':
+                        await renderReports();
+                        break;
+                    case 'users':
+                        await renderUsers();
+                        break;
+                    case 'activity':
+                        await renderActivityLog();
+                        break;
+                    case 'company':
+                        await renderCompanyProfile();
+                        break;
+                    case 'companies':
+                        await renderAllCompanies();
+                        break;
+                    case 'messages':
+                        await renderMessages();
+                        break;
+                    default:
+                        content.innerHTML = '<div class="alert alert-warning">Page not found</div>';
                 }
             } catch (err) {
                 console.error('renderPage', page, err);
@@ -1365,15 +1898,9 @@ const matches = allUsernames.filter(u =>
     </script>
 
     <!-- ============================================================
-    PART 5-11: All other modules (Dashboard, Sales, Shifts, Balancing, 
-    Inventory, Reports, Users, Company, Messages, etc.)
+    PART 5: DASHBOARD, SALES, SHIFTS, METERS, SUMMARY
     ============================================================ -->
-    <!-- These are the same as in the previous complete version – all included below. -->
-    <!-- I'll now include the full implementation for each module. -->
-
-    <!-- PART 5: DASHBOARD, SALES, SHIFTS, METERS, SUMMARY -->
     <script>
-        // ----- DASHBOARD -----
         async function renderDashboard() {
             const company = await getCompany(state.user.companyId);
             const companyData = company || {
@@ -1390,7 +1917,8 @@ const matches = allUsernames.filter(u =>
             const sales = await getAll('sales');
             const shifts = await getAll('shifts');
             const fInv = inv.filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
-            const fSales = sales.filter(s => s.status !== 'reversed' && (!state.currentStationId || Number(s.station_id) === state.currentStationId));
+            const fSales = sales.filter(s => s.status !== 'reversed' && (!state.currentStationId || Number(s.station_id) === state
+                .currentStationId));
             const fShifts = shifts.filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId);
             const productTypes = ['Petrol', 'Diesel', 'Gas', 'Paraffin'];
             const stockByProduct = {};
@@ -1400,7 +1928,7 @@ const matches = allUsernames.filter(u =>
                 if (stockByProduct[p] !== undefined) stockByProduct[p] += (i.quantity || 0);
                 else stockByProduct[p] = (i.quantity || 0);
             });
-            const totalLitres = Object.values(stockByProduct).reduce((a,b) => a+b, 0);
+            const totalLitres = Object.values(stockByProduct).reduce((a, b) => a + b, 0);
             const totalSales = fSales.reduce((sum, x) => sum + (x.amount || 0), 0);
             const today = new Date().toDateString();
             const todaySales = fSales.filter(s => {
@@ -1485,7 +2013,8 @@ const matches = allUsernames.filter(u =>
 
         async function renderCharts() {
             const sales = await getAll('sales');
-            const filtered = sales.filter(s => s.status !== 'reversed' && (!state.currentStationId || Number(s.station_id) === state.currentStationId));
+            const filtered = sales.filter(s => s.status !== 'reversed' && (!state.currentStationId || Number(s.station_id) === state
+                .currentStationId));
             const byProduct = {};
             filtered.forEach(s => {
                 const p = s.product_type || 'Unknown';
@@ -1516,7 +2045,9 @@ const matches = allUsernames.filter(u =>
                     type: 'doughnut',
                     data: {
                         labels: Object.keys(byProduct),
-                        datasets: [{ data: Object.values(byProduct), backgroundColor: ['#0d6efd', '#ffc107', '#dc3545', '#198754', '#6f42c1'] }]
+                        datasets: [{ data: Object.values(byProduct), backgroundColor: ['#0d6efd', '#ffc107', '#dc3545',
+                                '#198754', '#6f42c1'
+                            ] }]
                     },
                     options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
                 });
@@ -1527,7 +2058,8 @@ const matches = allUsernames.filter(u =>
                     type: 'line',
                     data: {
                         labels: Object.keys(byDate),
-                        datasets: [{ label: 'Daily Sales', data: Object.values(byDate), borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', fill: true, tension: 0.4 }]
+                        datasets: [{ label: 'Daily Sales', data: Object.values(byDate), borderColor: '#0d6efd',
+                                backgroundColor: 'rgba(13,110,253,0.1)', fill: true, tension: 0.4 }]
                     },
                     options: {
                         responsive: true,
@@ -1554,7 +2086,7 @@ const matches = allUsernames.filter(u =>
                 .map(u => `<option value="${u.id}" ${u.id === state.user.id ? 'selected' : ''}>${u.name || u.username}</option>`)
                 .join('');
 
-            const todayISO = new Date().toISOString().slice(0,10);
+            const todayISO = new Date().toISOString().slice(0, 10);
             let cart = [];
 
             let html = `
@@ -1781,17 +2313,20 @@ const matches = allUsernames.filter(u =>
                 btn.disabled = true;
                 btn.innerHTML = '<i class="bi bi-hourglass"></i> Processing...';
                 try {
-                    const transactionId = 'TXN_' + Date.now() + '_' + Math.random().toString(36).substr(2,6);
+                    const transactionId = 'TXN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
                     await db.runTransaction(async (transaction) => {
-                        const refs = cart.map(item => db.collection('inventory').doc(item.stationId + '_' + item.product));
+                        const refs = cart.map(item => db.collection('inventory').doc(item.stationId + '_' + item
+                        .product));
                         const docs = await Promise.all(refs.map(r => transaction.get(r)));
                         const updates = [];
                         cart.forEach((item, idx) => {
                             const doc = docs[idx];
                             if (!doc.exists) throw new Error('No inventory for ' + item.product);
                             const currentQty = doc.data().quantity || 0;
-                            if (currentQty < item.qty) throw new Error('Insufficient ' + item.product + '. Available: ' + currentQty.toFixed(2) + 'L');
-                            updates.push({ ref: doc.ref, newQty: currentQty - item.qty, cost: doc.data().cost_price || 0 });
+                            if (currentQty < item.qty) throw new Error('Insufficient ' + item.product +
+                                '. Available: ' + currentQty.toFixed(2) + 'L');
+                            updates.push({ ref: doc.ref, newQty: currentQty - item.qty, cost: doc.data()
+                                    .cost_price || 0 });
                         });
                         updates.forEach(u => transaction.update(u.ref, {
                             quantity: u.newQty,
@@ -1849,7 +2384,8 @@ const matches = allUsernames.filter(u =>
                     const qty = parseFloat(this.dataset.qty);
                     const product = this.dataset.product;
                     const stationId = Number(this.dataset.station);
-                    if (!confirm('Reverse sale of ' + qty + 'L ' + product + '?\n\nHistory is kept. Stock is restored.')) return;
+                    if (!confirm('Reverse sale of ' + qty + 'L ' + product + '?\n\nHistory is kept. Stock is restored.'))
+                        return;
                     try {
                         await adjustInventory(stationId, product, qty);
                         await updateDoc('sales', id, {
@@ -1867,7 +2403,7 @@ const matches = allUsernames.filter(u =>
             });
         }
 
-        // ----- SHIFTS (with Paraffin) -----
+        // ----- SHIFTS -----
         async function renderShifts() {
             const shifts = (await getAll('shifts'))
                 .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
@@ -1919,8 +2455,10 @@ const matches = allUsernames.filter(u =>
                 html += '<tr><td colspan="5" class="text-muted text-center">No shifts</td></tr>';
             } else {
                 shifts.slice(0, 30).forEach(s => {
-                    const start = (s.start_petrol || 0) + ' / ' + (s.start_diesel || 0) + ' / ' + (s.start_gas || 0) + ' / ' + (s.start_paraffin || 0);
-                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + ' / ' + (s.end_diesel || 0) + ' / ' + (s.end_gas || 0) + ' / ' + (s.end_paraffin || 0)) : '—';
+                    const start = (s.start_petrol || 0) + ' / ' + (s.start_diesel || 0) + ' / ' + (s.start_gas || 0) +
+                        ' / ' + (s.start_paraffin || 0);
+                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + ' / ' + (s.end_diesel || 0) + ' / ' + (
+                        s.end_gas || 0) + ' / ' + (s.end_paraffin || 0)) : '—';
                     html += `<tr>
                     <td>${stationName(s.station_id)}</td>
                     <td><span class="${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${s.shift_type}</span></td>
@@ -1945,7 +2483,10 @@ const matches = allUsernames.filter(u =>
                         start_diesel: parseFloat($('#startDiesel').value) || 0,
                         start_gas: parseFloat($('#startGas').value) || 0,
                         start_paraffin: parseFloat($('#startParaffin').value) || 0,
-                        end_petrol: null, end_diesel: null, end_gas: null, end_paraffin: null,
+                        end_petrol: null,
+                        end_diesel: null,
+                        end_gas: null,
+                        end_paraffin: null,
                         status: 'active'
                     });
                     await logAudit('start_shift', {});
@@ -1984,8 +2525,10 @@ const matches = allUsernames.filter(u =>
                 html += '<tr><td colspan="6" class="text-muted text-center">No meter data</td></tr>';
             } else {
                 shifts.slice(0, 40).forEach(s => {
-                    const start = (s.start_petrol || 0) + '/' + (s.start_diesel || 0) + '/' + (s.start_gas || 0) + '/' + (s.start_paraffin || 0);
-                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + '/' + (s.end_diesel || 0) + '/' + (s.end_gas || 0) + '/' + (s.end_paraffin || 0)) : '—';
+                    const start = (s.start_petrol || 0) + '/' + (s.start_diesel || 0) + '/' + (s.start_gas || 0) +
+                        '/' + (s.start_paraffin || 0);
+                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + '/' + (s.end_diesel || 0) + '/' + (s
+                        .end_gas || 0) + '/' + (s.end_paraffin || 0)) : '—';
                     html += `<tr>
                     <td>${stationName(s.station_id)}</td>
                     <td><span class="${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${s.shift_type}</span></td>
@@ -2006,22 +2549,27 @@ const matches = allUsernames.filter(u =>
             const isCashier = role === 'cashier';
             let sales = (await getAll('sales')).filter(s => s.status !== 'reversed');
             if (state.currentStationId) sales = sales.filter(s => Number(s.station_id) === state.currentStationId);
-            const today = new Date(); today.setHours(0,0,0,0);
-            const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
             const todaySales = sales.filter(s => {
                 const d = s.created_at ? (s.created_at.toDate ? s.created_at.toDate() : new Date(s.created_at)) : new Date();
                 return d >= today && d < tomorrow;
             });
             const mySales = isCashier ? todaySales.filter(s => s.recorded_by === state.user.id) : todaySales;
-            let totalQty = 0, totalRevenue = 0;
+            let totalQty = 0,
+                totalRevenue = 0;
             const byProduct = {};
             mySales.forEach(s => {
                 const qty = Number(s.quantity) || 0;
                 const amt = Number(s.amount) || 0;
-                totalQty += qty; totalRevenue += amt;
+                totalQty += qty;
+                totalRevenue += amt;
                 const p = s.product_type || 'Unknown';
                 if (!byProduct[p]) byProduct[p] = { qty: 0, revenue: 0 };
-                byProduct[p].qty += qty; byProduct[p].revenue += amt;
+                byProduct[p].qty += qty;
+                byProduct[p].revenue += amt;
             });
             let productRows = Object.keys(byProduct).map(p =>
                 `<tr><td>${p}</td><td>${byProduct[p].qty.toFixed(2)} L</td><td>${formatMoney(byProduct[p].revenue)}</td></tr>`
@@ -2046,7 +2594,9 @@ const matches = allUsernames.filter(u =>
         console.log('Part 5 loaded');
     </script>
 
-    <!-- PART 6: BALANCING (Start - End logic) -->
+    <!-- ============================================================
+    PART 6: BALANCING (refined – single shift, unreconciled only)
+    ============================================================ -->
     <script>
         async function renderBalancing() {
             if (!isAdmin(state.user.role)) {
@@ -2072,7 +2622,7 @@ const matches = allUsernames.filter(u =>
             const html = `
             <div class="card-box">
               <h5 class="mb-3"><i class="bi bi-scales"></i> Cashier Balancing</h5>
-              <p class="text-muted small">Select station, cashier, and date range. All shift meter readings are shown.</p>
+              <p class="text-muted small">Select a station and cashier. The system will show the <strong>most recent unreconciled</strong> closed shift.</p>
               <form id="balancingFilter" class="row g-2 mb-3">
                 <div class="col-md-3">
                   <label class="form-label small">Station</label>
@@ -2097,11 +2647,11 @@ const matches = allUsernames.filter(u =>
                   <input type="date" id="balTo" class="form-control form-control-sm" value="${endDate.toISOString().slice(0,10)}">
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                  <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Load Shifts</button>
+                  <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Load Shift</button>
                 </div>
               </form>
               <div id="balancingResult" class="balancing-result">
-                <div class="text-center text-muted py-4">Select filters and click <strong>Load Shifts</strong>.</div>
+                <div class="text-center text-muted py-4">Select filters and click <strong>Load Shift</strong>.</div>
               </div>
             </div>
             `;
@@ -2121,270 +2671,305 @@ const matches = allUsernames.filter(u =>
                 }
 
                 const start = new Date(fromDate);
-                start.setHours(0,0,0,0);
+                start.setHours(0, 0, 0, 0);
                 const end = new Date(toDate);
-                end.setHours(23,59,59,999);
+                end.setHours(23, 59, 59, 999);
 
-                const shiftsSnap = await db.collection('shifts')
-                    .where('station_id', '==', stationId)
-                    .where('cashier_id', '==', cashierId)
-                    .where('status', '==', 'closed')
-                    .get();
+                showLoading(true);
 
-                const shifts = [];
-                shiftsSnap.forEach(doc => {
-                    const data = doc.data();
-                    const createdAt = data.created_at && data.created_at.toDate ? data.created_at.toDate() : new Date(data.created_at);
-                    if (createdAt >= start && createdAt <= end) {
-                        shifts.push({ id: doc.id, ...data });
+                try {
+                    // 1. Get all closed shifts for this cashier & station in date range
+                    const shiftsSnap = await db.collection('shifts')
+                        .where('station_id', '==', stationId)
+                        .where('cashier_id', '==', cashierId)
+                        .where('status', '==', 'closed')
+                        .get();
+
+                    const shifts = [];
+                    shiftsSnap.forEach(doc => {
+                        const data = doc.data();
+                        const createdAt = data.created_at && data.created_at.toDate ? data.created_at.toDate() :
+                            new Date(data.created_at);
+                        if (createdAt >= start && createdAt <= end) {
+                            shifts.push({ id: doc.id, ...data, _createdAt: createdAt });
+                        }
+                    });
+
+                    if (shifts.length === 0) {
+                        $('#balancingResult').innerHTML =
+                            '<div class="alert alert-info">No closed shifts found for this cashier in the selected date range.</div>';
+                        showLoading(false);
+                        return;
                     }
-                });
 
-                if (shifts.length === 0) {
-                    $('#balancingResult').innerHTML = '<div class="alert alert-info">No closed shifts found for this cashier in the selected date range.</div>';
-                    return;
-                }
+                    // 2. Get all reconciliations for this cashier (to filter out reconciled shifts)
+                    const reconSnap = await db.collection('reconciliations')
+                        .where('cashier_id', '==', cashierId)
+                        .where('station_id', '==', stationId)
+                        .get();
 
-                shifts.sort((a,b) => (a.created_at && a.created_at.seconds || 0) - (b.created_at && b.created_at.seconds || 0));
+                    const reconciledShiftIds = new Set();
+                    reconSnap.forEach(doc => {
+                        const data = doc.data();
+                        if (data.shift_id) reconciledShiftIds.add(data.shift_id);
+                    });
 
-                const inv = await getAll('inventory');
-                const stationInv = inv.filter(i => Number(i.station_id) === stationId);
-                const getPrice = (product) => {
-                    const item = stationInv.find(i => i.product_type === product);
-                    return item ? (item.selling_price || 0) : 0;
-                };
-                const prices = {
-                    Petrol: getPrice('Petrol'),
-                    Diesel: getPrice('Diesel'),
-                    Gas: getPrice('Gas'),
-                    Paraffin: getPrice('Paraffin')
-                };
+                    // 3. Filter out reconciled shifts
+                    const unreconciled = shifts.filter(s => !reconciledShiftIds.has(s.id));
 
-                const missingPriceProducts = Object.keys(prices).filter(p => prices[p] === 0);
-                if (missingPriceProducts.length > 0) {
-                    toast('⚠️ Selling price not set for: ' + missingPriceProducts.join(', ') + '. Please set prices in Inventory.', 'warning');
-                }
+                    if (unreconciled.length === 0) {
+                        $('#balancingResult').innerHTML =
+                            `<div class="alert alert-success">✅ All shifts for this cashier have been reconciled. No pending shifts.</div>`;
+                        showLoading(false);
+                        return;
+                    }
 
-                const productList = ['Petrol', 'Diesel', 'Gas', 'Paraffin'];
+                    // 4. Sort by date (newest first) and pick the most recent
+                    unreconciled.sort((a, b) => b._createdAt - a._createdAt);
+                    const shift = unreconciled[0];
+                    const totalUnreconciled = unreconciled.length;
 
-                let shiftData = shifts.map((shift, idx) => {
-                    const startP = shift.start_petrol || 0;
-                    const endP = shift.end_petrol || 0;
-                    const startD = shift.start_diesel || 0;
-                    const endD = shift.end_diesel || 0;
-                    const startG = shift.start_gas || 0;
-                    const endG = shift.end_gas || 0;
-                    const startPf = shift.start_paraffin || 0;
-                    const endPf = shift.end_paraffin || 0;
-
-                    const diffs = {
-                        Petrol: startP - endP,
-                        Diesel: startD - endD,
-                        Gas: startG - endG,
-                        Paraffin: startPf - endPf
+                    // 5. Build the display for this single shift
+                    const inv = await getAll('inventory');
+                    const stationInv = inv.filter(i => Number(i.station_id) === stationId);
+                    const getPrice = (product) => {
+                        const item = stationInv.find(i => i.product_type === product);
+                        return item ? (item.selling_price || 0) : 0;
+                    };
+                    const prices = {
+                        Petrol: getPrice('Petrol'),
+                        Diesel: getPrice('Diesel'),
+                        Gas: getPrice('Gas'),
+                        Paraffin: getPrice('Paraffin')
                     };
 
-                    return {
-                        shiftNum: idx + 1,
-                        start: { Petrol: startP, Diesel: startD, Gas: startG, Paraffin: startPf },
-                        end: { Petrol: endP, Diesel: endD, Gas: endG, Paraffin: endPf },
-                        diffs: diffs,
-                        expected: {}
+                    const missingPriceProducts = Object.keys(prices).filter(p => prices[p] === 0);
+                    if (missingPriceProducts.length > 0) {
+                        toast('⚠️ Selling price not set for: ' + missingPriceProducts.join(', ') +
+                            '. Please set prices in Inventory.', 'warning');
+                    }
+
+                    const productList = ['Petrol', 'Diesel', 'Gas', 'Paraffin'];
+
+                    const startReadings = {
+                        Petrol: shift.start_petrol || 0,
+                        Diesel: shift.start_diesel || 0,
+                        Gas: shift.start_gas || 0,
+                        Paraffin: shift.start_paraffin || 0
                     };
-                });
-
-                shiftData.forEach(s => {
+                    const endReadings = {
+                        Petrol: shift.end_petrol || 0,
+                        Diesel: shift.end_diesel || 0,
+                        Gas: shift.end_gas || 0,
+                        Paraffin: shift.end_paraffin || 0
+                    };
+                    const diffs = {};
+                    let grandTotal = 0;
+                    const expectedByProduct = {};
                     productList.forEach(p => {
-                        s.expected[p] = s.diffs[p] * prices[p];
+                        const diff = startReadings[p] - endReadings[p];
+                        diffs[p] = diff;
+                        const exp = diff * prices[p];
+                        expectedByProduct[p] = exp;
+                        grandTotal += exp;
                     });
-                });
 
-                let meterRows = '';
-                shiftData.forEach(s => {
-                    let cells = `<td><strong>Shift ${s.shiftNum}</strong></td>`;
-                    productList.forEach(p => {
-                        cells += `<td>${s.start[p].toFixed(2)}</td>`;
-                        cells += `<td>${s.end[p].toFixed(2)}</td>`;
-                    });
-                    meterRows += `<tr>${cells}</tr>`;
-                });
+                    const shiftDate = formatDateTime(shift._createdAt || shift.created_at);
+                    const shiftType = shift.shift_type || 'day';
+                    const cashierName = allUsers.find(u => u.id === cashierId)?.name || allUsers.find(u => u.id ===
+                        cashierId)?.username || 'Unknown';
 
-                let diffRows = '';
-                shiftData.forEach(s => {
-                    let cells = `<td><strong>Shift ${s.shiftNum}</strong></td>`;
+                    // Build meter reading table
+                    let meterRows = `<tr><td><strong>Start</strong></td>`;
+                    productList.forEach(p => { meterRows += `<td>${startReadings[p].toFixed(2)}</td>`; });
+                    meterRows += `</tr><tr><td><strong>End</strong></td>`;
+                    productList.forEach(p => { meterRows += `<td>${endReadings[p].toFixed(2)}</td>`; });
+                    meterRows += `</tr><tr><td><strong>Difference</strong></td>`;
                     productList.forEach(p => {
-                        const diff = s.diffs[p];
+                        const diff = diffs[p];
                         const cls = diff < 0 ? 'diff-negative' : (diff > 0 ? 'diff-positive' : 'diff-zero');
-                        cells += `<td class="${cls}">${diff.toFixed(2)}</td>`;
+                        meterRows += `<td class="${cls}">${diff.toFixed(2)}</td>`;
                     });
-                    diffRows += `<tr>${cells}</tr>`;
-                });
+                    meterRows += `</tr>`;
 
-                let priceRow = '<tr><td><strong>Price / L</strong></td>';
-                productList.forEach(p => {
-                    const price = prices[p];
-                    const display = price === 0 ? `<span class="price-missing">Not set</span>` : formatMoney(price);
-                    priceRow += `<td>${display}</td>`;
-                });
-                priceRow += '</tr>';
-
-                let expectedRows = '';
-                let grandTotal = 0;
-                shiftData.forEach(s => {
-                    let cells = `<td><strong>Shift ${s.shiftNum}</strong></td>`;
-                    let shiftTotal = 0;
+                    let priceRow = '<tr><td><strong>Price / L</strong></td>';
                     productList.forEach(p => {
-                        const exp = s.expected[p] || 0;
-                        shiftTotal += exp;
-                        const cls = exp < 0 ? 'diff-negative' : (exp > 0 ? 'diff-positive' : 'diff-zero');
-                        cells += `<td class="${cls}">${formatMoney(exp)}</td>`;
+                        const price = prices[p];
+                        const display = price === 0 ? `<span class="price-missing">Not set</span>` : formatMoney(
+                        price);
+                        priceRow += `<td>${display}</td>`;
                     });
-                    cells += `<td><strong>${formatMoney(shiftTotal)}</strong></td>`;
-                    expectedRows += `<tr>${cells}</tr>`;
-                    grandTotal += shiftTotal;
-                });
+                    priceRow += '</tr>';
 
-                let resultHtml = `
-                <div class="table-responsive mb-4">
-                  <h6>1. Meter Readings (Start / End) per Shift</h6>
-                  <table class="table table-sm table-bordered">
-                    <thead>
-                      <tr><th>Shift</th>
-                        ${productList.map(p => `<th colspan="2">${p}</th>`).join('')}
-                      </tr>
-                      <tr><th></th>
-                        ${productList.map(p => `<th>Start</th><th>End</th>`).join('')}
-                      </tr>
-                    </thead>
-                    <tbody>${meterRows}</tbody>
-                  </table>
-                </div>
+                    let expectedRow = '<tr><td><strong>Expected Cash</strong></td>';
+                    productList.forEach(p => {
+                        const exp = expectedByProduct[p] || 0;
+                        const cls = exp < 0 ? 'diff-negative' : (exp > 0 ? 'diff-positive' : 'diff-zero');
+                        expectedRow += `<td class="${cls}">${formatMoney(exp)}</td>`;
+                    });
+                    expectedRow += `</tr>`;
 
-                <div class="table-responsive mb-4">
-                  <h6>2. Quantities Sold (Difference = Start − End) per Shift</h6>
-                  <p class="text-muted small">Positive values indicate fuel sold (start higher than end).</p>
-                  <table class="table table-sm table-bordered">
-                    <thead><tr><th>Shift</th>${productList.map(p => `<th>${p} (L)</th>`).join('')}</tr></thead>
-                    <tbody>${diffRows}</tbody>
-                  </table>
-                </div>
-
-                <div class="table-responsive mb-4">
-                  <h6>3. Selling Price per Litre</h6>
-                  <table class="table table-sm table-bordered">
-                    <thead><tr><th>Product</th>${productList.map(p => `<th>${p}</th>`).join('')}</tr></thead>
-                    <tbody>${priceRow}</tbody>
-                  </table>
-                </div>
-
-                <div class="table-responsive mb-4">
-                  <h6>4. Expected Cash per Shift (Qty × Price)</h6>
-                  <table class="table table-sm table-bordered">
-                    <thead><tr><th>Shift</th>${productList.map(p => `<th>${p}</th>`).join('')}<th>Total</th></tr></thead>
-                    <tbody>${expectedRows}</tbody>
-                    <tfoot>
-                      <tr class="table-secondary fw-bold">
-                        <td colspan="${productList.length + 1}" class="text-end">Grand Total Expected:</td>
-                        <td>${formatMoney(grandTotal)}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-
-                <hr>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label fw-bold">Actual Cash Presented by Cashier</label>
-                    <input type="number" id="actualCashInput" class="form-control" step="100" min="0" placeholder="Enter amount in UGX">
-                  </div>
-                  <div class="col-md-6 d-flex align-items-end">
-                    <button class="btn btn-success w-100" id="saveReconciliationBtn"><i class="bi bi-save"></i> Save Reconciliation</button>
-                  </div>
-                </div>
-                <div id="reconciliationResult" class="mt-3"></div>
-              `;
-
-                $('#balancingResult').innerHTML = resultHtml;
-
-                document.getElementById('actualCashInput').oninput = function() {
-                    const actual = parseFloat(this.value) || 0;
-                    const diff = actual - grandTotal;
-                    const resultDiv = document.getElementById('reconciliationResult');
-                    if (isNaN(actual) || actual === 0) {
-                        resultDiv.innerHTML = '';
-                        return;
-                    }
-                    let comment = '', cls = '';
-                    if (Math.abs(diff) < 1) {
-                        comment = 'Accurate';
-                        cls = 'diff-zero';
-                    } else if (diff < 0) {
-                        comment = 'Shortage';
-                        cls = 'diff-negative';
-                    } else {
-                        comment = 'Excess';
-                        cls = 'diff-positive';
-                    }
-                    const sign = diff >= 0 ? '+' : '';
-                    resultDiv.innerHTML = `
-                      <div class="alert alert-secondary">
-                        <strong>Preview:</strong><br>
-                        Expected: ${formatMoney(grandTotal)}<br>
-                        Actual: ${formatMoney(actual)}<br>
-                        <span class="${cls}">Difference: ${sign}${formatMoney(diff)} (${comment})</span>
-                      </div>
-                    `;
-                };
-
-                document.getElementById('saveReconciliationBtn').onclick = async function() {
-                    const actual = parseFloat(document.getElementById('actualCashInput').value);
-                    if (isNaN(actual) || actual < 0) {
-                        toast('Please enter a valid amount', 'warning');
-                        return;
-                    }
-                    const diff = actual - grandTotal;
-                    let comment = '';
-                    if (Math.abs(diff) < 1) comment = 'Accurate';
-                    else if (diff < 0) comment = 'Shortage';
-                    else comment = 'Excess';
-
-                    try {
-                        await addDoc('reconciliations', {
-                            station_id: stationId,
-                            cashier_id: cashierId,
-                            date_from: fromDate,
-                            date_to: toDate,
-                            expected_total: grandTotal,
-                            actual_cash: actual,
-                            difference: diff,
-                            comment: comment,
-                            reconciled_by: state.user.id,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        const resultDiv = document.getElementById('reconciliationResult');
-                        const sign = diff >= 0 ? '+' : '';
-                        const cls = Math.abs(diff) < 1 ? 'diff-zero' : (diff < 0 ? 'diff-negative' : 'diff-positive');
-                        resultDiv.innerHTML = `
-                        <div class="alert alert-info">
-                          <strong>Reconciliation saved!</strong><br>
-                          Expected: ${formatMoney(grandTotal)}<br>
-                          Actual: ${formatMoney(actual)}<br>
-                          <span class="${cls}">Difference: ${sign}${formatMoney(diff)} (${comment})</span>
+                    let resultHtml = `
+                    <div class="shift-card">
+                      <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+                        <div>
+                          <h6 class="mb-1"><i class="bi bi-clock-history"></i> Shift #${String(shift.id).slice(0,6)}</h6>
+                          <div class="shift-meta">
+                            <span><span class="label">Cashier:</span> <span class="value">${cashierName}</span></span>
+                            <span><span class="label">Type:</span> <span class="badge ${shiftType === 'day' ? 'badge-day' : 'badge-night'}">${shiftType}</span></span>
+                            <span><span class="label">Date:</span> <span class="value">${shiftDate}</span></span>
+                            <span><span class="label">Status:</span> <span class="badge badge-closed">Closed</span></span>
+                          </div>
                         </div>
-                      `;
-                        toast('Reconciliation saved successfully', 'success');
-                    } catch (err) {
-                        toast('Error saving reconciliation: ' + err.message, 'danger');
+                        <div class="shift-nav">
+                          <span class="counter">${totalUnreconciled} unreconciled shift${totalUnreconciled > 1 ? 'es' : ''}</span>
+                          ${totalUnreconciled > 1 ? `<button class="btn btn-sm btn-outline-secondary" id="nextUnreconciledBtn"><i class="bi bi-arrow-right"></i> Next</button>` : ''}
+                        </div>
+                      </div>
+
+                      <div class="table-responsive mb-3">
+                        <table class="table table-sm table-bordered">
+                          <thead><tr><th>Product</th>${productList.map(p => `<th>${p}</th>`).join('')}</tr></thead>
+                          <tbody>
+                            ${meterRows}
+                            ${priceRow}
+                            ${expectedRow}
+                            <tr><td><strong>Total Expected</strong></td><td colspan="${productList.length}" class="fw-bold">${formatMoney(grandTotal)}</td></tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      <hr>
+                      <div class="row g-3">
+                        <div class="col-md-6">
+                          <label class="form-label fw-bold">Actual Cash Presented by Cashier</label>
+                          <input type="number" id="actualCashInput" class="form-control" step="100" min="0" placeholder="Enter amount in UGX">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end">
+                          <button class="btn btn-success w-100" id="saveReconciliationBtn"><i class="bi bi-save"></i> Save Reconciliation</button>
+                        </div>
+                      </div>
+                      <div id="reconciliationResult" class="mt-3"></div>
+                    </div>
+                  `;
+
+                    // If there are multiple unreconciled shifts, store them in data attribute for "Next" button
+                    if (totalUnreconciled > 1) {
+                        resultHtml +=
+                            `<div class="mt-2 text-muted small">💡 There are ${totalUnreconciled - 1} more unreconciled shifts for this cashier. Click "Next" to balance them one by one.</div>`;
                     }
-                };
+
+                    $('#balancingResult').innerHTML = resultHtml;
+
+                    // --- Reconciliation logic ---
+                    document.getElementById('actualCashInput').oninput = function() {
+                        const actual = parseFloat(this.value) || 0;
+                        const diff = actual - grandTotal;
+                        const resultDiv = document.getElementById('reconciliationResult');
+                        if (isNaN(actual) || actual === 0) {
+                            resultDiv.innerHTML = '';
+                            return;
+                        }
+                        let comment = '',
+                            cls = '';
+                        if (Math.abs(diff) < 1) {
+                            comment = 'Accurate';
+                            cls = 'diff-zero';
+                        } else if (diff < 0) {
+                            comment = 'Shortage';
+                            cls = 'diff-negative';
+                        } else {
+                            comment = 'Excess';
+                            cls = 'diff-positive';
+                        }
+                        const sign = diff >= 0 ? '+' : '';
+                        resultDiv.innerHTML = `
+                          <div class="alert alert-secondary">
+                            <strong>Preview:</strong><br>
+                            Expected: ${formatMoney(grandTotal)}<br>
+                            Actual: ${formatMoney(actual)}<br>
+                            <span class="${cls}">Difference: ${sign}${formatMoney(diff)} (${comment})</span>
+                          </div>
+                        `;
+                    };
+
+                    document.getElementById('saveReconciliationBtn').onclick = async function() {
+                        const actual = parseFloat(document.getElementById('actualCashInput').value);
+                        if (isNaN(actual) || actual < 0) {
+                            toast('Please enter a valid amount', 'warning');
+                            return;
+                        }
+                        const diff = actual - grandTotal;
+                        let comment = '';
+                        if (Math.abs(diff) < 1) comment = 'Accurate';
+                        else if (diff < 0) comment = 'Shortage';
+                        else comment = 'Excess';
+
+                        try {
+                            await addDoc('reconciliations', {
+                                station_id: stationId,
+                                cashier_id: cashierId,
+                                shift_id: shift.id,
+                                date_from: fromDate,
+                                date_to: toDate,
+                                expected_total: grandTotal,
+                                actual_cash: actual,
+                                difference: diff,
+                                comment: comment,
+                                reconciled_by: state.user.id,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            const resultDiv = document.getElementById('reconciliationResult');
+                            const sign = diff >= 0 ? '+' : '';
+                            const cls = Math.abs(diff) < 1 ? 'diff-zero' : (diff < 0 ? 'diff-negative' :
+                            'diff-positive');
+                            resultDiv.innerHTML = `
+                            <div class="alert alert-info">
+                              <strong>✅ Reconciliation saved!</strong><br>
+                              Expected: ${formatMoney(grandTotal)}<br>
+                              Actual: ${formatMoney(actual)}<br>
+                              <span class="${cls}">Difference: ${sign}${formatMoney(diff)} (${comment})</span>
+                            </div>
+                          `;
+                            toast('Reconciliation saved successfully', 'success');
+                            // Reload after a moment to show the next shift
+                            setTimeout(() => {
+                                $('#balancingFilter').dispatchEvent(new Event('submit'));
+                            }, 1500);
+                        } catch (err) {
+                            toast('Error saving reconciliation: ' + err.message, 'danger');
+                        }
+                    };
+
+                    // "Next" button: load the next unreconciled shift
+                    const nextBtn = document.getElementById('nextUnreconciledBtn');
+                    if (nextBtn) {
+                        nextBtn.onclick = function() {
+                            // We remove the current one from the list and load the next
+                            // Since we're in a closure, we can just re-run with a small offset
+                            // For simplicity, we just reload the whole thing — the filter will naturally show the next one
+                            // because the reconciled one is now excluded.
+                            toast('Loading next unreconciled shift...', 'info');
+                            $('#balancingFilter').dispatchEvent(new Event('submit'));
+                        };
+                    }
+
+                    showLoading(false);
+
+                } catch (err) {
+                    console.error('Balancing error:', err);
+                    $('#balancingResult').innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+                    showLoading(false);
+                }
             };
         }
-        console.log('Part 6 loaded – Balancing with Start − End');
+        console.log('Part 6 loaded – Balancing shows single unreconciled shift');
     </script>
 
-    <!-- PART 7: INVENTORY, STOCK, ADJUSTMENTS -->
+    <!-- ============================================================
+    PART 7: INVENTORY, STOCK, ADJUSTMENTS (unchanged)
+    ============================================================ -->
     <script>
-        // ----- INVENTORY (with Add Item) -----
         async function renderInventory() {
             const inv = (await getAll('inventory'))
                 .filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
@@ -2392,7 +2977,8 @@ const matches = allUsernames.filter(u =>
 
             let stationOpts = '';
             state.stations.forEach(s => {
-                const sel = state.currentStationId && Number(state.currentStationId) === Number(s.id) ? 'selected' : '';
+                const sel = state.currentStationId && Number(state.currentStationId) === Number(s.id) ? 'selected' :
+                '';
                 stationOpts += `<option value="${s.id}" ${sel}>${s.name}</option>`;
             });
 
@@ -2448,16 +3034,19 @@ const matches = allUsernames.filter(u =>
                     const docId = i.id;
                     html += '<tr id="row_' + docId + '">' +
                         '<td>' + stationName(i.station_id) + '</td>' +
-                        '<td><span class="product-badge ' + (i.product_type || '').toLowerCase() + '">' + i.product_type + '</span></td>' +
+                        '<td><span class="product-badge ' + (i.product_type || '').toLowerCase() + '">' + i
+                        .product_type + '</span></td>' +
                         '<td><strong>' + (i.quantity || 0).toFixed(2) + '</strong></td>' +
                         '<td class="cost-display">' + formatMoney(i.cost_price || 0) + '</td>' +
                         '<td class="sell-display">' + formatMoney(i.selling_price || 0) + '</td>';
                     if (canEdit) {
                         html += '<td>' +
                             '<button class="btn btn-sm btn-outline-primary edit-inv-btn" data-id="' + docId +
-                            '" data-cost="' + (i.cost_price || 0) + '" data-sell="' + (i.selling_price || 0) + '">' +
+                            '" data-cost="' + (i.cost_price || 0) + '" data-sell="' + (i.selling_price || 0) +
+                            '">' +
                             '<i class="bi bi-pencil"></i> Edit</button>' +
-                            ' <button class="btn btn-sm btn-outline-danger delete-inv-btn" data-id="' + docId + '"><i class="bi bi-trash"></i></button>' +
+                            ' <button class="btn btn-sm btn-outline-danger delete-inv-btn" data-id="' + docId +
+                            '"><i class="bi bi-trash"></i></button>' +
                             '</td>';
                     }
                     html += '</tr>';
@@ -2543,7 +3132,6 @@ const matches = allUsernames.filter(u =>
             }
         }
 
-        // ----- STOCK (Offloading) -----
         async function renderStock() {
             const stock = (await getAll('stock'))
                 .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
@@ -2560,13 +3148,15 @@ const matches = allUsernames.filter(u =>
                 '<h5 class="mb-3"><i class="bi bi-truck"></i> Offloading (Receive Fuel)</h5>' +
                 '<form id="stockForm">' +
                 '<div class="mb-2"><label class="form-label small">Station *</label>' +
-                '<select id="recStation" class="form-select form-select-sm" required>' + stationOptions + '</select></div>' +
+                '<select id="recStation" class="form-select form-select-sm" required>' + stationOptions +
+                '</select></div>' +
                 '<div class="mb-2"><label class="form-label small">Shipping / Delivery Note # *</label>' +
                 '<input type="text" id="recInvoice" class="form-control form-control-sm" placeholder="e.g. DN-2026-0042" required></div>' +
                 '<div class="mb-2"><label class="form-label small">Vendor / Supplier *</label>' +
                 '<input type="text" id="recVendor" class="form-control form-control-sm" placeholder="e.g. Total Energies, Vivo Energy" required></div>' +
                 '<div class="mb-2"><label class="form-label small">Date</label>' +
-                '<input type="date" id="recDate" class="form-control form-control-sm" value="' + new Date().toISOString().slice(0,10) + '"></div>' +
+                '<input type="date" id="recDate" class="form-control form-control-sm" value="' + new Date().toISOString()
+                .slice(0, 10) + '"></div>' +
                 '<div id="recItems"></div>' +
                 '<button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="addRecItem"><i class="bi bi-plus"></i> Add Item</button>' +
                 '<button type="submit" class="btn btn-success w-100">Confirm Offloading & Update Inventory</button>' +
@@ -2579,8 +3169,9 @@ const matches = allUsernames.filter(u =>
             if (stock.length === 0) {
                 html += '<tr><td colspan="6" class="text-muted text-center">No offloading records</td></tr>';
             } else {
-                stock.slice(0,20).forEach(r => {
-                    const items = (r.items || []).map(it => it.product_type + ' ' + it.quantity + 'L').join(', ');
+                stock.slice(0, 20).forEach(r => {
+                    const items = (r.items || []).map(it => it.product_type + ' ' + it.quantity + 'L').join(
+                    ', ');
                     html += '<tr>' +
                         '<td>' + stationName(r.station_id) + '</td>' +
                         '<td>' + (r.invoice_number || r.shipping_number || '—') + '</td>' +
@@ -2588,7 +3179,8 @@ const matches = allUsernames.filter(u =>
                         '<td class="fs-xs">' + items + '</td>' +
                         '<td class="fs-xs">' + formatDate(r.received_date || r.created_at) + '</td>' +
                         '<td><button class="btn btn-sm btn-outline-danger delete-stock-btn" data-id="' + r.id +
-                        '" data-station="' + r.station_id + '" data-items=\'' + JSON.stringify(r.items || []) +
+                        '" data-station="' + r.station_id + '" data-items=\'' + JSON.stringify(r.items ||
+                            []) +
                         '\'><i class="bi bi-trash"></i></button></td>' +
                         '</tr>';
                 });
@@ -2689,7 +3281,6 @@ const matches = allUsernames.filter(u =>
             });
         }
 
-        // ----- ADJUSTMENTS -----
         async function renderAdjustments() {
             const canAdjust = isAdmin(state.user.role);
             const adj = (await getAll('adjustments'))
@@ -2716,7 +3307,8 @@ const matches = allUsernames.filter(u =>
                     '<option value="both_prices">Cost + Selling Price</option>' +
                     '</select></div>' +
                     '<div class="mb-2"><label class="form-label small">Station *</label>' +
-                    '<select id="adjStation" class="form-select form-select-sm">' + stationOptions + '</select></div>' +
+                    '<select id="adjStation" class="form-select form-select-sm">' + stationOptions +
+                    '</select></div>' +
                     '<div class="mb-2"><label class="form-label small">Product *</label>' +
                     '<select id="adjProduct" class="form-select form-select-sm">' +
                     '<option>Petrol</option><option>Diesel</option><option>Gas</option><option>Paraffin</option></select></div>' +
@@ -2761,43 +3353,52 @@ const matches = allUsernames.filter(u =>
             if (adj.length === 0) {
                 html += '<tr><td colspan="' + (canAdjust ? '7' : '6') + '" class="text-muted text-center">No adjustments</td></tr>';
             } else {
-                adj.slice(0,40).forEach(a => {
+                adj.slice(0, 40).forEach(a => {
                     const type = a.adj_type || 'quantity';
-                    let typeBadge = '', changeText = '';
+                    let typeBadge = '',
+                        changeText = '';
                     if (type === 'quantity') {
                         typeBadge = '<span class="badge bg-primary">Qty</span>';
                         const delta = Number(a.quantity || 0);
                         const qtyClass = delta < 0 ? 'text-danger' : 'text-success';
-                        const deltaStr = '<span class="' + qtyClass + '">(' + (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' L)</span>';
+                        const deltaStr = '<span class="' + qtyClass + '">(' + (delta >= 0 ? '+' : '') + delta
+                            .toFixed(2) + ' L)</span>';
                         if (a.old_quantity != null && a.new_quantity != null) {
-                            changeText = Number(a.old_quantity).toFixed(2) + ' → <strong>' + Number(a.new_quantity).toFixed(2) + ' L</strong> ' + deltaStr;
+                            changeText = Number(a.old_quantity).toFixed(2) + ' → <strong>' + Number(a
+                                .new_quantity).toFixed(2) + ' L</strong> ' + deltaStr;
                         } else {
                             changeText = deltaStr;
                         }
                     } else if (type === 'cost_price') {
                         typeBadge = '<span class="badge bg-info text-dark">Cost</span>';
-                        changeText = formatMoney(a.old_cost || 0) + ' → <strong>' + formatMoney(a.new_cost || 0) + '</strong>';
+                        changeText = formatMoney(a.old_cost || 0) + ' → <strong>' + formatMoney(a.new_cost ||
+                            0) + '</strong>';
                     } else if (type === 'selling_price') {
                         typeBadge = '<span class="badge bg-success">Sell</span>';
-                        changeText = formatMoney(a.old_sell || 0) + ' → <strong>' + formatMoney(a.new_sell || 0) + '</strong>';
+                        changeText = formatMoney(a.old_sell || 0) + ' → <strong>' + formatMoney(a.new_sell ||
+                            0) + '</strong>';
                     } else if (type === 'both_prices') {
                         typeBadge = '<span class="badge bg-warning text-dark">Prices</span>';
-                        changeText = 'Cost: ' + formatMoney(a.old_cost || 0) + '→' + formatMoney(a.new_cost || 0) +
+                        changeText = 'Cost: ' + formatMoney(a.old_cost || 0) + '→' + formatMoney(a.new_cost ||
+                            0) +
                             '<br>Sell: ' + formatMoney(a.old_sell || 0) + '→' + formatMoney(a.new_sell || 0);
                     } else {
                         typeBadge = '<span class="badge bg-secondary">Qty</span>';
                         const delta = Number(a.quantity || 0);
-                        changeText = '<span class="' + (delta < 0 ? 'text-danger' : 'text-success') + '">(' + (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' L)</span>';
+                        changeText = '<span class="' + (delta < 0 ? 'text-danger' : 'text-success') + '">(' + (
+                            delta >= 0 ? '+' : '') + delta.toFixed(2) + ' L)</span>';
                     }
                     html += '<tr>' +
                         '<td>' + stationName(a.station_id) + '</td>' +
-                        '<td><span class="product-badge ' + (a.product_type || '').toLowerCase() + '">' + (a.product_type || '—') + '</span></td>' +
+                        '<td><span class="product-badge ' + (a.product_type || '').toLowerCase() + '">' + (a
+                            .product_type || '—') + '</span></td>' +
                         '<td>' + typeBadge + '</td>' +
                         '<td class="fs-xs">' + changeText + '</td>' +
                         '<td class="fs-xs">' + (a.reason || '—') + '</td>' +
                         '<td class="fs-xs">' + formatDate(a.created_at) + '</td>';
                     if (canAdjust) {
-                        html += '<td><button class="btn btn-sm btn-outline-danger delete-adj-btn" data-id="' + a.id + '"><i class="bi bi-trash"></i></button></td>';
+                        html += '<td><button class="btn btn-sm btn-outline-danger delete-adj-btn" data-id="' + a.id +
+                            '"><i class="bi bi-trash"></i></button></td>';
                     }
                     html += '</tr>';
                 });
@@ -2833,11 +3434,13 @@ const matches = allUsernames.filter(u =>
                     const item = inv.find(i => Number(i.station_id) === stationId && i.product_type === product);
                     const info = $('#adjCurrentInfo');
                     if (item) {
-                        info.innerHTML = '<div><strong>Current:</strong> Qty <strong>' + (item.quantity || 0).toFixed(2) + ' L</strong> &nbsp;|&nbsp; ' +
+                        info.innerHTML = '<div><strong>Current:</strong> Qty <strong>' + (item.quantity || 0).toFixed(
+                            2) + ' L</strong> &nbsp;|&nbsp; ' +
                             'Cost <strong>' + formatMoney(item.cost_price || 0) + '</strong> &nbsp;|&nbsp; ' +
                             'Sell <strong>' + formatMoney(item.selling_price || 0) + '</strong></div>';
                         if ($('#adjCurrentQty')) $('#adjCurrentQty').value = Number(item.quantity || 0).toFixed(2);
-                        if ($('#adjNewQty') && !$('#adjNewQty').value) $('#adjNewQty').value = Number(item.quantity || 0).toFixed(2);
+                        if ($('#adjNewQty') && !$('#adjNewQty').value) $('#adjNewQty').value = Number(item
+                        .quantity || 0).toFixed(2);
                         if ($('#adjCost')) $('#adjCost').value = item.cost_price || '';
                         if ($('#adjSell')) $('#adjSell').value = item.selling_price || '';
                         updateQtyDelta();
@@ -2854,8 +3457,10 @@ const matches = allUsernames.filter(u =>
                 function toggleAdjFields() {
                     const type = $('#adjType').value;
                     $('#adjQtySection').style.display = (type === 'quantity') ? 'block' : 'none';
-                    $('#adjCostSection').style.display = (type === 'cost_price' || type === 'both_prices') ? 'block' : 'none';
-                    $('#adjSellSection').style.display = (type === 'selling_price' || type === 'both_prices') ? 'block' : 'none';
+                    $('#adjCostSection').style.display = (type === 'cost_price' || type === 'both_prices') ? 'block' :
+                        'none';
+                    $('#adjSellSection').style.display = (type === 'selling_price' || type === 'both_prices') ? 'block' :
+                        'none';
                     const newQtyInput = $('#adjNewQty');
                     const costInput = $('#adjCost');
                     const sellInput = $('#adjSell');
@@ -2864,9 +3469,12 @@ const matches = allUsernames.filter(u =>
                     if (sellInput) sellInput.required = (type === 'selling_price' || type === 'both_prices');
                 }
 
-                $('#adjType').onchange = function() { toggleAdjFields(); updateCurrentInfo(); };
-                $('#adjStation').onchange = function() { if ($('#adjNewQty')) $('#adjNewQty').value = ''; updateCurrentInfo(); };
-                $('#adjProduct').onchange = function() { if ($('#adjNewQty')) $('#adjNewQty').value = ''; updateCurrentInfo(); };
+                $('#adjType').onchange = function() { toggleAdjFields();
+                    updateCurrentInfo(); };
+                $('#adjStation').onchange = function() { if ($('#adjNewQty')) $('#adjNewQty').value = '';
+                    updateCurrentInfo(); };
+                $('#adjProduct').onchange = function() { if ($('#adjNewQty')) $('#adjNewQty').value = '';
+                    updateCurrentInfo(); };
                 if ($('#adjNewQty')) $('#adjNewQty').oninput = updateQtyDelta;
                 toggleAdjFields();
                 setTimeout(updateCurrentInfo, 50);
@@ -2882,14 +3490,19 @@ const matches = allUsernames.filter(u =>
                     try {
                         showLoading(true);
                         const invDocId = stationId + '_' + product;
-                        const current = inv.find(i => Number(i.station_id) === stationId && i.product_type === product);
+                        const current = inv.find(i => Number(i.station_id) === stationId && i.product_type ===
+                        product);
 
                         if (type === 'quantity') {
                             const currentQty = parseFloat($('#adjCurrentQty').value) || 0;
                             const newQty = parseFloat($('#adjNewQty').value);
-                            if (isNaN(newQty) || newQty < 0) { toast('Enter a valid new quantity (0 or more)', 'warning'); showLoading(false); return; }
+                            if (isNaN(newQty) || newQty < 0) { toast('Enter a valid new quantity (0 or more)',
+                                    'warning');
+                                showLoading(false); return; }
                             const qty = newQty - currentQty;
-                            if (qty === 0) { toast('New quantity is the same as current – no change needed', 'info'); showLoading(false); return; }
+                            if (qty === 0) { toast('New quantity is the same as current – no change needed',
+                                    'info');
+                                showLoading(false); return; }
                             await adjustInventory(stationId, product, qty);
                             await addDoc('adjustments', {
                                 station_id: stationId,
@@ -2901,11 +3514,14 @@ const matches = allUsernames.filter(u =>
                                 reason: reason,
                                 created_by: state.user.id
                             });
-                            await logAudit('stock_adjustment', { station: stationId, product, qty, old: currentQty, new: newQty, reason });
-                            toast('Quantity updated: ' + currentQty.toFixed(2) + ' L → ' + newQty.toFixed(2) + ' L');
+                            await logAudit('stock_adjustment', { station: stationId, product, qty, old: currentQty,
+                                new: newQty, reason });
+                            toast('Quantity updated: ' + currentQty.toFixed(2) + ' L → ' + newQty.toFixed(2) +
+                            ' L');
                         } else if (type === 'cost_price') {
                             const newCost = parseFloat($('#adjCost').value);
-                            if (isNaN(newCost) || newCost < 0) { toast('Enter a valid cost price', 'warning'); showLoading(false); return; }
+                            if (isNaN(newCost) || newCost < 0) { toast('Enter a valid cost price', 'warning');
+                                showLoading(false); return; }
                             const oldCost = current ? (current.cost_price || 0) : 0;
                             const ref = db.collection('inventory').doc(invDocId);
                             const snap = await ref.get();
@@ -2920,7 +3536,8 @@ const matches = allUsernames.filter(u =>
                                     last_updated: firebase.firestore.FieldValue.serverTimestamp()
                                 });
                             } else {
-                                await ref.update({ cost_price: newCost, last_updated: firebase.firestore.FieldValue.serverTimestamp() });
+                                await ref.update({ cost_price: newCost,
+                                    last_updated: firebase.firestore.FieldValue.serverTimestamp() });
                             }
                             await addDoc('adjustments', {
                                 station_id: stationId,
@@ -2931,11 +3548,13 @@ const matches = allUsernames.filter(u =>
                                 reason: reason,
                                 created_by: state.user.id
                             });
-                            await logAudit('cost_adjustment', { station: stationId, product, oldCost, newCost, reason });
+                            await logAudit('cost_adjustment', { station: stationId, product, oldCost, newCost,
+                                reason });
                             toast('Cost price updated: ' + formatMoney(oldCost) + ' → ' + formatMoney(newCost));
                         } else if (type === 'selling_price') {
                             const newSell = parseFloat($('#adjSell').value);
-                            if (isNaN(newSell) || newSell < 0) { toast('Enter a valid selling price', 'warning'); showLoading(false); return; }
+                            if (isNaN(newSell) || newSell < 0) { toast('Enter a valid selling price', 'warning');
+                                showLoading(false); return; }
                             const oldSell = current ? (current.selling_price || 0) : 0;
                             const ref = db.collection('inventory').doc(invDocId);
                             const snap = await ref.get();
@@ -2950,7 +3569,8 @@ const matches = allUsernames.filter(u =>
                                     last_updated: firebase.firestore.FieldValue.serverTimestamp()
                                 });
                             } else {
-                                await ref.update({ selling_price: newSell, last_updated: firebase.firestore.FieldValue.serverTimestamp() });
+                                await ref.update({ selling_price: newSell,
+                                    last_updated: firebase.firestore.FieldValue.serverTimestamp() });
                             }
                             await addDoc('adjustments', {
                                 station_id: stationId,
@@ -2961,13 +3581,17 @@ const matches = allUsernames.filter(u =>
                                 reason: reason,
                                 created_by: state.user.id
                             });
-                            await logAudit('sell_adjustment', { station: stationId, product, oldSell, newSell, reason });
-                            toast('Selling price updated: ' + formatMoney(oldSell) + ' → ' + formatMoney(newSell));
+                            await logAudit('sell_adjustment', { station: stationId, product, oldSell, newSell,
+                                reason });
+                            toast('Selling price updated: ' + formatMoney(oldSell) + ' → ' + formatMoney(
+                            newSell));
                         } else if (type === 'both_prices') {
                             const newCost = parseFloat($('#adjCost').value);
                             const newSell = parseFloat($('#adjSell').value);
                             if (isNaN(newCost) || newCost < 0 || isNaN(newSell) || newSell < 0) {
-                                toast('Enter valid cost and selling prices', 'warning'); showLoading(false); return;
+                                toast('Enter valid cost and selling prices', 'warning');
+                                showLoading(false);
+                                return;
                             }
                             const oldCost = current ? (current.cost_price || 0) : 0;
                             const oldSell = current ? (current.selling_price || 0) : 0;
@@ -3001,7 +3625,8 @@ const matches = allUsernames.filter(u =>
                                 reason: reason,
                                 created_by: state.user.id
                             });
-                            await logAudit('price_adjustment', { station: stationId, product, oldCost, newCost, oldSell, newSell, reason });
+                            await logAudit('price_adjustment', { station: stationId, product, oldCost, newCost,
+                                oldSell, newSell, reason });
                             toast('Prices updated');
                         }
                         renderAdjustments();
@@ -3030,9 +3655,10 @@ const matches = allUsernames.filter(u =>
         console.log('Part 7 loaded');
     </script>
 
-    <!-- PART 8: USERS, ACTIVITY, FINANCIALS, CUSTOMERS, RECEIPTS -->
+    <!-- ============================================================
+    PART 8: USERS, ACTIVITY, FINANCIALS, CUSTOMERS, RECEIPTS
+    ============================================================ -->
     <script>
-        // ----- USERS (with self password change) -----
         async function renderUsers() {
             if (!canManageUsers(state.user.role)) {
                 $('#pageContent').innerHTML =
@@ -3046,7 +3672,6 @@ const matches = allUsernames.filter(u =>
             });
 
             let html = '<div class="row g-4">';
-            // Change My Password
             html += `
             <div class="col-lg-12">
               <div class="card-box mb-3">
@@ -3074,7 +3699,6 @@ const matches = allUsernames.filter(u =>
               </div>
             </div>`;
 
-            // Add User
             html += `
             <div class="col-lg-4">
               <div class="card-box">
@@ -3105,7 +3729,6 @@ const matches = allUsernames.filter(u =>
               </div>
             </div>`;
 
-            // User list
             html += `
             <div class="col-lg-8">
               <div class="card-box">
@@ -3133,7 +3756,6 @@ const matches = allUsernames.filter(u =>
             html += '</tbody></table></div></div></div></div>';
             $('#pageContent').innerHTML = html;
 
-            // Change Password handler
             $('#changePasswordForm').onsubmit = async function(e) {
                 e.preventDefault();
                 const oldPass = $('#oldPass').value;
@@ -3178,7 +3800,6 @@ const matches = allUsernames.filter(u =>
                 }
             };
 
-            // User create/edit/delete/reset
             $('#userForm').onsubmit = async function(e) {
                 e.preventDefault();
                 $('#userResult').innerHTML = '';
@@ -3300,7 +3921,6 @@ const matches = allUsernames.filter(u =>
             });
         }
 
-        // ----- ACTIVITY LOG -----
         async function renderActivityLog() {
             if (!canManageUsers(state.user.role)) {
                 $('#pageContent').innerHTML =
@@ -3331,7 +3951,8 @@ const matches = allUsernames.filter(u =>
                 logs.slice(0, 100).forEach(log => {
                     const user = users.find(u => u.id === log.user_id);
                     const username = user ? (user.name || user.username) : (log.username || 'System');
-                    const details = typeof log.details === 'string' ? log.details : JSON.stringify(log.details || {});
+                    const details = typeof log.details === 'string' ? log.details : JSON.stringify(log
+                    .details || {});
                     html += `<tr>
                     <td class="fs-xs">${formatDateTime(log.timestamp)}</td>
                     <td><strong>${username}</strong></td>
@@ -3355,7 +3976,8 @@ const matches = allUsernames.filter(u =>
                     row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
                 });
             };
-            $('#refreshLogs').onclick = function() { renderActivityLog(); toast('Refreshed', 'info'); };
+            $('#refreshLogs').onclick = function() { renderActivityLog();
+                toast('Refreshed', 'info'); };
             $('#clearLogs').onclick = async function() {
                 if (!confirm('Delete ALL activity logs?')) return;
                 try {
@@ -3369,6 +3991,7 @@ const matches = allUsernames.filter(u =>
                 }
             };
         }
+
         async function renderActivity() { return renderActivityLog(); }
 
         // ----- FINANCIALS -----
@@ -3384,7 +4007,8 @@ const matches = allUsernames.filter(u =>
             let accountOptions = '<option value="">Select Account</option>';
             accountOptions += '<option value="petty_cash">💰 Petty Cash</option>';
             accounts.forEach(a => {
-                accountOptions += '<option value="' + a.id + '">🏦 ' + a.bank_name + ' – ' + a.account_number + '</option>';
+                accountOptions += '<option value="' + a.id + '">🏦 ' + a.bank_name + ' – ' + a.account_number +
+                '</option>';
             });
 
             let depositSourceOptions =
@@ -3404,7 +4028,8 @@ const matches = allUsernames.filter(u =>
 
                 '<div class="card-box mb-3"><h5 class="mb-3"><i class="bi bi-arrow-up-circle"></i> Record Banking (Deposit)</h5><form id="bankForm">' +
                 '<div class="mb-2"><label class="form-label small">Source Account</label>' +
-                '<select id="bfSource" class="form-select form-select-sm" required>' + depositSourceOptions + '</select></div>' +
+                '<select id="bfSource" class="form-select form-select-sm" required>' + depositSourceOptions +
+                '</select></div>' +
                 '<div class="mb-2"><label class="form-label small">Destination Bank Account</label>' +
                 '<select id="bfAccount" class="form-select form-select-sm" required>' +
                 '<option value="">Select Bank Account</option>';
@@ -3421,7 +4046,8 @@ const matches = allUsernames.filter(u =>
 
                 '<div class="card-box"><h5 class="mb-3"><i class="bi bi-arrow-down-circle"></i> Record Expense / Payment</h5><form id="expForm">' +
                 '<div class="mb-2"><label class="form-label small">Source Account</label>' +
-                '<select id="expSource" class="form-select form-select-sm" required>' + accountOptions + '</select></div>' +
+                '<select id="expSource" class="form-select form-select-sm" required>' + accountOptions +
+                '</select></div>' +
                 '<div class="mb-2"><input id="expDesc" class="form-control form-control-sm" placeholder="Description *" required></div>' +
                 '<div class="mb-2"><input type="number" id="expAmount" class="form-control form-control-sm" placeholder="Amount *" step="100" required></div>' +
                 '<div class="mb-2"><label class="form-label small">Category</label>' +
@@ -3452,7 +4078,8 @@ const matches = allUsernames.filter(u =>
                         '<td>' + formatMoney(bal) + '</td>' +
                         '<td>' +
                         (canDelete ?
-                            '<button class="btn btn-sm btn-outline-danger delete-account-btn" data-id="' + a.id + '"><i class="bi bi-trash"></i></button>' :
+                            '<button class="btn btn-sm btn-outline-danger delete-account-btn" data-id="' + a
+                            .id + '"><i class="bi bi-trash"></i></button>' :
                             '<button class="btn btn-sm btn-outline-secondary" disabled title="Account has balance"><i class="bi bi-lock"></i></button>') +
                         '</td></tr>';
                 });
@@ -3474,8 +4101,10 @@ const matches = allUsernames.filter(u =>
                         const src = accounts.find(a => a.id === b.source_account);
                         if (src) fromLabel = src.bank_name;
                     }
-                    html += '<tr><td>' + fromLabel + '</td><td>' + (acc ? acc.bank_name : '—') + '</td><td>' + (b.depositor || '—') +
-                        '</td><td>' + formatMoney(b.amount) + '</td><td class="fs-xs">' + formatDate(b.created_at) + '</td></tr>';
+                    html += '<tr><td>' + fromLabel + '</td><td>' + (acc ? acc.bank_name : '—') + '</td><td>' + (b
+                        .depositor || '—') +
+                        '</td><td>' + formatMoney(b.amount) + '</td><td class="fs-xs">' + formatDate(b
+                        .created_at) + '</td></tr>';
                 });
             }
 
@@ -3494,7 +4123,8 @@ const matches = allUsernames.filter(u =>
                         if (acc) sourceLabel = acc.bank_name;
                     }
                     html += '<tr><td>' + sourceLabel + '</td><td>' + (e.description || '—') + '</td><td><span class="badge bg-secondary">' +
-                        (e.category || 'other') + '</span></td><td class="text-danger">' + formatMoney(e.amount) +
+                        (e.category || 'other') + '</span></td><td class="text-danger">' + formatMoney(e
+                        .amount) +
                         '</td><td class="fs-xs">' + formatDate(e.created_at) + '</td></tr>';
                 });
             }
@@ -3755,7 +4385,8 @@ const matches = allUsernames.filter(u =>
                 html += '<tr><td colspan="6" class="text-center text-muted">No customers yet</td></tr>';
             } else {
                 customers.forEach(c => {
-                    const customerSales = sales.filter(s => s.status !== 'reversed' && s.customer_name === c.name);
+                    const customerSales = sales.filter(s => s.status !== 'reversed' && s.customer_name === c
+                    .name);
                     const visits = customerSales.length;
                     const totalSpent = customerSales.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
                     html += `<tr>
@@ -3842,7 +4473,9 @@ const matches = allUsernames.filter(u =>
         console.log('Part 8 loaded');
     </script>
 
-    <!-- PART 9: REPORTS -->
+    <!-- ============================================================
+    PART 9: REPORTS (unchanged)
+    ============================================================ -->
     <script>
         async function renderReports() {
             const inv = await getAll('inventory');
@@ -3889,9 +4522,11 @@ const matches = allUsernames.filter(u =>
                 '<div class="col-md-2"><label class="form-label">Station</label>' +
                 '<select id="rptStation" class="form-select form-select-sm">' + stationOpts + '</select></div>' +
                 '<div class="col-md-2"><label class="form-label">From</label>' +
-                '<input type="date" id="rptFrom" class="form-control form-control-sm" value="' + toISO(thirtyDaysAgo) + '"></div>' +
+                '<input type="date" id="rptFrom" class="form-control form-control-sm" value="' + toISO(thirtyDaysAgo) +
+                '"></div>' +
                 '<div class="col-md-2"><label class="form-label">To</label>' +
-                '<input type="date" id="rptTo" class="form-control form-control-sm" value="' + toISO(today) + '"></div>' +
+                '<input type="date" id="rptTo" class="form-control form-control-sm" value="' + toISO(today) +
+                '"></div>' +
                 '<div class="col-md-2"><label class="form-label">Product</label>' +
                 '<select id="rptProduct" class="form-select form-select-sm">' +
                 '<option value="">All Products</option>' +
@@ -3963,19 +4598,27 @@ const matches = allUsernames.filter(u =>
                 return tableHtml;
             }
 
-            // SALES SUMMARY (product-wise)
             function genSales(f) {
-                const data = filterByCommon(sales, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
-                let totalPetrol = 0, totalDiesel = 0, totalGas = 0, totalParaffin = 0;
+                const data = filterByCommon(sales, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a
+                    .created_at && a.created_at.seconds || 0));
+                let totalPetrol = 0,
+                    totalDiesel = 0,
+                    totalGas = 0,
+                    totalParaffin = 0;
                 let totalAmt = 0;
-                const headers = ['Station', 'Cashier', 'Petrol (L)', 'Diesel (L)', 'Gas (L)', 'Paraffin (L)', 'Total Qty (L)', 'Total Amount', 'Discount', 'Payment', 'Status', 'Date'];
+                const headers = ['Station', 'Cashier', 'Petrol (L)', 'Diesel (L)', 'Gas (L)', 'Paraffin (L)',
+                    'Total Qty (L)', 'Total Amount', 'Discount', 'Payment', 'Status', 'Date'
+                ];
                 const rows = [];
                 data.forEach(s => {
                     const qty = Number(s.quantity) || 0;
                     const amt = Number(s.amount) || 0;
                     const isRev = s.status === 'reversed';
                     const product = s.product_type || '';
-                    let petrol = 0, diesel = 0, gas = 0, paraffin = 0;
+                    let petrol = 0,
+                        diesel = 0,
+                        gas = 0,
+                        paraffin = 0;
                     if (product === 'Petrol') petrol = qty;
                     else if (product === 'Diesel') diesel = qty;
                     else if (product === 'Gas') gas = qty;
@@ -4003,25 +4646,27 @@ const matches = allUsernames.filter(u =>
                 let body = '<div class="d-flex justify-content-between align-items-center mb-3">' +
                     '<h5 class="mb-0">Sales Summary <span class="badge bg-primary">' + data.length + '</span></h5>' +
                     '<div class="text-end"><div class="fw-bold">' + formatMoney(totalAmt) +
-                    '</div><small class="text-muted">Petrol: ' + totalPetrol.toFixed(2) + 'L | Diesel: ' + totalDiesel.toFixed(2) +
+                    '</div><small class="text-muted">Petrol: ' + totalPetrol.toFixed(2) + 'L | Diesel: ' + totalDiesel
+                    .toFixed(2) +
                     'L | Gas: ' + totalGas.toFixed(2) + 'L | Paraffin: ' + totalParaffin.toFixed(2) + 'L</small></div></div>';
                 body += regenerateTable(headers, rows);
                 if (data.length > 0) {
                     body += '<div class="mt-3"><strong>Grand Total (excl. reversed):</strong> ' + formatMoney(totalAmt) +
-                        ' | <strong>Total Qty:</strong> ' + (totalPetrol + totalDiesel + totalGas + totalParaffin).toFixed(2) + ' L' +
+                        ' | <strong>Total Qty:</strong> ' + (totalPetrol + totalDiesel + totalGas + totalParaffin)
+                        .toFixed(2) + ' L' +
                         ' (Petrol: ' + totalPetrol.toFixed(2) + 'L, Diesel: ' + totalDiesel.toFixed(2) +
                         'L, Gas: ' + totalGas.toFixed(2) + 'L, Paraffin: ' + totalParaffin.toFixed(2) + 'L)</div>';
                 }
                 return { html: body, headers: headers, rows: rows, filename: 'sales_report' };
             }
 
-            // DEPOSITS
             function genDeposits(f) {
                 const data = bankings.filter(b => {
                     if (f.stationId && Number(b.station_id) !== f.stationId) return false;
                     if (b.created_at && !dateInRange(b.created_at, f.from, f.to)) return false;
                     return true;
-                }).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+                }).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds ||
+                0));
 
                 let total = 0;
                 const headers = ['Source', 'Destination Account', 'Depositor', 'Amount', 'Date'];
@@ -4053,19 +4698,24 @@ const matches = allUsernames.filter(u =>
                 return { html: body, headers: headers, rows: rows, filename: 'deposits_report' };
             }
 
-            // PROFIT
             function genProfit(f) {
                 const data = filterByCommon(sales, f).filter(s => s.status !== 'reversed');
-                let totalRev = 0, totalCost = 0, totalQty = 0;
+                let totalRev = 0,
+                    totalCost = 0,
+                    totalQty = 0;
                 const byProduct = {};
                 data.forEach(s => {
                     const qty = Number(s.quantity) || 0;
                     const rev = Number(s.amount) || 0;
                     const cost = (Number(s.cost_price) || 0) * qty;
-                    totalRev += rev; totalCost += cost; totalQty += qty;
+                    totalRev += rev;
+                    totalCost += cost;
+                    totalQty += qty;
                     const key = s.product_type || 'Unknown';
                     if (!byProduct[key]) byProduct[key] = { qty: 0, rev: 0, cost: 0 };
-                    byProduct[key].qty += qty; byProduct[key].rev += rev; byProduct[key].cost += cost;
+                    byProduct[key].qty += qty;
+                    byProduct[key].rev += rev;
+                    byProduct[key].cost += cost;
                 });
                 const profit = totalRev - totalCost;
                 const margin = totalRev > 0 ? (profit / totalRev * 100) : 0;
@@ -4075,7 +4725,9 @@ const matches = allUsernames.filter(u =>
                     const d = byProduct[p];
                     const pr = d.rev - d.cost;
                     const m = d.rev > 0 ? (pr / d.rev * 100) : 0;
-                    rows.push([p, d.qty.toFixed(2), formatMoney(d.rev), formatMoney(d.cost), formatMoney(pr), m.toFixed(1) + '%']);
+                    rows.push([p, d.qty.toFixed(2), formatMoney(d.rev), formatMoney(d.cost), formatMoney(pr), m
+                        .toFixed(1) + '%'
+                    ]);
                 });
                 let body = '<div class="row g-3 mb-4">' +
                     '<div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#198754"><i class="bi bi-cash-stack"></i></div>' +
@@ -4083,7 +4735,8 @@ const matches = allUsernames.filter(u =>
                     '<div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#dc3545"><i class="bi bi-cart"></i></div>' +
                     '<div><div class="num">' + formatMoney(totalCost) + '</div><div class="lbl">COGS</div></div></div></div>' +
                     '<div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#0d6efd"><i class="bi bi-graph-up-arrow"></i></div>' +
-                    '<div><div class="num ' + (profit >= 0 ? 'profit-positive' : 'profit-negative') + '">' + formatMoney(profit) +
+                    '<div><div class="num ' + (profit >= 0 ? 'profit-positive' : 'profit-negative') + '">' + formatMoney(
+                        profit) +
                     '</div><div class="lbl">Gross Profit</div></div></div></div>' +
                     '<div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#ffc107"><i class="bi bi-percent"></i></div>' +
                     '<div><div class="num">' + margin.toFixed(1) + '%</div><div class="lbl">Margin</div></div></div></div></div>';
@@ -4091,80 +4744,100 @@ const matches = allUsernames.filter(u =>
                 return { html: body, headers: headers, rows: rows, filename: 'profit_report' };
             }
 
-            // INVENTORY
             function genInventory(f) {
                 const data = inv.filter(i => {
                     if (f.stationId && Number(i.station_id) !== f.stationId) return false;
                     if (f.product && i.product_type !== f.product) return false;
                     return true;
                 });
-                let totalLitres = 0, totalValue = 0;
-                const headers = ['Station', 'Product', 'Quantity (L)', 'Cost/L', 'Sell/L', 'Stock Value', 'Potential Revenue'];
+                let totalLitres = 0,
+                    totalValue = 0;
+                const headers = ['Station', 'Product', 'Quantity (L)', 'Cost/L', 'Sell/L', 'Stock Value',
+                    'Potential Revenue'
+                ];
                 const rows = [];
                 data.forEach(i => {
                     const qty = Number(i.quantity) || 0;
                     const cost = Number(i.cost_price) || 0;
                     const sell = Number(i.selling_price) || 0;
-                    totalLitres += qty; totalValue += qty * cost;
+                    totalLitres += qty;
+                    totalValue += qty * cost;
                     rows.push([
                         stationName(i.station_id), i.product_type, qty.toFixed(2),
-                        formatMoney(cost), formatMoney(sell), formatMoney(qty * cost), formatMoney(qty * sell)
+                        formatMoney(cost), formatMoney(sell), formatMoney(qty * cost), formatMoney(qty *
+                        sell)
                     ]);
                 });
                 let body = '<div class="d-flex justify-content-between mb-3">' +
-                    '<h5 class="mb-0">Inventory Snapshot <span class="badge bg-secondary">' + data.length + '</span></h5>' +
+                    '<h5 class="mb-0">Inventory Snapshot <span class="badge bg-secondary">' + data.length +
+                    '</span></h5>' +
                     '<div class="text-end"><div class="fw-bold">' + totalLitres.toFixed(2) + ' L</div><small class="text-muted">' +
                     formatMoney(totalValue) + ' total value</small></div></div>';
                 body += regenerateTable(headers, rows);
                 return { html: body, headers: headers, rows: rows, filename: 'inventory_report' };
             }
 
-            // SHIFTS
             function genShifts(f) {
                 const data = shifts.filter(s => {
                     if (f.stationId && Number(s.station_id) !== f.stationId) return false;
                     if (s.created_at && !dateInRange(s.created_at, f.from, f.to)) return false;
                     return true;
-                }).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
-                const headers = ['Station', 'Cashier', 'Type', 'Status', 'Start P/D/G/Pf', 'End P/D/G/Pf', 'Sold P/D/G/Pf', 'Date'];
+                }).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds ||
+                0));
+                const headers = ['Station', 'Cashier', 'Type', 'Status', 'Start P/D/G/Pf', 'End P/D/G/Pf',
+                    'Sold P/D/G/Pf', 'Date'
+                ];
                 const rows = [];
                 data.forEach(s => {
                     const cashier = users.find(u => u.id === s.cashier_id);
                     const name = cashier ? (cashier.name || cashier.username) : '—';
-                    const start = (s.start_petrol || 0) + '/' + (s.start_diesel || 0) + '/' + (s.start_gas || 0) + '/' + (s.start_paraffin || 0);
-                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + '/' + (s.end_diesel || 0) + '/' + (s.end_gas || 0) + '/' + (s.end_paraffin || 0)) : '—';
-                    const soldP = s.status === 'closed' ? Math.max(0, (s.start_petrol || 0) - (s.end_petrol || 0)).toFixed(1) : '—';
-                    const soldD = s.status === 'closed' ? Math.max(0, (s.start_diesel || 0) - (s.end_diesel || 0)).toFixed(1) : '—';
-                    const soldG = s.status === 'closed' ? Math.max(0, (s.start_gas || 0) - (s.end_gas || 0)).toFixed(1) : '—';
-                    const soldPf = s.status === 'closed' ? Math.max(0, (s.start_paraffin || 0) - (s.end_paraffin || 0)).toFixed(1) : '—';
+                    const start = (s.start_petrol || 0) + '/' + (s.start_diesel || 0) + '/' + (s.start_gas || 0) +
+                        '/' + (s.start_paraffin || 0);
+                    const end = s.status === 'closed' ? ((s.end_petrol || 0) + '/' + (s.end_diesel || 0) + '/' + (
+                        s.end_gas || 0) + '/' + (s.end_paraffin || 0)) : '—';
+                    const soldP = s.status === 'closed' ? Math.max(0, (s.start_petrol || 0) - (s.end_petrol || 0))
+                        .toFixed(1) : '—';
+                    const soldD = s.status === 'closed' ? Math.max(0, (s.start_diesel || 0) - (s.end_diesel || 0))
+                        .toFixed(1) : '—';
+                    const soldG = s.status === 'closed' ? Math.max(0, (s.start_gas || 0) - (s.end_gas || 0))
+                        .toFixed(1) : '—';
+                    const soldPf = s.status === 'closed' ? Math.max(0, (s.start_paraffin || 0) - (s.end_paraffin ||
+                        0)).toFixed(1) : '—';
                     rows.push([
                         stationName(s.station_id), name, s.shift_type, s.status, start, end,
                         soldP + '/' + soldD + '/' + soldG + '/' + soldPf, formatDate(s.created_at)
                     ]);
                 });
                 let body = '<div class="d-flex justify-content-between mb-3">' +
-                    '<h5 class="mb-0">Shift Performance <span class="badge bg-secondary">' + data.length + '</span></h5></div>';
+                    '<h5 class="mb-0">Shift Performance <span class="badge bg-secondary">' + data.length +
+                    '</span></h5></div>';
                 body += regenerateTable(headers, rows);
                 return { html: body, headers: headers, rows: rows, filename: 'shifts_report' };
             }
 
-            // RECONCILIATION
             function genReconciliation(f) {
                 let closed = shifts.filter(s => s.status === 'closed');
                 if (f.stationId) closed = closed.filter(s => Number(s.station_id) === f.stationId);
                 closed = closed.filter(s => !s.created_at || dateInRange(s.created_at, f.from, f.to));
-                const headers = ['Station', 'Shift', 'Date', 'Expected', 'Cash', 'Mobile', 'Credit', 'Total Actual', 'Difference', 'Status'];
+                const headers = ['Station', 'Shift', 'Date', 'Expected', 'Cash', 'Mobile', 'Credit', 'Total Actual',
+                    'Difference', 'Status'
+                ];
                 const rows = [];
                 closed.forEach(s => {
                     const petrolSold = Math.max(0, (s.start_petrol || 0) - (s.end_petrol || 0));
                     const dieselSold = Math.max(0, (s.start_diesel || 0) - (s.end_diesel || 0));
                     const gasSold = Math.max(0, (s.start_gas || 0) - (s.end_gas || 0));
                     const paraffinSold = Math.max(0, (s.start_paraffin || 0) - (s.end_paraffin || 0));
-                    const pPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Petrol') || {}).selling_price || 0;
-                    const dPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Diesel') || {}).selling_price || 0;
-                    const gPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Gas') || {}).selling_price || 0;
-                    const pfPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i.product_type === 'Paraffin') || {}).selling_price || 0;
-                    const expected = petrolSold * pPrice + dieselSold * dPrice + gasSold * gPrice + paraffinSold * pfPrice;
+                    const pPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i
+                        .product_type === 'Petrol') || {}).selling_price || 0;
+                    const dPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i
+                        .product_type === 'Diesel') || {}).selling_price || 0;
+                    const gPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i
+                        .product_type === 'Gas') || {}).selling_price || 0;
+                    const pfPrice = (inv.find(i => Number(i.station_id) === Number(s.station_id) && i
+                        .product_type === 'Paraffin') || {}).selling_price || 0;
+                    const expected = petrolSold * pPrice + dieselSold * dPrice + gasSold * gPrice + paraffinSold *
+                        pfPrice;
                     const recon = recons.find(r => r.shift_id === s.id);
                     const cash = recon ? (recon.cash_actual || 0) : 0;
                     const mobile = recon ? (recon.mobile_actual || 0) : 0;
@@ -4177,14 +4850,15 @@ const matches = allUsernames.filter(u =>
                     ]);
                 });
                 let body = '<div class="d-flex justify-content-between mb-3">' +
-                    '<h5 class="mb-0">Reconciliation Report <span class="badge bg-secondary">' + closed.length + '</span></h5></div>';
+                    '<h5 class="mb-0">Reconciliation Report <span class="badge bg-secondary">' + closed.length +
+                    '</span></h5></div>';
                 body += regenerateTable(headers, rows);
                 return { html: body, headers: headers, rows: rows, filename: 'reconciliation_report' };
             }
 
-            // EXPENSES
             function genExpenses(f) {
-                const data = filterByCommon(expenses, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+                const data = filterByCommon(expenses, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a
+                    .created_at && a.created_at.seconds || 0));
                 let total = 0;
                 const headers = ['Station', 'Source', 'Description', 'Category', 'Amount', 'Date'];
                 const rows = [];
@@ -4203,18 +4877,19 @@ const matches = allUsernames.filter(u =>
                 return { html: body, headers: headers, rows: rows, filename: 'expenses_report' };
             }
 
-            // STOCK
             function genStock(f) {
                 const data = stock.filter(s => {
                     if (f.stationId && Number(s.station_id) !== f.stationId) return false;
                     const dt = s.received_date || s.created_at;
                     if (dt && !dateInRange(dt, f.from, f.to)) return false;
                     return true;
-                }).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+                }).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds ||
+                0));
                 const headers = ['Station', 'Shipping #', 'Vendor', 'Items', 'Total Qty (L)', 'Date'];
                 const rows = [];
                 data.forEach(r => {
-                    const items = (r.items || []).map(it => it.product_type + ' ' + it.quantity + 'L').join('; ');
+                    const items = (r.items || []).map(it => it.product_type + ' ' + it.quantity + 'L').join(
+                    '; ');
                     const totalQty = (r.items || []).reduce((sum, it) => sum + (Number(it.quantity) || 0), 0);
                     rows.push([
                         stationName(r.station_id),
@@ -4226,24 +4901,27 @@ const matches = allUsernames.filter(u =>
                     ]);
                 });
                 let body = '<div class="d-flex justify-content-between mb-3">' +
-                    '<h5 class="mb-0">Offloading Report <span class="badge bg-info">' + data.length + '</span></h5></div>';
+                    '<h5 class="mb-0">Offloading Report <span class="badge bg-info">' + data.length +
+                    '</span></h5></div>';
                 body += regenerateTable(headers, rows);
                 return { html: body, headers: headers, rows: rows, filename: 'offloading_report' };
             }
 
-            // ADJUSTMENTS
             function genAdjustments(f) {
-                const data = filterByCommon(adjustments, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+                const data = filterByCommon(adjustments, f).sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a
+                    .created_at && a.created_at.seconds || 0));
                 const headers = ['Station', 'Product', 'Type', 'Change', 'Reason', 'Date'];
                 const rows = [];
                 data.forEach(a => {
                     const type = a.adj_type || 'quantity';
-                    let typeLabel = 'Quantity', change = '';
+                    let typeLabel = 'Quantity',
+                        change = '';
                     if (type === 'quantity') {
                         const delta = Number(a.quantity || 0);
                         const deltaStr = '(' + (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' L)';
                         change = (a.old_quantity != null && a.new_quantity != null) ?
-                            Number(a.old_quantity).toFixed(2) + ' → ' + Number(a.new_quantity).toFixed(2) + ' L ' + deltaStr :
+                            Number(a.old_quantity).toFixed(2) + ' → ' + Number(a.new_quantity).toFixed(2) +
+                            ' L ' + deltaStr :
                             deltaStr;
                     } else if (type === 'cost_price') {
                         typeLabel = 'Cost Price';
@@ -4264,12 +4942,12 @@ const matches = allUsernames.filter(u =>
                     ]);
                 });
                 let body = '<div class="d-flex justify-content-between mb-3">' +
-                    '<h5 class="mb-0">Stock Adjustments <span class="badge bg-warning text-dark">' + data.length + '</span></h5></div>';
+                    '<h5 class="mb-0">Stock Adjustments <span class="badge bg-warning text-dark">' + data.length +
+                    '</span></h5></div>';
                 body += regenerateTable(headers, rows);
                 return { html: body, headers: headers, rows: rows, filename: 'adjustments_report' };
             }
 
-            // EOP
             function genEOP(f) {
                 const stationsToReport = f.stationId ?
                     state.stations.filter(s => Number(s.id) === f.stationId) :
@@ -4281,32 +4959,44 @@ const matches = allUsernames.filter(u =>
 
                 stationsToReport.forEach(st => {
                     const sid = Number(st.id);
-                    const stSales = sales.filter(s => s.status !== 'reversed' && Number(s.station_id) === sid && dateInRange(s.created_at || s.sale_date, f.from, f.to));
-                    const stShifts = shifts.filter(s => Number(s.station_id) === sid && dateInRange(s.created_at, f.from, f.to));
+                    const stSales = sales.filter(s => s.status !== 'reversed' && Number(s.station_id) === sid &&
+                        dateInRange(s.created_at || s.sale_date, f.from, f.to));
+                    const stShifts = shifts.filter(s => Number(s.station_id) === sid && dateInRange(s
+                        .created_at, f.from, f.to));
                     const stRecons = recons.filter(r => {
                         const sh = shifts.find(s => s.id === r.shift_id);
-                        return sh && Number(sh.station_id) === sid && dateInRange(sh.created_at, f.from, f.to);
+                        return sh && Number(sh.station_id) === sid && dateInRange(sh.created_at, f
+                        .from, f.to);
                     });
                     const stInv = inv.filter(i => Number(i.station_id) === sid);
-                    const stStock = stock.filter(s => Number(s.station_id) === sid && dateInRange(s.received_date || s.created_at, f.from, f.to));
-                    const stAdj = adjustments.filter(a => Number(a.station_id) === sid && dateInRange(a.created_at, f.from, f.to));
-                    const stExp = expenses.filter(e => Number(e.station_id) === sid && dateInRange(e.created_at, f.from, f.to));
+                    const stStock = stock.filter(s => Number(s.station_id) === sid && dateInRange(s
+                        .received_date || s.created_at, f.from, f.to));
+                    const stAdj = adjustments.filter(a => Number(a.station_id) === sid && dateInRange(a
+                        .created_at, f.from, f.to));
+                    const stExp = expenses.filter(e => Number(e.station_id) === sid && dateInRange(e
+                        .created_at, f.from, f.to));
 
-                    let salesQty = 0, salesRev = 0, salesDisc = 0;
+                    let salesQty = 0,
+                        salesRev = 0,
+                        salesDisc = 0;
                     const byProd = {};
                     stSales.forEach(s => {
                         const q = Number(s.quantity) || 0;
                         const a = Number(s.amount) || 0;
                         const d = Number(s.discount) || 0;
-                        salesQty += q; salesRev += a; salesDisc += d;
+                        salesQty += q;
+                        salesRev += a;
+                        salesDisc += d;
                         const p = s.product_type || 'Unknown';
                         if (!byProd[p]) byProd[p] = { qty: 0, rev: 0 };
-                        byProd[p].qty += q; byProd[p].rev += a;
+                        byProd[p].qty += q;
+                        byProd[p].rev += a;
                     });
 
                     const closedShifts = stShifts.filter(s => s.status === 'closed');
                     const activeShifts = stShifts.filter(s => s.status === 'active');
-                    const pendingRecon = closedShifts.filter(s => !stRecons.find(r => r.shift_id === s.id)).length;
+                    const pendingRecon = closedShifts.filter(s => !stRecons.find(r => r.shift_id === s.id))
+                        .length;
 
                     let invTotal = 0;
                     stInv.forEach(i => invTotal += Number(i.quantity) || 0);
@@ -4323,38 +5013,53 @@ const matches = allUsernames.filter(u =>
                     stExp.forEach(e => expTotal += Number(e.amount) || 0);
 
                     body += '<div class="card-box mb-4 border">' +
-                        '<h6 class="mb-3 text-primary"><i class="bi bi-geo-alt"></i> ' + st.name + ' (' + (st.location || '—') + ')</h6>' +
+                        '<h6 class="mb-3 text-primary"><i class="bi bi-geo-alt"></i> ' + st.name + ' (' + (st
+                            .location || '—') + ')</h6>' +
                         '<div class="row g-3 mb-3">' +
                         '<div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#198754"><i class="bi bi-cash-stack"></i></div>' +
-                        '<div><div class="num" style="font-size:1.1rem">' + formatMoney(salesRev) + '</div><div class="lbl">Sales Revenue</div></div></div></div>' +
+                        '<div><div class="num" style="font-size:1.1rem">' + formatMoney(salesRev) +
+                        '</div><div class="lbl">Sales Revenue</div></div></div></div>' +
                         '<div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#0d6efd"><i class="bi bi-droplet"></i></div>' +
-                        '<div><div class="num" style="font-size:1.1rem">' + salesQty.toFixed(1) + ' L</div><div class="lbl">Volume Sold</div></div></div></div>' +
+                        '<div><div class="num" style="font-size:1.1rem">' + salesQty.toFixed(1) +
+                        ' L</div><div class="lbl">Volume Sold</div></div></div></div>' +
                         '<div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#ffc107"><i class="bi bi-box-seam"></i></div>' +
-                        '<div><div class="num" style="font-size:1.1rem">' + invTotal.toFixed(0) + ' L</div><div class="lbl">Current Stock</div></div></div></div>' +
+                        '<div><div class="num" style="font-size:1.1rem">' + invTotal.toFixed(0) +
+                        ' L</div><div class="lbl">Current Stock</div></div></div></div>' +
                         '<div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#dc3545"><i class="bi bi-clock"></i></div>' +
-                        '<div><div class="num" style="font-size:1.1rem">' + activeShifts.length + '</div><div class="lbl">Active Shifts</div></div></div></div>' +
+                        '<div><div class="num" style="font-size:1.1rem">' + activeShifts.length +
+                        '</div><div class="lbl">Active Shifts</div></div></div></div>' +
                         '</div>' +
                         '<table class="table table-sm table-bordered">' +
                         '<tr><th colspan="2" class="bg-light">Sales</th></tr>' +
                         '<tr><td>Transactions</td><td>' + stSales.length + '</td></tr>' +
                         '<tr><td>Gross Revenue</td><td>' + formatMoney(salesRev + salesDisc) + '</td></tr>' +
-                        '<tr><td>Discounts Given</td><td class="text-danger">' + formatMoney(salesDisc) + '</td></tr>' +
+                        '<tr><td>Discounts Given</td><td class="text-danger">' + formatMoney(salesDisc) +
+                        '</td></tr>' +
                         '<tr><td>Net Revenue</td><td><strong>' + formatMoney(salesRev) + '</strong></td></tr>' +
                         '<tr><td>Volume Sold</td><td>' + salesQty.toFixed(2) + ' L</td></tr>' +
-                        Object.keys(byProd).map(p => '<tr><td>&nbsp;&nbsp;• ' + p + '</td><td>' + byProd[p].qty.toFixed(2) + ' L – ' + formatMoney(byProd[p].rev) + '</td></tr>').join('') +
+                        Object.keys(byProd).map(p => '<tr><td>&nbsp;&nbsp;• ' + p + '</td><td>' + byProd[p]
+                            .qty.toFixed(2) + ' L – ' + formatMoney(byProd[p].rev) + '</td></tr>').join(
+                        '') +
                         '<tr><th colspan="2" class="bg-light">Shifts & Balancing</th></tr>' +
                         '<tr><td>Total Shifts</td><td>' + stShifts.length + '</td></tr>' +
                         '<tr><td>Closed Shifts</td><td>' + closedShifts.length + '</td></tr>' +
                         '<tr><td>Active Shifts</td><td>' + activeShifts.length + '</td></tr>' +
-                        '<tr><td>Pending Reconciliation</td><td class="' + (pendingRecon > 0 ? 'text-danger fw-bold' : 'text-success') + '">' + pendingRecon + '</td></tr>' +
+                        '<tr><td>Pending Reconciliation</td><td class="' + (pendingRecon > 0 ?
+                            'text-danger fw-bold' : 'text-success') + '">' + pendingRecon + '</td></tr>' +
                         '<tr><th colspan="2" class="bg-light">Inventory Movement</th></tr>' +
-                        '<tr><td>Current Stock (all products)</td><td>' + invTotal.toFixed(2) + ' L</td></tr>' +
-                        '<tr><td>Offloaded (received)</td><td class="text-success">+' + offloadQty.toFixed(2) + ' L</td></tr>' +
-                        '<tr><td>Net Adjustments</td><td class="' + (adjNet >= 0 ? 'text-success' : 'text-danger') + '">' + (adjNet >= 0 ? '+' : '') + adjNet.toFixed(2) + ' L</td></tr>' +
+                        '<tr><td>Current Stock (all products)</td><td>' + invTotal.toFixed(2) +
+                        ' L</td></tr>' +
+                        '<tr><td>Offloaded (received)</td><td class="text-success">+' + offloadQty.toFixed(
+                            2) + ' L</td></tr>' +
+                        '<tr><td>Net Adjustments</td><td class="' + (adjNet >= 0 ? 'text-success' :
+                            'text-danger') + '">' + (adjNet >= 0 ? '+' : '') + adjNet.toFixed(2) +
+                        ' L</td></tr>' +
                         '<tr><th colspan="2" class="bg-light">Financials</th></tr>' +
-                        '<tr><td>Expenses</td><td class="text-danger">' + formatMoney(expTotal) + '</td></tr>' +
+                        '<tr><td>Expenses</td><td class="text-danger">' + formatMoney(expTotal) +
+                        '</td></tr>' +
                         '</table>' +
-                        '<div class="text-end small text-muted mt-2">Period: ' + f.from + ' → ' + f.to + '</div></div>';
+                        '<div class="text-end small text-muted mt-2">Period: ' + f.from + ' → ' + f.to +
+                        '</div></div>';
 
                     allRows.push(['=== ' + st.name + ' ===', '']);
                     allRows.push(['Sales Revenue (Net)', formatMoney(salesRev)]);
@@ -4378,7 +5083,6 @@ const matches = allUsernames.filter(u =>
                 return { html: body, headers: allHeaders, rows: allRows, filename: 'end_of_procedure_report' };
             }
 
-            // CASHIER PERFORMANCE
             function genCashierPerformance(f) {
                 const data = recons.filter(r => {
                     if (f.stationId && Number(r.station_id) !== f.stationId) return false;
@@ -4403,7 +5107,9 @@ const matches = allUsernames.filter(u =>
                     grouped[cid].count += 1;
                 });
 
-                const headers = ['Cashier', 'Total Shortage', 'Total Excess', 'Net Difference', 'Reconciliations', 'Status'];
+                const headers = ['Cashier', 'Total Shortage', 'Total Excess', 'Net Difference', 'Reconciliations',
+                    'Status'
+                ];
                 const rows = [];
                 Object.keys(grouped).forEach(cid => {
                     const g = grouped[cid];
@@ -4429,31 +5135,55 @@ const matches = allUsernames.filter(u =>
                 }
 
                 let body = '<div class="d-flex justify-content-between mb-3">' +
-                    '<h5 class="mb-0">Cashier Performance <span class="badge bg-info">' + data.length + ' reconciliations</span></h5>' +
+                    '<h5 class="mb-0">Cashier Performance <span class="badge bg-info">' + data.length +
+                    ' reconciliations</span></h5>' +
                     '</div>';
                 body += regenerateTable(headers, rows);
                 return { html: body, headers: headers, rows: rows, filename: 'cashier_performance' };
             }
 
-            // MAIN
             let lastReport = null;
 
             function runReport() {
                 const f = getFilters();
                 let result;
                 switch (f.type) {
-                    case 'sales': result = genSales(f); break;
-                    case 'profit': result = genProfit(f); break;
-                    case 'inventory': result = genInventory(f); break;
-                    case 'shifts': result = genShifts(f); break;
-                    case 'reconciliation': result = genReconciliation(f); break;
-                    case 'expenses': result = genExpenses(f); break;
-                    case 'stock': result = genStock(f); break;
-                    case 'adjustments': result = genAdjustments(f); break;
-                    case 'eop': result = genEOP(f); break;
-                    case 'cashier_performance': result = genCashierPerformance(f); break;
-                    case 'deposits': result = genDeposits(f); break;
-                    default: result = { html: '<div class="alert alert-info">Unknown report type</div>', headers: [], rows: [], filename: 'report' };
+                    case 'sales':
+                        result = genSales(f);
+                        break;
+                    case 'profit':
+                        result = genProfit(f);
+                        break;
+                    case 'inventory':
+                        result = genInventory(f);
+                        break;
+                    case 'shifts':
+                        result = genShifts(f);
+                        break;
+                    case 'reconciliation':
+                        result = genReconciliation(f);
+                        break;
+                    case 'expenses':
+                        result = genExpenses(f);
+                        break;
+                    case 'stock':
+                        result = genStock(f);
+                        break;
+                    case 'adjustments':
+                        result = genAdjustments(f);
+                        break;
+                    case 'eop':
+                        result = genEOP(f);
+                        break;
+                    case 'cashier_performance':
+                        result = genCashierPerformance(f);
+                        break;
+                    case 'deposits':
+                        result = genDeposits(f);
+                        break;
+                    default:
+                        result = { html: '<div class="alert alert-info">Unknown report type</div>', headers: [],
+                            rows: [], filename: 'report' };
                 }
                 if (f.search && result.rows && result.rows.length > 0 && f.type !== 'eop') {
                     const filteredRows = result.rows.filter(row =>
@@ -4513,7 +5243,9 @@ const matches = allUsernames.filter(u =>
         console.log('Part 9 loaded');
     </script>
 
-    <!-- PART 10: COMPANY PROFILE & ALL COMPANIES -->
+    <!-- ============================================================
+    PART 10: COMPANY PROFILE & ALL COMPANIES
+    ============================================================ -->
     <script>
         async function renderCompanyProfile() {
             const companyId = state.user.companyId;
@@ -4703,12 +5435,15 @@ const matches = allUsernames.filter(u =>
                 document.querySelectorAll('.delete-station-btn').forEach(btn => {
                     btn.onclick = async function() {
                         const id = this.dataset.id;
-                        if (!confirm('Delete this station? This may affect sales, shifts, and inventory.')) return;
+                        if (!confirm('Delete this station? This may affect sales, shifts, and inventory.'))
+                            return;
                         try {
                             const stationId = Number(id) || id;
-                            const hasSales = await db.collection('sales').where('station_id', '==', stationId).limit(1).get();
+                            const hasSales = await db.collection('sales').where('station_id', '==',
+                                stationId).limit(1).get();
                             if (!hasSales.empty) {
-                                toast('Cannot delete station with existing sales. Remove sales first or reassign.', 'warning');
+                                toast('Cannot delete station with existing sales. Remove sales first or reassign.',
+                                    'warning');
                                 return;
                             }
                             await deleteDoc('stations', id);
@@ -4723,7 +5458,8 @@ const matches = allUsernames.filter(u =>
 
             } catch (err) {
                 console.error('renderCompanyProfile', err);
-                $('#pageContent').innerHTML = `<div class="alert alert-danger">Error loading company profile: ${err.message}</div>`;
+                $('#pageContent').innerHTML =
+                `<div class="alert alert-danger">Error loading company profile: ${err.message}</div>`;
             }
         }
 
@@ -4733,9 +5469,12 @@ const matches = allUsernames.filter(u =>
                 return;
             }
             const companies = await getAllCompanies();
-            let html = '<div class="card-box"><h5 class="mb-3">All Companies</h5><table class="table table-sm"><thead><tr><th>Name</th><th>Address</th><th>Phone</th><th>Active</th></tr></thead><tbody>';
+            let html =
+                '<div class="card-box"><h5 class="mb-3">All Companies</h5><table class="table table-sm"><thead><tr><th>Name</th><th>Address</th><th>Phone</th><th>Active</th></tr></thead><tbody>';
             companies.forEach(c => {
-                html += '<tr><td><strong>' + (c.name || c.id) + '</strong></td><td>' + (c.address || '—') + '</td><td>' + (c.phone || '—') + '</td><td>' + (c.active !== false ? 'Yes' : 'No') + '</td></tr>';
+                html += '<tr><td><strong>' + (c.name || c.id) + '</strong></td><td>' + (c.address || '—') +
+                    '</td><td>' + (c.phone || '—') + '</td><td>' + (c.active !== false ? 'Yes' : 'No') +
+                    '</td></tr>';
             });
             html += '</tbody></table></div>';
             $('#pageContent').innerHTML = html;
@@ -4744,7 +5483,9 @@ const matches = allUsernames.filter(u =>
         console.log('Part 10 loaded');
     </script>
 
-    <!-- PART 11: MESSAGES (real-time chat) -->
+    <!-- ============================================================
+    PART 11: MESSAGES (real-time chat)
+    ============================================================ -->
     <script>
         async function renderMessages() {
             const currentUser = state.user;
@@ -4793,7 +5534,8 @@ const matches = allUsernames.filter(u =>
                 const container = document.getElementById('chatMessages');
                 if (!container) return;
                 if (snapshot.empty) {
-                    container.innerHTML = '<div class="text-muted text-center">No messages yet. Start the conversation!</div>';
+                    container.innerHTML =
+                    '<div class="text-muted text-center">No messages yet. Start the conversation!</div>';
                     return;
                 }
                 let msgs = '';
@@ -4869,10 +5611,10 @@ const matches = allUsernames.filter(u =>
         console.log('Part 11 loaded');
     </script>
     <script>
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then(() => console.log('Service Worker registered'));
-}
-</script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(() => console.log('Service Worker registered'));
+        }
+    </script>
 </body>
 </html>
