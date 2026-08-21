@@ -824,7 +824,7 @@
         function isTopAdmin(r) { return roleNorm(r) === 'top_admin' || roleNorm(r) === 'super_admin'; }
 
         function stationName(id) {
-            const s = state.stations.find(st => Number(st.id) === Number(id));
+            const s = state.stations.find(st => String(st.id) === String(id));
             return s ? s.name : 'Unknown';
         }
 
@@ -934,7 +934,7 @@
                 if (newQty < 0) throw new Error(`Insufficient stock for ${product}. Available: ${currentQty.toFixed(2)} L`);
                 const newCost = (costPrice !== null && costPrice !== undefined) ? costPrice : currentCost;
                 tx.set(ref, {
-                    station_id: Number(stationId),
+                    station_id: String(stationId),
                     product_type: product,
                     quantity: newQty,
                     cost_price: newCost,
@@ -1025,7 +1025,6 @@
 
         // ===== Simple Excel export (CSV with .xlsx mimetype) =====
         function exportExcel(headers, rows, filename = 'report.xlsx') {
-            // Use CSV with .xlsx extension – Excel opens it fine
             let csv = headers.join(',') + '\n';
             rows.forEach(row => {
                 csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
@@ -1105,7 +1104,7 @@
             const threshold = 100;
             const inv = await getAll('inventory');
             const lowItems = inv.filter(i => {
-                if (state.currentStationId && Number(i.station_id) !== state.currentStationId) return false;
+                if (state.currentStationId && String(i.station_id) !== String(state.currentStationId)) return false;
                 return (i.quantity || 0) < threshold;
             });
             if (lowItems.length > 0) {
@@ -1493,7 +1492,7 @@
         async function loadStations() {
             try {
                 const list = await getAll('stations');
-                state.stations = list.map(s => ({ ...s, id: s.id != null ? s.id : s.station_id }))
+                state.stations = list.map(s => ({ ...s, id: s.id != null ? String(s.id) : String(s.station_id) }))
                     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')));
             } catch (e) { console.error('loadStations', e);
                 state.stations = []; }
@@ -1516,9 +1515,9 @@
             sel.innerHTML = '<option value="">All Stations</option>';
             state.stations.forEach(s => {
                 const opt = document.createElement('option');
-                opt.value = s.id;
+                opt.value = String(s.id);
                 opt.textContent = s.name || ('Station ' + s.id);
-                if (Number(s.id) === Number(current)) opt.selected = true;
+                if (String(s.id) === String(current)) opt.selected = true;
                 sel.appendChild(opt);
             });
         }
@@ -1555,7 +1554,7 @@
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 await db.collection('stations').doc('1').set({
-                    id: 1,
+                    id: '1',
                     name: 'Main Station',
                     location: address || '',
                     companyId: companyId
@@ -1665,7 +1664,7 @@
                     logout();
                     return;
                 }
-                state.currentStationId = Number(state.user.station_id);
+                state.currentStationId = String(state.user.station_id);
                 $('#stationSelector').style.display = 'none';
             } else {
                 state.currentStationId = null;
@@ -1678,7 +1677,7 @@
             navigate('dashboard');
             $('#stationSelector').onchange = function() {
                 const v = $('#stationSelector').value;
-                state.currentStationId = v ? Number(v) : null;
+                state.currentStationId = v ? String(v) : null;
                 renderPage(state.currentPage);
             };
             setupBackupReminder();
@@ -1965,11 +1964,11 @@
             const sales = await getAll('sales');
             const shifts = await getAll('shifts');
             const expenses = await getAll('expenses');
-            const fInv = inv.filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
-            const fSales = sales.filter(s => s.status !== 'reversed' && (!state.currentStationId || Number(s.station_id) === state
-                .currentStationId));
-            const fShifts = shifts.filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId);
-            const fExpenses = expenses.filter(e => !state.currentStationId || Number(e.station_id) === state.currentStationId);
+            const fInv = inv.filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId));
+            const fSales = sales.filter(s => s.status !== 'reversed' && (!state.currentStationId || String(s.station_id) === String(state
+                .currentStationId)));
+            const fShifts = shifts.filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId));
+            const fExpenses = expenses.filter(e => !state.currentStationId || String(e.station_id) === String(state.currentStationId));
 
             // Stock by product
             const productTypes = [...new Set(fInv.map(i => i.product_type).filter(Boolean))];
@@ -2171,7 +2170,7 @@
         async function renderSales() {
             const inv = await getAll('inventory');
             const sales = (await getAll('sales'))
-                .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
+                .filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId))
                 .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
             const customers = await getAll('customers');
             const creditLimits = await getAll('credit_limits');
@@ -2188,7 +2187,7 @@
             }
 
             const stationOpts = state.stations.map(s =>
-                `<option value="${s.id}" ${state.currentStationId && Number(s.id) === state.currentStationId ? 'selected' : ''}>${s.name}</option>`
+                `<option value="${s.id}" ${state.currentStationId && String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${s.name}</option>`
             ).join('');
 
             const cashierOpts = state.cashiers
@@ -2413,11 +2412,11 @@
 
             // ---- Price update ----
             async function updatePrice() {
-                const stationId = Number($('#saleStation').value);
+                const stationId = String($('#saleStation').value);
                 const product = $('#saleProduct').value;
                 if (!stationId) { $('#salePrice').value = ''; return; }
                 const invData = await getAll('inventory');
-                const item = invData.find(i => Number(i.station_id) === stationId && i.product_type === product);
+                const item = invData.find(i => String(i.station_id) === stationId && i.product_type === product);
                 $('#salePrice').value = (item && item.selling_price) ? Number(item.selling_price) : '';
             }
             $('#saleStation').onchange = updatePrice;
@@ -2476,11 +2475,14 @@
 
             // ---- Add to cart ----
             $('#addToCartBtn').onclick = function() {
-                const stationId = Number($('#saleStation').value);
+                const stationId = String($('#saleStation').value);
+                if (!stationId) {
+                    toast('Select a station', 'warning');
+                    return;
+                }
                 const product = $('#saleProduct').value;
                 const qty = parseFloat($('#saleQty').value);
                 const price = parseFloat($('#salePrice').value);
-                if (!stationId) { toast('Select a station', 'warning'); return; }
                 if (!qty || qty <= 0) { toast('Enter a valid quantity', 'warning'); return; }
                 if (!price || price <= 0) { toast('Price not set in inventory for this product', 'warning'); return; }
                 const existing = cart.find(i => i.stationId === stationId && i.product === product);
@@ -2509,7 +2511,7 @@
                 try {
                     const transactionId = 'TXN_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
                     await db.runTransaction(async (transaction) => {
-                        const refs = cart.map(item => db.collection('inventory').doc(item.stationId + '_' + item
+                        const refs = cart.map(item => db.collection('inventory').doc(String(item.stationId) + '_' + item
                             .product));
                         const docs = await Promise.all(refs.map(r => transaction.get(r)));
                         const updates = [];
@@ -2529,7 +2531,7 @@
                             const lineAmount = item.qty * item.price;
                             const lineDiscount = subtotal > 0 ? (lineAmount / subtotal) * disc : 0;
                             transaction.set(saleRef, {
-                                station_id: item.stationId,
+                                station_id: String(item.stationId),
                                 product_type: item.product,
                                 quantity: item.qty,
                                 selling_price: item.price,
@@ -2590,7 +2592,7 @@
                     const id = this.dataset.id;
                     const qty = parseFloat(this.dataset.qty);
                     const product = this.dataset.product;
-                    const stationId = Number(this.dataset.station);
+                    const stationId = String(this.dataset.station);
                     if (!confirm('Reverse sale of ' + qty + 'L ' + product + '?\n\nHistory is kept. Stock is restored.'))
                         return;
                     try {
@@ -2785,7 +2787,7 @@
         // ----- SHIFTS -----
         async function renderShifts() {
             const shifts = (await getAll('shifts'))
-                .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
+                .filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId))
                 .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
             const inv = await getAll('inventory');
@@ -2876,7 +2878,7 @@
             if (startForm) {
                 startForm.onsubmit = async function(e) {
                     e.preventDefault();
-                    const data = { station_id: Number(state.user.station_id), cashier_id: state.user.id,
+                    const data = { station_id: String(state.user.station_id), cashier_id: state.user.id,
                         shift_type: $('#shiftType').value, status: 'active' };
                     displayProducts.forEach(p => {
                         const id = 'start_' + p.replace(/[^a-zA-Z0-9]/g, '_');
@@ -2909,7 +2911,7 @@
         // ----- METERS -----
         async function renderMeters() {
             const shifts = (await getAll('shifts'))
-                .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
+                .filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId))
                 .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
             const inv = await getAll('inventory');
@@ -3003,7 +3005,7 @@
 
             $('#balancingFilter').onsubmit = async function(e) {
                 e.preventDefault();
-                const stationId = Number($('#balStation').value);
+                const stationId = String($('#balStation').value);
                 const cashierId = $('#balCashier').value;
                 const fromDate = $('#balFrom').value;
                 const toDate = $('#balTo').value;
@@ -3058,7 +3060,7 @@
                     const shift = unreconciled[0];
                     const totalUnreconciled = unreconciled.length;
 
-                    const stationInv = inv.filter(i => Number(i.station_id) === stationId);
+                    const stationInv = inv.filter(i => String(i.station_id) === stationId);
                     const products = [...new Set(stationInv.map(i => i.product_type).filter(Boolean))];
                     if (products.length === 0) {
                         $('#balancingResult').innerHTML =
@@ -3251,919 +3253,586 @@
         console.log('Part 7 loaded – Shifts, Meters, Balancing');
     </script>
 
-    <!-- ============================================================
-    PART 8: INVENTORY, STOCK, ADJUSTMENTS, FUEL PRICES, TANK LEVELS
-    ============================================================ -->
-    <script>
-        // ----- INVENTORY (unchanged, with product list) -----
-        async function renderInventory() {
-            const inv = (await getAll('inventory'))
-                .filter(i => !state.currentStationId || Number(i.station_id) === state.currentStationId);
-            const canEdit = isAdmin(state.user.role);
-            const allProducts = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
-            state.allProducts = allProducts;
+   <!-- ============================================================
+PART 8: STOCK, ADJUSTMENTS, FINANCIALS, CUSTOMERS, RECEIPTS, USERS, ACTIVITY
+============================================================ -->
+<script>
+    // ----- STOCK (offloading) -----
+    async function renderStock() {
+        const stock = (await getAll('stock'))
+            .filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId))
+            .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
-            let stationOpts = '';
-            state.stations.forEach(s => {
-                const sel = state.currentStationId && Number(state.currentStationId) === Number(s.id) ? 'selected' :
-                    '';
-                stationOpts += `<option value="${s.id}" ${sel}>${s.name}</option>`;
-            });
+        const inv = await getAll('inventory');
+        const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
+        const productOpts = productTypes.length > 0 ?
+            productTypes.map(p => `<option value="${p}">${p}</option>`).join('') :
+            '<option value="Petrol">Petrol</option><option value="Diesel">Diesel</option><option value="Gas">Gas</option><option value="Paraffin">Paraffin</option>';
 
-            let html = '<div class="card-box">' +
-                '<div class="d-flex justify-content-between align-items-center mb-3">' +
-                '<h5 class="mb-0"><i class="bi bi-box-seam"></i> Inventory</h5>' +
-                '<span class="badge bg-secondary">' + inv.length + ' items</span>' +
-                '</div>';
+        let stationOptions = '';
+        state.stations.forEach(s => {
+            const selected = state.currentStationId && String(s.id) === String(state.currentStationId) ? ' selected' : '';
+            stationOptions += '<option value="' + s.id + '"' + selected + '>' + s.name + '</option>';
+        });
 
-            html += '<div class="table-responsive"><table class="table table-sm table-hover inv-table" id="inventoryTable">' +
-                '<thead><tr><th>Station</th><th>Product</th><th>Quantity (L)</th><th>Cost/L</th><th>Sell/L</th>' +
-                (canEdit ? '<th style="min-width:120px;">Actions</th>' : '') +
-                '</tr></thead><tbody id="invTableBody">';
+        let html = '<div class="row g-4">' +
+            '<div class="col-lg-5"><div class="card-box">' +
+            '<h5 class="mb-3"><i class="bi bi-truck"></i> Offloading (Receive Fuel)</h5>' +
+            '<form id="stockForm">' +
+            '<div class="mb-2"><label class="form-label small">Station *</label>' +
+            '<select id="recStation" class="form-select form-select-sm" required>' + stationOptions +
+            '</select></div>' +
+            '<div class="mb-2"><label class="form-label small">Shipping / Delivery Note # *</label>' +
+            '<input type="text" id="recInvoice" class="form-control form-control-sm" placeholder="e.g. DN-2026-0042" required></div>' +
+            '<div class="mb-2"><label class="form-label small">Vendor / Supplier *</label>' +
+            '<input type="text" id="recVendor" class="form-control form-control-sm" placeholder="e.g. Total Energies, Vivo Energy" required></div>' +
+            '<div class="mb-2"><label class="form-label small">Date</label>' +
+            '<input type="date" id="recDate" class="form-control form-control-sm" value="' + new Date().toISOString()
+            .slice(0, 10) + '"></div>' +
+            '<div id="recItems"></div>' +
+            '<button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="addRecItem"><i class="bi bi-plus"></i> Add Item</button>' +
+            '<button type="submit" class="btn btn-success w-100">Confirm Offloading & Update Inventory</button>' +
+            '</form></div></div>' +
+            '<div class="col-lg-7"><div class="card-box">' +
+            '<h5 class="mb-3">Offloading History</h5>' +
+            '<div class="table-responsive"><table class="table table-sm table-hover">' +
+            '<thead><tr><th>Station</th><th>Shipping #</th><th>Vendor</th><th>Items</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
 
-            if (inv.length === 0) {
-                html += '<tr id="emptyRow"><td colspan="' + (canEdit ? '6' : '5') +
-                    '" class="text-muted text-center">No inventory items. Add your first item using the row below.</td></tr>';
-            } else {
-                inv.forEach(i => {
-                    const docId = i.id;
-                    html += '<tr id="row_' + docId + '" data-id="' + docId + '">' +
-                        '<td class="station-display">' + stationName(i.station_id) + '</td>' +
-                        '<td class="product-display"><span class="product-badge custom">' + i.product_type +
-                        '</span></td>' +
-                        '<td class="qty-display"><strong>' + (i.quantity || 0).toFixed(2) + '</strong></td>' +
-                        '<td class="cost-display">' + formatMoney(i.cost_price || 0) + '</td>' +
-                        '<td class="sell-display">' + formatMoney(i.selling_price || 0) + '</td>';
-                    if (canEdit) {
-                        html += '<td>' +
-                            '<button class="btn btn-sm btn-outline-primary edit-inv-row-btn me-1" data-id="' +
-                            docId + '"><i class="bi bi-pencil"></i></button>' +
-                            '<button class="btn btn-sm btn-outline-danger delete-inv-btn" data-id="' + docId +
-                            '"><i class="bi bi-trash"></i></button>' +
-                            '</td>';
-                    }
-                    html += '</tr>';
-                });
-            }
-
-            if (canEdit) {
-                const productOpts = allProducts.length > 0 ?
-                    allProducts.map(p => `<option value="${p}">${p}</option>`).join('') :
-                    '<option value="">No products yet</option>';
-
-                html += '<tr class="inv-add-row" id="addRow">' +
-                    '<td><select id="invAddStation" class="form-select form-select-sm">' + stationOpts +
-                    '</select></td>' +
-                    '<td><input type="text" id="invAddProduct" class="form-control form-control-sm" placeholder="New product name" list="productList"></td>' +
-                    '<td><input type="number" id="invAddQty" class="form-control form-control-sm" step="0.01" min="0" placeholder="0"></td>' +
-                    '<td><input type="number" id="invAddCost" class="form-control form-control-sm" step="10" min="0" placeholder="Cost"></td>' +
-                    '<td><input type="number" id="invAddSell" class="form-control form-control-sm" step="10" min="0" placeholder="Sell"></td>' +
-                    '<td><button type="button" class="btn btn-sm btn-success w-100" id="invAddBtn"><i class="bi bi-plus"></i> Add</button></td>' +
+        if (stock.length === 0) {
+            html += '<tr><td colspan="6" class="text-muted text-center">No offloading records</td></tr>';
+        } else {
+            stock.slice(0, 20).forEach(r => {
+                const items = (r.items || []).map(it => it.product_type + ' ' + it.quantity + 'L').join(
+                    ', ');
+                html += '<tr>' +
+                    '<td>' + stationName(r.station_id) + '</td>' +
+                    '<td>' + (r.invoice_number || r.shipping_number || '—') + '</td>' +
+                    '<td>' + (r.vendor || '—') + '</td>' +
+                    '<td class="fs-xs">' + items + '</td>' +
+                    '<td class="fs-xs">' + formatDate(r.received_date || r.created_at) + '</td>' +
+                    '<td><button class="btn btn-sm btn-outline-danger delete-stock-btn" data-id="' + r.id +
+                    '" data-station="' + r.station_id + '" data-items=\'' + JSON.stringify(r.items ||
+                        []) +
+                    '\'><i class="bi bi-trash"></i></button></td>' +
                     '</tr>';
-
-                html += `<datalist id="productList">${allProducts.map(p => `<option value="${p}">`).join('')}</datalist>`;
-            }
-
-            html += '</tbody></table></div></div>';
-
-            $('#pageContent').innerHTML = html;
-
-            const addBtn = $('#invAddBtn');
-            if (addBtn) {
-                addBtn.onclick = async function() {
-                    const stationId = Number($('#invAddStation').value);
-                    const product = $('#invAddProduct').value.trim();
-                    const qty = parseFloat($('#invAddQty').value) || 0;
-                    const cost = parseFloat($('#invAddCost').value) || 0;
-                    const sell = parseFloat($('#invAddSell').value) || 0;
-                    if (!stationId) { toast('Select a station', 'warning'); return; }
-                    if (!product) { toast('Product name is required', 'warning'); return; }
-                    if (qty < 0 || cost < 0 || sell < 0) { toast('Values cannot be negative', 'warning'); return; }
-                    try {
-                        const docId = stationId + '_' + product;
-                        const ref = db.collection('inventory').doc(docId);
-                        await ref.set({
-                            station_id: stationId,
-                            product_type: product,
-                            quantity: qty,
-                            cost_price: cost,
-                            selling_price: sell,
-                            companyId: state.user.companyId,
-                            last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                        }, { merge: true });
-                        await logAudit('add_inventory', { station: stationId, product, qty, cost, sell });
-                        toast('Inventory item added/updated', 'success');
-                        renderInventory();
-                    } catch (err) { toast('Error: ' + err.message, 'danger'); }
-                };
-            }
-
-            document.querySelectorAll('.delete-inv-btn').forEach(btn => {
-                btn.onclick = async function() {
-                    const id = this.dataset.id;
-                    if (!confirm('Delete this inventory record permanently?')) return;
-                    try { await deleteDoc('inventory', id);
-                        toast('Inventory item deleted');
-                        renderInventory(); } catch (err) { toast('Error: ' + err.message,
-                        'danger'); }
-                };
-            });
-
-            document.querySelectorAll('.edit-inv-row-btn').forEach(btn => {
-                btn.onclick = function() {
-                    const id = this.dataset.id;
-                    const row = document.getElementById('row_' + id);
-                    if (!row) return;
-                    if (row.classList.contains('inv-edit-row')) { renderInventory(); return; }
-                    const stationEl = row.querySelector('.station-display');
-                    const productEl = row.querySelector('.product-display');
-                    const qtyEl = row.querySelector('.qty-display');
-                    const costEl = row.querySelector('.cost-display');
-                    const sellEl = row.querySelector('.sell-display');
-                    const stationText = stationEl.textContent.trim();
-                    const productText = productEl.textContent.trim();
-                    const qtyText = parseFloat(qtyEl.textContent.replace(/[^0-9.]/g, '')) || 0;
-                    const costText = parseFloat(costEl.textContent.replace(/[^0-9.]/g, '')) || 0;
-                    const sellText = parseFloat(sellEl.textContent.replace(/[^0-9.]/g, '')) || 0;
-                    const stationId = Number(id.split('_')[0]) || state.stations[0]?.id || '';
-                    const stationOptsEdit = state.stations.map(s =>
-                        `<option value="${s.id}" ${Number(s.id) === stationId ? 'selected' : ''}>${s.name}</option>`
-                    ).join('');
-                    row.innerHTML =
-                        `
-                    <td><select class="form-select form-select-sm edit-station" data-id="${id}">${stationOptsEdit}</select></td>
-                    <td><input type="text" class="form-control form-control-sm edit-product" value="${productText}" data-id="${id}"></td>
-                    <td><input type="number" class="form-control form-control-sm edit-qty" step="0.01" min="0" value="${qtyText}" data-id="${id}"></td>
-                    <td><input type="number" class="form-control form-control-sm edit-cost" step="10" min="0" value="${costText}" data-id="${id}"></td>
-                    <td><input type="number" class="form-control form-control-sm edit-sell" step="10" min="0" value="${sellText}" data-id="${id}"></td>
-                    <td>
-                      <button class="btn btn-sm btn-success save-edit-btn me-1" data-id="${id}"><i class="bi bi-check"></i></button>
-                      <button class="btn btn-sm btn-secondary cancel-edit-btn" data-id="${id}"><i class="bi bi-x"></i></button>
-                    </td>
-                  `;
-                    row.classList.add('inv-edit-row');
-                    row.querySelector('.save-edit-btn').onclick = async function() {
-                        const id = this.dataset.id;
-                        const station = Number(row.querySelector('.edit-station').value);
-                        const product = row.querySelector('.edit-product').value.trim();
-                        const qty = parseFloat(row.querySelector('.edit-qty').value) || 0;
-                        const cost = parseFloat(row.querySelector('.edit-cost').value) || 0;
-                        const sell = parseFloat(row.querySelector('.edit-sell').value) || 0;
-                        if (!product) { toast('Product name is required', 'warning'); return; }
-                        if (qty < 0 || cost < 0 || sell < 0) { toast('Values cannot be negative',
-                            'warning'); return; }
-                        try {
-                            const docId = station + '_' + product;
-                            const ref = db.collection('inventory').doc(docId);
-                            await ref.set({
-                                station_id: station,
-                                product_type: product,
-                                quantity: qty,
-                                cost_price: cost,
-                                selling_price: sell,
-                                companyId: state.user.companyId,
-                                last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                            }, { merge: true });
-                            if (docId !== id) { await deleteDoc('inventory', id); }
-                            await logAudit('edit_inventory', { id, station, product, qty, cost, sell });
-                            toast('Inventory updated', 'success');
-                            renderInventory();
-                        } catch (err) { toast('Error: ' + err.message, 'danger'); }
-                    };
-                    row.querySelector('.cancel-edit-btn').onclick = function() { renderInventory(); };
-                };
             });
         }
 
-        // ----- STOCK (offloading) -----
-        async function renderStock() {
-            const stock = (await getAll('stock'))
-                .filter(s => !state.currentStationId || Number(s.station_id) === state.currentStationId)
-                .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+        html += '</tbody></table></div></div></div></div>';
+        $('#pageContent').innerHTML = html;
 
-            const inv = await getAll('inventory');
-            const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
-            const productOpts = productTypes.length > 0 ?
-                productTypes.map(p => `<option value="${p}">${p}</option>`).join('') :
-                '<option value="Petrol">Petrol</option><option value="Diesel">Diesel</option><option value="Gas">Gas</option><option value="Paraffin">Paraffin</option>';
+        const container = $('#recItems');
 
-            let stationOptions = '';
-            state.stations.forEach(s => {
-                const selected = state.currentStationId === s.id ? ' selected' : '';
-                stationOptions += '<option value="' + s.id + '"' + selected + '>' + s.name + '</option>';
-            });
-
-            let html = '<div class="row g-4">' +
-                '<div class="col-lg-5"><div class="card-box">' +
-                '<h5 class="mb-3"><i class="bi bi-truck"></i> Offloading (Receive Fuel)</h5>' +
-                '<form id="stockForm">' +
-                '<div class="mb-2"><label class="form-label small">Station *</label>' +
-                '<select id="recStation" class="form-select form-select-sm" required>' + stationOptions +
+        function addRecRow() {
+            const row = document.createElement('div');
+            row.className = 'row g-1 mb-2 rec-row';
+            row.innerHTML =
+                '<div class="col-5">' +
+                '<select class="form-select form-select-sm rec-product">' + productOpts +
                 '</select></div>' +
-                '<div class="mb-2"><label class="form-label small">Shipping / Delivery Note # *</label>' +
-                '<input type="text" id="recInvoice" class="form-control form-control-sm" placeholder="e.g. DN-2026-0042" required></div>' +
-                '<div class="mb-2"><label class="form-label small">Vendor / Supplier *</label>' +
-                '<input type="text" id="recVendor" class="form-control form-control-sm" placeholder="e.g. Total Energies, Vivo Energy" required></div>' +
-                '<div class="mb-2"><label class="form-label small">Date</label>' +
-                '<input type="date" id="recDate" class="form-control form-control-sm" value="' + new Date().toISOString()
-                .slice(0, 10) + '"></div>' +
-                '<div id="recItems"></div>' +
-                '<button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="addRecItem"><i class="bi bi-plus"></i> Add Item</button>' +
-                '<button type="submit" class="btn btn-success w-100">Confirm Offloading & Update Inventory</button>' +
-                '</form></div></div>' +
-                '<div class="col-lg-7"><div class="card-box">' +
-                '<h5 class="mb-3">Offloading History</h5>' +
-                '<div class="table-responsive"><table class="table table-sm table-hover">' +
-                '<thead><tr><th>Station</th><th>Shipping #</th><th>Vendor</th><th>Items</th><th>Date</th><th>Actions</th></tr></thead><tbody>';
+                '<div class="col-5"><input type="number" class="form-control form-control-sm rec-qty" placeholder="Qty (L)" step="0.01" required></div>' +
+                '<div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100 remove-rec"><i class="bi bi-x"></i></button></div>';
+            container.appendChild(row);
+            row.querySelector('.remove-rec').onclick = function() {
+                if (container.children.length > 1) row.remove();
+            };
+        }
+        addRecRow();
+        $('#addRecItem').onclick = addRecRow;
 
-            if (stock.length === 0) {
-                html += '<tr><td colspan="6" class="text-muted text-center">No offloading records</td></tr>';
-            } else {
-                stock.slice(0, 20).forEach(r => {
-                    const items = (r.items || []).map(it => it.product_type + ' ' + it.quantity + 'L').join(
-                        ', ');
-                    html += '<tr>' +
-                        '<td>' + stationName(r.station_id) + '</td>' +
-                        '<td>' + (r.invoice_number || r.shipping_number || '—') + '</td>' +
-                        '<td>' + (r.vendor || '—') + '</td>' +
-                        '<td class="fs-xs">' + items + '</td>' +
-                        '<td class="fs-xs">' + formatDate(r.received_date || r.created_at) + '</td>' +
-                        '<td><button class="btn btn-sm btn-outline-danger delete-stock-btn" data-id="' + r.id +
-                        '" data-station="' + r.station_id + '" data-items=\'' + JSON.stringify(r.items ||
-                            []) +
-                        '\'><i class="bi bi-trash"></i></button></td>' +
-                        '</tr>';
-                });
+        $('#stockForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const stationId = String($('#recStation').value);
+            const shippingNo = $('#recInvoice').value.trim();
+            const vendor = $('#recVendor').value.trim();
+            const date = $('#recDate').value;
+            if (!shippingNo) { toast('Shipping / Delivery Note number is required', 'warning'); return; }
+            if (!vendor) { toast('Vendor / Supplier is required', 'warning'); return; }
+
+            const items = [];
+            let valid = true;
+            document.querySelectorAll('.rec-row').forEach(r => {
+                const product = r.querySelector('.rec-product').value;
+                const qty = parseFloat(r.querySelector('.rec-qty').value);
+                if (!qty || qty <= 0) { valid = false; return; }
+                items.push({ product_type: product, quantity: qty });
+            });
+            if (!valid || items.length === 0) {
+                toast('Add at least one item with a valid quantity', 'warning');
+                return;
             }
-
-            html += '</tbody></table></div></div></div></div>';
-            $('#pageContent').innerHTML = html;
-
-            const container = $('#recItems');
-
-            function addRecRow() {
-                const row = document.createElement('div');
-                row.className = 'row g-1 mb-2 rec-row';
-                row.innerHTML =
-                    '<div class="col-5"><select class="form-select form-select-sm rec-product">' + productOpts +
-                    '</select></div>' +
-                    '<div class="col-5"><input type="number" class="form-control form-control-sm rec-qty" placeholder="Qty (L)" step="0.01" required></div>' +
-                    '<div class="col-2"><button type="button" class="btn btn-sm btn-outline-danger w-100 remove-rec"><i class="bi bi-x"></i></button></div>';
-                container.appendChild(row);
-                row.querySelector('.remove-rec').onclick = function() { if (container.children.length > 1) row
-                    .remove(); };
-            }
-            addRecRow();
-            $('#addRecItem').onclick = addRecRow;
-
-            $('#stockForm').onsubmit = async function(e) {
-                e.preventDefault();
-                const stationId = Number($('#recStation').value);
-                const shippingNo = $('#recInvoice').value.trim();
-                const vendor = $('#recVendor').value.trim();
-                const date = $('#recDate').value;
-                if (!shippingNo) { toast('Shipping / Delivery Note number is required', 'warning'); return; }
-                if (!vendor) { toast('Vendor / Supplier is required', 'warning'); return; }
-
-                const items = [];
-                let valid = true;
-                document.querySelectorAll('.rec-row').forEach(r => {
-                    const product = r.querySelector('.rec-product').value;
-                    const qty = parseFloat(r.querySelector('.rec-qty').value);
-                    if (!qty || qty <= 0) { valid = false; return; }
-                    items.push({ product_type: product, quantity: qty });
+            try {
+                showLoading(true);
+                const batch = db.batch();
+                const stockRef = db.collection('stock').doc();
+                batch.set(stockRef, {
+                    station_id: stationId,
+                    invoice_number: shippingNo,
+                    shipping_number: shippingNo,
+                    vendor: vendor,
+                    received_date: date,
+                    items: items,
+                    created_by: state.user.id,
+                    companyId: state.user.companyId,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                if (!valid || items.length === 0) {
-                    toast('Add at least one item with a valid quantity', 'warning');
-                    return;
+                for (let item of items) {
+                    await adjustInventory(stationId, item.product_type, item.quantity, null);
                 }
+                await batch.commit();
+                await logAudit('offload_stock', { station: stationId, shipping: shippingNo, vendor, items });
+                toast('Offloading recorded. Inventory updated.');
+                renderStock();
+            } catch (err) {
+                toast(err.message, 'danger');
+            } finally {
+                showLoading(false);
+            }
+        };
+
+        document.querySelectorAll('.delete-stock-btn').forEach(btn => {
+            btn.onclick = async function() {
+                const id = this.dataset.id;
+                const stationId = String(this.dataset.station);
+                const items = JSON.parse(this.dataset.items);
+                if (!confirm('Delete this offloading record? This will REMOVE stock from inventory.')) return;
+                if (!confirm('Are you sure? This cannot be undone!')) return;
+                try {
+                    for (let item of items) {
+                        await adjustInventory(stationId, item.product_type, -item.quantity);
+                    }
+                    await deleteDoc('stock', id);
+                    await logAudit('delete_offload', { station: stationId, items });
+                    toast('Offloading record deleted. Inventory adjusted.', 'success');
+                    renderStock();
+                } catch (err) {
+                    toast('Error: ' + err.message, 'danger');
+                }
+            };
+        });
+    }
+
+    // ----- ADJUSTMENTS (smooth) -----
+    async function renderAdjustments() {
+        const canAdjust = isAdmin(state.user.role);
+        const adj = (await getAll('adjustments'))
+            .filter(a => !state.currentStationId || String(a.station_id) === String(state.currentStationId))
+            .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+        const inv = await getAll('inventory');
+
+        const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
+        const productOpts = productTypes.length > 0 ?
+            productTypes.map(p => `<option value="${p}">${p}</option>`).join('') :
+            '<option value="Petrol">Petrol</option><option value="Diesel">Diesel</option><option value="Gas">Gas</option><option value="Paraffin">Paraffin</option>';
+
+        let stationOptions = '';
+        state.stations.forEach(s => {
+            const selected = state.currentStationId && String(s.id) === String(state.currentStationId) ? ' selected' : '';
+            stationOptions += '<option value="' + s.id + '"' + selected + '>' + s.name + '</option>';
+        });
+
+        let html = '<div class="row g-4">';
+        if (canAdjust) {
+            html += '<div class="col-lg-4"><div class="card-box">' +
+                '<h5 class="mb-3"><i class="bi bi-sliders"></i> Adjustment</h5>' +
+                '<form id="adjForm">' +
+                '<div class="mb-2"><label class="form-label small">Adjustment Type *</label>' +
+                '<select id="adjType" class="form-select form-select-sm">' +
+                '<option value="quantity">Quantity (Stock Volume)</option>' +
+                '<option value="cost_price">Cost Price</option>' +
+                '<option value="selling_price">Selling Price</option>' +
+                '<option value="both_prices">Cost + Selling Price</option>' +
+                '</select></div>' +
+                '<div class="mb-2"><label class="form-label small">Station *</label>' +
+                '<select id="adjStation" class="form-select form-select-sm">' + stationOptions +
+                '</select></div>' +
+                '<div class="mb-2"><label class="form-label small">Product *</label>' +
+                '<select id="adjProduct" class="form-select form-select-sm">' + productOpts +
+                '</select></div>' +
+                '<div class="mb-2 p-2 bg-light rounded small" id="adjCurrentInfo">' +
+                '<span class="text-muted">Current values will appear here</span></div>' +
+                '<div id="adjQtySection">' +
+                '<div class="row g-2 mb-2">' +
+                '<div class="col-6">' +
+                '<label class="form-label small">Current Quantity (L)</label>' +
+                '<input type="number" id="adjCurrentQty" class="form-control form-control-sm bg-light" step="0.01" readonly tabindex="-1">' +
+                '</div>' +
+                '<div class="col-6">' +
+                '<label class="form-label small">New Quantity (L) *</label>' +
+                '<input type="number" id="adjNewQty" class="form-control form-control-sm" step="0.01" min="0" placeholder="Enter target qty">' +
+                '</div>' +
+                '</div>' +
+                '<div class="mb-2 p-2 rounded small" id="adjQtyDelta" style="background:#e8f4fd;display:none;">' +
+                '<span class="text-muted">Difference: </span><strong id="adjDeltaValue">0 L</strong>' +
+                '</div>' +
+                '</div>' +
+                '<div id="adjCostSection" style="display:none;">' +
+                '<div class="mb-2"><label class="form-label small">New Cost Price (UGX/L) *</label>' +
+                '<input type="number" id="adjCost" class="form-control form-control-sm" step="10" min="0" placeholder="e.g. 3800"></div>' +
+                '</div>' +
+                '<div id="adjSellSection" style="display:none;">' +
+                '<div class="mb-2"><label class="form-label small">New Selling Price (UGX/L) *</label>' +
+                '<input type="number" id="adjSell" class="form-control form-control-sm" step="10" min="0" placeholder="e.g. 4200"></div>' +
+                '</div>' +
+                '<div class="mb-2"><label class="form-label small">Reason *</label>' +
+                '<input type="text" id="adjReason" class="form-control form-control-sm" placeholder="e.g. price revision, spill, leakage" required></div>' +
+                '<button type="submit" class="btn btn-warning w-100">Apply Adjustment</button>' +
+                '</form></div></div>';
+        }
+
+        html += '<div class="col-lg-' + (canAdjust ? '8' : '12') + '"><div class="card-box">' +
+            '<h5 class="mb-3">Adjustment History</h5>' +
+            '<div class="table-responsive"><table class="table table-sm table-hover">' +
+            '<thead><tr><th>Station</th><th>Product</th><th>Type</th><th>Change</th><th>Reason</th><th>Date</th>' +
+            (canAdjust ? '<th>Actions</th>' : '') +
+            '</tr></thead><tbody>';
+
+        if (adj.length === 0) {
+            html += '<tr><td colspan="' + (canAdjust ? '7' : '6') + '" class="text-muted text-center">No adjustments</td></tr>';
+        } else {
+            adj.slice(0, 40).forEach(a => {
+                const type = a.adj_type || 'quantity';
+                let typeBadge = '',
+                    changeText = '';
+                if (type === 'quantity') {
+                    typeBadge = '<span class="badge bg-primary">Qty</span>';
+                    const delta = Number(a.quantity || 0);
+                    const qtyClass = delta < 0 ? 'text-danger' : 'text-success';
+                    const deltaStr = '<span class="' + qtyClass + '">(' + (delta >= 0 ? '+' : '') + delta
+                        .toFixed(2) + ' L)</span>';
+                    if (a.old_quantity != null && a.new_quantity != null) {
+                        changeText = Number(a.old_quantity).toFixed(2) + ' → <strong>' + Number(a
+                            .new_quantity).toFixed(2) + ' L</strong> ' + deltaStr;
+                    } else {
+                        changeText = deltaStr;
+                    }
+                } else if (type === 'cost_price') {
+                    typeBadge = '<span class="badge bg-info text-dark">Cost</span>';
+                    changeText = formatMoney(a.old_cost || 0) + ' → <strong>' + formatMoney(a.new_cost ||
+                        0) + '</strong>';
+                } else if (type === 'selling_price') {
+                    typeBadge = '<span class="badge bg-success">Sell</span>';
+                    changeText = formatMoney(a.old_sell || 0) + ' → <strong>' + formatMoney(a.new_sell ||
+                        0) + '</strong>';
+                } else if (type === 'both_prices') {
+                    typeBadge = '<span class="badge bg-warning text-dark">Prices</span>';
+                    changeText = 'Cost: ' + formatMoney(a.old_cost || 0) + '→' + formatMoney(a.new_cost ||
+                        0) +
+                        '<br>Sell: ' + formatMoney(a.old_sell || 0) + '→' + formatMoney(a.new_sell || 0);
+                } else {
+                    typeBadge = '<span class="badge bg-secondary">Qty</span>';
+                    const delta = Number(a.quantity || 0);
+                    changeText = '<span class="' + (delta < 0 ? 'text-danger' : 'text-success') + '">(' + (
+                        delta >= 0 ? '+' : '') + delta.toFixed(2) + ' L)</span>';
+                }
+                html += '<tr>' +
+                    '<td>' + stationName(a.station_id) + '</td>' +
+                    '<td><span class="product-badge custom">' + (a.product_type || '—') + '</span></td>' +
+                    '<td>' + typeBadge + '</td>' +
+                    '<td class="fs-xs">' + changeText + '</td>' +
+                    '<td class="fs-xs">' + (a.reason || '—') + '</td>' +
+                    '<td class="fs-xs">' + formatDate(a.created_at) + '</td>';
+                if (canAdjust) {
+                    html += '<td><button class="btn btn-sm btn-outline-danger delete-adj-btn" data-id="' + a.id +
+                        '"><i class="bi bi-trash"></i></button></td>';
+                }
+                html += '</tr>';
+            });
+        }
+
+        html += '</tbody></table></div></div></div></div>';
+        $('#pageContent').innerHTML = html;
+
+        if (canAdjust) {
+            function updateQtyDelta() {
+                const currentQty = parseFloat($('#adjCurrentQty').value) || 0;
+                const newQty = parseFloat($('#adjNewQty').value);
+                const deltaEl = $('#adjQtyDelta');
+                const deltaVal = $('#adjDeltaValue');
+                if (isNaN(newQty)) { deltaEl.style.display = 'none'; return; }
+                const delta = newQty - currentQty;
+                deltaEl.style.display = 'block';
+                if (delta === 0) {
+                    deltaVal.textContent = '0 L (no change)';
+                    deltaVal.className = 'text-muted';
+                } else if (delta > 0) {
+                    deltaVal.textContent = '+' + delta.toFixed(2) + ' L (will be ADDED)';
+                    deltaVal.className = 'text-success';
+                } else {
+                    deltaVal.textContent = delta.toFixed(2) + ' L (will be REMOVED)';
+                    deltaVal.className = 'text-danger';
+                }
+            }
+
+            async function updateCurrentInfo() {
+                const stationId = String($('#adjStation').value);
+                const product = $('#adjProduct').value;
+                const item = inv.find(i => String(i.station_id) === stationId && i.product_type === product);
+                const info = $('#adjCurrentInfo');
+                if (item) {
+                    info.innerHTML = '<div><strong>Current:</strong> Qty <strong>' + (item.quantity || 0).toFixed(
+                        2) + ' L</strong> &nbsp;|&nbsp; ' +
+                        'Cost <strong>' + formatMoney(item.cost_price || 0) + '</strong> &nbsp;|&nbsp; ' +
+                        'Sell <strong>' + formatMoney(item.selling_price || 0) + '</strong></div>';
+                    if ($('#adjCurrentQty')) $('#adjCurrentQty').value = Number(item.quantity || 0).toFixed(2);
+                    if ($('#adjNewQty') && !$('#adjNewQty').value) $('#adjNewQty').value = Number(item
+                        .quantity || 0).toFixed(2);
+                    if ($('#adjCost')) $('#adjCost').value = item.cost_price || '';
+                    if ($('#adjSell')) $('#adjSell').value = item.selling_price || '';
+                    updateQtyDelta();
+                } else {
+                    info.innerHTML = '<span class="text-warning">No inventory record found for this station/product</span>';
+                    if ($('#adjCurrentQty')) $('#adjCurrentQty').value = '0';
+                    if ($('#adjNewQty')) $('#adjNewQty').value = '';
+                    if ($('#adjCost')) $('#adjCost').value = '';
+                    if ($('#adjSell')) $('#adjSell').value = '';
+                    updateQtyDelta();
+                }
+            }
+
+            function toggleAdjFields() {
+                const type = $('#adjType').value;
+                $('#adjQtySection').style.display = (type === 'quantity') ? 'block' : 'none';
+                $('#adjCostSection').style.display = (type === 'cost_price' || type === 'both_prices') ? 'block' :
+                    'none';
+                $('#adjSellSection').style.display = (type === 'selling_price' || type === 'both_prices') ? 'block' :
+                    'none';
+                const newQtyInput = $('#adjNewQty');
+                const costInput = $('#adjCost');
+                const sellInput = $('#adjSell');
+                if (newQtyInput) newQtyInput.required = (type === 'quantity');
+                if (costInput) costInput.required = (type === 'cost_price' || type === 'both_prices');
+                if (sellInput) sellInput.required = (type === 'selling_price' || type === 'both_prices');
+            }
+
+            $('#adjType').onchange = function() { toggleAdjFields();
+                updateCurrentInfo(); };
+            $('#adjStation').onchange = function() { if ($('#adjNewQty')) $('#adjNewQty').value = '';
+                updateCurrentInfo(); };
+            $('#adjProduct').onchange = function() { if ($('#adjNewQty')) $('#adjNewQty').value = '';
+                updateCurrentInfo(); };
+            if ($('#adjNewQty')) $('#adjNewQty').oninput = updateQtyDelta;
+            toggleAdjFields();
+            setTimeout(updateCurrentInfo, 50);
+
+            $('#adjForm').onsubmit = async function(e) {
+                e.preventDefault();
+                const stationId = String($('#adjStation').value);
+                const product = $('#adjProduct').value;
+                const type = $('#adjType').value;
+                const reason = $('#adjReason').value.trim();
+                if (!reason) { toast('Reason is required', 'warning'); return; }
+
                 try {
                     showLoading(true);
-                    const batch = db.batch();
-                    const stockRef = db.collection('stock').doc();
-                    batch.set(stockRef, {
-                        station_id: stationId,
-                        invoice_number: shippingNo,
-                        shipping_number: shippingNo,
-                        vendor: vendor,
-                        received_date: date,
-                        items: items,
-                        created_by: state.user.id,
-                        companyId: state.user.companyId,
-                        created_at: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    for (let item of items) {
-                        await adjustInventory(stationId, item.product_type, item.quantity, null);
-                    }
-                    await batch.commit();
-                    await logAudit('offload_stock', { station: stationId, shipping: shippingNo, vendor, items });
-                    toast('Offloading recorded. Inventory updated.');
-                    renderStock();
-                } catch (err) { toast(err.message, 'danger'); } finally { showLoading(false); }
-            };
+                    const invDocId = stationId + '_' + product;
+                    const current = inv.find(i => String(i.station_id) === stationId && i.product_type ===
+                        product);
 
-            document.querySelectorAll('.delete-stock-btn').forEach(btn => {
-                btn.onclick = async function() {
-                    const id = this.dataset.id;
-                    const stationId = Number(this.dataset.station);
-                    const items = JSON.parse(this.dataset.items);
-                    if (!confirm('Delete this offloading record? This will REMOVE stock from inventory.')) return;
-                    if (!confirm('Are you sure? This cannot be undone!')) return;
-                    try {
-                        for (let item of items) { await adjustInventory(stationId, item.product_type, -item
-                                .quantity); }
-                        await deleteDoc('stock', id);
-                        await logAudit('delete_offload', { station: stationId, items });
-                        toast('Offloading record deleted. Inventory adjusted.', 'success');
-                        renderStock();
-                    } catch (err) { toast('Error: ' + err.message, 'danger'); }
-                };
-            });
-        }
-
-        // ----- ADJUSTMENTS (unchanged) -----
-        async function renderAdjustments() {
-            const canAdjust = isAdmin(state.user.role);
-            const adj = (await getAll('adjustments'))
-                .filter(a => !state.currentStationId || Number(a.station_id) === state.currentStationId)
-                .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
-            const inv = await getAll('inventory');
-
-            const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
-            const productOpts = productTypes.length > 0 ?
-                productTypes.map(p => `<option value="${p}">${p}</option>`).join('') :
-                '<option value="Petrol">Petrol</option><option value="Diesel">Diesel</option><option value="Gas">Gas</option><option value="Paraffin">Paraffin</option>';
-
-            let stationOptions = '';
-            state.stations.forEach(s => {
-                const selected = state.currentStationId === s.id ? ' selected' : '';
-                stationOptions += '<option value="' + s.id + '"' + selected + '>' + s.name + '</option>';
-            });
-
-            let html = '<div class="row g-4">';
-            if (canAdjust) {
-                html += '<div class="col-lg-4"><div class="card-box">' +
-                    '<h5 class="mb-3"><i class="bi bi-sliders"></i> Adjustment</h5>' +
-                    '<form id="adjForm">' +
-                    '<div class="mb-2"><label class="form-label small">Adjustment Type *</label>' +
-                    '<select id="adjType" class="form-select form-select-sm">' +
-                    '<option value="quantity">Quantity (Stock Volume)</option>' +
-                    '<option value="cost_price">Cost Price</option>' +
-                    '<option value="selling_price">Selling Price</option>' +
-                    '<option value="both_prices">Cost + Selling Price</option>' +
-                    '</select></div>' +
-                    '<div class="mb-2"><label class="form-label small">Station *</label>' +
-                    '<select id="adjStation" class="form-select form-select-sm">' + stationOptions +
-                    '</select></div>' +
-                    '<div class="mb-2"><label class="form-label small">Product *</label>' +
-                    '<select id="adjProduct" class="form-select form-select-sm">' + productOpts +
-                    '</select></div>' +
-                    '<div class="mb-2 p-2 bg-light rounded small" id="adjCurrentInfo">' +
-                    '<span class="text-muted">Current values will appear here</span></div>' +
-                    '<div id="adjQtySection">' +
-                    '<div class="row g-2 mb-2"><div class="col-6"><label class="form-label small">Current Quantity (L)</label>' +
-                    '<input type="number" id="adjCurrentQty" class="form-control form-control-sm bg-light" step="0.01" readonly tabindex="-1"></div>' +
-                    '<div class="col-6"><label class="form-label small">New Quantity (L) *</label>' +
-                    '<input type="number" id="adjNewQty" class="form-control form-control-sm" step="0.01" min="0" placeholder="Enter target qty"></div></div>' +
-                    '<div class="mb-2 p-2 rounded small" id="adjQtyDelta" style="background:#e8f4fd;display:none;">' +
-                    '<span class="text-muted">Difference: </span><strong id="adjDeltaValue">0 L</strong></div></div>' +
-                    '<div id="adjCostSection" style="display:none;"><div class="mb-2"><label class="form-label small">New Cost Price (UGX/L) *</label>' +
-                    '<input type="number" id="adjCost" class="form-control form-control-sm" step="10" min="0" placeholder="e.g. 3800"></div></div>' +
-                    '<div id="adjSellSection" style="display:none;"><div class="mb-2"><label class="form-label small">New Selling Price (UGX/L) *</label>' +
-                    '<input type="number" id="adjSell" class="form-control form-control-sm" step="10" min="0" placeholder="e.g. 4200"></div></div>' +
-                    '<div class="mb-2"><label class="form-label small">Reason *</label>' +
-                    '<input type="text" id="adjReason" class="form-control form-control-sm" placeholder="e.g. price revision, spill, leakage" required></div>' +
-                    '<button type="submit" class="btn btn-warning w-100">Apply Adjustment</button>' +
-                    '</form></div></div>';
-            }
-
-            html += '<div class="col-lg-' + (canAdjust ? '8' : '12') + '"><div class="card-box">' +
-                '<h5 class="mb-3">Adjustment History</h5>' +
-                '<div class="table-responsive"><table class="table table-sm table-hover">' +
-                '<thead><tr><th>Station</th><th>Product</th><th>Type</th><th>Change</th><th>Reason</th><th>Date</th>' +
-                (canAdjust ? '<th>Actions</th>' : '') +
-                '</tr></thead><tbody>';
-
-            if (adj.length === 0) {
-                html += '<tr><td colspan="' + (canAdjust ? '7' : '6') + '" class="text-muted text-center">No adjustments</td></tr>';
-            } else {
-                adj.slice(0, 40).forEach(a => {
-                    const type = a.adj_type || 'quantity';
-                    let typeBadge = '',
-                        changeText = '';
                     if (type === 'quantity') {
-                        typeBadge = '<span class="badge bg-primary">Qty</span>';
-                        const delta = Number(a.quantity || 0);
-                        const qtyClass = delta < 0 ? 'text-danger' : 'text-success';
-                        const deltaStr = '<span class="' + qtyClass + '">(' + (delta >= 0 ? '+' : '') + delta
-                            .toFixed(2) + ' L)</span>';
-                        if (a.old_quantity != null && a.new_quantity != null) {
-                            changeText = Number(a.old_quantity).toFixed(2) + ' → <strong>' + Number(a
-                                .new_quantity).toFixed(2) + ' L</strong> ' + deltaStr;
-                        } else { changeText = deltaStr; }
+                        const currentQty = parseFloat($('#adjCurrentQty').value) || 0;
+                        const newQty = parseFloat($('#adjNewQty').value);
+                        if (isNaN(newQty) || newQty < 0) { toast('Enter a valid new quantity (0 or more)',
+                                'warning');
+                            showLoading(false); return; }
+                        const qty = newQty - currentQty;
+                        if (qty === 0) { toast('New quantity is the same as current – no change needed',
+                                'info');
+                            showLoading(false); return; }
+                        await adjustInventory(stationId, product, qty);
+                        await addDoc('adjustments', {
+                            station_id: stationId,
+                            product_type: product,
+                            adj_type: 'quantity',
+                            quantity: qty,
+                            old_quantity: currentQty,
+                            new_quantity: newQty,
+                            reason: reason,
+                            created_by: state.user.id
+                        });
+                        await logAudit('stock_adjustment', { station: stationId, product, qty, old: currentQty,
+                            new: newQty, reason });
+                        toast('Quantity updated: ' + currentQty.toFixed(2) + ' L → ' + newQty.toFixed(2) +
+                            ' L');
                     } else if (type === 'cost_price') {
-                        typeBadge = '<span class="badge bg-info text-dark">Cost</span>';
-                        changeText = formatMoney(a.old_cost || 0) + ' → <strong>' + formatMoney(a.new_cost ||
-                            0) + '</strong>';
+                        const newCost = parseFloat($('#adjCost').value);
+                        if (isNaN(newCost) || newCost < 0) { toast('Enter a valid cost price', 'warning');
+                            showLoading(false); return; }
+                        const oldCost = current ? (current.cost_price || 0) : 0;
+                        const ref = db.collection('inventory').doc(invDocId);
+                        const snap = await ref.get();
+                        if (!snap.exists) {
+                            await ref.set({
+                                station_id: stationId,
+                                product_type: product,
+                                quantity: 0,
+                                cost_price: newCost,
+                                selling_price: 0,
+                                companyId: state.user.companyId,
+                                last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        } else {
+                            await ref.update({ cost_price: newCost,
+                                last_updated: firebase.firestore.FieldValue.serverTimestamp() });
+                        }
+                        await addDoc('adjustments', {
+                            station_id: stationId,
+                            product_type: product,
+                            adj_type: 'cost_price',
+                            old_cost: oldCost,
+                            new_cost: newCost,
+                            reason: reason,
+                            created_by: state.user.id
+                        });
+                        await logAudit('cost_adjustment', { station: stationId, product, oldCost, newCost,
+                            reason });
+                        toast('Cost price updated: ' + formatMoney(oldCost) + ' → ' + formatMoney(newCost));
                     } else if (type === 'selling_price') {
-                        typeBadge = '<span class="badge bg-success">Sell</span>';
-                        changeText = formatMoney(a.old_sell || 0) + ' → <strong>' + formatMoney(a.new_sell ||
-                            0) + '</strong>';
-                    } else if (type === 'both_prices') {
-                        typeBadge = '<span class="badge bg-warning text-dark">Prices</span>';
-                        changeText = 'Cost: ' + formatMoney(a.old_cost || 0) + '→' + formatMoney(a.new_cost ||
-                            0) +
-                            '<br>Sell: ' + formatMoney(a.old_sell || 0) + '→' + formatMoney(a.new_sell || 0);
-                    } else {
-                        typeBadge = '<span class="badge bg-secondary">Qty</span>';
-                        const delta = Number(a.quantity || 0);
-                        changeText = '<span class="' + (delta < 0 ? 'text-danger' : 'text-success') + '">(' + (
-                            delta >= 0 ? '+' : '') + delta.toFixed(2) + ' L)</span>';
-                    }
-                    html += '<tr>' +
-                        '<td>' + stationName(a.station_id) + '</td>' +
-                        '<td><span class="product-badge custom">' + (a.product_type || '—') + '</span></td>' +
-                        '<td>' + typeBadge + '</td>' +
-                        '<td class="fs-xs">' + changeText + '</td>' +
-                        '<td class="fs-xs">' + (a.reason || '—') + '</td>' +
-                        '<td class="fs-xs">' + formatDate(a.created_at) + '</td>';
-                    if (canAdjust) {
-                        html += '<td><button class="btn btn-sm btn-outline-danger delete-adj-btn" data-id="' + a.id +
-                            '"><i class="bi bi-trash"></i></button></td>';
-                    }
-                    html += '</tr>';
-                });
-            }
-
-            html += '</tbody></table></div></div></div></div>';
-            $('#pageContent').innerHTML = html;
-
-            if (canAdjust) {
-                function updateQtyDelta() {
-                    const currentQty = parseFloat($('#adjCurrentQty').value) || 0;
-                    const newQty = parseFloat($('#adjNewQty').value);
-                    const deltaEl = $('#adjQtyDelta');
-                    const deltaVal = $('#adjDeltaValue');
-                    if (isNaN(newQty)) { deltaEl.style.display = 'none'; return; }
-                    const delta = newQty - currentQty;
-                    deltaEl.style.display = 'block';
-                    if (delta === 0) { deltaVal.textContent = '0 L (no change)';
-                        deltaVal.className = 'text-muted'; } else if (delta > 0) { deltaVal.textContent = '+' + delta
-                            .toFixed(2) + ' L (will be ADDED)';
-                        deltaVal.className = 'text-success'; } else { deltaVal.textContent = delta.toFixed(2) +
-                            ' L (will be REMOVED)';
-                        deltaVal.className = 'text-danger'; }
-                }
-
-                async function updateCurrentInfo() {
-                    const stationId = Number($('#adjStation').value);
-                    const product = $('#adjProduct').value;
-                    const item = inv.find(i => Number(i.station_id) === stationId && i.product_type === product);
-                    const info = $('#adjCurrentInfo');
-                    if (item) {
-                        info.innerHTML = '<div><strong>Current:</strong> Qty <strong>' + (item.quantity || 0)
-                            .toFixed(2) + ' L</strong> &nbsp;|&nbsp; ' +
-                            'Cost <strong>' + formatMoney(item.cost_price || 0) + '</strong> &nbsp;|&nbsp; ' +
-                            'Sell <strong>' + formatMoney(item.selling_price || 0) + '</strong></div>';
-                        if ($('#adjCurrentQty')) $('#adjCurrentQty').value = Number(item.quantity || 0).toFixed(2);
-                        if ($('#adjNewQty') && !$('#adjNewQty').value) $('#adjNewQty').value = Number(item
-                            .quantity || 0).toFixed(2);
-                        if ($('#adjCost')) $('#adjCost').value = item.cost_price || '';
-                        if ($('#adjSell')) $('#adjSell').value = item.selling_price || '';
-                        updateQtyDelta();
-                    } else {
-                        info.innerHTML =
-                            '<span class="text-warning">No inventory record found for this station/product</span>';
-                        if ($('#adjCurrentQty')) $('#adjCurrentQty').value = '0';
-                        if ($('#adjNewQty')) $('#adjNewQty').value = '';
-                        if ($('#adjCost')) $('#adjCost').value = '';
-                        if ($('#adjSell')) $('#adjSell').value = '';
-                        updateQtyDelta();
-                    }
-                }
-
-                function toggleAdjFields() {
-                    const type = $('#adjType').value;
-                    $('#adjQtySection').style.display = (type === 'quantity') ? 'block' : 'none';
-                    $('#adjCostSection').style.display = (type === 'cost_price' || type === 'both_prices') ? 'block' :
-                        'none';
-                    $('#adjSellSection').style.display = (type === 'selling_price' || type === 'both_prices') ? 'block' :
-                        'none';
-                    const newQtyInput = $('#adjNewQty');
-                    const costInput = $('#adjCost');
-                    const sellInput = $('#adjSell');
-                    if (newQtyInput) newQtyInput.required = (type === 'quantity');
-                    if (costInput) costInput.required = (type === 'cost_price' || type === 'both_prices');
-                    if (sellInput) sellInput.required = (type === 'selling_price' || type === 'both_prices');
-                }
-
-                $('#adjType').onchange = function() { toggleAdjFields();
-                    updateCurrentInfo(); };
-                $('#adjStation').onchange = function() { if ($('#adjNewQty')) $('#adjNewQty').value = '';
-                    updateCurrentInfo(); };
-                $('#adjProduct').onchange = function() { if ($('#adjNewQty')) $('#adjNewQty').value = '';
-                    updateCurrentInfo(); };
-                if ($('#adjNewQty')) $('#adjNewQty').oninput = updateQtyDelta;
-                toggleAdjFields();
-                setTimeout(updateCurrentInfo, 50);
-
-                $('#adjForm').onsubmit = async function(e) {
-                    e.preventDefault();
-                    const stationId = Number($('#adjStation').value);
-                    const product = $('#adjProduct').value;
-                    const type = $('#adjType').value;
-                    const reason = $('#adjReason').value.trim();
-                    if (!reason) { toast('Reason is required', 'warning'); return; }
-
-                    try {
-                        showLoading(true);
-                        const invDocId = stationId + '_' + product;
-                        const current = inv.find(i => Number(i.station_id) === stationId && i.product_type ===
-                            product);
-
-                        if (type === 'quantity') {
-                            const currentQty = parseFloat($('#adjCurrentQty').value) || 0;
-                            const newQty = parseFloat($('#adjNewQty').value);
-                            if (isNaN(newQty) || newQty < 0) { toast('Enter a valid new quantity (0 or more)',
-                                    'warning');
-                                showLoading(false); return; }
-                            const qty = newQty - currentQty;
-                            if (qty === 0) { toast('New quantity is the same as current – no change needed',
-                                    'info');
-                                showLoading(false); return; }
-                            await adjustInventory(stationId, product, qty);
-                            await addDoc('adjustments', {
+                        const newSell = parseFloat($('#adjSell').value);
+                        if (isNaN(newSell) || newSell < 0) { toast('Enter a valid selling price', 'warning');
+                            showLoading(false); return; }
+                        const oldSell = current ? (current.selling_price || 0) : 0;
+                        const ref = db.collection('inventory').doc(invDocId);
+                        const snap = await ref.get();
+                        if (!snap.exists) {
+                            await ref.set({
                                 station_id: stationId,
                                 product_type: product,
-                                adj_type: 'quantity',
-                                quantity: qty,
-                                old_quantity: currentQty,
-                                new_quantity: newQty,
-                                reason: reason,
-                                created_by: state.user.id
+                                quantity: 0,
+                                cost_price: 0,
+                                selling_price: newSell,
+                                companyId: state.user.companyId,
+                                last_updated: firebase.firestore.FieldValue.serverTimestamp()
                             });
-                            await logAudit('stock_adjustment', { station: stationId, product, qty, old: currentQty,
-                                new: newQty, reason });
-                            toast('Quantity updated: ' + currentQty.toFixed(2) + ' L → ' + newQty.toFixed(2) +
-                                ' L');
-                        } else if (type === 'cost_price') {
-                            const newCost = parseFloat($('#adjCost').value);
-                            if (isNaN(newCost) || newCost < 0) { toast('Enter a valid cost price', 'warning');
-                                showLoading(false); return; }
-                            const oldCost = current ? (current.cost_price || 0) : 0;
-                            const ref = db.collection('inventory').doc(invDocId);
-                            const snap = await ref.get();
-                            if (!snap.exists) {
-                                await ref.set({
-                                    station_id: stationId,
-                                    product_type: product,
-                                    quantity: 0,
-                                    cost_price: newCost,
-                                    selling_price: 0,
-                                    companyId: state.user.companyId,
-                                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            } else {
-                                await ref.update({ cost_price: newCost,
-                                    last_updated: firebase.firestore.FieldValue.serverTimestamp() });
-                            }
-                            await addDoc('adjustments', {
-                                station_id: stationId,
-                                product_type: product,
-                                adj_type: 'cost_price',
-                                old_cost: oldCost,
-                                new_cost: newCost,
-                                reason: reason,
-                                created_by: state.user.id
-                            });
-                            await logAudit('cost_adjustment', { station: stationId, product, oldCost, newCost,
-                                reason });
-                            toast('Cost price updated: ' + formatMoney(oldCost) + ' → ' + formatMoney(newCost));
-                        } else if (type === 'selling_price') {
-                            const newSell = parseFloat($('#adjSell').value);
-                            if (isNaN(newSell) || newSell < 0) { toast('Enter a valid selling price', 'warning');
-                                showLoading(false); return; }
-                            const oldSell = current ? (current.selling_price || 0) : 0;
-                            const ref = db.collection('inventory').doc(invDocId);
-                            const snap = await ref.get();
-                            if (!snap.exists) {
-                                await ref.set({
-                                    station_id: stationId,
-                                    product_type: product,
-                                    quantity: 0,
-                                    cost_price: 0,
-                                    selling_price: newSell,
-                                    companyId: state.user.companyId,
-                                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            } else {
-                                await ref.update({ selling_price: newSell,
-                                    last_updated: firebase.firestore.FieldValue.serverTimestamp() });
-                            }
-                            await addDoc('adjustments', {
-                                station_id: stationId,
-                                product_type: product,
-                                adj_type: 'selling_price',
-                                old_sell: oldSell,
-                                new_sell: newSell,
-                                reason: reason,
-                                created_by: state.user.id
-                            });
-                            await logAudit('sell_adjustment', { station: stationId, product, oldSell, newSell,
-                                reason });
-                            toast('Selling price updated: ' + formatMoney(oldSell) + ' → ' + formatMoney(
+                        } else {
+                            await ref.update({ selling_price: newSell,
+                                last_updated: firebase.firestore.FieldValue.serverTimestamp() });
+                        }
+                        await addDoc('adjustments', {
+                            station_id: stationId,
+                            product_type: product,
+                            adj_type: 'selling_price',
+                            old_sell: oldSell,
+                            new_sell: newSell,
+                            reason: reason,
+                            created_by: state.user.id
+                        });
+                        await logAudit('sell_adjustment', { station: stationId, product, oldSell, newSell,
+                            reason });
+                        toast('Selling price updated: ' + formatMoney(oldSell) + ' → ' + formatMoney(
                             newSell));
-                        } else if (type === 'both_prices') {
-                            const newCost = parseFloat($('#adjCost').value);
-                            const newSell = parseFloat($('#adjSell').value);
-                            if (isNaN(newCost) || newCost < 0 || isNaN(newSell) || newSell < 0) {
-                                toast('Enter valid cost and selling prices', 'warning');
-                                showLoading(false);
-                                return;
-                            }
-                            const oldCost = current ? (current.cost_price || 0) : 0;
-                            const oldSell = current ? (current.selling_price || 0) : 0;
-                            const ref = db.collection('inventory').doc(invDocId);
-                            const snap = await ref.get();
-                            if (!snap.exists) {
-                                await ref.set({
-                                    station_id: stationId,
-                                    product_type: product,
-                                    quantity: 0,
-                                    cost_price: newCost,
-                                    selling_price: newSell,
-                                    companyId: state.user.companyId,
-                                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            } else {
-                                await ref.update({
-                                    cost_price: newCost,
-                                    selling_price: newSell,
-                                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            }
-                            await addDoc('adjustments', {
+                    } else if (type === 'both_prices') {
+                        const newCost = parseFloat($('#adjCost').value);
+                        const newSell = parseFloat($('#adjSell').value);
+                        if (isNaN(newCost) || newCost < 0 || isNaN(newSell) || newSell < 0) {
+                            toast('Enter valid cost and selling prices', 'warning');
+                            showLoading(false);
+                            return;
+                        }
+                        const oldCost = current ? (current.cost_price || 0) : 0;
+                        const oldSell = current ? (current.selling_price || 0) : 0;
+                        const ref = db.collection('inventory').doc(invDocId);
+                        const snap = await ref.get();
+                        if (!snap.exists) {
+                            await ref.set({
                                 station_id: stationId,
                                 product_type: product,
-                                adj_type: 'both_prices',
-                                old_cost: oldCost,
-                                new_cost: newCost,
-                                old_sell: oldSell,
-                                new_sell: newSell,
-                                reason: reason,
-                                created_by: state.user.id
+                                quantity: 0,
+                                cost_price: newCost,
+                                selling_price: newSell,
+                                companyId: state.user.companyId,
+                                last_updated: firebase.firestore.FieldValue.serverTimestamp()
                             });
-                            await logAudit('price_adjustment', { station: stationId, product, oldCost, newCost,
-                                oldSell, newSell, reason });
-                            toast('Prices updated');
+                        } else {
+                            await ref.update({
+                                cost_price: newCost,
+                                selling_price: newSell,
+                                last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                            });
                         }
+                        await addDoc('adjustments', {
+                            station_id: stationId,
+                            product_type: product,
+                            adj_type: 'both_prices',
+                            old_cost: oldCost,
+                            new_cost: newCost,
+                            old_sell: oldSell,
+                            new_sell: newSell,
+                            reason: reason,
+                            created_by: state.user.id
+                        });
+                        await logAudit('price_adjustment', { station: stationId, product, oldCost, newCost,
+                            oldSell, newSell, reason });
+                        toast('Prices updated');
+                    }
+                    renderAdjustments();
+                } catch (err) {
+                    toast('Error: ' + err.message, 'danger');
+                } finally {
+                    showLoading(false);
+                }
+            };
+
+            document.querySelectorAll('.delete-adj-btn').forEach(btn => {
+                btn.onclick = async function() {
+                    if (!confirm('Delete this adjustment record? (Does not reverse inventory)')) return;
+                    try {
+                        await deleteDoc('adjustments', this.dataset.id);
+                        toast('Adjustment record deleted');
                         renderAdjustments();
-                    } catch (err) { toast('Error: ' + err.message, 'danger'); } finally { showLoading(false); }
+                    } catch (err) {
+                        toast('Error: ' + err.message, 'danger');
+                    }
                 };
-
-                document.querySelectorAll('.delete-adj-btn').forEach(btn => {
-                    btn.onclick = async function() {
-                        if (!confirm('Delete this adjustment record? (Does not reverse inventory)')) return;
-                        try { await deleteDoc('adjustments', this.dataset.id);
-                            toast('Adjustment record deleted');
-                            renderAdjustments(); } catch (err) { toast('Error: ' + err.message,
-                            'danger'); }
-                    };
-                });
-            }
+            });
         }
+    }
 
-        // ----- FUEL PRICES -----
-        async function renderFuelPrices() {
-            const fuelPrices = await getAll('fuel_prices');
-            const suppliers = await getAll('suppliers');
-            const inv = await getAll('inventory');
+    // ----- FINANCIALS (with credit limits, recurring, auto-record) -----
+    async function renderFinancials() {
+        try {
+            console.log('Financials with credit limits, recurring, and auto-record');
 
-            let html = `
-            <div class="row g-4">
-              <div class="col-lg-5">
-                <div class="card-box">
-                  <h5 class="mb-3"><i class="bi bi-graph-up"></i> Record Fuel Price</h5>
-                  <form id="fuelPriceForm">
-                    <div class="mb-2"><label class="form-label small">Product *</label>
-                      <select id="fpProduct" class="form-select form-select-sm" required>
-                        ${[...new Set(inv.map(i => i.product_type).filter(Boolean))].map(p => `<option value="${p}">${p}</option>`).join('')}
-                      </select></div>
-                    <div class="mb-2"><label class="form-label small">Supplier</label>
-                      <select id="fpSupplier" class="form-select form-select-sm">
-                        <option value="">— Select Supplier —</option>
-                        ${suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                      </select></div>
-                    <div class="mb-2"><label class="form-label small">Purchase Price (UGX/L) *</label>
-                      <input type="number" id="fpPurchase" class="form-control form-control-sm" step="10" min="0" placeholder="e.g. 3800" required></div>
-                    <div class="mb-2"><label class="form-label small">Selling Price (UGX/L)</label>
-                      <input type="number" id="fpSell" class="form-control form-control-sm" step="10" min="0" placeholder="e.g. 4200"></div>
-                    <div class="mb-2"><label class="form-label small">Date</label>
-                      <input type="date" id="fpDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}"></div>
-                    <button type="submit" class="btn btn-primary w-100">Record Price</button>
-                  </form>
-                </div>
-              </div>
-              <div class="col-lg-7">
-                <div class="card-box">
-                  <h5 class="mb-3">Price History</h5>
-                  <div class="table-responsive">
-                    <table class="table table-sm">
-                      <thead><tr><th>Product</th><th>Supplier</th><th>Purchase</th><th>Sell</th><th>Date</th></tr></thead>
-                      <tbody>`;
+            // ---- Fetch data ----
+            const accounts = await getAll('bank_accounts') || [];
+            const expenses = await getAll('expenses') || [];
+            const bankings = await getAll('bankings') || [];
+            const suppliers = await getAll('suppliers') || [];
+            const supplierPayments = await getAll('supplier_payments') || [];
+            const allUsers = await getAll('users') || [];
+            const creditLimits = await getAll('credit_limits') || [];
+            const recurringExpenses = await getAll('recurring_expenses') || [];
+            const customers = await getAll('customers') || [];
 
-            if (fuelPrices.length === 0) {
-                html += '<tr><td colspan="5" class="text-muted text-center">No fuel prices recorded</td></tr>';
-            } else {
-                fuelPrices.sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at
-                    .seconds || 0));
-                fuelPrices.slice(0, 30).forEach(fp => {
-                    const supplier = suppliers.find(s => s.id === fp.supplier_id);
-                    html += `<tr>
-                        <td><span class="product-badge custom">${fp.product_type}</span></td>
-                        <td>${supplier ? supplier.name : '—'}</td>
-                        <td>${formatMoney(fp.purchase_price)}</td>
-                        <td>${fp.selling_price ? formatMoney(fp.selling_price) : '—'}</td>
-                        <td class="fs-xs">${formatDate(fp.created_at)}</td>
-                      </tr>`;
-                });
-            }
+            function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
 
-            html += `</tbody></table></div></div></div></div>`;
-            $('#pageContent').innerHTML = html;
+            // ---- Build dropdowns ----
+            const userOpts = allUsers.filter(u => u.active !== false)
+                .map(u => `<option value="${esc(u.id)}">${esc(u.name || u.username)}</option>`).join('');
 
-            $('#fuelPriceForm').onsubmit = async function(e) {
-                e.preventDefault();
-                const product = $('#fpProduct').value;
-                const supplierId = $('#fpSupplier').value || null;
-                const purchase = parseFloat($('#fpPurchase').value);
-                const sell = parseFloat($('#fpSell').value) || 0;
-                const date = $('#fpDate').value;
-                if (!product || !purchase || purchase <= 0) { toast('Fill all required fields', 'warning'); return; }
-                try {
-                    await addDoc('fuel_prices', {
-                        product_type: product,
-                        supplier_id: supplierId,
-                        purchase_price: purchase,
-                        selling_price: sell,
-                        price_date: date || null,
-                        created_by: state.user.id
-                    });
-                    // Optionally update inventory selling price
-                    if (sell > 0) {
-                        const invItems = await getAll('inventory');
-                        const item = invItems.find(i => i.product_type === product && i.station_id === state
-                            .currentStationId);
-                        if (item) {
-                            await updateDoc('inventory', item.id, { selling_price: sell });
-                        }
-                    }
-                    toast('Fuel price recorded');
-                    renderFuelPrices();
-                } catch (err) { toast('Error: ' + err.message, 'danger'); }
-            };
-        }
+            let accountOptions = '<option value="">Select Account</option><option value="petty_cash">💰 Petty Cash</option>';
+            accounts.forEach(a => {
+                accountOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)} – ${esc(a.account_number)}</option>`;
+            });
 
-        // ----- TANK LEVELS -----
-        async function renderTankLevels() {
-            const tankLevels = await getAll('tank_levels');
-            const inv = await getAll('inventory');
+            let depositSourceOptions =
+                '<option value="cash_till">Cash Till</option><option value="petty_cash">Petty Cash</option>';
+            accounts.forEach(a => {
+                depositSourceOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)}</option>`;
+            });
 
-            let html = `
-            <div class="row g-4">
-              <div class="col-lg-5">
-                <div class="card-box">
-                  <h5 class="mb-3"><i class="bi bi-droplet"></i> Record Tank Level</h5>
-                  <form id="tankLevelForm">
-                    <div class="mb-2"><label class="form-label small">Station *</label>
-                      <select id="tlStation" class="form-select form-select-sm" required>
-                        ${state.stations.map(s => `<option value="${s.id}" ${state.currentStationId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
-                      </select></div>
-                    <div class="mb-2"><label class="form-label small">Product *</label>
-                      <select id="tlProduct" class="form-select form-select-sm" required>
-                        ${[...new Set(inv.map(i => i.product_type).filter(Boolean))].map(p => `<option value="${p}">${p}</option>`).join('')}
-                      </select></div>
-                    <div class="mb-2"><label class="form-label small">Current Level (Litres) *</label>
-                      <input type="number" id="tlLevel" class="form-control form-control-sm" step="1" min="0" placeholder="e.g. 5000" required></div>
-                    <div class="mb-2"><label class="form-label small">Capacity (Litres)</label>
-                      <input type="number" id="tlCapacity" class="form-control form-control-sm" step="1" min="0" placeholder="e.g. 10000" value="10000"></div>
-                    <button type="submit" class="btn btn-info w-100">Record Level</button>
-                  </form>
-                </div>
-              </div>
-              <div class="col-lg-7">
-                <div class="card-box">
-                  <h5 class="mb-3">Tank Levels</h5>
-                  <div class="row g-3" id="tankLevelsContainer">`;
+            let supplierOptions = '<option value="">— Select Supplier —</option>';
+            suppliers.forEach(s => {
+                supplierOptions += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
+            });
 
-            if (tankLevels.length === 0) {
-                html += '<div class="text-muted text-center">No tank levels recorded</div>';
-            } else {
-                // Group by station/product, show latest
-                const latest = {};
-                tankLevels.forEach(tl => {
-                    const key = tl.station_id + '_' + tl.product_type;
-                    if (!latest[key] || (tl.created_at && tl.created_at.seconds > (latest[key].created_at
-                            ?.seconds || 0))) {
-                        latest[key] = tl;
-                    }
-                });
-                Object.values(latest).forEach(tl => {
-                    const capacity = tl.capacity || 10000;
-                    const level = tl.level || 0;
-                    const pct = Math.min(100, (level / capacity) * 100);
-                    const cls = pct < 20 ? 'danger' : (pct < 50 ? 'warning' : 'success');
-                    html += `
-                    <div class="col-6 col-md-4">
-                      <div class="card-box text-center">
-                        <div><strong>${stationName(tl.station_id)}</strong></div>
-                        <div class="tank-level">
-                          <div class="fill ${cls}" style="height:${pct}%;"></div>
-                        </div>
-                        <div class="tank-label">${tl.product_type}</div>
-                        <div class="tank-label"><strong>${level.toFixed(0)} L</strong> / ${capacity.toFixed(0)} L</div>
-                        <div class="tank-label small text-muted">${formatDate(tl.created_at)}</div>
-                      </div>
-                    </div>`;
-                });
-            }
+            let customerOptions = '<option value="">— Select Customer —</option>';
+            customers.forEach(c => {
+                customerOptions += `<option value="${esc(c.id)}">${esc(c.name)}</option>`;
+            });
 
-            html += `</div></div></div></div>`;
-            $('#pageContent').innerHTML = html;
-
-            $('#tankLevelForm').onsubmit = async function(e) {
-                e.preventDefault();
-                const stationId = Number($('#tlStation').value);
-                const product = $('#tlProduct').value;
-                const level = parseFloat($('#tlLevel').value);
-                const capacity = parseFloat($('#tlCapacity').value) || 10000;
-                if (!stationId || !product || isNaN(level) || level < 0) { toast('Fill all required fields',
-                        'warning'); return; }
-                try {
-                    await addDoc('tank_levels', {
-                        station_id: stationId,
-                        product_type: product,
-                        level: level,
-                        capacity: capacity,
-                        created_by: state.user.id
-                    });
-                    toast('Tank level recorded');
-                    renderTankLevels();
-                } catch (err) { toast('Error: ' + err.message, 'danger'); }
-            };
-        }
-
-        console.log('Part 8 loaded – Inventory, Stock, Adjustments, Fuel Prices, Tank Levels');
-    </script>
-
-    <!-- ============================================================
-    PART 9: FINANCIALS (with credit limits, recurring, auto-record)
-    ============================================================ -->
-    <script>
-        async function renderFinancials() {
-            try {
-                console.log('Financials with credit limits, recurring, and auto-record');
-
-                // ---- Fetch data ----
-                const accounts = await getAll('bank_accounts') || [];
-                const expenses = await getAll('expenses') || [];
-                const bankings = await getAll('bankings') || [];
-                const suppliers = await getAll('suppliers') || [];
-                const supplierPayments = await getAll('supplier_payments') || [];
-                const allUsers = await getAll('users') || [];
-                const creditLimits = await getAll('credit_limits') || [];
-                const recurringExpenses = await getAll('recurring_expenses') || [];
-                const customers = await getAll('customers') || [];
-
-                function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                        .replace(/"/g, '&quot;').replace(/'/g, '&#039;'); }
-
-                // ---- Build dropdowns ----
-                const userOpts = allUsers.filter(u => u.active !== false)
-                    .map(u => `<option value="${esc(u.id)}">${esc(u.name || u.username)}</option>`).join('');
-
-                let accountOptions = '<option value="">Select Account</option><option value="petty_cash">💰 Petty Cash</option>';
-                accounts.forEach(a => {
-                    accountOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)} – ${esc(a.account_number)}</option>`;
-                });
-
-                let depositSourceOptions =
-                    '<option value="cash_till">Cash Till</option><option value="petty_cash">Petty Cash</option>';
-                accounts.forEach(a => {
-                    depositSourceOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)}</option>`;
-                });
-
-                let supplierOptions = '<option value="">— Select Supplier —</option>';
-                suppliers.forEach(s => {
-                    supplierOptions += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
-                });
-
-                let customerOptions = '<option value="">— Select Customer —</option>';
-                customers.forEach(c => {
-                    customerOptions += `<option value="${esc(c.id)}">${esc(c.name)}</option>`;
-                });
-
-                const expenseCategories = `
+            const expenseCategories = `
                     <option value="operations">⚙️ Operations</option>
                     <option value="utilities">💡 Utilities</option>
                     <option value="maintenance">🔧 Maintenance</option>
@@ -4172,38 +3841,38 @@
                     <option value="other">📁 Other</option>
                 `;
 
-                const today = new Date().toISOString().slice(0, 10);
+            const today = new Date().toISOString().slice(0, 10);
 
-                // ---- Helper functions for tables ----
-                function accountRows() {
-                    if (accounts.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No accounts</td></tr>';
-                    let rows = '';
-                    accounts.forEach(a => {
-                        const bal = Number(a.balance) || 0;
-                        const canDelete = bal <= 0;
-                        rows += `<tr>
+            // ---- Helper functions for tables ----
+            function accountRows() {
+                if (accounts.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No accounts</td></tr>';
+                let rows = '';
+                accounts.forEach(a => {
+                    const bal = Number(a.balance) || 0;
+                    const canDelete = bal <= 0;
+                    rows += `<tr>
                             <td>${esc(a.bank_name)}</td>
                             <td>${esc(a.account_name)}</td>
                             <td>${esc(a.account_number)}</td>
                             <td>${formatMoney(bal)}</td>
                             <td>${canDelete ? `<button class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${esc(a.id)}"><i class="bi bi-trash"></i></button>` : `<button class="btn btn-sm btn-outline-secondary" disabled title="Account has balance"><i class="bi bi-lock"></i></button>`}</td>
                         </tr>`;
-                    });
-                    return rows;
-                }
+                });
+                return rows;
+            }
 
-                function expenseRows() {
-                    if (expenses.length === 0) return '<tr><td colspan="8" class="text-muted text-center">No expenses</td></tr>';
-                    let rows = '';
-                    expenses.slice(0, 15).forEach(e => {
-                        let sourceLabel = 'Unknown';
-                        if (e.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
-                        else { const acc = accounts.find(a => a.id === e.source_account); if (acc) sourceLabel =
-                                acc.bank_name; }
-                        const person = e.person_name || '—';
-                        const isRecurring = e.is_recurring ? '<span class="recurring-badge">Recurring</span>' : '';
-                        const autoRecorded = e.auto_recorded ? '<span class="badge bg-info">Auto</span>' : '';
-                        rows += `<tr>
+            function expenseRows() {
+                if (expenses.length === 0) return '<tr><td colspan="8" class="text-muted text-center">No expenses</td></tr>';
+                let rows = '';
+                expenses.slice(0, 15).forEach(e => {
+                    let sourceLabel = 'Unknown';
+                    if (e.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
+                    else { const acc = accounts.find(a => a.id === e.source_account); if (acc) sourceLabel =
+                            acc.bank_name; }
+                    const person = e.person_name || '—';
+                    const isRecurring = e.is_recurring ? '<span class="recurring-badge">Recurring</span>' : '';
+                    const autoRecorded = e.auto_recorded ? '<span class="badge bg-info">Auto</span>' : '';
+                    rows += `<tr>
                             <td>${esc(sourceLabel)}</td>
                             <td>${esc(person)}</td>
                             <td>${esc(e.description || '—')}</td>
@@ -4213,55 +3882,55 @@
                             <td>${isRecurring}</td>
                             <td>${autoRecorded}</td>
                         </tr>`;
-                    });
-                    return rows;
-                }
+                });
+                return rows;
+            }
 
-                function transferRows() {
-                    if (bankings.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No transfers</td></tr>';
-                    let rows = '';
-                    bankings.slice(0, 15).forEach(b => {
-                        const acc = accounts.find(a => a.id === b.bank_account_id);
-                        let fromLabel = 'Unknown';
-                        if (b.source_account === 'cash_till') fromLabel = 'Cash Till';
-                        else if (b.source_account === 'petty_cash') fromLabel = 'Petty Cash';
-                        else { const src = accounts.find(a => a.id === b.source_account); if (src) fromLabel =
-                                src.bank_name; }
-                        rows += `<tr>
+            function transferRows() {
+                if (bankings.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No transfers</td></tr>';
+                let rows = '';
+                bankings.slice(0, 15).forEach(b => {
+                    const acc = accounts.find(a => a.id === b.bank_account_id);
+                    let fromLabel = 'Unknown';
+                    if (b.source_account === 'cash_till') fromLabel = 'Cash Till';
+                    else if (b.source_account === 'petty_cash') fromLabel = 'Petty Cash';
+                    else { const src = accounts.find(a => a.id === b.source_account); if (src) fromLabel =
+                            src.bank_name; }
+                    rows += `<tr>
                             <td>${esc(fromLabel)}</td>
                             <td>${esc(acc ? acc.bank_name : '—')}</td>
                             <td>${esc(b.depositor || '—')}</td>
                             <td>${formatMoney(b.amount)}</td>
                             <td class="fs-xs">${formatDate(b.created_at)}</td>
                         </tr>`;
-                    });
-                    return rows;
-                }
+                });
+                return rows;
+            }
 
-                function paymentRows() {
-                    if (supplierPayments.length === 0) return '<tr><td colspan="6" class="text-muted text-center">No supplier payments</td></tr>';
-                    let rows = '';
-                    supplierPayments.slice(0, 20).forEach(p => {
-                        const sup = suppliers.find(s => s.id === p.supplier_id);
-                        const supName = sup ? sup.name : 'Unknown';
-                        let sourceLabel = 'Unknown';
-                        if (p.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
-                        else { const acc = accounts.find(a => a.id === p.source_account); if (acc) sourceLabel =
-                                acc.bank_name; }
-                        let limitBadge = '';
-                        const limit = creditLimits.find(c => c.supplier_id === p.supplier_id);
-                        if (limit) {
-                            const totalPaid = supplierPayments.filter(sp => sp.supplier_id === p.supplier_id)
-                                .reduce((s, sp) => s + Number(sp.amount || 0), 0);
-                            if (totalPaid > limit.limit) {
-                                limitBadge =
+            function paymentRows() {
+                if (supplierPayments.length === 0) return '<tr><td colspan="6" class="text-muted text-center">No supplier payments</td></tr>';
+                let rows = '';
+                supplierPayments.slice(0, 20).forEach(p => {
+                    const sup = suppliers.find(s => s.id === p.supplier_id);
+                    const supName = sup ? sup.name : 'Unknown';
+                    let sourceLabel = 'Unknown';
+                    if (p.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
+                    else { const acc = accounts.find(a => a.id === p.source_account); if (acc) sourceLabel =
+                            acc.bank_name; }
+                    let limitBadge = '';
+                    const limit = creditLimits.find(c => c.supplier_id === p.supplier_id);
+                    if (limit) {
+                        const totalPaid = supplierPayments.filter(sp => sp.supplier_id === p.supplier_id)
+                            .reduce((s, sp) => s + Number(sp.amount || 0), 0);
+                        if (totalPaid > limit.limit) {
+                            limitBadge =
                                 `<span class="credit-limit-exceeded"><i class="bi bi-exclamation-triangle"></i> Exceeded</span>`;
-                            } else {
-                                limitBadge =
+                        } else {
+                            limitBadge =
                                 `<span class="credit-limit-ok"><i class="bi bi-check-circle"></i> OK</span>`;
-                            }
                         }
-                        rows += `<tr>
+                    }
+                    rows += `<tr>
                             <td><strong>${esc(supName)}</strong></td>
                             <td>${esc(sourceLabel)}</td>
                             <td>${formatMoney(p.amount)}</td>
@@ -4269,41 +3938,41 @@
                             <td class="fs-xs">${formatDate(p.created_at)}</td>
                             <td>${limitBadge}</td>
                         </tr>`;
-                    });
-                    return rows;
-                }
+                });
+                return rows;
+            }
 
-                function creditLimitRows() {
-                    if (creditLimits.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No credit limits set</td></tr>';
-                    let rows = '';
-                    creditLimits.forEach(cl => {
-                        const isSupplier = !!cl.supplier_id;
-                        let name = 'Unknown';
-                        if (isSupplier) { const sup = suppliers.find(s => s.id === cl.supplier_id); if (sup)
-                                name = sup.name; } else { const cust = customers.find(c => c.id === cl
-                                .customer_id); if (cust) name = cust.name; }
-                        const totalUsed = isSupplier ?
-                            supplierPayments.filter(p => p.supplier_id === cl.supplier_id)
-                            .reduce((s, p) => s + Number(p.amount || 0), 0) :
-                            0;
-                        const remaining = cl.limit - totalUsed;
-                        const statusClass = remaining < 0 ? 'credit-limit-exceeded' : 'credit-limit-ok';
-                        rows += `<tr>
+            function creditLimitRows() {
+                if (creditLimits.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No credit limits set</td></tr>';
+                let rows = '';
+                creditLimits.forEach(cl => {
+                    const isSupplier = !!cl.supplier_id;
+                    let name = 'Unknown';
+                    if (isSupplier) { const sup = suppliers.find(s => s.id === cl.supplier_id); if (sup)
+                            name = sup.name; } else { const cust = customers.find(c => c.id === cl
+                            .customer_id); if (cust) name = cust.name; }
+                    const totalUsed = isSupplier ?
+                        supplierPayments.filter(p => p.supplier_id === cl.supplier_id)
+                        .reduce((s, p) => s + Number(p.amount || 0), 0) :
+                        0;
+                    const remaining = cl.limit - totalUsed;
+                    const statusClass = remaining < 0 ? 'credit-limit-exceeded' : 'credit-limit-ok';
+                    rows += `<tr>
                             <td><strong>${esc(name)}</strong></td>
                             <td>${isSupplier ? 'Supplier' : 'Customer'}</td>
                             <td>${formatMoney(cl.limit)}</td>
                             <td>${formatMoney(totalUsed)}</td>
                             <td class="${statusClass}">${formatMoney(remaining)}</td>
                         </tr>`;
-                    });
-                    return rows;
-                }
+                });
+                return rows;
+            }
 
-                function recurringRows() {
-                    if (recurringExpenses.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No recurring expenses scheduled</td></tr>';
-                    let rows = '';
-                    recurringExpenses.forEach(re => {
-                        rows += `<tr>
+            function recurringRows() {
+                if (recurringExpenses.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No recurring expenses scheduled</td></tr>';
+                let rows = '';
+                recurringExpenses.forEach(re => {
+                    rows += `<tr>
                             <td>${esc(re.description)}</td>
                             <td>${formatMoney(re.amount)}</td>
                             <td><span class="badge bg-secondary">${esc(re.category || 'other')}</span></td>
@@ -4316,12 +3985,12 @@
                                 <button class="btn btn-sm btn-outline-danger delete-recurring-btn" data-id="${re.id}"><i class="bi bi-trash"></i></button>
                             </td>
                         </tr>`;
-                    });
-                    return rows;
-                }
+                });
+                return rows;
+            }
 
-                // ---- Build HTML ----
-                let html = `
+            // ---- Build HTML ----
+            let html = `
                 <div class="card-box">
                   <h5 class="mb-3"><i class="bi bi-wallet2"></i> Financial Dashboard</h5>
                   <div class="row g-3 mb-4 financial-summary">
@@ -4650,7 +4319,7 @@
                     const desc = document.getElementById('bfDesc').value.trim();
                     if (!accId || !amount || amount <= 0) { toast('Fill required fields', 'warning'); return; }
                     try {
-                        await addDoc('bankings', { station_id: state.currentStationId || 1, source_account: source,
+                        await addDoc('bankings', { station_id: state.currentStationId || '1', source_account: source,
                             bank_account_id: accId, depositor, amount, description: desc || null,
                             created_by: state.user.id });
                         const acc = await getDoc('bank_accounts', accId);
@@ -4683,7 +4352,7 @@
                         const personName = personId ? (allUsers.find(u => u.id === personId)?.name || '') :
                         '';
                         await addDoc('expenses', {
-                            station_id: state.currentStationId || 1,
+                            station_id: state.currentStationId || '1',
                             source_account: source,
                             person_id: personId || null,
                             person_name: personName || null,
@@ -4731,7 +4400,7 @@
                     if (!supplierId || !source || !amount || amount <= 0) { toast('Fill all required fields',
                             'warning'); return; }
                     try {
-                        await addDoc('supplier_payments', { station_id: state.currentStationId || 1,
+                        await addDoc('supplier_payments', { station_id: state.currentStationId || '1',
                             supplier_id: supplierId, source_account: source, amount: amount,
                             reference: reference || null, note: note || null, created_by: state.user.id });
                         if (source !== 'petty_cash' && source !== '') {
@@ -4855,7 +4524,7 @@
 
                         try {
                             await addDoc('expenses', {
-                                station_id: state.currentStationId || 1,
+                                station_id: state.currentStationId || '1',
                                 source_account: rec.source_account,
                                 description: rec.description,
                                 amount: rec.amount,
@@ -5069,7 +4738,7 @@
 
             let stationOpts = '<option value="">All Stations</option>';
             state.stations.forEach(s => {
-                const sel = state.currentStationId === s.id ? ' selected' : '';
+                const sel = state.currentStationId && String(s.id) === String(state.currentStationId) ? ' selected' : '';
                 stationOpts += '<option value="' + s.id + '"' + sel + '>' + s.name + '</option>';
             });
 
@@ -5127,7 +4796,7 @@
             function getFilters() {
                 return {
                     type: $('#rptType').value,
-                    stationId: $('#rptStation').value ? Number($('#rptStation').value) : null,
+                    stationId: $('#rptStation').value || null,
                     from: $('#rptFrom').value,
                     to: $('#rptTo').value,
                     product: $('#rptProduct').value,
@@ -5137,7 +4806,7 @@
 
             function filterByCommon(arr, f) {
                 return arr.filter(x => {
-                    if (f.stationId && Number(x.station_id) !== f.stationId) return false;
+                    if (f.stationId && String(x.station_id) !== String(f.stationId)) return false;
                     if (f.product && x.product_type && x.product_type !== f.product) return false;
                     if (x.created_at && !dateInRange(x.created_at, f.from, f.to)) return false;
                     if (x.received_date && !dateInRange(x.received_date, f.from, f.to)) return false;
@@ -5230,7 +4899,7 @@
 
             function genInventory(f) {
                 const data = inv.filter(i => {
-                    if (f.stationId && Number(i.station_id) !== f.stationId) return false;
+                    if (f.stationId && String(i.station_id) !== String(f.stationId)) return false;
                     if (f.product && i.product_type !== f.product) return false;
                     return true;
                 });
@@ -5285,7 +4954,7 @@
 
             function genCashierPerformance(f) {
                 const data = recons.filter(r => {
-                    if (f.stationId && Number(r.station_id) !== f.stationId) return false;
+                    if (f.stationId && String(r.station_id) !== String(f.stationId)) return false;
                     if (r.timestamp && !dateInRange(r.timestamp, f.from, f.to)) return false;
                     return true;
                 });
@@ -5327,7 +4996,7 @@
 
             function genDeposits(f) {
                 const data = bankings.filter(b => {
-                    if (f.stationId && Number(b.station_id) !== f.stationId) return false;
+                    if (f.stationId && String(b.station_id) !== String(f.stationId)) return false;
                     if (b.created_at && !dateInRange(b.created_at, f.from, f.to)) return false;
                     return true;
                 });
@@ -5357,7 +5026,7 @@
 
             function genSupplierPayments(f) {
                 const data = supplierPayments.filter(p => {
-                    if (f.stationId && Number(p.station_id) !== f.stationId) return false;
+                    if (f.stationId && String(p.station_id) !== String(f.stationId)) return false;
                     if (p.created_at && !dateInRange(p.created_at, f.from, f.to)) return false;
                     return true;
                 });
@@ -5559,14 +5228,20 @@
                 const name = $('#uName').value.trim();
                 const password = $('#uPass').value.trim();
                 const role = $('#uRole').value;
-                const stationId = $('#uStation').value ? Number($('#uStation').value) : null;
+                const stationId = $('#uStation').value ? String($('#uStation').value) : null;
                 if (password.length < 4) { toast('Password must be at least 4 characters', 'warning'); return; }
                 const existing = await db.collection('users').where('username', '==', username).get();
                 if (!existing.empty) { toast('Username already exists', 'warning'); return; }
                 try {
-                    await addDoc('users', { username, name: name || username, password: await hashPassword(password),
-                        role, station_id: stationId, active: true });
-                    toast('User created! Password: ' + password, 'success');
+                    await addDoc('users', {
+                        username,
+                        name: name || username,
+                        password: await hashPassword(password),
+                        role,
+                        station_id: stationId,
+                        active: true
+                    });
+                    toast('User created!', 'success');
                     renderUsers();
                 } catch (err) { toast('Error: ' + err.message, 'danger'); }
             };
@@ -5582,7 +5257,7 @@
                     if (!['cashier', 'manager', 'top_admin'].includes(newRole)) { toast(
                             'Invalid role. Use: cashier, manager, or top_admin', 'danger'); return; }
                     updateDoc('users', id, { name: newName || this.dataset.username, role: newRole,
-                        station_id: newStation ? Number(newStation) : null }).then(() => { toast(
+                        station_id: newStation ? String(newStation) : null }).then(() => { toast(
                             'User updated!', 'success');
                         renderUsers(); }).catch(err => toast('Error: ' + err.message, 'danger'));
                 };
@@ -5792,8 +5467,7 @@
                         const id = this.dataset.id;
                         if (!confirm('Delete this station?')) return;
                         try {
-                            const stationId = Number(id) || id;
-                            const hasSales = await db.collection('sales').where('station_id', '==', stationId)
+                            const hasSales = await db.collection('sales').where('station_id', '==', String(id))
                                 .limit(1).get();
                             if (!hasSales.empty) { toast(
                                     'Cannot delete station with existing sales. Remove sales first or reassign.',
