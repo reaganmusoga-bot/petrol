@@ -589,60 +589,6 @@
             .main-content { margin-left: 0 !important; }
             .page-content { padding: 0 !important; }
         }
-        /* ===== FIX: Make form inputs readable in both Light & Dark mode ===== */
-.form-control,
-.form-select,
-.form-control-sm,
-.form-select-sm,
-input[type="text"],
-input[type="number"],
-input[type="email"],
-input[type="password"],
-input[type="date"],
-input[type="month"],
-textarea,
-select {
-    background-color: var(--card-bg) !important;
-    color: var(--text-color) !important;
-    border-color: var(--border-color) !important;
-}
-
-.form-control:focus,
-.form-select:focus,
-.form-control-sm:focus,
-.form-select-sm:focus {
-    background-color: var(--card-bg) !important;
-    color: var(--text-color) !important;
-    border-color: #0d6efd !important;
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-
-.form-control::placeholder,
-.form-control-sm::placeholder {
-    color: #6c7a8e !important;
-    opacity: 0.8;
-}
-
-/* Dark mode specific improvements */
-[data-theme="dark"] .form-control,
-[data-theme="dark"] .form-select,
-[data-theme="dark"] .form-control-sm,
-[data-theme="dark"] .form-select-sm {
-    background-color: #2a2a2a !important;
-    color: #e0e0e0 !important;
-    border-color: #444 !important;
-}
-
-[data-theme="dark"] .form-control:focus,
-[data-theme="dark"] .form-select:focus {
-    background-color: #2a2a2a !important;
-    color: #ffffff !important;
-    border-color: #0d6efd !important;
-}
-
-[data-theme="dark"] .form-control::placeholder {
-    color: #888 !important;
-}
     </style>
 </head>
 <body>
@@ -3312,120 +3258,84 @@ PART 8: STOCK, ADJUSTMENTS, FINANCIALS, CUSTOMERS, RECEIPTS, USERS, ACTIVITY
 ============================================================ -->
 <script>
     // ============================================================
-// INVENTORY OVERVIEW (was missing – this was the bug)
+// ITEM PRICES (formerly Fuel Prices)
 // ============================================================
-async function renderInventory() {
+async function renderFuelPrices() {
     const inv = await getAll('inventory');
     const filtered = inv.filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId))
         .sort((a, b) => {
-            const stationA = stationName(a.station_id);
-            const stationB = stationName(b.station_id);
-            if (stationA !== stationB) return stationA.localeCompare(stationB);
+            const sA = stationName(a.station_id);
+            const sB = stationName(b.station_id);
+            if (sA !== sB) return sA.localeCompare(sB);
             return (a.product_type || '').localeCompare(b.product_type || '');
         });
 
-    // Station options for the "Add Product" form
-    let stationOptions = '';
-    state.stations.forEach(s => {
-        const selected = state.currentStationId && String(s.id) === String(state.currentStationId) ? ' selected' : '';
-        stationOptions += `<option value="\( {s.id}" \){selected}>${s.name}</option>`;
-    });
-
     let html = `
-    <div class="row g-4">
-      <!-- ADD NEW PRODUCT -->
-      <div class="col-lg-4">
-        <div class="card-box">
-          <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Product to Inventory</h5>
-          <form id="invAddForm">
-            <div class="mb-2">
-              <label class="form-label small">Station *</label>
-              <select id="invStation" class="form-select form-select-sm" required>
-                ${stationOptions || '<option value="">No stations available</option>'}
-              </select>
-            </div>
-            <div class="mb-2">
-              <label class="form-label small">Product Name *</label>
-              <input type="text" id="invProduct" class="form-control form-control-sm" placeholder="e.g. Petrol, Diesel, Gas" required>
-            </div>
-            <div class="mb-2">
-              <label class="form-label small">Initial Quantity (L)</label>
-              <input type="number" id="invQty" class="form-control form-control-sm" step="0.01" min="0" value="0">
-            </div>
-            <div class="mb-2">
-              <label class="form-label small">Cost Price (UGX/L)</label>
-              <input type="number" id="invCost" class="form-control form-control-sm" step="10" min="0" value="0">
-            </div>
-            <div class="mb-2">
-              <label class="form-label small">Selling Price (UGX/L)</label>
-              <input type="number" id="invSell" class="form-control form-control-sm" step="10" min="0" value="0">
-            </div>
-            <button type="submit" class="btn btn-success w-100">
-              <i class="bi bi-check-circle"></i> Add to Inventory
-            </button>
-          </form>
-        </div>
+    <div class="card-box">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0"><i class="bi bi-tags"></i> Item Prices</h5>
+        <span class="badge bg-secondary">${filtered.length} items</span>
       </div>
+      <p class="text-muted small mb-3">
+        Update Cost Price and Selling Price for each product. Selling Price is used when making sales.
+      </p>
 
-      <!-- CURRENT STOCK -->
-      <div class="col-lg-8">
-        <div class="card-box">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0"><i class="bi bi-box-seam"></i> Current Inventory</h5>
-            <span class="badge bg-secondary">${filtered.length} items</span>
-          </div>
-
-          <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
-            <table class="table table-sm table-hover inv-table">
-              <thead>
-                <tr>
-                  <th>Station</th>
-                  <th>Product</th>
-                  <th class="text-end">Quantity (L)</th>
-                  <th class="text-end">Cost/L</th>
-                  <th class="text-end">Sell/L</th>
-                  <th class="text-end">Stock Value</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>`;
+      <div class="table-responsive">
+        <table class="table table-sm table-hover">
+          <thead>
+            <tr>
+              <th>Station</th>
+              <th>Product</th>
+              <th class="text-end">Current Qty (L)</th>
+              <th class="text-end">Cost Price (UGX/L)</th>
+              <th class="text-end">Selling Price (UGX/L)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+    `;
 
     if (filtered.length === 0) {
-        html += `<tr><td colspan="7" class="text-center text-muted py-4">
-                    No inventory items found.<br>
-                    <small>Use the form on the left to add your first product.</small>
-                 </td></tr>`;
+        html += `
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+              No products found in inventory.<br>
+              Please go to <strong>Inventory → Overview</strong> and add products first.
+            </td>
+          </tr>`;
     } else {
         filtered.forEach(item => {
             const qty = Number(item.quantity) || 0;
             const cost = Number(item.cost_price) || 0;
             const sell = Number(item.selling_price) || 0;
-            const value = qty * cost;
-            const lowStock = qty < 100;
 
             html += `
-            <tr class="${lowStock ? 'table-warning' : ''}">
+            <tr>
               <td>${stationName(item.station_id)}</td>
               <td>
                 <span class="product-badge ${(item.product_type || '').toLowerCase()}">
                   ${esc(item.product_type || '—')}
                 </span>
-                ${lowStock ? ' <span class="badge bg-danger">Low</span>' : ''}
               </td>
-              <td class="text-end fw-semibold">${qty.toFixed(2)}</td>
-              <td class="text-end">${formatMoney(cost)}</td>
-              <td class="text-end">${formatMoney(sell)}</td>
-              <td class="text-end">${formatMoney(value)}</td>
+              <td class="text-end">${qty.toFixed(2)}</td>
+              <td class="text-end">
+                <input type="number" class="form-control form-control-sm text-end price-cost" 
+                       value="${cost}" step="10" min="0" 
+                       data-id="\( {item.id}" data-station=" \){item.station_id}" data-product="${esc(item.product_type)}"
+                       style="width:110px; display:inline-block;">
+              </td>
+              <td class="text-end">
+                <input type="number" class="form-control form-control-sm text-end price-sell" 
+                       value="${sell}" step="10" min="0" 
+                       data-id="\( {item.id}" data-station=" \){item.station_id}" data-product="${esc(item.product_type)}"
+                       style="width:110px; display:inline-block;">
+              </td>
               <td>
-                <button class="btn btn-sm btn-outline-primary inv-edit-btn"
+                <button class="btn btn-sm btn-success save-price-btn"
                         data-id="${item.id}"
                         data-station="${item.station_id}"
-                        data-product="${esc(item.product_type)}"
-                        data-qty="${qty}"
-                        data-cost="${cost}"
-                        data-sell="${sell}"
-                        title="Edit">
-                  <i class="bi bi-pencil"></i>
+                        data-product="${esc(item.product_type)}">
+                  <i class="bi bi-check-lg"></i> Save
                 </button>
               </td>
             </tr>`;
@@ -3433,112 +3343,121 @@ async function renderInventory() {
     }
 
     html += `
-              </tbody>
-            </table>
-          </div>
-        </div>
+          </tbody>
+        </table>
       </div>
     </div>`;
 
     $('#pageContent').innerHTML = html;
 
-    // ---- Add new product ----
-    $('#invAddForm').onsubmit = async function(e) {
-        e.preventDefault();
-        const stationId = String($('#invStation').value);
-        const product = ($('#invProduct').value || '').trim();
-        const qty = parseFloat($('#invQty').value) || 0;
-        const cost = parseFloat($('#invCost').value) || 0;
-        const sell = parseFloat($('#invSell').value) || 0;
-
-        if (!stationId || !product) {
-            toast('Station and Product name are required', 'warning');
-            return;
-        }
-
-        try {
-            showLoading(true);
-            const docId = `\( {stationId}_ \){product}`;
-            const ref = db.collection('inventory').doc(docId);
-            const snap = await ref.get();
-
-            if (snap.exists) {
-                // Update existing
-                await ref.update({
-                    quantity: (snap.data().quantity || 0) + qty,
-                    cost_price: cost || snap.data().cost_price || 0,
-                    selling_price: sell || snap.data().selling_price || 0,
-                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                toast(`Updated existing ${product}`, 'success');
-            } else {
-                // Create new
-                await ref.set({
-                    station_id: stationId,
-                    product_type: product,
-                    quantity: qty,
-                    cost_price: cost,
-                    selling_price: sell,
-                    companyId: state.user.companyId,
-                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                toast(`${product} added to inventory`, 'success');
-            }
-            renderInventory();
-        } catch (err) {
-            toast('Error: ' + err.message, 'danger');
-        } finally {
-            showLoading(false);
-        }
-    };
-
-    // ---- Edit existing item ----
-    document.querySelectorAll('.inv-edit-btn').forEach(btn => {
-        btn.onclick = function() {
+    // Save price buttons
+    document.querySelectorAll('.save-price-btn').forEach(btn => {
+        btn.onclick = async function() {
+            const id = this.dataset.id;
             const stationId = this.dataset.station;
             const product = this.dataset.product;
-            const currentQty = this.dataset.qty;
-            const currentCost = this.dataset.cost;
-            const currentSell = this.dataset.sell;
 
-            const newQty = prompt(`Edit Quantity for ${product} (current: ${currentQty} L)`, currentQty);
-            if (newQty === null) return;
+            const row = this.closest('tr');
+            const costInput = row.querySelector('.price-cost');
+            const sellInput = row.querySelector('.price-sell');
 
-            const newCost = prompt(`Edit Cost Price (UGX/L) – current: ${currentCost}`, currentCost);
-            if (newCost === null) return;
+            const newCost = parseFloat(costInput.value) || 0;
+            const newSell = parseFloat(sellInput.value) || 0;
 
-            const newSell = prompt(`Edit Selling Price (UGX/L) – current: ${currentSell}`, currentSell);
-            if (newSell === null) return;
-
-            const qty = parseFloat(newQty);
-            const cost = parseFloat(newCost);
-            const sell = parseFloat(newSell);
-
-            if (isNaN(qty) || qty < 0 || isNaN(cost) || cost < 0 || isNaN(sell) || sell < 0) {
-                toast('Invalid values entered', 'warning');
+            if (newCost < 0 || newSell < 0) {
+                toast('Prices cannot be negative', 'warning');
                 return;
             }
 
-            (async () => {
-                try {
-                    showLoading(true);
-                    const docId = `\( {stationId}_ \){product}`;
-                    await db.collection('inventory').doc(docId).update({
-                        quantity: qty,
-                        cost_price: cost,
-                        selling_price: sell,
-                        last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    toast('Inventory updated successfully', 'success');
-                    renderInventory();
-                } catch (err) {
-                    toast('Error: ' + err.message, 'danger');
-                } finally {
-                    showLoading(false);
-                }
-            })();
+            try {
+                showLoading(true);
+                await db.collection('inventory').doc(id).update({
+                    cost_price: newCost,
+                    selling_price: newSell,
+                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                toast(`Prices updated for ${product}`, 'success');
+            } catch (err) {
+                toast('Error: ' + err.message, 'danger');
+            } finally {
+                showLoading(false);
+            }
         };
     });
+}
+
+// ============================================================
+// TANK LEVELS
+// ============================================================
+async function renderTankLevels() {
+    const inv = await getAll('inventory');
+    const filtered = inv.filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId))
+        .sort((a, b) => {
+            const sA = stationName(a.station_id);
+            const sB = stationName(b.station_id);
+            if (sA !== sB) return sA.localeCompare(sB);
+            return (a.product_type || '').localeCompare(b.product_type || '');
+        });
+
+    // Group by station
+    const byStation = {};
+    filtered.forEach(item => {
+        const sid = item.station_id;
+        if (!byStation[sid]) byStation[sid] = [];
+        byStation[sid].push(item);
+    });
+
+    let html = `
+    <div class="card-box">
+      <h5 class="mb-3"><i class="bi bi-droplet-half"></i> Tank / Stock Levels</h5>
+      <p class="text-muted small mb-4">Visual overview of current stock levels across stations.</p>
+    `;
+
+    if (Object.keys(byStation).length === 0) {
+        html += `
+          <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No inventory found.<br>Add products in <strong>Inventory → Overview</strong> first.</p>
+          </div>`;
+    } else {
+        Object.keys(byStation).forEach(stationId => {
+            const items = byStation[stationId];
+            html += `
+            <div class="mb-4">
+              <h6 class="mb-3"><i class="bi bi-geo-alt"></i> ${stationName(stationId)}</h6>
+              <div class="row g-3">`;
+
+            items.forEach(item => {
+                const qty = Number(item.quantity) || 0;
+                // Simple visual level (assuming max 10000L for percentage, can be adjusted)
+                const maxCapacity = 10000; // You can later make this configurable
+                let percent = Math.min(100, (qty / maxCapacity) * 100);
+                let fillClass = 'success';
+                if (percent < 20) fillClass = 'danger';
+                else if (percent < 40) fillClass = 'warning';
+
+                html += `
+                <div class="col-6 col-md-4 col-lg-3">
+                  <div class="card-box text-center p-3">
+                    <div class="tank-level mx-auto mb-2">
+                      <div class="fill ${fillClass}" style="height: ${percent}%;"></div>
+                    </div>
+                    <div class="fw-semibold">${esc(item.product_type)}</div>
+                    <div class="fs-5 fw-bold">${qty.toFixed(0)} L</div>
+                    <div class="tank-label text-muted">${percent.toFixed(0)}% full</div>
+                    <div class="small mt-1">
+                      Sell: ${formatMoney(item.selling_price || 0)}
+                    </div>
+                  </div>
+                </div>`;
+            });
+
+            html += `</div></div>`;
+        });
+    }
+
+    html += `</div>`;
+    $('#pageContent').innerHTML = html;
 }
     // ----- STOCK (offloading) -----
     async function renderStock() {
@@ -6613,6 +6532,216 @@ async function renderInventory() {
         };
 
         console.log('Part 11 loaded – Reports, Users, Company, Payroll, Suppliers, Messages, Invoices, Staff, Maintenance');
+    </script>
+
+    <!-- ============================================================
+    PART 12: INVENTORY (FIXED – defined globally)
+    ============================================================ -->
+    <script>
+        // This function was previously missing or nested – now defined at top level.
+        async function renderInventory() {
+            // Ensure stations are loaded
+            if (state.stations.length === 0) {
+                await loadStations();
+                updateStationDropdown();
+            }
+
+            const inv = (await getAll('inventory'))
+                .filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId));
+            const canEdit = isAdmin(state.user.role);
+
+            const allProducts = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
+            state.allProducts = allProducts;
+
+            let stationOpts = '';
+            state.stations.forEach(s => {
+                const sel = state.currentStationId && String(state.currentStationId) === String(s.id) ? 'selected' : '';
+                stationOpts += `<option value="${s.id}" ${sel}>${s.name}</option>`;
+            });
+
+            let html = '<div class="card-box">' +
+                '<div class="d-flex justify-content-between align-items-center mb-3">' +
+                '<h5 class="mb-0"><i class="bi bi-box-seam"></i> Inventory</h5>' +
+                '<span class="badge bg-secondary">' + inv.length + ' items</span>' +
+                '</div>';
+
+            html += '<div class="table-responsive"><table class="table table-sm table-hover inv-table" id="inventoryTable">' +
+                '<thead><tr><th>Station</th><th>Product</th><th>Quantity (L)</th><th>Cost/L</th><th>Sell/L</th>' +
+                (canEdit ? '<th style="min-width:120px;">Actions</th>' : '') +
+                '</tr></thead><tbody id="invTableBody">';
+
+            if (inv.length === 0) {
+                html += '<tr id="emptyRow"><td colspan="' + (canEdit ? '6' : '5') +
+                    '" class="text-muted text-center">No inventory items. Add your first item using the row below.</td></tr>';
+            } else {
+                inv.forEach(i => {
+                    const docId = i.id;
+                    html += '<tr id="row_' + docId + '" data-id="' + docId + '">' +
+                        '<td class="station-display">' + stationName(i.station_id) + '</td>' +
+                        '<td class="product-display"><span class="product-badge custom">' + i.product_type +
+                        '</span></td>' +
+                        '<td class="qty-display"><strong>' + (i.quantity || 0).toFixed(2) + '</strong></td>' +
+                        '<td class="cost-display">' + formatMoney(i.cost_price || 0) + '</td>' +
+                        '<td class="sell-display">' + formatMoney(i.selling_price || 0) + '</td>';
+                    if (canEdit) {
+                        html += '<td>' +
+                            '<button class="btn btn-sm btn-outline-primary edit-inv-row-btn me-1" data-id="' +
+                            docId + '"><i class="bi bi-pencil"></i></button>' +
+                            '<button class="btn btn-sm btn-outline-danger delete-inv-btn" data-id="' + docId +
+                            '"><i class="bi bi-trash"></i></button>' +
+                            '</td>';
+                    }
+                    html += '</tr>';
+                });
+            }
+
+            if (canEdit) {
+                const productOpts = allProducts.length > 0 ?
+                    allProducts.map(p => `<option value="${p}">${p}</option>`).join('') :
+                    '<option value="">No products yet</option>';
+
+                html += '<tr class="inv-add-row" id="addRow">' +
+                    '<td><select id="invAddStation" class="form-select form-select-sm">' + stationOpts +
+                    '</select></td>' +
+                    '<td><input type="text" id="invAddProduct" class="form-control form-control-sm" placeholder="New product name" list="productList"></td>' +
+                    '<td><input type="number" id="invAddQty" class="form-control form-control-sm" step="0.01" min="0" placeholder="0"></td>' +
+                    '<td><input type="number" id="invAddCost" class="form-control form-control-sm" step="10" min="0" placeholder="Cost"></td>' +
+                    '<td><input type="number" id="invAddSell" class="form-control form-control-sm" step="10" min="0" placeholder="Sell"></td>' +
+                    '<td><button type="button" class="btn btn-sm btn-success w-100" id="invAddBtn"><i class="bi bi-plus"></i> Add</button></td>' +
+                    '</tr>';
+
+                html += `<datalist id="productList">${allProducts.map(p => `<option value="${p}">`).join('')}</datalist>`;
+            }
+
+            html += '</tbody></table></div></div>';
+
+            $('#pageContent').innerHTML = html;
+
+            // ---- Add Inventory ----
+            const addBtn = $('#invAddBtn');
+            if (addBtn) {
+                addBtn.onclick = async function() {
+                    const stationId = String($('#invAddStation').value);
+                    if (!stationId) {
+                        toast('Select a valid station', 'warning');
+                        return;
+                    }
+                    const product = $('#invAddProduct').value.trim();
+                    const qty = parseFloat($('#invAddQty').value) || 0;
+                    const cost = parseFloat($('#invAddCost').value) || 0;
+                    const sell = parseFloat($('#invAddSell').value) || 0;
+                    if (!product) { toast('Product name is required', 'warning'); return; }
+                    if (qty < 0 || cost < 0 || sell < 0) { toast('Values cannot be negative', 'warning'); return; }
+                    try {
+                        const docId = stationId + '_' + product;
+                        const ref = db.collection('inventory').doc(docId);
+                        await ref.set({
+                            station_id: stationId,
+                            product_type: product,
+                            quantity: qty,
+                            cost_price: cost,
+                            selling_price: sell,
+                            companyId: state.user.companyId,
+                            last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                        await logAudit('add_inventory', { station: stationId, product, qty, cost, sell });
+                        toast('Inventory item added/updated', 'success');
+                        renderInventory();
+                    } catch (err) {
+                        toast('Error: ' + err.message, 'danger');
+                    }
+                };
+            }
+
+            // ---- Delete Inventory ----
+            document.querySelectorAll('.delete-inv-btn').forEach(btn => {
+                btn.onclick = async function() {
+                    const id = this.dataset.id;
+                    if (!confirm('Delete this inventory record permanently?')) return;
+                    try { await deleteDoc('inventory', id);
+                        toast('Inventory item deleted');
+                        renderInventory(); } catch (err) { toast('Error: ' + err.message, 'danger'); }
+                };
+            });
+
+            // ---- Edit Inventory ----
+            document.querySelectorAll('.edit-inv-row-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const id = this.dataset.id;
+                    const row = document.getElementById('row_' + id);
+                    if (!row) return;
+                    if (row.classList.contains('inv-edit-row')) { renderInventory(); return; }
+
+                    const stationEl = row.querySelector('.station-display');
+                    const productEl = row.querySelector('.product-display');
+                    const qtyEl = row.querySelector('.qty-display');
+                    const costEl = row.querySelector('.cost-display');
+                    const sellEl = row.querySelector('.sell-display');
+
+                    const stationText = stationEl.textContent.trim();
+                    const productText = productEl.textContent.trim();
+                    const qtyText = parseFloat(qtyEl.textContent.replace(/[^0-9.]/g, '')) || 0;
+                    const costText = parseFloat(costEl.textContent.replace(/[^0-9.]/g, '')) || 0;
+                    const sellText = parseFloat(sellEl.textContent.replace(/[^0-9.]/g, '')) || 0;
+
+                    // Find actual station id from the current dropdown options
+                    const stationId = id.split('_')[0] || state.stations[0]?.id || '';
+                    const stationOptsEdit = state.stations.map(s =>
+                        `<option value="${s.id}" ${String(s.id) === String(stationId) ? 'selected' : ''}>${s.name}</option>`
+                    ).join('');
+
+                    row.innerHTML = `
+                        <td><select class="form-select form-select-sm edit-station" data-id="${id}">${stationOptsEdit}</select></td>
+                        <td><input type="text" class="form-control form-control-sm edit-product" value="${productText}" data-id="${id}"></td>
+                        <td><input type="number" class="form-control form-control-sm edit-qty" step="0.01" min="0" value="${qtyText}" data-id="${id}"></td>
+                        <td><input type="number" class="form-control form-control-sm edit-cost" step="10" min="0" value="${costText}" data-id="${id}"></td>
+                        <td><input type="number" class="form-control form-control-sm edit-sell" step="10" min="0" value="${sellText}" data-id="${id}"></td>
+                        <td>
+                            <button class="btn btn-sm btn-success save-edit-btn me-1" data-id="${id}"><i class="bi bi-check"></i></button>
+                            <button class="btn btn-sm btn-secondary cancel-edit-btn" data-id="${id}"><i class="bi bi-x"></i></button>
+                        </td>
+                    `;
+                    row.classList.add('inv-edit-row');
+
+                    row.querySelector('.save-edit-btn').onclick = async function() {
+                        const id = this.dataset.id;
+                        const stationVal = row.querySelector('.edit-station').value;
+                        const station = String(stationVal);
+                        if (!stationVal) {
+                            toast('Select a valid station', 'warning');
+                            return;
+                        }
+                        const product = row.querySelector('.edit-product').value.trim();
+                        const qty = parseFloat(row.querySelector('.edit-qty').value) || 0;
+                        const cost = parseFloat(row.querySelector('.edit-cost').value) || 0;
+                        const sell = parseFloat(row.querySelector('.edit-sell').value) || 0;
+                        if (!product) { toast('Product name is required', 'warning'); return; }
+                        if (qty < 0 || cost < 0 || sell < 0) { toast('Values cannot be negative', 'warning'); return; }
+                        try {
+                            const docId = station + '_' + product;
+                            const ref = db.collection('inventory').doc(docId);
+                            await ref.set({
+                                station_id: station,
+                                product_type: product,
+                                quantity: qty,
+                                cost_price: cost,
+                                selling_price: sell,
+                                companyId: state.user.companyId,
+                                last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                            }, { merge: true });
+                            if (docId !== id) { await deleteDoc('inventory', id); }
+                            await logAudit('edit_inventory', { id, station, product, qty, cost, sell });
+                            toast('Inventory updated', 'success');
+                            renderInventory();
+                        } catch (err) { toast('Error: ' + err.message, 'danger'); }
+                    };
+
+                    row.querySelector('.cancel-edit-btn').onclick = function() { renderInventory(); };
+                };
+            });
+        }
+
+        console.log('Part 12 loaded – Inventory (global)');
     </script>
 
     <!-- ============================================================
