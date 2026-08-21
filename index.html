@@ -589,6 +589,60 @@
             .main-content { margin-left: 0 !important; }
             .page-content { padding: 0 !important; }
         }
+        /* ===== FIX: Make form inputs readable in both Light & Dark mode ===== */
+.form-control,
+.form-select,
+.form-control-sm,
+.form-select-sm,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="month"],
+textarea,
+select {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.form-control:focus,
+.form-select:focus,
+.form-control-sm:focus,
+.form-select-sm:focus {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.form-control::placeholder,
+.form-control-sm::placeholder {
+    color: #6c7a8e !important;
+    opacity: 0.8;
+}
+
+/* Dark mode specific improvements */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-theme="dark"] .form-control-sm,
+[data-theme="dark"] .form-select-sm {
+    background-color: #2a2a2a !important;
+    color: #e0e0e0 !important;
+    border-color: #444 !important;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #2a2a2a !important;
+    color: #ffffff !important;
+    border-color: #0d6efd !important;
+}
+
+[data-theme="dark"] .form-control::placeholder {
+    color: #888 !important;
+}
     </style>
 </head>
 <body>
@@ -3257,6 +3311,235 @@
 PART 8: STOCK, ADJUSTMENTS, FINANCIALS, CUSTOMERS, RECEIPTS, USERS, ACTIVITY
 ============================================================ -->
 <script>
+    // ============================================================
+// INVENTORY OVERVIEW (was missing – this was the bug)
+// ============================================================
+async function renderInventory() {
+    const inv = await getAll('inventory');
+    const filtered = inv.filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId))
+        .sort((a, b) => {
+            const stationA = stationName(a.station_id);
+            const stationB = stationName(b.station_id);
+            if (stationA !== stationB) return stationA.localeCompare(stationB);
+            return (a.product_type || '').localeCompare(b.product_type || '');
+        });
+
+    // Station options for the "Add Product" form
+    let stationOptions = '';
+    state.stations.forEach(s => {
+        const selected = state.currentStationId && String(s.id) === String(state.currentStationId) ? ' selected' : '';
+        stationOptions += `<option value="\( {s.id}" \){selected}>${s.name}</option>`;
+    });
+
+    let html = `
+    <div class="row g-4">
+      <!-- ADD NEW PRODUCT -->
+      <div class="col-lg-4">
+        <div class="card-box">
+          <h5 class="mb-3"><i class="bi bi-plus-circle"></i> Add Product to Inventory</h5>
+          <form id="invAddForm">
+            <div class="mb-2">
+              <label class="form-label small">Station *</label>
+              <select id="invStation" class="form-select form-select-sm" required>
+                ${stationOptions || '<option value="">No stations available</option>'}
+              </select>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small">Product Name *</label>
+              <input type="text" id="invProduct" class="form-control form-control-sm" placeholder="e.g. Petrol, Diesel, Gas" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small">Initial Quantity (L)</label>
+              <input type="number" id="invQty" class="form-control form-control-sm" step="0.01" min="0" value="0">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small">Cost Price (UGX/L)</label>
+              <input type="number" id="invCost" class="form-control form-control-sm" step="10" min="0" value="0">
+            </div>
+            <div class="mb-2">
+              <label class="form-label small">Selling Price (UGX/L)</label>
+              <input type="number" id="invSell" class="form-control form-control-sm" step="10" min="0" value="0">
+            </div>
+            <button type="submit" class="btn btn-success w-100">
+              <i class="bi bi-check-circle"></i> Add to Inventory
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- CURRENT STOCK -->
+      <div class="col-lg-8">
+        <div class="card-box">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0"><i class="bi bi-box-seam"></i> Current Inventory</h5>
+            <span class="badge bg-secondary">${filtered.length} items</span>
+          </div>
+
+          <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+            <table class="table table-sm table-hover inv-table">
+              <thead>
+                <tr>
+                  <th>Station</th>
+                  <th>Product</th>
+                  <th class="text-end">Quantity (L)</th>
+                  <th class="text-end">Cost/L</th>
+                  <th class="text-end">Sell/L</th>
+                  <th class="text-end">Stock Value</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+    if (filtered.length === 0) {
+        html += `<tr><td colspan="7" class="text-center text-muted py-4">
+                    No inventory items found.<br>
+                    <small>Use the form on the left to add your first product.</small>
+                 </td></tr>`;
+    } else {
+        filtered.forEach(item => {
+            const qty = Number(item.quantity) || 0;
+            const cost = Number(item.cost_price) || 0;
+            const sell = Number(item.selling_price) || 0;
+            const value = qty * cost;
+            const lowStock = qty < 100;
+
+            html += `
+            <tr class="${lowStock ? 'table-warning' : ''}">
+              <td>${stationName(item.station_id)}</td>
+              <td>
+                <span class="product-badge ${(item.product_type || '').toLowerCase()}">
+                  ${esc(item.product_type || '—')}
+                </span>
+                ${lowStock ? ' <span class="badge bg-danger">Low</span>' : ''}
+              </td>
+              <td class="text-end fw-semibold">${qty.toFixed(2)}</td>
+              <td class="text-end">${formatMoney(cost)}</td>
+              <td class="text-end">${formatMoney(sell)}</td>
+              <td class="text-end">${formatMoney(value)}</td>
+              <td>
+                <button class="btn btn-sm btn-outline-primary inv-edit-btn"
+                        data-id="${item.id}"
+                        data-station="${item.station_id}"
+                        data-product="${esc(item.product_type)}"
+                        data-qty="${qty}"
+                        data-cost="${cost}"
+                        data-sell="${sell}"
+                        title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </button>
+              </td>
+            </tr>`;
+        });
+    }
+
+    html += `
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+    $('#pageContent').innerHTML = html;
+
+    // ---- Add new product ----
+    $('#invAddForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const stationId = String($('#invStation').value);
+        const product = ($('#invProduct').value || '').trim();
+        const qty = parseFloat($('#invQty').value) || 0;
+        const cost = parseFloat($('#invCost').value) || 0;
+        const sell = parseFloat($('#invSell').value) || 0;
+
+        if (!stationId || !product) {
+            toast('Station and Product name are required', 'warning');
+            return;
+        }
+
+        try {
+            showLoading(true);
+            const docId = `\( {stationId}_ \){product}`;
+            const ref = db.collection('inventory').doc(docId);
+            const snap = await ref.get();
+
+            if (snap.exists) {
+                // Update existing
+                await ref.update({
+                    quantity: (snap.data().quantity || 0) + qty,
+                    cost_price: cost || snap.data().cost_price || 0,
+                    selling_price: sell || snap.data().selling_price || 0,
+                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                toast(`Updated existing ${product}`, 'success');
+            } else {
+                // Create new
+                await ref.set({
+                    station_id: stationId,
+                    product_type: product,
+                    quantity: qty,
+                    cost_price: cost,
+                    selling_price: sell,
+                    companyId: state.user.companyId,
+                    last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                toast(`${product} added to inventory`, 'success');
+            }
+            renderInventory();
+        } catch (err) {
+            toast('Error: ' + err.message, 'danger');
+        } finally {
+            showLoading(false);
+        }
+    };
+
+    // ---- Edit existing item ----
+    document.querySelectorAll('.inv-edit-btn').forEach(btn => {
+        btn.onclick = function() {
+            const stationId = this.dataset.station;
+            const product = this.dataset.product;
+            const currentQty = this.dataset.qty;
+            const currentCost = this.dataset.cost;
+            const currentSell = this.dataset.sell;
+
+            const newQty = prompt(`Edit Quantity for ${product} (current: ${currentQty} L)`, currentQty);
+            if (newQty === null) return;
+
+            const newCost = prompt(`Edit Cost Price (UGX/L) – current: ${currentCost}`, currentCost);
+            if (newCost === null) return;
+
+            const newSell = prompt(`Edit Selling Price (UGX/L) – current: ${currentSell}`, currentSell);
+            if (newSell === null) return;
+
+            const qty = parseFloat(newQty);
+            const cost = parseFloat(newCost);
+            const sell = parseFloat(newSell);
+
+            if (isNaN(qty) || qty < 0 || isNaN(cost) || cost < 0 || isNaN(sell) || sell < 0) {
+                toast('Invalid values entered', 'warning');
+                return;
+            }
+
+            (async () => {
+                try {
+                    showLoading(true);
+                    const docId = `\( {stationId}_ \){product}`;
+                    await db.collection('inventory').doc(docId).update({
+                        quantity: qty,
+                        cost_price: cost,
+                        selling_price: sell,
+                        last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    toast('Inventory updated successfully', 'success');
+                    renderInventory();
+                } catch (err) {
+                    toast('Error: ' + err.message, 'danger');
+                } finally {
+                    showLoading(false);
+                }
+            })();
+        };
+    });
+}
     // ----- STOCK (offloading) -----
     async function renderStock() {
         const stock = (await getAll('stock'))
