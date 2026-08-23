@@ -3859,15 +3859,26 @@ async function renderBalancing() {
         });
         priceRow += '</tr>';
 
-        let discountRow = '<tr class="table-warning"><td><strong>Discounts Given</strong></td>';
-        // Show total discount once spanning products (discounts are sale-level, not always per product)
-        discountRow += `<td colspan="${products.length}" class="text-danger fw-bold">− ${formatMoney(totalDiscountsGiven)}</td></tr>`;
+        // Manager enters discounts given (prefilled from sales if any, but always editable)
+        let discountRow = `<tr class="table-warning">
+            <td><strong>Discounts Given</strong><div class="small text-muted fw-normal">Manager enters total</div></td>
+            <td colspan="${products.length}">
+                <div class="input-group input-group-sm" style="max-width:280px;">
+                    <span class="input-group-text">UGX</span>
+                    <input type="number" id="balDiscountInput" class="form-control form-control-sm text-danger fw-bold"
+                        step="100" min="0" value="${Number(totalDiscountsGiven || 0).toFixed(0)}"
+                        placeholder="0">
+                </div>
+                <div class="small text-muted mt-1">Suggested from sales: ${formatMoney(totalDiscountsGiven)}. Edit if needed.</div>
+            </td>
+        </tr>`;
 
         let expectedRow = '<tr><td><strong>Expected Cash</strong></td>';
         products.forEach(p => {
             const exp = expectedByProduct[p] || 0;
             const cls = exp < 0 ? 'diff-negative' : (exp > 0 ? 'diff-positive' : 'diff-zero');
-            expectedRow += `<td class="${cls}">${formatMoney(exp)}</td>`;
+            const safe = p.replace(/[^a-zA-Z0-9]/g, '_');
+            expectedRow += `<td class="${cls}" id="balExpected_${safe}">${formatMoney(exp)}</td>`;
         });
         expectedRow += `</tr>`;
 
@@ -3899,11 +3910,11 @@ async function renderBalancing() {
                             ${priceRow}
                             ${discountRow}
                             ${expectedRow}
-                            <tr class="table-light"><td><strong>Gross (meters × price)</strong></td><td colspan="${products.length}">${formatMoney(grossExpected)}</td></tr>
-                            <tr><td><strong>Total Expected (after discounts)</strong></td><td colspan="${products.length}" class="fw-bold text-primary">${formatMoney(grandTotal)}</td></tr>
+                            <tr class="table-light"><td><strong>Gross (meters × price)</strong></td><td colspan="${products.length}" id="balGrossDisplay">${formatMoney(grossExpected)}</td></tr>
+                            <tr><td><strong>Total Expected (after discounts)</strong></td><td colspan="${products.length}" class="fw-bold text-primary" id="balTotalExpectedDisplay">${formatMoney(grandTotal)}</td></tr>
                         </tbody>
                     </table>
-                    <div class="small text-muted mt-1">📐 <strong>Math:</strong> (End − Start) × Price = Expected per product. <strong>Total Expected = Gross − Discounts Given</strong> by this cashier.</div>
+                    <div class="small text-muted mt-1">📐 <strong>Math:</strong> Gross = Σ (End − Start) × Price. <strong>Total Expected = Gross − Discounts Given</strong> (entered by manager).</div>
                     <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
                         <button type="button" class="btn btn-sm btn-warning" id="saveShiftEditsBtn">
                             <i class="bi bi-pencil-square"></i> Save Meter Corrections
@@ -3947,24 +3958,71 @@ async function renderBalancing() {
 
         document.getElementById('balancingResult').innerHTML = resultHtml;
 
-        // Live update Sold column when manager types new readings
-        function refreshSoldPreview() {
+        // Live totals: meters, discounts (manager-entered), expected
+        function getLiveGross() {
+            let gross = 0;
             products.forEach(p => {
                 const safe = p.replace(/[^a-zA-Z0-9]/g, '_');
                 const startEl = document.getElementById('editStart_' + safe);
                 const endEl = document.getElementById('editEnd_' + safe);
-                const soldEl = document.getElementById('editSold_' + safe);
-                if (!startEl || !endEl || !soldEl) return;
-                const start = parseFloat(startEl.value) || 0;
-                const end = parseFloat(endEl.value) || 0;
+                const start = startEl ? (parseFloat(startEl.value) || 0) : (Number(startReadings[p]) || 0);
+                const end = endEl ? (parseFloat(endEl.value) || 0) : (Number(endReadings[p]) || 0);
                 const sold = end - start;
-                soldEl.textContent = sold.toFixed(2);
-                soldEl.className = sold < 0 ? 'diff-negative' : (sold > 0 ? 'diff-positive' : 'diff-zero');
+                const exp = sold * (prices[p] || 0);
+                gross += exp;
+                const soldEl = document.getElementById('editSold_' + safe);
+                if (soldEl) {
+                    soldEl.textContent = sold.toFixed(2);
+                    soldEl.className = sold < 0 ? 'diff-negative' : (sold > 0 ? 'diff-positive' : 'diff-zero');
+                }
+                const expEl = document.getElementById('balExpected_' + safe);
+                if (expEl) {
+                    expEl.textContent = formatMoney(exp);
+                    expEl.className = exp < 0 ? 'diff-negative' : (exp > 0 ? 'diff-positive' : 'diff-zero');
+                }
             });
+            return gross;
+        }
+
+        function getLiveDiscount() {
+            const el = document.getElementById('balDiscountInput');
+            if (!el) return 0;
+            const v = parseFloat(el.value);
+            return isNaN(v) || v < 0 ? 0 : v;
+        }
+
+        function getLiveExpected() {
+            return Math.max(0, getLiveGross() - getLiveDiscount());
+        }
+
+        function refreshBalancingTotals() {
+            const gross = getLiveGross();
+            const disc = getLiveDiscount();
+            const expected = Math.max(0, gross - disc);
+            grandTotal = expected;
+            grossExpected = gross;
+            const grossEl = document.getElementById('balGrossDisplay');
+            const totalEl = document.getElementById('balTotalExpectedDisplay');
+            if (grossEl) grossEl.textContent = formatMoney(gross);
+            if (totalEl) totalEl.textContent = formatMoney(expected);
+            // Refresh cash preview if amount already typed
+            const cashEl = document.getElementById('actualCashInput');
+            if (cashEl && cashEl.value !== '') {
+                cashEl.dispatchEvent(new Event('input'));
+            }
+        }
+
+        function refreshSoldPreview() {
+            refreshBalancingTotals();
         }
         document.querySelectorAll('.edit-start-meter, .edit-end-meter').forEach(inp => {
             inp.addEventListener('input', refreshSoldPreview);
         });
+        const balDiscountInput = document.getElementById('balDiscountInput');
+        if (balDiscountInput) {
+            balDiscountInput.addEventListener('input', refreshBalancingTotals);
+            balDiscountInput.addEventListener('change', refreshBalancingTotals);
+        }
 
         // ---- Save meter corrections to the shift document ----
         document.getElementById('saveShiftEditsBtn').onclick = async function() {
@@ -4052,7 +4110,10 @@ async function renderBalancing() {
             const resultDiv = document.getElementById('reconciliationResult');
             if (isNaN(actual)) { resultDiv.innerHTML = ''; return; }
             const adjusted = computeAdjusted(actual);
-            const diff = adjusted - grandTotal;
+            const liveExpected = getLiveExpected();
+            const liveDisc = getLiveDiscount();
+            const liveGross = getLiveGross();
+            const diff = adjusted - liveExpected;
             let comment = '', cls = '';
             if (Math.abs(diff) < 1) { comment = 'Accurate'; cls = 'diff-zero'; }
             else if (diff < 0) { comment = 'Shortage'; cls = 'diff-negative'; }
@@ -4060,7 +4121,9 @@ async function renderBalancing() {
             const sign = diff >= 0 ? '+' : '';
             resultDiv.innerHTML =
                 `<div class="alert alert-secondary"><strong>Preview:</strong><br>
-                Expected (meters): ${formatMoney(grandTotal)}<br>
+                Gross (meters): ${formatMoney(liveGross)}<br>
+                Discounts given: −${formatMoney(liveDisc)}<br>
+                Expected (after discounts): ${formatMoney(liveExpected)}<br>
                 Cash presented: ${formatMoney(actual)}<br>
                 Cashier expenses: ${formatMoney(totalCashierExpenses)}<br>
                 Adjusted actual: ${formatMoney(adjusted)}<br>
@@ -4077,8 +4140,13 @@ async function renderBalancing() {
                 if (!proceed) return;
             }
 
+            const liveGross = getLiveGross();
+            const liveDisc = getLiveDiscount();
+            const liveExpected = Math.max(0, liveGross - liveDisc);
+            grandTotal = liveExpected;
+            grossExpected = liveGross;
             const adjusted = computeAdjusted(actual);
-            const diff = adjusted - grandTotal;
+            const diff = adjusted - liveExpected;
             let comment = '';
             if (Math.abs(diff) < 1) comment = 'Accurate';
             else if (diff < 0) comment = 'Shortage';
@@ -4091,9 +4159,10 @@ async function renderBalancing() {
                     shift_id: shift.id,
                     date_from: document.getElementById('balFrom').value,
                     date_to: document.getElementById('balTo').value,
-                    expected_total: grandTotal,
-                    gross_expected: grossExpected,
-                    discounts_given: totalDiscountsGiven,
+                    expected_total: liveExpected,
+                    gross_expected: liveGross,
+                    discounts_given: liveDisc,
+                    discounts_entered_by: state.user.id,
                     actual_cash: actual,
                     cashier_expenses: totalCashierExpenses,
                     adjusted_actual: adjusted,
@@ -4108,9 +4177,9 @@ async function renderBalancing() {
                 const cls = Math.abs(diff) < 1 ? 'diff-zero' : (diff < 0 ? 'diff-negative' : 'diff-positive');
                 resultDiv.innerHTML =
                     `<div class="alert alert-info"><strong>✅ Reconciliation saved!</strong><br>
-                    Gross (meters): ${formatMoney(grossExpected)}<br>
-                    Discounts given: −${formatMoney(totalDiscountsGiven)}<br>
-                    Expected (after discounts): ${formatMoney(grandTotal)}<br>
+                    Gross (meters): ${formatMoney(liveGross)}<br>
+                    Discounts given (manager): −${formatMoney(liveDisc)}<br>
+                    Expected (after discounts): ${formatMoney(liveExpected)}<br>
                     Cash presented: ${formatMoney(actual)}<br>
                     Cashier expenses: ${formatMoney(totalCashierExpenses)}<br>
                     Adjusted actual: ${formatMoney(adjusted)}<br>
@@ -6475,21 +6544,41 @@ async function renderCustomers() {
                             </thead>
                             <tbody>`;
 
+    // Aggregate visits & total spent from sales (match header columns)
+    const salesByCustomer = {};
+    (sales || []).forEach(s => {
+        if (s.status === 'reversed') return;
+        const key = s.customer_id
+            ? String(s.customer_id)
+            : (s.customer_name ? ('name:' + String(s.customer_name).toLowerCase().trim()) : null);
+        if (!key) return;
+        if (!salesByCustomer[key]) salesByCustomer[key] = { visits: 0, spent: 0 };
+        salesByCustomer[key].visits += 1;
+        salesByCustomer[key].spent += Number(s.amount) || 0;
+    });
+
     if (customers.length === 0) {
-        html += '<tr><td colspan="5" class="text-center text-muted">No customers yet</td></tr>';
+        html += '<tr><td colspan="7" class="text-center text-muted">No customers yet</td></tr>';
     } else {
         customers.forEach(c => {
             const balance = Number(c.current_balance != null ? c.current_balance : (c.opening_balance || 0));
             const station = c.station_id ? stationName(c.station_id) : 'All Stations';
             const canDelete = balance <= 0;
             const balClass = balance > 0 ? 'balance-negative' : (balance < 0 ? 'balance-positive' : 'balance-zero');
+            const byId = salesByCustomer[String(c.id)] || { visits: 0, spent: 0 };
+            const byName = salesByCustomer['name:' + String(c.name || '').toLowerCase().trim()] || { visits: 0, spent: 0 };
+            const visits = byId.visits || byName.visits || 0;
+            const totalSpent = byId.spent || byName.spent || 0;
 
+            // Column order MUST match headers: Name | Phone | Station | Visits | Total Spent | Balance | Actions
             html += '<tr>' +
                 '<td><strong>' + esc(c.name) + '</strong></td>' +
-                '<td>' + esc(station) + '</td>' +
                 '<td>' + esc(c.phone || '—') + '</td>' +
+                '<td>' + esc(station) + '</td>' +
+                '<td>' + visits + '</td>' +
+                '<td>' + formatMoney(totalSpent) + '</td>' +
                 '<td class="' + balClass + '">' + formatMoney(balance) + '</td>' +
-                '<td>' +
+                '<td class="text-nowrap">' +
                     '<button class="btn btn-sm btn-outline-primary edit-cust-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" data-phone="' + esc(c.phone || '') + '" data-email="' + esc(c.email || '') + '" data-address="' + esc(c.address || '') + '" data-station="' + (c.station_id || '') + '" data-opening="' + (c.opening_balance || 0) + '" title="Edit"><i class="bi bi-pencil"></i></button> ' +
                     '<button class="btn btn-sm btn-outline-secondary purchase-history-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" title="Purchase History"><i class="bi bi-bag-check"></i> History</button> ' +
                     '<button class="btn btn-sm btn-outline-info statement-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" title="Account Statement"><i class="bi bi-receipt"></i></button> ' +
