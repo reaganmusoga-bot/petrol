@@ -2333,13 +2333,7 @@ async function renderPageDispatcher(page) {
     // Look up the render function
     const renderFn = window.pageRenderers[page];
     if (!renderFn) {
-        const available = Object.keys(window.pageRenderers || {}).sort().join(', ') || '(none)';
-        console.warn('Page not registered:', page, 'Available:', available);
-        content.innerHTML = `<div class="alert alert-warning">
-            <strong>Page "${esc(page)}" not found or not yet implemented.</strong>
-            <p class="mb-1 mt-2 small">Registered pages: ${esc(available)}</p>
-            <p class="small text-muted mb-0">Hard refresh (Ctrl+Shift+R). If still missing, open Console and check for red errors.</p>
-        </div>`;
+        content.innerHTML = `<div class="alert alert-warning">Page "${page}" not found or not yet implemented.</div>`;
         return;
     }
 
@@ -5998,13 +5992,9 @@ async function renderFinancials() {
 // ----- CUSTOMERS (with opening balance, station, balance, statement + reliable payment → revenue) -----
 async function renderCustomers() {
     // ---- Fetch data ----
-    if (!state.stations || state.stations.length === 0) {
-        await loadStations();
-        updateStationDropdown();
-    }
     const customers = await getAll('customers');
     const sales = await getAll('sales');
-    const stationOpts = state.stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    const stationOpts = state.stations.map(s => `<option value="\( {s.id}"> \){s.name}</option>`).join('');
 
     // ---- Build HTML ----
     let html = `
@@ -6057,29 +6047,52 @@ async function renderCustomers() {
                             <tbody>`;
 
     if (customers.length === 0) {
-        html += '<tr><td colspan="5" class="text-center text-muted">No customers yet</td></tr>';
+        html += '<tr><td colspan="7" class="text-center text-muted">No customers yet</td></tr>';
     } else {
         customers.forEach(c => {
-            const balance = Number(c.current_balance != null ? c.current_balance : (c.opening_balance || 0));
+            const customerSales = sales.filter(s =>
+                s.status !== 'reversed' &&
+                (s.customer_id === c.id || s.customer_name === c.name)
+            );
+            const visits = customerSales.length;
+            const totalSpent = customerSales.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+            const balance = Number(c.current_balance || 0);
             const station = c.station_id ? stationName(c.station_id) : 'All Stations';
             const canDelete = balance <= 0;
-            const balClass = balance > 0 ? 'balance-negative' : (balance < 0 ? 'balance-positive' : 'balance-zero');
 
-            html += '<tr>' +
-                '<td><strong>' + esc(c.name) + '</strong></td>' +
-                '<td>' + esc(station) + '</td>' +
-                '<td>' + esc(c.phone || '—') + '</td>' +
-                '<td class="' + balClass + '">' + formatMoney(balance) + '</td>' +
-                '<td>' +
-                    '<button class="btn btn-sm btn-outline-primary edit-cust-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" data-phone="' + esc(c.phone || '') + '" data-email="' + esc(c.email || '') + '" data-address="' + esc(c.address || '') + '" data-station="' + (c.station_id || '') + '" data-opening="' + (c.opening_balance || 0) + '" title="Edit"><i class="bi bi-pencil"></i></button> ' +
-                    '<button class="btn btn-sm btn-outline-secondary purchase-history-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" title="Purchase History"><i class="bi bi-bag-check"></i> History</button> ' +
-                    '<button class="btn btn-sm btn-outline-info statement-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" title="Account Statement"><i class="bi bi-receipt"></i></button> ' +
-                    '<button class="btn btn-sm btn-success receive-payment-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" data-balance="' + balance + '" data-station="' + (c.station_id || '') + '" title="Receive Payment"><i class="bi bi-cash"></i> Pay</button> ' +
-                    (canDelete
-                        ? '<button class="btn btn-sm btn-outline-danger delete-cust-btn" data-id="' + c.id + '" title="Delete"><i class="bi bi-trash"></i></button>'
-                        : '<button class="btn btn-sm btn-outline-secondary" disabled title="Customer has balance"><i class="bi bi-lock"></i></button>') +
-                '</td>' +
-            '</tr>';
+            html += `<tr>
+                <td><strong>${esc(c.name)}</strong></td>
+                <td>${esc(c.phone || '—')}</td>
+                <td>${esc(station)}</td>
+                <td><span class="badge bg-secondary">${visits}</span></td>
+                <td>${formatMoney(totalSpent)}</td>
+                <td class="\( {balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : 'balance-zero'}"> \){formatMoney(balance)}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary edit-cust-btn"
+                        data-id="${c.id}"
+                        data-name="${esc(c.name)}"
+                        data-phone="${esc(c.phone || '')}"
+                        data-email="${esc(c.email || '')}"
+                        data-address="${esc(c.address || '')}"
+                        data-station="${c.station_id || ''}"
+                        data-opening="${c.opening_balance || 0}">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-info statement-btn" data-id="\( {c.id}" data-name=" \){esc(c.name)}">
+                        <i class="bi bi-receipt"></i>
+                    </button>
+                    <button class="btn btn-sm btn-success receive-payment-btn"
+                        data-id="${c.id}"
+                        data-name="${esc(c.name)}"
+                        data-balance="${balance}"
+                        data-station="${c.station_id || ''}">
+                        <i class="bi bi-cash"></i> Pay
+                    </button>
+                    ${canDelete
+                        ? `<button class="btn btn-sm btn-outline-danger delete-cust-btn" data-id="${c.id}"><i class="bi bi-trash"></i></button>`
+                        : `<button class="btn btn-sm btn-outline-secondary" disabled title="Customer has balance"><i class="bi bi-lock"></i></button>`}
+                </td>
+            </tr>`;
         });
     }
 
@@ -6227,55 +6240,6 @@ async function renderCustomers() {
         };
     });
 
-    // ---- Purchase History ----
-    document.querySelectorAll('.purchase-history-btn').forEach(btn => {
-        btn.onclick = async function() {
-            const id = this.dataset.id;
-            const name = this.dataset.name;
-            const modalEl = document.getElementById('statementModal');
-            const body = document.getElementById('statementModalBody');
-            if (!modalEl || !body) { toast('History modal not available', 'danger'); return; }
-            body.innerHTML = '<div class="text-center py-3"><div class="spinner"></div></div>';
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-            try {
-                const customerSales = sales
-                    .filter(s => s.status !== 'reversed' && (s.customer_id === id || s.customer_name === name))
-                    .filter(s => s.type !== 'payment')
-                    .sort((a, b) => {
-                        const da = a.created_at && a.created_at.seconds ? a.created_at.seconds : 0;
-                        const dbv = b.created_at && b.created_at.seconds ? b.created_at.seconds : 0;
-                        return dbv - da;
-                    });
-                let rows = '';
-                let totalQty = 0, totalAmt = 0;
-                if (customerSales.length === 0) {
-                    rows = '<tr><td colspan="6" class="text-muted text-center">No purchase history for this customer</td></tr>';
-                } else {
-                    customerSales.forEach(s => {
-                        const qty = Number(s.quantity) || 0;
-                        const amt = Number(s.amount) || 0;
-                        totalQty += qty; totalAmt += amt;
-                        rows += '<tr>' +
-                            '<td class="fs-xs">' + formatDate(s.sale_date || s.created_at) + '</td>' +
-                            '<td>' + esc(stationName(s.station_id)) + '</td>' +
-                            '<td>' + esc(s.product_type || '—') + '</td>' +
-                            '<td>' + (qty ? qty.toFixed(2) + ' L' : '—') + '</td>' +
-                            '<td>' + formatMoney(s.selling_price || 0) + '</td>' +
-                            '<td class="fw-bold">' + formatMoney(amt) + '</td>' +
-                            '</tr>';
-                    });
-                }
-                body.innerHTML = '<div class="mb-3"><h6>Purchase History — ' + esc(name) + '</h6>' +
-                    '<p>Purchases: <strong>' + customerSales.length + '</strong> | Total Qty: <strong>' + totalQty.toFixed(2) + ' L</strong> | Total Spent: <strong>' + formatMoney(totalAmt) + '</strong></p></div>' +
-                    '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr>' +
-                    '<th>Date</th><th>Station</th><th>Product</th><th>Qty</th><th>Price/L</th><th>Amount</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
-            } catch (err) {
-                body.innerHTML = '<div class="alert alert-danger">Error loading purchase history: ' + err.message + '</div>';
-            }
-        };
-    });
-
     // ---- Statement ----
     document.querySelectorAll('.statement-btn').forEach(btn => {
         btn.onclick = async function() {
@@ -6304,7 +6268,7 @@ async function renderCustomers() {
                         rows += `<tr>
                             <td>${formatDateTime(t.timestamp)}</td>
                             <td>${esc(t.source || '—')}</td>
-                            <td class="${cls}">${formatMoney(amount)}</td>
+                            <td class="\( {cls}"> \){formatMoney(amount)}</td>
                             <td>${formatMoney(t.balance_after || 0)}</td>
                         </tr>`;
                     });
@@ -6399,7 +6363,7 @@ async function renderCustomers() {
 
         // Confirm overpayment
         if (amount > currentBalance) {
-            if (!confirm(`⚠️ This payment (${formatMoney(amount)}) exceeds the customer's current balance ( ${formatMoney(currentBalance)}).\n\nThis will create a credit balance (company owes the customer). Continue?`)) {
+            if (!confirm(`⚠️ This payment (\( {formatMoney(amount)}) exceeds the customer's current balance ( \){formatMoney(currentBalance)}).\n\nThis will create a credit balance (company owes the customer). Continue?`)) {
                 return;
             }
         }
@@ -6678,7 +6642,7 @@ async function renderSuppliers() {
 registerPageRenderer('suppliers', renderSuppliers);
 
 console.log('✅ All missing pages from Part 8 now registered.');
-</script>
+    </script>
 <script>
 // ============================================================
 // PART 9: REPORTS CENTER (FULLY CORRECTED)
@@ -8932,54 +8896,6 @@ async function renderLicenses() {
 registerPageRenderer('licenses', renderLicenses);
 
 console.log('Part 11 loaded – License Manager for Super Admin');
-</script>
-<script>
-// ============================================================
-// FINAL SAFETY: ensure every menu page has a renderer
-// ============================================================
-(function ensureAllPageRenderers() {
-    const map = {
-        dashboard: typeof renderDashboard === 'function' ? renderDashboard : null,
-        sales: typeof renderSales === 'function' ? renderSales : null,
-        shifts: typeof renderShifts === 'function' ? renderShifts : null,
-        meters: typeof renderMeters === 'function' ? renderMeters : null,
-        balancing: typeof renderBalancing === 'function' ? renderBalancing : null,
-        inventory: typeof renderInventory === 'function' ? renderInventory : null,
-        stock: typeof renderStock === 'function' ? renderStock : null,
-        adjustments: typeof renderAdjustments === 'function' ? renderAdjustments : null,
-        fuel_prices: typeof renderFuelPrices === 'function' ? renderFuelPrices : null,
-        tank_levels: typeof renderTankLevels === 'function' ? renderTankLevels : null,
-        financials: typeof renderFinancials === 'function' ? renderFinancials : null,
-        customers: typeof renderCustomers === 'function' ? renderCustomers : null,
-        suppliers: typeof renderSuppliers === 'function' ? renderSuppliers : null,
-        reports: typeof renderReports === 'function' ? renderReports : null,
-        users: typeof renderUsers === 'function' ? renderUsers : null,
-        company: typeof renderCompanyProfile === 'function' ? renderCompanyProfile : null,
-        companies: typeof renderAllCompanies === 'function' ? renderAllCompanies : null,
-        payroll: typeof renderPayroll === 'function' ? renderPayroll : null,
-        messages: typeof renderMessages === 'function' ? renderMessages : null,
-        invoices: typeof renderInvoices === 'function' ? renderInvoices : null,
-        staff: typeof renderStaff === 'function' ? renderStaff : null,
-        maintenance: typeof renderMaintenance === 'function' ? renderMaintenance : null,
-        licenses: typeof renderLicenses === 'function' ? renderLicenses : null
-    };
-
-    window.pageRenderers = window.pageRenderers || {};
-    const missingFns = [];
-    Object.keys(map).forEach(function(page) {
-        if (map[page]) {
-            window.pageRenderers[page] = map[page];
-        } else if (!window.pageRenderers[page]) {
-            missingFns.push(page);
-        }
-    });
-
-    const registered = Object.keys(window.pageRenderers).sort();
-    console.log('✅ Final page registry (' + registered.length + '):', registered.join(', '));
-    if (missingFns.length) {
-        console.error('❌ Functions missing for pages:', missingFns.join(', '));
-    }
-})();
 </script>
 </body>
 </html>
