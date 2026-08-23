@@ -1437,7 +1437,7 @@ updateOnlineStatus();
 const BACKUP_COLLECTIONS = [
     'stations', 'users', 'inventory', 'sales', 'shifts', 'stock',
     'adjustments', 'reconciliations', 'bank_accounts', 'bankings',
-    'expenses', 'customers', 'audit_logs', 'messages', 'salaries',
+    'expenses', 'customers', 'audit_logs', 'messages', 'salaries', 'salary_advances',
     'suppliers', 'supplier_payments', 'credit_limits', 'recurring_expenses',
     'invoices', 'staff', 'maintenance', 'tank_levels', 'fuel_prices',
     'inventory_history', 'supplier_transactions', 'customer_transactions'
@@ -3714,7 +3714,7 @@ async function renderBalancing() {
         const startReadings = {},
             endReadings = {},
             diffs = {};
-        let grandTotal = 0;
+        let grossExpected = 0;
         const expectedByProduct = {};
         products.forEach(p => {
             const pKey = p.toLowerCase();
@@ -3726,8 +3726,45 @@ async function renderBalancing() {
             diffs[p] = diff;
             const exp = diff * prices[p];
             expectedByProduct[p] = exp;
-            grandTotal += exp;
+            grossExpected += exp;
         });
+
+        // Discounts given by this cashier during the shift / filter range
+        const allSalesForBal = await getAll('sales') || [];
+        const balFromEl2 = document.getElementById('balFrom');
+        const balToEl2 = document.getElementById('balTo');
+        const rangeFrom2 = balFromEl2 && balFromEl2.value ? new Date(balFromEl2.value + 'T00:00:00') : null;
+        const rangeTo2 = balToEl2 && balToEl2.value ? new Date(balToEl2.value + 'T23:59:59') : null;
+        const shiftStartForDisc = shift._createdAt || (shift.created_at?.toDate ? shift.created_at.toDate() : (shift.created_at ? new Date(shift.created_at) : null));
+        const shiftEndForDisc = shift.closed_at?.toDate ? shift.closed_at.toDate() : (shift.ended_at?.toDate ? shift.ended_at.toDate() : (shift.ended_at ? new Date(shift.ended_at) : null));
+
+        const cashierDiscountSales = allSalesForBal.filter(s => {
+            if (s.status === 'reversed') return false;
+            const sameCashier =
+                (s.recorded_by && String(s.recorded_by) === String(cashierId)) ||
+                (s.cashier_id && String(s.cashier_id) === String(cashierId));
+            if (!sameCashier) return false;
+            if (stationId && s.station_id && String(s.station_id) !== String(stationId)) return false;
+            const disc = Number(s.discount) || 0;
+            if (disc <= 0) return false;
+            const sd = s.sale_date ? new Date(s.sale_date) :
+                (s.created_at && s.created_at.toDate ? s.created_at.toDate() :
+                (s.created_at ? new Date(s.created_at) : null));
+            if (sd && rangeFrom2 && rangeTo2) {
+                if (sd < rangeFrom2 || sd > rangeTo2) return false;
+            } else if (sd && shiftStartForDisc) {
+                const from = new Date(shiftStartForDisc); from.setHours(0, 0, 0, 0);
+                const to = shiftEndForDisc ? new Date(shiftEndForDisc) : new Date(shiftStartForDisc);
+                to.setHours(23, 59, 59, 999);
+                from.setDate(from.getDate() - 1);
+                to.setDate(to.getDate() + 1);
+                if (sd < from || sd > to) return false;
+            }
+            return true;
+        });
+        const totalDiscountsGiven = cashierDiscountSales.reduce((sum, s) => sum + (Number(s.discount) || 0), 0);
+        // Expected cash after discounts: meter revenue minus discounts given at the till
+        let grandTotal = Math.max(0, grossExpected - totalDiscountsGiven);
 
         const shiftDate = formatDateTime(shift._createdAt || shift.created_at);
         const shiftType = shift.shift_type || 'day';
@@ -3822,6 +3859,10 @@ async function renderBalancing() {
         });
         priceRow += '</tr>';
 
+        let discountRow = '<tr class="table-warning"><td><strong>Discounts Given</strong></td>';
+        // Show total discount once spanning products (discounts are sale-level, not always per product)
+        discountRow += `<td colspan="${products.length}" class="text-danger fw-bold">− ${formatMoney(totalDiscountsGiven)}</td></tr>`;
+
         let expectedRow = '<tr><td><strong>Expected Cash</strong></td>';
         products.forEach(p => {
             const exp = expectedByProduct[p] || 0;
@@ -3856,11 +3897,13 @@ async function renderBalancing() {
                         <tbody>
                             ${meterRows}
                             ${priceRow}
+                            ${discountRow}
                             ${expectedRow}
-                            <tr><td><strong>Total Expected</strong></td><td colspan="${products.length}" class="fw-bold">${formatMoney(grandTotal)}</td></tr>
+                            <tr class="table-light"><td><strong>Gross (meters × price)</strong></td><td colspan="${products.length}">${formatMoney(grossExpected)}</td></tr>
+                            <tr><td><strong>Total Expected (after discounts)</strong></td><td colspan="${products.length}" class="fw-bold text-primary">${formatMoney(grandTotal)}</td></tr>
                         </tbody>
                     </table>
-                    <div class="small text-muted mt-1">📐 <strong>Math:</strong> End Reading − Start Reading = Quantity Sold (meters increase as fuel is dispensed)</div>
+                    <div class="small text-muted mt-1">📐 <strong>Math:</strong> (End − Start) × Price = Expected per product. <strong>Total Expected = Gross − Discounts Given</strong> by this cashier.</div>
                     <div class="d-flex flex-wrap gap-2 align-items-center mt-2">
                         <button type="button" class="btn btn-sm btn-warning" id="saveShiftEditsBtn">
                             <i class="bi bi-pencil-square"></i> Save Meter Corrections
@@ -4049,6 +4092,8 @@ async function renderBalancing() {
                     date_from: document.getElementById('balFrom').value,
                     date_to: document.getElementById('balTo').value,
                     expected_total: grandTotal,
+                    gross_expected: grossExpected,
+                    discounts_given: totalDiscountsGiven,
                     actual_cash: actual,
                     cashier_expenses: totalCashierExpenses,
                     adjusted_actual: adjusted,
@@ -4063,7 +4108,9 @@ async function renderBalancing() {
                 const cls = Math.abs(diff) < 1 ? 'diff-zero' : (diff < 0 ? 'diff-negative' : 'diff-positive');
                 resultDiv.innerHTML =
                     `<div class="alert alert-info"><strong>✅ Reconciliation saved!</strong><br>
-                    Expected: ${formatMoney(grandTotal)}<br>
+                    Gross (meters): ${formatMoney(grossExpected)}<br>
+                    Discounts given: −${formatMoney(totalDiscountsGiven)}<br>
+                    Expected (after discounts): ${formatMoney(grandTotal)}<br>
                     Cash presented: ${formatMoney(actual)}<br>
                     Cashier expenses: ${formatMoney(totalCashierExpenses)}<br>
                     Adjusted actual: ${formatMoney(adjusted)}<br>
@@ -8254,6 +8301,27 @@ async function renderPayroll() {
     const allUsers = await getAll('users');
     const salaries = await getAll('salaries');
     const recons = await getAll('reconciliations');
+    const salaryAdvances = await getAll('salary_advances') || [];
+
+    // Outstanding advances: total advanced minus already recovered on salary runs
+    const advancesGiven = {};
+    salaryAdvances.forEach(a => {
+        const cid = a.employee_id;
+        if (!cid) return;
+        if (!advancesGiven[cid]) advancesGiven[cid] = 0;
+        advancesGiven[cid] += Number(a.amount) || 0;
+    });
+    const advancesRecovered = {};
+    salaries.forEach(s => {
+        const cid = s.employee_id;
+        if (!cid) return;
+        if (!advancesRecovered[cid]) advancesRecovered[cid] = 0;
+        advancesRecovered[cid] += Number(s.deducted_advance) || 0;
+    });
+    const remainingAdvances = {};
+    Object.keys(advancesGiven).forEach(cid => {
+        remainingAdvances[cid] = Math.max(0, (advancesGiven[cid] || 0) - (advancesRecovered[cid] || 0));
+    });
 
     const cashierBalances = {};
     recons.forEach(r => {
@@ -8289,8 +8357,27 @@ async function renderPayroll() {
 
     const userOpts = allUsers.filter(u => u.active !== false).map(u => {
         const bal = remainingBalances[u.id] || { remainingShortage: 0, excess: 0 };
-        return `<option value="${u.id}" data-shortage="${bal.remainingShortage}" data-excess="${bal.excess}">${u.name || u.username} (${u.role})</option>`;
+        const adv = remainingAdvances[u.id] || 0;
+        return `<option value="${u.id}" data-shortage="${bal.remainingShortage}" data-excess="${bal.excess}" data-advance="${adv}">${u.name || u.username} (${u.role})${adv > 0 ? ' · Adv' : ''}</option>`;
     }).join('');
+
+
+    let advanceHistoryRows = '';
+    if (salaryAdvances.length === 0) {
+        advanceHistoryRows = '<tr><td colspan="4" class="text-muted text-center">No advances yet</td></tr>';
+    } else {
+        const sortedAdv = [...salaryAdvances].sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+        sortedAdv.slice(0, 20).forEach(a => {
+            const emp = allUsers.find(u => u.id === a.employee_id);
+            const empName = emp ? (emp.name || emp.username) : (a.employee_name || 'Unknown');
+            advanceHistoryRows += `<tr>
+                <td><strong>${esc(empName)}</strong></td>
+                <td class="text-warning fw-bold">${formatMoney(a.amount)}</td>
+                <td class="fs-xs">${formatDate(a.advance_date || a.created_at)}</td>
+                <td class="small">${esc(a.note || '—')}</td>
+            </tr>`;
+        });
+    }
 
     let html = `
         <div class="row g-4">
@@ -8317,6 +8404,15 @@ async function renderPayroll() {
                         </div>
                         <div class="mb-2"><label class="form-label small">Other Deductions</label>
                             <input type="number" id="salaryOtherDeductions" class="form-control form-control-sm" step="100" min="0" placeholder="e.g. 20000" value="0"></div>
+                        <div id="advanceSection" class="mb-2" style="display:none;">
+                            <label class="form-label small text-warning fw-bold">Salary Advance (to recover)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">UGX</span>
+                                <input type="number" id="salaryAdvanceDeduct" class="form-control form-control-sm" step="100" min="0" value="0">
+                                <button type="button" class="btn btn-outline-warning btn-sm" id="deductFullAdvanceBtn" title="Recover full outstanding">Full</button>
+                            </div>
+                            <small class="text-muted">Outstanding advance for this employee. Deducted from this month's net pay.</small>
+                        </div>
                         <div class="mb-2 p-2 bg-light rounded">
                             <div class="row"><div class="col-6"><strong>Gross Pay:</strong> <span id="grossPayDisplay">0</span></div>
                             <div class="col-6"><strong>Net Pay:</strong> <span id="netPayDisplay" class="fw-bold">0</span></div></div>
@@ -8325,17 +8421,43 @@ async function renderPayroll() {
                     </form>
                     <div id="salaryResult" class="mt-2 small"></div>
                 </div>
+
+                <div class="card-box mt-3 border border-warning">
+                    <h5 class="mb-2"><i class="bi bi-cash-coin text-warning"></i> Give Salary Advance</h5>
+                    <p class="small text-muted">Pay an employee early (before month-end) if they have financial need. The advance is recorded and <strong>automatically subtracted</strong> when salary is processed.</p>
+                    <form id="advanceForm">
+                        <div class="mb-2"><label class="form-label small">Employee *</label>
+                            <select id="advEmployee" class="form-select form-select-sm" required><option value="">— Select —</option>${userOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
+                            <input type="number" id="advAmount" class="form-control form-control-sm" step="1000" min="1" required placeholder="e.g. 100000"></div>
+                        <div class="mb-2"><label class="form-label small">Date *</label>
+                            <input type="date" id="advDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}" required></div>
+                        <div class="mb-2"><label class="form-label small">Reason / Note</label>
+                            <input type="text" id="advNote" class="form-control form-control-sm" placeholder="e.g. Medical emergency"></div>
+                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-lightning-charge"></i> Record Advance Payment</button>
+                    </form>
+                    <div id="advanceResult" class="mt-2 small"></div>
+                    <hr>
+                    <h6 class="mb-2">Recent Advances</h6>
+                    <div class="table-responsive" style="max-height:200px;overflow-y:auto;">
+                        <table class="table table-sm">
+                            <thead><tr><th>Employee</th><th>Amount</th><th>Date</th><th>Note</th></tr></thead>
+                            <tbody id="advanceHistoryBody">
+                            ${advanceHistoryRows}
+                        </tbody></table>
+                    </div>
+                </div>
             </div>
             <div class="col-lg-7">
                 <div class="card-box">
                     <h5 class="mb-3"><i class="bi bi-clock-history"></i> Salary History</h5>
                     <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
                         <table class="table table-sm table-hover">
-                            <thead><tr><th>Employee</th><th>Period</th><th>Gross</th><th>Shortage Ded.</th><th>Other Ded.</th><th>Net Pay</th><th>Status</th><th>Actions</th></tr></thead>
+                            <thead><tr><th>Employee</th><th>Period</th><th>Gross</th><th>Shortage</th><th>Advance</th><th>Other</th><th>Net Pay</th><th>Status</th><th>Actions</th></tr></thead>
                             <tbody>`;
 
     if (salaries.length === 0) {
-        html += '<tr><td colspan="8" class="text-muted text-center">No salary records yet</td></tr>';
+        html += '<tr><td colspan="9" class="text-muted text-center">No salary records yet</td></tr>';
     } else {
         salaries.sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
         salaries.slice(0, 30).forEach(s => {
@@ -8346,6 +8468,7 @@ async function renderPayroll() {
                     <td>${s.period || '—'}</td>
                     <td>${formatMoney(s.gross_pay)}</td>
                     <td class="text-danger">${s.deducted_shortage ? formatMoney(s.deducted_shortage) : '—'}</td>
+                    <td class="text-warning">${s.deducted_advance ? formatMoney(s.deducted_advance) : '—'}</td>
                     <td class="text-danger">${s.other_deductions ? formatMoney(s.other_deductions) : '—'}</td>
                     <td><strong>${formatMoney(s.net_pay)}</strong></td>
                     <td><span class="badge ${s.status === 'paid' ? 'bg-success' : 'bg-warning'}">${s.status || 'paid'}</span></td>
@@ -8365,10 +8488,12 @@ async function renderPayroll() {
     const shortageSection = document.getElementById('shortageSection');
     const excessSection = document.getElementById('excessSection');
 
+    const advanceSection = document.getElementById('advanceSection');
     salaryEmployee.onchange = function() {
         const selected = this.options[this.selectedIndex];
         const shortage = parseFloat(selected.dataset.shortage) || 0;
         const excess = parseFloat(selected.dataset.excess) || 0;
+        const advance = parseFloat(selected.dataset.advance) || 0;
         if (shortage > 0) { shortageSection.style.display = 'block';
             document.getElementById('salaryShortage').value = shortage;
             document.getElementById('shortageLabel').textContent = formatMoney(shortage); } else { shortageSection.style.display = 'none';
@@ -8377,23 +8502,43 @@ async function renderPayroll() {
             document.getElementById('salaryExcess').value = excess;
             document.getElementById('excessLabel').textContent = formatMoney(excess); } else { excessSection.style.display = 'none';
             document.getElementById('salaryExcess').value = 0; }
+        if (advance > 0) {
+            advanceSection.style.display = 'block';
+            document.getElementById('salaryAdvanceDeduct').value = advance;
+            document.getElementById('salaryAdvanceDeduct').max = advance;
+        } else {
+            advanceSection.style.display = 'none';
+            document.getElementById('salaryAdvanceDeduct').value = 0;
+        }
         calculateNet();
     };
+    const deductFullAdvBtn = document.getElementById('deductFullAdvanceBtn');
+    if (deductFullAdvBtn) {
+        deductFullAdvBtn.onclick = function() {
+            const selected = salaryEmployee.options[salaryEmployee.selectedIndex];
+            const advance = parseFloat(selected.dataset.advance) || 0;
+            document.getElementById('salaryAdvanceDeduct').value = advance;
+            calculateNet();
+        };
+    }
 
     function calculateNet() {
         const base = parseFloat(document.getElementById('salaryBase').value) || 0;
         const bonus = parseFloat(document.getElementById('salaryBonus').value) || 0;
         const shortage = parseFloat(document.getElementById('salaryShortage').value) || 0;
         const otherDed = parseFloat(document.getElementById('salaryOtherDeductions').value) || 0;
+        const advanceDed = parseFloat(document.getElementById('salaryAdvanceDeduct')?.value) || 0;
         const gross = base + bonus;
-        const net = gross - shortage - otherDed;
+        const net = gross - shortage - otherDed - advanceDed;
         document.getElementById('grossPayDisplay').textContent = formatMoney(gross);
         document.getElementById('netPayDisplay').textContent = formatMoney(Math.max(0, net));
-        return { gross, net, shortage, otherDed };
+        return { gross, net, shortage, otherDed, advanceDed };
     }
     document.getElementById('salaryBase').oninput = calculateNet;
     document.getElementById('salaryBonus').oninput = calculateNet;
     document.getElementById('salaryOtherDeductions').oninput = calculateNet;
+    const advDedInput = document.getElementById('salaryAdvanceDeduct');
+    if (advDedInput) advDedInput.oninput = calculateNet;
     setTimeout(calculateNet, 100);
 
     document.getElementById('salaryForm').onsubmit = async function(e) {
@@ -8404,8 +8549,11 @@ async function renderPayroll() {
         const bonus = parseFloat(document.getElementById('salaryBonus').value) || 0;
         const shortage = parseFloat(document.getElementById('salaryShortage').value) || 0;
         const otherDed = parseFloat(document.getElementById('salaryOtherDeductions').value) || 0;
+        const advanceDed = parseFloat(document.getElementById('salaryAdvanceDeduct')?.value) || 0;
+        const outstandingAdv = parseFloat(salaryEmployee.options[salaryEmployee.selectedIndex]?.dataset.advance) || 0;
+        if (advanceDed > outstandingAdv + 0.01) { toast('Advance recovery cannot exceed outstanding advance', 'warning'); return; }
         const gross = base + bonus;
-        const net = gross - shortage - otherDed;
+        const net = gross - shortage - otherDed - advanceDed;
         if (!employeeId) { toast('Select an employee', 'warning'); return; }
         if (!period) { toast('Select a period', 'warning'); return; }
         if (base <= 0) { toast('Enter a valid base salary', 'warning'); return; }
@@ -8420,6 +8568,7 @@ async function renderPayroll() {
                 base_salary: base,
                 bonus: bonus,
                 deducted_shortage: shortage,
+                deducted_advance: advanceDed,
                 other_deductions: otherDed,
                 gross_pay: gross,
                 net_pay: net,
@@ -8434,6 +8583,7 @@ async function renderPayroll() {
                 period: period,
                 gross: gross,
                 shortage: shortage,
+                advance: advanceDed,
                 otherDeductions: otherDed,
                 net: net,
                 date: new Date().toLocaleDateString('en-GB'),
@@ -8443,6 +8593,40 @@ async function renderPayroll() {
             renderPayroll();
         } catch (err) { toast('Error: ' + err.message, 'danger'); }
     };
+
+    const advanceForm = document.getElementById('advanceForm');
+    if (advanceForm) {
+        advanceForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const employeeId = document.getElementById('advEmployee').value;
+            const amount = parseFloat(document.getElementById('advAmount').value) || 0;
+            const advDate = document.getElementById('advDate').value;
+            const note = (document.getElementById('advNote').value || '').trim();
+            if (!employeeId) { toast('Select an employee', 'warning'); return; }
+            if (amount <= 0) { toast('Enter a valid advance amount', 'warning'); return; }
+            if (!advDate) { toast('Select a date', 'warning'); return; }
+            const employee = allUsers.find(u => u.id === employeeId);
+            const empName = employee ? (employee.name || employee.username) : 'Unknown';
+            try {
+                await addDoc('salary_advances', {
+                    employee_id: employeeId,
+                    employee_name: empName,
+                    amount: amount,
+                    advance_date: advDate,
+                    note: note || null,
+                    paid_by: state.user.id,
+                    status: 'outstanding'
+                });
+                await logAudit('salary_advance', { employee_id: employeeId, amount: amount });
+                toast('Advance of ' + formatMoney(amount) + ' paid to ' + empName, 'success');
+                document.getElementById('advanceResult').innerHTML = '<span class="text-success">✅ Advance recorded. It will be deducted on next salary.</span>';
+                renderPayroll();
+            } catch (err) {
+                toast('Error: ' + err.message, 'danger');
+                document.getElementById('advanceResult').innerHTML = '<span class="text-danger">' + err.message + '</span>';
+            }
+        };
+    }
 
     document.querySelectorAll('.delete-salary-btn').forEach(btn => {
         btn.onclick = async function() {
@@ -8466,6 +8650,7 @@ async function renderPayroll() {
                 period: doc.period || '—',
                 gross: doc.gross_pay || 0,
                 shortage: doc.deducted_shortage || 0,
+                advance: doc.deducted_advance || 0,
                 otherDeductions: doc.other_deductions || 0,
                 net: doc.net_pay || 0,
                 date: doc.paid_date ? formatDate(doc.paid_date) : new Date().toLocaleDateString('en-GB'),
@@ -8491,6 +8676,7 @@ function showVoucher(data) {
             <hr>
             <div class="row"><span class="label">Base Salary:</span> <span>${formatMoney(data.gross)}</span></div>
             ${data.shortage > 0 ? `<div class="row"><span class="label text-danger">Shortage Deduction:</span> <span class="text-danger">-${formatMoney(data.shortage)}</span></div>` : ''}
+            ${data.advance > 0 ? `<div class="row"><span class="label text-warning">Advance Recovered:</span> <span class="text-warning">-${formatMoney(data.advance)}</span></div>` : ''}
             ${data.otherDeductions > 0 ? `<div class="row"><span class="label text-danger">Other Deductions:</span> <span class="text-danger">-${formatMoney(data.otherDeductions)}</span></div>` : ''}
             <div class="row total"><span class="label fw-bold">Net Pay:</span> <span class="fw-bold">${formatMoney(data.net)}</span></div>
             <div class="row" style="font-size:0.8rem;color:#666;margin-top:8px;">
