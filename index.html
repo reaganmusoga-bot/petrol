@@ -707,7 +707,7 @@
                 <i class="bi bi-fuel-pump"></i>
                 <h4>PetroManager Pro</h4>
                 <p>Multi-Company Fuel Management</p>
-                <p style="font-size:0.7rem;opacity:0.5;margin-top:4px;">by Musoga Reagan</p>
+                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.0.0</strong> First Edition</p>
             </div>
             <div id="normalLogin">
                 <form id="loginForm" autocomplete="off">
@@ -762,7 +762,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.0.0</div>
             </div>
         </nav>
         <div class="main-content">
@@ -3976,17 +3976,22 @@ async function renderBalancing() {
         const rangeFrom = balFromEl && balFromEl.value ? new Date(balFromEl.value + 'T00:00:00') : null;
         const rangeTo = balToEl && balToEl.value ? new Date(balToEl.value + 'T23:59:59') : null;
 
-        // Expenses already attached to a saved reconciliation must not be reused
+        // Expenses already attached to a saved reconciliation must not be reused.
+        // Collect every expense ID linked to any reconciliation + expense-level flags.
         const allRecons = await getAll('reconciliations') || [];
         const usedExpenseIds = new Set();
         allRecons.forEach(r => {
             (r.expense_ids || []).forEach(id => { if (id) usedExpenseIds.add(String(id)); });
+            if (r.expense_id) usedExpenseIds.add(String(r.expense_id));
+            if (Array.isArray(r.expenses)) {
+                r.expenses.forEach(ex => {
+                    if (ex && ex.id) usedExpenseIds.add(String(ex.id));
+                    else if (typeof ex === 'string') usedExpenseIds.add(String(ex));
+                });
+            }
         });
 
-        const cashierExpenses = allExpenses.filter(e => {
-            if (e.id && usedExpenseIds.has(String(e.id))) return false; // already reconciled
-            if (e.reconciled === true || e.reconciled_in) return false;
-
+        const candidateExpenses = allExpenses.filter(e => {
             const eName = (e.person_name || '').toLowerCase().trim();
             const samePerson =
                 (e.person_id && String(e.person_id) === String(cashierId)) ||
@@ -3996,9 +4001,8 @@ async function renderBalancing() {
                 (eName && cashierUser?.name && eName === String(cashierUser.name).toLowerCase().trim());
             if (!samePerson) return false;
 
-            // Station: soft filter
             if (stationId && e.station_id && String(e.station_id) !== String(stationId) && String(e.station_id) !== '1') {
-                // allow
+                // soft allow
             }
 
             const ed = e.expense_date ? new Date(e.expense_date) :
@@ -4016,11 +4020,23 @@ async function renderBalancing() {
             }
             return true;
         });
+
+        const cashierExpenses = candidateExpenses.filter(e => {
+            if (!e.id) return true;
+            if (usedExpenseIds.has(String(e.id))) return false;
+            if (e.reconciled === true) return false;
+            if (e.reconciled_in) return false;
+            if (e.reconciled_shift_id) return false;
+            if (e.status === 'reconciled') return false;
+            return true;
+        });
+
+        const excludedReconciledCount = candidateExpenses.length - cashierExpenses.length;
         const totalCashierExpenses = cashierExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
         let expenseRowsHtml = '';
         if (cashierExpenses.length === 0) {
-            expenseRowsHtml = '<tr><td colspan="4" class="text-muted text-center">No expenses by this cashier</td></tr>';
+            expenseRowsHtml = '<tr><td colspan="4" class="text-muted text-center">No unreconciled expenses for this cashier in the selected range</td></tr>';
         } else {
             cashierExpenses.forEach(e => {
                 expenseRowsHtml += `<tr>
@@ -4030,6 +4046,11 @@ async function renderBalancing() {
                     <td class="fw-bold">${formatMoney(e.amount)}</td>
                 </tr>`;
             });
+        }
+        if (excludedReconciledCount > 0) {
+            expenseRowsHtml += `<tr class="table-secondary"><td colspan="4" class="small text-muted text-center">
+                <i class="bi bi-info-circle"></i> ${excludedReconciledCount} already-reconciled expense(s) hidden – they no longer affect this balance.
+            </td></tr>`;
         }
 
         // Editable start/end meters so managers can correct cashier mistakes during balancing
@@ -6098,20 +6119,32 @@ async function renderFinancials() {
         }
 
         function transferRows() {
-            if (bankings.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No transfers</td></tr>';
+            if (bankings.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No transfers</td></tr>';
             let rows = '';
-            bankings.slice(0, 15).forEach(b => {
+            const sorted = [...bankings].sort((a, b) =>
+                (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0)
+            );
+            sorted.slice(0, 25).forEach(b => {
                 const acc = accounts.find(a => a.id === b.bank_account_id);
                 let fromLabel = 'Unknown';
                 if (b.source_account === 'cash_till') fromLabel = 'Cash Till';
                 else if (b.source_account === 'petty_cash') fromLabel = 'Petty Cash';
                 else { const src = accounts.find(a => a.id === b.source_account); if (src) fromLabel = src.bank_name; }
-                rows += `<tr>
+                const isReversed = b.status === 'reversed' || b.reversed === true;
+                const statusBadge = isReversed
+                    ? '<span class="badge bg-secondary">Reversed</span>'
+                    : '<span class="badge bg-success">Active</span>';
+                const actions = isReversed
+                    ? '<span class="text-muted small">—</span>'
+                    : `<button class="btn btn-sm btn-outline-danger reverse-transfer-btn" data-id="${b.id}" title="Reverse this transfer"><i class="bi bi-arrow-counterclockwise"></i> Reverse</button>`;
+                rows += `<tr class="${isReversed ? 'table-secondary text-muted' : ''}">
                         <td>${esc(fromLabel)}</td>
                         <td>${esc(acc ? acc.bank_name : '—')}</td>
                         <td>${esc(b.depositor || '—')}</td>
-                        <td>${formatMoney(b.amount)}</td>
+                        <td class="fw-bold">${formatMoney(b.amount)}</td>
                         <td class="fs-xs">${formatDate(b.created_at)}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actions}</td>
                     </tr>`;
             });
             return rows;
@@ -6197,6 +6230,7 @@ async function renderFinancials() {
                         <div><div class="num">${formatCompactMoney(accounts.reduce((s, a) => s + Number(a.balance || 0), 0))}</div><div class="lbl">Bank Balance</div></div></div></div>
                     <div class="col-6 col-md-3"><div class="stat-item" title="Deposits this month"><div class="icon" style="background:#0d6efd;"><i class="bi bi-arrow-up-circle"></i></div>
                         <div><div class="num">${formatCompactMoney(bankings.filter(b => {
+                            if (b.status === 'reversed' || b.reversed === true || b.status === 'reversal') return false;
                             const d = b.created_at?.toDate ? b.created_at.toDate() : new Date(b.created_at);
                             const now = new Date();
                             return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
@@ -6322,9 +6356,10 @@ async function renderFinancials() {
                             <div class="col-lg-7">
                                 <div class="card-box">
                                     <h6 class="mb-3">Transfer History</h6>
+                                    <p class="small text-muted mb-2">You can reverse an active transfer. Balances will be adjusted automatically and the original entry will be marked as reversed.</p>
                                     <div class="table-responsive">
                                         <table class="table table-sm">
-                                            <thead><tr><th>From</th><th>To</th><th>By</th><th>Amount</th><th>Date</th></tr></thead>
+                                            <thead><tr><th>From</th><th>To</th><th>By</th><th>Amount</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
                                             <tbody>${transferRows()}</tbody>
                                         </table>
                                     </div>
@@ -6537,6 +6572,7 @@ async function renderFinancials() {
             try {
                 await addDoc('bankings', { station_id: state.currentStationId || '1', source_account: source,
                     bank_account_id: accId, depositor, amount, description: desc || null,
+                    status: 'active',
                     created_by: state.user.id });
                 const acc = await getDoc('bank_accounts', accId);
                 if (acc) { await updateDoc('bank_accounts', accId, { balance: (acc.balance || 0) + amount }); }
@@ -6548,6 +6584,84 @@ async function renderFinancials() {
                 renderFinancials();
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
         };
+
+        // ---- Reverse a bank transfer ----
+        document.querySelectorAll('.reverse-transfer-btn').forEach(btn => {
+            btn.onclick = async function() {
+                const id = this.dataset.id;
+                if (!id) return;
+                const transfer = bankings.find(b => b.id === id);
+                if (!transfer) { toast('Transfer not found', 'danger'); return; }
+                if (transfer.status === 'reversed' || transfer.reversed === true) {
+                    toast('This transfer has already been reversed', 'warning');
+                    return;
+                }
+                const amount = Number(transfer.amount) || 0;
+                if (amount <= 0) { toast('Invalid transfer amount', 'danger'); return; }
+
+                const confirmMsg = `Reverse this transfer of ${formatMoney(amount)}?\n\n` +
+                    `• The target bank balance will decrease by ${formatMoney(amount)}\n` +
+                    `• The source account (if a bank account) will be restored\n` +
+                    `• The original entry will be marked as Reversed\n\nThis cannot be undone automatically.`;
+                if (!confirm(confirmMsg)) return;
+
+                try {
+                    showLoading(true);
+                    await updateDoc('bankings', id, {
+                        status: 'reversed',
+                        reversed: true,
+                        reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
+                        reversed_by: state.user.id
+                    });
+
+                    const targetId = transfer.bank_account_id;
+                    if (targetId) {
+                        const targetAcc = await getDoc('bank_accounts', targetId);
+                        if (targetAcc) {
+                            await updateDoc('bank_accounts', targetId, {
+                                balance: (Number(targetAcc.balance) || 0) - amount
+                            });
+                        }
+                    }
+                    const source = transfer.source_account;
+                    if (source && source !== 'cash_till' && source !== 'petty_cash') {
+                        const srcAcc = await getDoc('bank_accounts', source);
+                        if (srcAcc) {
+                            await updateDoc('bank_accounts', source, {
+                                balance: (Number(srcAcc.balance) || 0) + amount
+                            });
+                        }
+                    }
+
+                    await addDoc('bankings', {
+                        station_id: transfer.station_id || state.currentStationId || '1',
+                        source_account: transfer.bank_account_id,
+                        bank_account_id: transfer.source_account || null,
+                        depositor: state.user.name || state.user.username || 'System',
+                        amount: amount,
+                        description: 'REVERSAL of transfer ' + String(id).slice(0, 8),
+                        status: 'reversal',
+                        reverses_id: id,
+                        created_by: state.user.id
+                    });
+
+                    await logAudit('bank_transfer_reversed', {
+                        original_id: id,
+                        amount: amount,
+                        target: targetId,
+                        source: source
+                    });
+
+                    toast('Transfer reversed successfully. Balances updated.', 'success');
+                    renderFinancials();
+                } catch (err) {
+                    console.error('Reverse transfer error:', err);
+                    toast('Error reversing transfer: ' + err.message, 'danger');
+                } finally {
+                    showLoading(false);
+                }
+            };
+        });
 
         document.getElementById('expForm').onsubmit = async function(e) {
             e.preventDefault();
