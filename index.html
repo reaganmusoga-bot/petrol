@@ -205,8 +205,20 @@
             color: #fff;
             font-size: 1.25rem;
         }
-        .stat-item .num { font-size: 1.4rem; font-weight: 700; color: var(--text-color); }
-        .stat-item .lbl { font-size: .8rem; color: #6c7a8e; }
+        .stat-item .num {
+            font-size: clamp(0.85rem, 2.2vw, 1.15rem);
+            font-weight: 700;
+            color: var(--text-color);
+            line-height: 1.2;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            max-width: 100%;
+        }
+        .stat-item .lbl { font-size: .75rem; color: #6c7a8e; margin-top: 2px; }
+        .stat-item > div:last-child { min-width: 0; flex: 1; overflow: hidden; }
+        .kpi-compact .stat-item { padding: 12px 14px; }
+        .kpi-compact .stat-item .icon { width: 38px; height: 38px; font-size: 1.1rem; flex-shrink: 0; }
+        .financial-summary .stat-item .num { font-size: clamp(0.8rem, 2vw, 1.05rem); }
         .hero {
             background: var(--hero-gradient);
             border-radius: 14px;
@@ -865,6 +877,51 @@ function toast(msg, type = 'success') {
 
 function formatMoney(n, symbol = 'UGX') {
     return symbol + ' ' + (Number(n) || 0).toLocaleString();
+}
+
+function formatCompactMoney(n, symbol = 'UGX') {
+    const v = Number(n) || 0;
+    const abs = Math.abs(v);
+    const sign = v < 0 ? '-' : '';
+    if (abs >= 1e9) return sign + symbol + ' ' + (abs / 1e9).toFixed(abs >= 1e10 ? 1 : 2) + 'B';
+    if (abs >= 1e6) return sign + symbol + ' ' + (abs / 1e6).toFixed(abs >= 1e7 ? 1 : 2) + 'M';
+    if (abs >= 1e4) return sign + symbol + ' ' + (abs / 1e3).toFixed(abs >= 1e5 ? 0 : 1) + 'K';
+    return sign + symbol + ' ' + abs.toLocaleString();
+}
+
+function lockSubmit(el, busyText) {
+    if (!el) return true;
+    if (el.dataset.submitting === '1') return true;
+    el.dataset.submitting = '1';
+    if (el.tagName === 'BUTTON' || el.type === 'submit') {
+        el.disabled = true;
+        if (busyText) {
+            el.dataset._oldHtml = el.innerHTML;
+            el.innerHTML = busyText;
+        }
+    } else if (el.tagName === 'FORM') {
+        const btn = el.querySelector('button[type="submit"], button:not([type])');
+        if (btn) {
+            btn.disabled = true;
+            btn.dataset._oldHtml = btn.innerHTML;
+            if (busyText) btn.innerHTML = busyText;
+        }
+    }
+    return false;
+}
+function unlockSubmit(el) {
+    if (!el) return;
+    el.dataset.submitting = '0';
+    if (el.tagName === 'BUTTON' || el.type === 'submit') {
+        el.disabled = false;
+        if (el.dataset._oldHtml) { el.innerHTML = el.dataset._oldHtml; delete el.dataset._oldHtml; }
+    } else if (el.tagName === 'FORM') {
+        const btn = el.querySelector('button[type="submit"], button:not([type])');
+        if (btn) {
+            btn.disabled = false;
+            if (btn.dataset._oldHtml) { btn.innerHTML = btn.dataset._oldHtml; delete btn.dataset._oldHtml; }
+        }
+    }
 }
 
 function formatDate(d) {
@@ -2501,42 +2558,30 @@ async function renderDashboard() {
             </div>
         </div>
 
-        <!-- P&L Summary -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#198754;"><i class="bi bi-cash-stack"></i></div>
-                <div><div class="num">${formatMoney(totalRevenue)}</div><div class="lbl">Total Revenue</div></div></div></div>
-            <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#dc3545;"><i class="bi bi-cart"></i></div>
-                <div><div class="num">${formatMoney(totalExpenses)}</div><div class="lbl">Total Expenses</div></div></div></div>
-            <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#0d6efd;"><i class="bi bi-graph-up-arrow"></i></div>
-                <div><div class="num ${grossProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatMoney(grossProfit)}</div><div class="lbl">Gross Profit</div></div></div></div>
-            <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#6f42c1;"><i class="bi bi-percent"></i></div>
-                <div><div class="num">${totalRevenue > 0 ? (grossProfit / totalRevenue * 100).toFixed(1) : 0}%</div><div class="lbl">Gross Margin</div></div></div></div>
+        <!-- Primary KPIs (compact) -->
+        <div class="row g-2 g-md-3 mb-3 kpi-compact">
+            <div class="col-6 col-md-3"><div class="stat-item" title="${formatMoney(totalRevenue)}"><div class="icon" style="background:#198754;"><i class="bi bi-cash-stack"></i></div>
+                <div><div class="num">${formatCompactMoney(totalRevenue)}</div><div class="lbl">Revenue</div></div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-item" title="${formatMoney(totalExpenses)}"><div class="icon" style="background:#dc3545;"><i class="bi bi-cart"></i></div>
+                <div><div class="num">${formatCompactMoney(totalExpenses)}</div><div class="lbl">Expenses</div></div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-item" title="${formatMoney(grossProfit)}"><div class="icon" style="background:#0d6efd;"><i class="bi bi-graph-up-arrow"></i></div>
+                <div><div class="num ${grossProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCompactMoney(grossProfit)}</div><div class="lbl">Gross Profit</div></div></div></div>
+            <div class="col-6 col-md-3"><div class="stat-item" title="${formatMoney(netProfit)}"><div class="icon" style="background:#6f42c1;"><i class="bi bi-pie-chart"></i></div>
+                <div><div class="num ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCompactMoney(netProfit)}</div><div class="lbl">Net · ${totalRevenue > 0 ? (grossProfit / totalRevenue * 100).toFixed(0) : 0}%</div></div></div></div>
         </div>
-
-        <!-- Second row: Net Profit, Losses, etc. -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#0d6efd;"><i class="bi bi-pie-chart"></i></div>
-                <div><div class="num ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatMoney(netProfit)}</div><div class="lbl">Net Profit</div></div></div></div>
-            <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#dc3545;"><i class="bi bi-arrow-down-circle"></i></div>
-                <div><div class="num text-danger">${formatMoney(totalLosses)}</div><div class="lbl">Inventory Losses</div></div></div></div>
-            <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#ffc107;"><i class="bi bi-people"></i></div>
-                <div><div class="num">${totalCustomers}</div><div class="lbl">Customers</div></div></div></div>
-            <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#17a2b8;"><i class="bi bi-truck"></i></div>
-                <div><div class="num">${totalSuppliers}</div><div class="lbl">Suppliers</div></div></div></div>
-        </div>
-
-        <!-- Stats grid -->
-        <div class="stat-grid">
+        <div class="stat-grid kpi-compact mb-3">
+            <div class="stat-item" title="${formatMoney(todaySales)}"><div class="icon" style="background:#ffc107;"><i class="bi bi-calendar-day"></i></div>
+                <div><div class="num">${formatCompactMoney(todaySales)}</div><div class="lbl">Today Sales</div></div></div>
+            <div class="stat-item" title="${formatMoney(totalLosses)}"><div class="icon" style="background:#dc3545;"><i class="bi bi-arrow-down-circle"></i></div>
+                <div><div class="num text-danger">${formatCompactMoney(totalLosses)}</div><div class="lbl">Losses</div></div></div>
             <div class="stat-item"><div class="icon" style="background:#0d6efd;"><i class="bi bi-box-seam"></i></div>
-                <div><div class="num">${totalLitres.toFixed(0)} L</div><div class="lbl">Total Stock</div></div></div>
-            <div class="stat-item"><div class="icon" style="background:#198754;"><i class="bi bi-cash-stack"></i></div>
-                <div><div class="num">${formatMoney(totalRevenue)}</div><div class="lbl">Total Sales</div></div></div>
-            <div class="stat-item"><div class="icon" style="background:#ffc107;"><i class="bi bi-calendar-day"></i></div>
-                <div><div class="num">${formatMoney(todaySales)}</div><div class="lbl">Today's Sales</div></div></div>
-            <div class="stat-item"><div class="icon" style="background:#dc3545;"><i class="bi bi-clock-history"></i></div>
+                <div><div class="num">${totalLitres >= 1000 ? (totalLitres/1000).toFixed(1) + 'k' : totalLitres.toFixed(0)} L</div><div class="lbl">Stock</div></div></div>
+            <div class="stat-item"><div class="icon" style="background:#17a2b8;"><i class="bi bi-clock-history"></i></div>
                 <div><div class="num">${activeShifts}</div><div class="lbl">Active Shifts</div></div></div>
             <div class="stat-item"><div class="icon" style="background:#dc3545;"><i class="bi bi-exclamation-triangle"></i></div>
-                <div><div class="num">${lowCount}</div><div class="lbl">Low Stock Items</div></div></div>
+                <div><div class="num">${lowCount}</div><div class="lbl">Low Stock</div></div></div>
+            <div class="stat-item"><div class="icon" style="background:#6c757d;"><i class="bi bi-people"></i></div>
+                <div><div class="num">${totalCustomers} / ${totalSuppliers}</div><div class="lbl">Cust / Supp</div></div></div>
         </div>
 
         <!-- Stock by product -->
@@ -3020,6 +3065,8 @@ async function renderSales() {
     // ---- Complete sale ----
     completeBtn.onclick = async function() {
         if (!cart.length) return;
+        if (this.dataset.submitting === '1') return;
+        this.dataset.submitting = '1';
         const stationId = cart[0].stationId;
         const cashierId = $('#saleCashier').value;
         const saleDate = $('#saleDate').value;
@@ -3193,6 +3240,7 @@ async function renderSales() {
         } catch (err) {
             toast('Sale failed: ' + err.message, 'danger');
         } finally {
+            btn.dataset.submitting = '0';
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-check-circle"></i> Complete Sale & Generate Invoice';
         }
@@ -3783,7 +3831,17 @@ async function renderBalancing() {
         const rangeFrom = balFromEl && balFromEl.value ? new Date(balFromEl.value + 'T00:00:00') : null;
         const rangeTo = balToEl && balToEl.value ? new Date(balToEl.value + 'T23:59:59') : null;
 
+        // Expenses already attached to a saved reconciliation must not be reused
+        const allRecons = await getAll('reconciliations') || [];
+        const usedExpenseIds = new Set();
+        allRecons.forEach(r => {
+            (r.expense_ids || []).forEach(id => { if (id) usedExpenseIds.add(String(id)); });
+        });
+
         const cashierExpenses = allExpenses.filter(e => {
+            if (e.id && usedExpenseIds.has(String(e.id))) return false; // already reconciled
+            if (e.reconciled === true || e.reconciled_in) return false;
+
             const eName = (e.person_name || '').toLowerCase().trim();
             const samePerson =
                 (e.person_id && String(e.person_id) === String(cashierId)) ||
@@ -3793,12 +3851,11 @@ async function renderBalancing() {
                 (eName && cashierUser?.name && eName === String(cashierUser.name).toLowerCase().trim());
             if (!samePerson) return false;
 
-            // Station: allow match OR expense with no station set
+            // Station: soft filter
             if (stationId && e.station_id && String(e.station_id) !== String(stationId) && String(e.station_id) !== '1') {
-                // still allow if only one station company — do not hard-fail; soft filter
+                // allow
             }
 
-            // Date: use balancing From/To if set, else shift day, else include
             const ed = e.expense_date ? new Date(e.expense_date) :
                 (e.created_at && e.created_at.toDate ? e.created_at.toDate() :
                 (e.created_at ? new Date(e.created_at) : null));
@@ -3808,7 +3865,6 @@ async function renderBalancing() {
                 const from = new Date(shiftStart); from.setHours(0, 0, 0, 0);
                 const to = shiftEnd ? new Date(shiftEnd) : new Date(shiftStart);
                 to.setHours(23, 59, 59, 999);
-                // widen ±1 day for night shifts
                 from.setDate(from.getDate() - 1);
                 to.setDate(to.getDate() + 1);
                 if (ed < from || ed > to) return false;
@@ -4132,8 +4188,9 @@ async function renderBalancing() {
 
         // ---- Save reconciliation ----
         document.getElementById('saveReconciliationBtn').onclick = async function() {
+            if (lockSubmit(this, '<span class="spinner-border spinner-border-sm"></span> Saving...')) return;
             const actual = parseFloat(document.getElementById('actualCashInput').value);
-            if (isNaN(actual) || actual < 0) { toast('Please enter a valid amount', 'warning'); return; }
+            if (isNaN(actual) || actual < 0) { unlockSubmit(this); toast('Please enter a valid amount', 'warning'); return; }
 
             if (totalCashierExpenses === 0) {
                 const proceed = confirm('No expenses were found for this cashier in Financials → Expenses.\n\nOnly recorded expenses are accepted during balancing.\n\nContinue with 0 expenses?');
@@ -4153,6 +4210,7 @@ async function renderBalancing() {
             else comment = 'Excess';
 
             try {
+                const expenseIds = cashierExpenses.map(e => e.id).filter(Boolean);
                 await addDoc('reconciliations', {
                     station_id: stationId,
                     cashier_id: cashierId,
@@ -4166,12 +4224,22 @@ async function renderBalancing() {
                     actual_cash: actual,
                     cashier_expenses: totalCashierExpenses,
                     adjusted_actual: adjusted,
-                    expense_ids: cashierExpenses.map(e => e.id),
+                    expense_ids: expenseIds,
                     difference: diff,
                     comment: comment,
                     reconciled_by: state.user.id,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
+                // Flag each expense so it cannot be picked again on another balancing
+                for (const eid of expenseIds) {
+                    try {
+                        await updateDoc('expenses', eid, {
+                            reconciled: true,
+                            reconciled_at: firebase.firestore.FieldValue.serverTimestamp(),
+                            reconciled_shift_id: shift.id
+                        });
+                    } catch (_) { /* non-fatal */ }
+                }
                 const resultDiv = document.getElementById('reconciliationResult');
                 const sign = diff >= 0 ? '+' : '';
                 const cls = Math.abs(diff) < 1 ? 'diff-zero' : (diff < 0 ? 'diff-negative' : 'diff-positive');
@@ -4186,7 +4254,7 @@ async function renderBalancing() {
                     <span class="${cls}">Difference: ${sign}${formatMoney(diff)} (${comment})</span></div>`;
                 toast('Reconciliation saved successfully', 'success');
                 setTimeout(() => { document.getElementById('balancingFilter').dispatchEvent(new Event('submit')); }, 1500);
-            } catch (err) { toast('Error saving reconciliation: ' + err.message, 'danger'); }
+            } catch (err) { unlockSubmit(document.getElementById('saveReconciliationBtn')); toast('Error saving reconciliation: ' + err.message, 'danger'); }
         };
 
         // ---- Next button logic ----
@@ -4790,14 +4858,25 @@ async function renderStock() {
                     const supRef = db.collection('suppliers').doc(supplierId);
                     const supDoc = await tx.get(supRef);
                     if (supDoc.exists) {
-                        const currentBal = supDoc.data().current_balance || 0;
-                        tx.update(supRef, { current_balance: currentBal + totalCost });
+                        const currentBal = Number(supDoc.data().current_balance || 0);
+                        // If currentBal < 0, supplier had prepaid credit; offload consumes it
+                        const prepaidBefore = currentBal < 0 ? Math.abs(currentBal) : 0;
+                        const prepaidApplied = Math.min(prepaidBefore, totalCost);
+                        const newBal = currentBal + totalCost;
+                        tx.update(supRef, {
+                            current_balance: newBal,
+                            last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
                         const transRef = db.collection('supplier_transactions').doc();
                         tx.set(transRef, {
                             supplier_id: supplierId,
                             amount: totalCost,
-                            balance_after: currentBal + totalCost,
+                            balance_after: newBal,
                             source: 'offload',
+                            prepaid_applied: prepaidApplied,
+                            note: prepaidApplied > 0
+                                ? ('Offload applied prepaid credit of ' + prepaidApplied)
+                                : null,
                             reference_id: stockRef.id,
                             user_id: state.user.id,
                             timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -4807,7 +4886,23 @@ async function renderStock() {
             });
 
             await logAudit('offload_stock', { station: stationId, invoice: invoiceNo, items: items.length, total: totalCost });
-            toast('Offloading recorded. Inventory and supplier balance updated.', 'success');
+            let offMsg = 'Offloading recorded. Inventory updated.';
+            if (supplierId) {
+                try {
+                    const supAfter = await getDoc('suppliers', supplierId);
+                    const balAfter = supAfter ? Number(supAfter.current_balance || 0) : 0;
+                    if (balAfter < 0) {
+                        offMsg += ' Prepaid credit remaining: ' + formatMoney(Math.abs(balAfter)) + '.';
+                    } else if (balAfter === 0) {
+                        offMsg += ' Supplier account settled (prepaid fully applied).';
+                    } else {
+                        offMsg += ' Company now owes supplier: ' + formatMoney(balAfter) + '.';
+                    }
+                } catch (_) {
+                    offMsg += ' Supplier balance updated.';
+                }
+            }
+            toast(offMsg, 'success');
 
             const voucherData = {
                 id: 'OFF-' + Date.now().toString(36).toUpperCase(),
@@ -5878,34 +5973,27 @@ async function renderFinancials() {
         }
 
         function paymentRows() {
-            if (supplierPayments.length === 0) return '<tr><td colspan="6" class="text-muted text-center">No supplier payments</td></tr>';
+            if (supplierPayments.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No supplier payments or prepayments</td></tr>';
             let rows = '';
-            supplierPayments.slice(0, 20).forEach(p => {
+            const sorted = [...supplierPayments].sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+            sorted.slice(0, 30).forEach(p => {
                 const sup = suppliers.find(s => s.id === p.supplier_id);
                 const supName = sup ? sup.name : 'Unknown';
                 let sourceLabel = 'Unknown';
                 if (p.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
-                else { const acc = accounts.find(a => a.id === p.source_account); if (acc) sourceLabel = acc.bank_name; }
-                let limitBadge = '';
-                const limit = creditLimits.find(c => c.supplier_id === p.supplier_id);
-                if (limit) {
-                    const totalPaid = supplierPayments.filter(sp => sp.supplier_id === p.supplier_id)
-                        .reduce((s, sp) => s + Number(sp.amount || 0), 0);
-                    if (totalPaid > limit.limit) {
-                        limitBadge =
-                            `<span class="credit-limit-exceeded"><i class="bi bi-exclamation-triangle"></i> Exceeded</span>`;
-                    } else {
-                        limitBadge =
-                            `<span class="credit-limit-ok"><i class="bi bi-check-circle"></i> OK</span>`;
-                    }
-                }
+                else { const acc = accounts.find(a => a.id === p.source_account); if (acc) sourceLabel = acc.bank_name || acc.name || 'Bank'; }
+                const isPre = !!p.is_prepayment;
+                const typeBadge = isPre
+                    ? '<span class="badge bg-warning text-dark">Prepayment</span>'
+                    : '<span class="badge bg-primary">Payment</span>';
                 rows += `<tr>
                         <td><strong>${esc(supName)}</strong></td>
+                        <td>${typeBadge}</td>
                         <td>${esc(sourceLabel)}</td>
-                        <td>${formatMoney(p.amount)}</td>
+                        <td class="fw-bold">${formatMoney(p.amount)}</td>
                         <td>${esc(p.reference || '—')}</td>
-                        <td class="fs-xs">${formatDate(p.created_at)}</td>
-                        <td>${limitBadge}</td>
+                        <td class="fs-xs">${formatDate(p.payment_date || p.created_at)}</td>
+                        <td class="small text-muted">${esc(p.note || '—')}</td>
                     </tr>`;
             });
             return rows;
@@ -5959,22 +6047,22 @@ async function renderFinancials() {
         let html = `
             <div class="card-box">
                 <h5 class="mb-3"><i class="bi bi-wallet2"></i> Financial Dashboard</h5>
-                <div class="row g-3 mb-4 financial-summary">
-                    <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#198754;"><i class="bi bi-bank"></i></div>
-                        <div><div class="num">${formatMoney(accounts.reduce((s, a) => s + Number(a.balance || 0), 0))}</div><div class="lbl">Total Balance</div></div></div></div>
-                    <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#0d6efd;"><i class="bi bi-arrow-up-circle"></i></div>
-                        <div><div class="num">${formatMoney(bankings.filter(b => {
+                <div class="row g-2 g-md-3 mb-3 financial-summary kpi-compact">
+                    <div class="col-6 col-md-3"><div class="stat-item" title="Sum of all bank account balances"><div class="icon" style="background:#198754;"><i class="bi bi-bank"></i></div>
+                        <div><div class="num">${formatCompactMoney(accounts.reduce((s, a) => s + Number(a.balance || 0), 0))}</div><div class="lbl">Bank Balance</div></div></div></div>
+                    <div class="col-6 col-md-3"><div class="stat-item" title="Deposits this month"><div class="icon" style="background:#0d6efd;"><i class="bi bi-arrow-up-circle"></i></div>
+                        <div><div class="num">${formatCompactMoney(bankings.filter(b => {
                             const d = b.created_at?.toDate ? b.created_at.toDate() : new Date(b.created_at);
                             const now = new Date();
-                            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                        }).reduce((s, b) => s + Number(b.amount || 0), 0))}</div><div class="lbl">Deposits (This Month)</div></div></div></div>
-                    <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#dc3545;"><i class="bi bi-arrow-down-circle"></i></div>
-                        <div><div class="num">${formatMoney(expenses.filter(e => {
+                            return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                        }).reduce((s, b) => s + Number(b.amount || 0), 0))}</div><div class="lbl">Cash In (Month)</div></div></div></div>
+                    <div class="col-6 col-md-3"><div class="stat-item" title="Expenses this month"><div class="icon" style="background:#dc3545;"><i class="bi bi-arrow-down-circle"></i></div>
+                        <div><div class="num">${formatCompactMoney(expenses.filter(e => {
                             const d = e.created_at?.toDate ? e.created_at.toDate() : new Date(e.created_at);
                             const now = new Date();
-                            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                        }).reduce((s, e) => s + Number(e.amount || 0), 0))}</div><div class="lbl">Expenses (This Month)</div></div></div></div>
-                    <div class="col-md-3"><div class="stat-item"><div class="icon" style="background:#6f42c1;"><i class="bi bi-receipt"></i></div>
+                            return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                        }).reduce((s, e) => s + Number(e.amount || 0), 0))}</div><div class="lbl">Cash Out (Month)</div></div></div></div>
+                    <div class="col-6 col-md-3"><div class="stat-item"><div class="icon" style="background:#6f42c1;"><i class="bi bi-receipt"></i></div>
                         <div><div class="num">${accounts.length}</div><div class="lbl">Bank Accounts</div></div></div></div>
                 </div>
 
@@ -6100,36 +6188,59 @@ async function renderFinancials() {
                         </div>
                     </div>
 
-                    <!-- Supplier Payments -->
+                    <!-- Supplier Payments & Prepayments -->
                     <div class="tab-pane fade" id="payments" role="tabpanel">
-                        <div class="row g-3">
-                            <div class="col-lg-5">
-                                <div class="card-box">
-                                    <h6 class="mb-3">Pay Supplier</h6>
+                        <div class="row g-3 mb-3">
+                            <div class="col-lg-6">
+                                <div class="card-box h-100 border border-primary">
+                                    <h6 class="mb-2"><i class="bi bi-cash-stack text-primary"></i> Pay Supplier (after goods / invoice)</h6>
+                                    <p class="small text-muted mb-3">Payment for goods already received or against an open invoice. Reduces what the company owes.</p>
                                     <form id="paymentForm">
                                         <div class="mb-2"><label class="form-label small">Supplier *</label>
                                             <select id="paySupplier" class="form-select form-select-sm" required>${supplierOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Pay From</label>
+                                        <div class="mb-2"><label class="form-label small">Pay From *</label>
                                             <select id="paySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
-                                        <div class="mb-2"><input type="number" id="payAmount" class="form-control form-control-sm" placeholder="Amount *" step="100" required></div>
-                                        <div class="mb-2"><input id="payReference" class="form-control form-control-sm" placeholder="Reference / Invoice #"></div>
-                                        <div class="mb-2"><input id="payNote" class="form-control form-control-sm" placeholder="Note"></div>
+                                        <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
+                                            <input type="number" id="payAmount" class="form-control form-control-sm" placeholder="0" step="100" min="1" required></div>
+                                        <div class="mb-2"><label class="form-label small">Invoice / Reference</label>
+                                            <input id="payReference" class="form-control form-control-sm" placeholder="Invoice #"></div>
+                                        <div class="mb-2"><label class="form-label small">Note</label>
+                                            <input id="payNote" class="form-control form-control-sm" placeholder="Optional note"></div>
                                         <div class="mb-2"><label class="form-label small">Date</label>
                                             <input type="date" id="payDate" class="form-control form-control-sm" value="${today}"></div>
-                                        <button class="btn btn-primary w-100">Record Payment</button>
+                                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-circle"></i> Record Payment</button>
                                     </form>
                                 </div>
                             </div>
-                            <div class="col-lg-7">
-                                <div class="card-box">
-                                    <h6 class="mb-3">Supplier Payment History</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead><tr><th>Supplier</th><th>From Account</th><th>Amount</th><th>Reference</th><th>Date</th><th>Credit Status</th></tr></thead>
-                                            <tbody>${paymentRows()}</tbody>
-                                        </table>
-                                    </div>
+                            <div class="col-lg-6">
+                                <div class="card-box h-100 border border-warning">
+                                    <h6 class="mb-2"><i class="bi bi-wallet2 text-warning"></i> Prepayment (before supplying goods)</h6>
+                                    <p class="small text-muted mb-3">Give the supplier money <strong>before</strong> delivery. Creates a <strong>prepaid credit</strong> on their account. When they later offload goods, that credit is used up automatically (balance rises toward zero).</p>
+                                    <form id="prepaymentForm">
+                                        <div class="mb-2"><label class="form-label small">Supplier *</label>
+                                            <select id="prepaySupplier" class="form-select form-select-sm" required>${supplierOptions}</select></div>
+                                        <div class="mb-2"><label class="form-label small">Pay From *</label>
+                                            <select id="prepaySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
+                                        <div class="mb-2"><label class="form-label small">Prepayment Amount (UGX) *</label>
+                                            <input type="number" id="prepayAmount" class="form-control form-control-sm" placeholder="0" step="100" min="1" required></div>
+                                        <div class="mb-2"><label class="form-label small">Reference</label>
+                                            <input id="prepayReference" class="form-control form-control-sm" placeholder="e.g. Advance for next delivery"></div>
+                                        <div class="mb-2"><label class="form-label small">Note</label>
+                                            <input id="prepayNote" class="form-control form-control-sm" placeholder="Purpose of prepayment"></div>
+                                        <div class="mb-2"><label class="form-label small">Date</label>
+                                            <input type="date" id="prepayDate" class="form-control form-control-sm" value="${today}"></div>
+                                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-lightning-charge"></i> Record Prepayment</button>
+                                    </form>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="card-box">
+                            <h6 class="mb-3"><i class="bi bi-clock-history"></i> Payment &amp; Prepayment History</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead><tr><th>Supplier</th><th>Type</th><th>From Account</th><th>Amount</th><th>Reference</th><th>Date</th><th>Note</th></tr></thead>
+                                    <tbody>${paymentRows()}</tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -6295,6 +6406,7 @@ async function renderFinancials() {
 
         document.getElementById('expForm').onsubmit = async function(e) {
             e.preventDefault();
+            if (lockSubmit(this, 'Saving...')) return;
             const source = document.getElementById('expSource').value;
             const personId = document.getElementById('expPerson').value;
             const desc = document.getElementById('expDesc').value.trim();
@@ -6344,27 +6456,80 @@ async function renderFinancials() {
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
         };
 
+        async function recordSupplierPay(opts) {
+            const { supplierId, source, amount, reference, note, isPrepayment, dateVal } = opts;
+            if (!supplierId || !source || !amount || amount <= 0) {
+                toast('Fill all required fields', 'warning');
+                return false;
+            }
+            const sourceLabel = isPrepayment ? 'prepayment' : 'payment';
+            await addDoc('supplier_payments', {
+                station_id: state.currentStationId || '1',
+                supplier_id: supplierId,
+                source_account: source,
+                amount: amount,
+                reference: reference || null,
+                note: note || null,
+                is_prepayment: !!isPrepayment,
+                payment_date: dateVal || null,
+                created_by: state.user.id
+            });
+            // Negative delta: reduces amount owed OR builds prepaid credit (negative balance)
+            await updateSupplierBalance(supplierId, -amount, sourceLabel, reference || '');
+            if (source !== 'petty_cash' && source !== '') {
+                const acc = await getDoc('bank_accounts', source);
+                if (acc) {
+                    await updateDoc('bank_accounts', source, { balance: (Number(acc.balance) || 0) - amount });
+                }
+            }
+            return true;
+        }
+
         document.getElementById('paymentForm').onsubmit = async function(e) {
             e.preventDefault();
-            const supplierId = document.getElementById('paySupplier').value;
-            const source = document.getElementById('paySource').value;
-            const amount = parseFloat(document.getElementById('payAmount').value);
-            const reference = document.getElementById('payReference').value.trim();
-            const note = document.getElementById('payNote').value.trim();
-            if (!supplierId || !source || !amount || amount <= 0) { toast('Fill all required fields', 'warning'); return; }
+            if (lockSubmit(this, '<span class="spinner-border spinner-border-sm"></span> Saving...')) return;
             try {
-                await addDoc('supplier_payments', { station_id: state.currentStationId || '1',
-                    supplier_id: supplierId, source_account: source, amount: amount,
-                    reference: reference || null, note: note || null, created_by: state.user.id });
-                await updateSupplierBalance(supplierId, -amount, 'payment', '');
-                if (source !== 'petty_cash' && source !== '') {
-                    const acc = await getDoc('bank_accounts', source);
-                    if (acc) { await updateDoc('bank_accounts', source, { balance: (acc.balance || 0) - amount }); }
-                }
-                toast('Supplier payment recorded');
-                renderFinancials();
-            } catch (err) { toast('Error: ' + err.message, 'danger'); }
+                const ok = await recordSupplierPay({
+                    supplierId: document.getElementById('paySupplier').value,
+                    source: document.getElementById('paySource').value,
+                    amount: parseFloat(document.getElementById('payAmount').value),
+                    reference: document.getElementById('payReference').value.trim(),
+                    note: document.getElementById('payNote').value.trim(),
+                    isPrepayment: false,
+                    dateVal: document.getElementById('payDate').value
+                });
+                if (ok) {
+                    toast('Supplier payment recorded', 'success');
+                    renderFinancials();
+                } else unlockSubmit(this);
+            } catch (err) { unlockSubmit(this); toast('Error: ' + err.message, 'danger'); }
         };
+
+        const prepayFormEl = document.getElementById('prepaymentForm');
+        if (prepayFormEl) {
+            prepayFormEl.onsubmit = async function(e) {
+                e.preventDefault();
+                if (lockSubmit(this, '<span class="spinner-border spinner-border-sm"></span> Saving...')) return;
+                try {
+                    const supplierId = document.getElementById('prepaySupplier').value;
+                    const amount = parseFloat(document.getElementById('prepayAmount').value);
+                    const ok = await recordSupplierPay({
+                        supplierId: supplierId,
+                        source: document.getElementById('prepaySource').value,
+                        amount: amount,
+                        reference: document.getElementById('prepayReference').value.trim(),
+                        note: document.getElementById('prepayNote').value.trim(),
+                        isPrepayment: true,
+                        dateVal: document.getElementById('prepayDate').value
+                    });
+                    if (ok) {
+                        toast('Prepayment recorded — prepaid credit on supplier account: ' + formatMoney(amount), 'success');
+                        await logAudit('supplier_prepayment', { supplier_id: supplierId, amount: amount });
+                        renderFinancials();
+                    } else unlockSubmit(this);
+                } catch (err) { unlockSubmit(this); toast('Error: ' + err.message, 'danger'); }
+            };
+        }
 
         document.getElementById('creditForm').onsubmit = async function(e) {
             e.preventDefault();
@@ -6680,6 +6845,7 @@ async function renderCustomers() {
             toast('Customer added!');
             renderCustomers();
         } catch (err) {
+            unlockSubmit(document.getElementById('customerForm'));
             toast('Error: ' + err.message, 'danger');
         }
     };
@@ -6774,10 +6940,87 @@ async function renderCustomers() {
                             '</tr>';
                     });
                 }
+                // Payments (type=payment sales) with reverse option
+                const paymentSales = sales
+                    .filter(s => (s.customer_id === id || s.customer_name === name) && s.type === 'payment')
+                    .sort((a, b) => {
+                        const da = a.created_at && a.created_at.seconds ? a.created_at.seconds : 0;
+                        const dbv = b.created_at && b.created_at.seconds ? b.created_at.seconds : 0;
+                        return dbv - da;
+                    });
+                let payRows = '';
+                if (paymentSales.length === 0) {
+                    payRows = '<tr><td colspan="5" class="text-muted text-center">No payments recorded</td></tr>';
+                } else {
+                    paymentSales.forEach(s => {
+                        const reversed = s.status === 'reversed';
+                        payRows += '<tr class="' + (reversed ? 'table-secondary' : '') + '">' +
+                            '<td class="fs-xs">' + formatDate(s.sale_date || s.created_at) + '</td>' +
+                            '<td>' + esc(s.payment_method || '—') + '</td>' +
+                            '<td class="fw-bold">' + formatMoney(s.amount) + '</td>' +
+                            '<td>' + (reversed ? '<span class="badge bg-secondary">Reversed</span>' : '<span class="badge bg-success">Active</span>') + '</td>' +
+                            '<td>' + (reversed ? '—' :
+                                '<button type="button" class="btn btn-sm btn-outline-danger reverse-payment-btn" data-sale-id="' + s.id + '" data-customer-id="' + id + '" data-amount="' + (Number(s.amount)||0) + '" data-tx-id=""><i class="bi bi-arrow-counterclockwise"></i> Reverse</button>') +
+                            '</td></tr>';
+                    });
+                }
+
                 body.innerHTML = '<div class="mb-3"><h6>Purchase History — ' + esc(name) + '</h6>' +
                     '<p>Purchases: <strong>' + customerSales.length + '</strong> | Total Qty: <strong>' + totalQty.toFixed(2) + ' L</strong> | Total Spent: <strong>' + formatMoney(totalAmt) + '</strong></p></div>' +
+                    '<div class="table-responsive mb-4"><table class="table table-sm table-hover"><thead><tr>' +
+                    '<th>Date</th><th>Station</th><th>Product</th><th>Qty</th><th>Price/L</th><th>Amount</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+                    '<h6 class="mb-2"><i class="bi bi-cash"></i> Payments received</h6>' +
+                    '<p class="small text-muted">Reverse a payment to restore the customer balance and remove it from revenue.</p>' +
                     '<div class="table-responsive"><table class="table table-sm table-hover"><thead><tr>' +
-                    '<th>Date</th><th>Station</th><th>Product</th><th>Qty</th><th>Price/L</th><th>Amount</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+                    '<th>Date</th><th>Method</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody>' + payRows + '</tbody></table></div>';
+
+                // Bind reverse buttons inside modal
+                body.querySelectorAll('.reverse-payment-btn').forEach(rbtn => {
+                    rbtn.onclick = async function() {
+                        if (lockSubmit(this, '...')) return;
+                        const saleId = this.dataset.saleId;
+                        const customerId = this.dataset.customerId;
+                        const amount = parseFloat(this.dataset.amount) || 0;
+                        if (!confirm('Reverse this payment of ' + formatMoney(amount) + '?\nCustomer balance increases and revenue is reduced.')) {
+                            unlockSubmit(this);
+                            return;
+                        }
+                        try {
+                            showLoading(true);
+                            const cust = await getDoc('customers', customerId);
+                            const currentBal = cust ? Number(cust.current_balance || 0) : 0;
+                            const newBal = currentBal + amount;
+                            await updateDoc('customers', customerId, { current_balance: newBal });
+                            if (saleId) {
+                                await updateDoc('sales', saleId, {
+                                    status: 'reversed',
+                                    reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
+                                    reversed_by: state.user.id
+                                });
+                            }
+                            await addDoc('customer_transactions', {
+                                customer_id: customerId,
+                                amount: amount,
+                                balance_after: newBal,
+                                source: 'payment_reversal',
+                                reference_id: saleId || null,
+                                note: 'Payment reversed',
+                                user_id: state.user.id,
+                                status: 'active',
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            await logAudit('customer_payment_reverse', { customer_id: customerId, amount: amount, sale_id: saleId });
+                            toast('Payment reversed', 'success');
+                            modal.hide();
+                            renderCustomers();
+                        } catch (err) {
+                            toast('Error: ' + err.message, 'danger');
+                            unlockSubmit(this);
+                        } finally {
+                            showLoading(false);
+                        }
+                    };
+                });
             } catch (err) {
                 body.innerHTML = '<div class="alert alert-danger">Error loading purchase history: ' + err.message + '</div>';
             }
@@ -6895,10 +7138,12 @@ async function renderCustomers() {
 
         // Validation
         if (!customerId || !customer) {
+            unlockSubmit(document.getElementById('savePaymentBtn'));
             document.getElementById('paymentResult').innerHTML = '<span class="text-danger">Customer not found.</span>';
             return;
         }
         if (!amount || amount <= 0) {
+            unlockSubmit(document.getElementById('savePaymentBtn'));
             document.getElementById('paymentResult').innerHTML = '<span class="text-danger">Enter a valid amount greater than 0.</span>';
             return;
         }
@@ -7044,16 +7289,22 @@ async function renderSuppliers() {
             const payments = supplierPayments.filter(p => p.supplier_id === s.id);
             const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
             const balance = Number(s.current_balance || 0);
-            const status = balance > 0 ? 'Company Owes' : (balance < 0 ? 'Supplier Owes' : 'Settled');
+            const prepayTotal = payments.filter(p => p.is_prepayment).reduce((sum, p) => sum + Number(p.amount || 0), 0);
+            // Negative balance = remaining prepaid credit still available against future supplies
+            const prepaidCredit = balance < 0 ? Math.abs(balance) : 0;
+            const status = balance > 0 ? 'Company Owes' : (balance < 0 ? 'Prepaid Credit' : 'Settled');
 
             html += `<tr>
                         <td><strong>${esc(s.name)}</strong></td>
                         <td>${esc(s.phone || '—')}</td>
                         <td>${esc(s.address || '—')}</td>
                         <td>${formatMoney(s.opening_balance || 0)}</td>
-                        <td class="${balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : 'balance-zero'}">${formatMoney(balance)}</td>
+                        <td class="${balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : 'balance-zero'}">
+                            ${formatMoney(balance)}
+                            ${prepaidCredit > 0 ? '<br><span class="badge bg-success">Prepaid left: ' + formatMoney(prepaidCredit) + '</span>' : ''}
+                        </td>
                         <td>${formatMoney(totalOffloads)}</td>
-                        <td>${formatMoney(totalPayments)}</td>
+                        <td>${formatMoney(totalPayments)}${prepayTotal > 0 ? '<br><span class="small text-warning">of which prepay: ' + formatMoney(prepayTotal) + '</span>' : ''}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-info statement-btn" data-id="${s.id}" data-name="${esc(s.name)}" data-type="supplier"><i class="bi bi-receipt"></i></button>
                             <button class="btn btn-sm btn-outline-danger delete-supplier-btn" data-id="${s.id}" data-balance="${balance}"><i class="bi bi-trash"></i></button>
