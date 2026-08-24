@@ -359,7 +359,77 @@
             .main-content { margin-left: 0; }
             .sidebar-toggle { display: inline-block !important; }
         }
-        @media (min-width: 769px) { .sidebar-toggle { display: none !important; } }
+        @media (min-width: 769px) {
+            .sidebar-toggle { display: none !important; }
+            .main-content { margin-left: var(--sidebar-w); min-width: 0; }
+            .page-content, #pageContent { max-width: 1600px; }
+        }
+        /* Windows desktop / large screens: readable density */
+        @media (min-width: 1200px) {
+            .dash-hero-metric .value { font-size: 1.75rem !important; }
+            .dash-layout { gap: 1.25rem; }
+        }
+        @media (min-width: 769px) and (max-width: 1199px) {
+            .dash-hero-metric .value { font-size: 1.35rem !important; }
+        }
+        /* Dashboard redesign */
+        .dash-topbar {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
+            gap: 12px; margin-bottom: 18px;
+        }
+        .dash-topbar h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; }
+        .dash-period {
+            display: inline-flex; background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 3px; gap: 2px;
+        }
+        .dash-period button {
+            border: none; background: transparent; padding: 6px 14px; border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600; color: #6c7a8e; cursor: pointer;
+        }
+        .dash-period button.active { background: #0b1a33; color: #fff; }
+        .dash-hero-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+        @media (max-width: 992px) { .dash-hero-row { grid-template-columns: 1fr; } }
+        .dash-hero-metric {
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px;
+            padding: 18px 20px; min-width: 0;
+        }
+        .dash-hero-metric .label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: #6c7a8e; font-weight: 600; }
+        .dash-hero-metric .value { font-size: 1.6rem; font-weight: 800; line-height: 1.15; margin: 6px 0 4px; word-break: break-word; }
+        .dash-hero-metric .delta { font-size: 0.8rem; font-weight: 600; }
+        .dash-hero-metric .delta.up { color: #198754; }
+        .dash-hero-metric .delta.down { color: #dc3545; }
+        .dash-hero-metric .delta.flat { color: #6c7a8e; }
+        .dash-main-grid {
+            display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 16px;
+        }
+        @media (max-width: 992px) { .dash-main-grid { grid-template-columns: 1fr; } }
+        .dash-attention {
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px;
+            padding: 16px 18px; min-height: 180px;
+        }
+        .dash-attention h6 { font-weight: 700; margin-bottom: 12px; }
+        .dash-attention .item {
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 0.9rem;
+        }
+        .dash-attention .item:last-child { border-bottom: none; }
+        .dash-attention .item .go { font-size: 0.8rem; white-space: nowrap; }
+        .dash-sec-metrics {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;
+        }
+        .dash-sec-metric {
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;
+            padding: 12px 14px; min-width: 0;
+        }
+        .dash-sec-metric .v { font-weight: 700; font-size: 1.05rem; line-height: 1.2; word-break: break-word; }
+        .dash-sec-metric .l { font-size: 0.72rem; color: #6c7a8e; margin-top: 2px; }
+        .dash-charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        @media (max-width: 992px) { .dash-charts { grid-template-columns: 1fr; } }
+        .quick-action-card { cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+        .quick-action-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+        body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+        .table-responsive { max-width: 100%; }
+
 
         .report-filter .form-label { font-weight: 600; font-size: 0.8rem; margin-bottom: 2px; }
         .report-filter .form-control, .report-filter .form-select { font-size: 0.85rem; }
@@ -2519,11 +2589,17 @@ async function renderDashboard() {
     });
     const netProfit = grossProfit - totalExpenses - totalLosses;
 
-    const today = new Date().toDateString();
-    const todaySales = fSales.filter(s => {
-        const d = s.created_at && s.created_at.toDate ? s.created_at.toDate() : new Date(s.created_at);
-        return d.toDateString() === today;
-    }).reduce((sum, x) => sum + (x.amount || 0), 0);
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const yest = new Date(now); yest.setDate(yest.getDate() - 1);
+    const yestStr = yest.toDateString();
+    const saleDate = (s) => {
+        const d = s.created_at && s.created_at.toDate ? s.created_at.toDate() : (s.sale_date ? new Date(s.sale_date) : new Date(s.created_at));
+        return d;
+    };
+    const todaySales = fSales.filter(s => saleDate(s).toDateString() === todayStr).reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+    const yesterdaySales = fSales.filter(s => saleDate(s).toDateString() === yestStr).reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+    const todayDeltaPct = yesterdaySales > 0 ? ((todaySales - yesterdaySales) / yesterdaySales * 100) : (todaySales > 0 ? 100 : 0);
     const activeShifts = fShifts.filter(s => s.status === 'active').length;
     const stationLabel = state.currentStationId ? stationName(state.currentStationId) : 'All Stations';
     const lowStockItems = await checkLowStock();
@@ -2531,96 +2607,113 @@ async function renderDashboard() {
     const totalCustomers = customers.length;
     const totalSuppliers = suppliers.length;
 
+    // Attention items
+    const recons = await getAll('reconciliations') || [];
+    const reconciledShiftIds = new Set(recons.map(r => r.shift_id).filter(Boolean));
+    const unreconciledCount = fShifts.filter(s => s.status === 'closed' && !reconciledShiftIds.has(s.id)).length;
+    let openShortage = 0;
+    recons.forEach(r => {
+        const diff = Number(r.difference) || 0;
+        if (diff < 0) openShortage += Math.abs(diff);
+    });
+    const creditOverdue = customers.filter(c => Number(c.current_balance || 0) > 0).length;
+    const marginPct = totalRevenue > 0 ? (grossProfit / totalRevenue * 100) : 0;
+
+    function deltaClass(pct) {
+        if (Math.abs(pct) < 0.5) return 'flat';
+        return pct >= 0 ? 'up' : 'down';
+    }
+    function deltaLabel(pct) {
+        if (Math.abs(pct) < 0.5) return 'vs yesterday · flat';
+        const arrow = pct >= 0 ? '↑' : '↓';
+        return arrow + ' ' + Math.abs(pct).toFixed(1) + '% vs yesterday';
+    }
+
+    const isCashierUser = roleNorm(state.user.role) === 'cashier';
+
     let html = `
-        <div class="hero">
-            <div class="d-flex justify-content-between align-items-start flex-wrap">
-                <div style="flex:1; min-width:250px;">
-                    <div class="company">
-                        ${companyData.logo_url ? `<img src="${companyData.logo_url}" style="height:50px;margin-right:10px;border-radius:8px;">` : ''}
-                        ${companyData.name || 'PetroManager'}
-                    </div>
-                    <div class="tag">${companyData.tagline || ''}</div>
-                    <div class="details" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px 20px; margin-top: 12px; background: rgba(255,255,255,0.08); padding: 12px 16px; border-radius: 8px;">
-                        ${companyData.address ? `<span><i class="bi bi-geo-alt"></i> ${companyData.address}</span>` : ''}
-                        ${companyData.phone ? `<span><i class="bi bi-telephone"></i> ${companyData.phone}</span>` : ''}
-                        ${companyData.email ? `<span><i class="bi bi-envelope"></i> ${companyData.email}</span>` : ''}
-                        ${companyData.tax_id ? `<span><i class="bi bi-receipt"></i> Tax: ${companyData.tax_id}</span>` : ''}
-                        ${companyData.website ? `<span><i class="bi bi-globe"></i> ${companyData.website}</span>` : ''}
-                        <span><i class="bi bi-pin-map"></i> ${stationLabel}</span>
-                        <span><i class="bi bi-person-badge"></i> ${state.user.role}</span>
-                    </div>
+        <div class="dash-topbar">
+            <div>
+                <h4>${esc(companyData.name || 'PetroManager')}</h4>
+                <div class="text-muted small mt-1">
+                    <i class="bi bi-pin-map"></i> ${esc(stationLabel)}
+                    · <i class="bi bi-person"></i> ${esc(state.user.role)}
+                    · ${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
                 </div>
-                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
-                    ${canManageCompany(state.user.role) ? `<button class="btn btn-sm btn-outline-light" id="editCompanyBtn"><i class="bi bi-pencil"></i> Edit Company</button>` : ''}
-                    <button class="btn btn-sm btn-outline-light" id="dailyReportBtn"><i class="bi bi-envelope"></i> Email Report</button>
-                    <button class="btn btn-sm btn-outline-light" id="lowStockAlertBtn"><i class="bi bi-exclamation-triangle"></i> Check Stock</button>
+            </div>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                ${canManageCompany(state.user.role) ? `<button class="btn btn-sm btn-outline-secondary" id="editCompanyBtn"><i class="bi bi-pencil"></i> Company</button>` : ''}
+                <button class="btn btn-sm btn-outline-secondary" id="dailyReportBtn"><i class="bi bi-envelope"></i> Email report</button>
+                <button class="btn btn-sm btn-outline-secondary" id="lowStockAlertBtn"><i class="bi bi-bell"></i> Stock check</button>
+            </div>
+        </div>
+
+        <!-- Hero metrics -->
+        <div class="dash-hero-row">
+            <div class="dash-hero-metric" title="${formatMoney(todaySales)}">
+                <div class="label">Today's sales</div>
+                <div class="value text-primary">${formatCompactMoney(todaySales)}</div>
+                <div class="delta ${deltaClass(todayDeltaPct)}">${deltaLabel(todayDeltaPct)} · yday ${formatCompactMoney(yesterdaySales)}</div>
+            </div>
+            <div class="dash-hero-metric" title="${formatMoney(totalRevenue)}">
+                <div class="label">Total revenue</div>
+                <div class="value">${formatCompactMoney(totalRevenue)}</div>
+                <div class="delta flat">Gross margin ${marginPct.toFixed(1)}% · GP ${formatCompactMoney(grossProfit)}</div>
+            </div>
+            <div class="dash-hero-metric" title="${formatMoney(netProfit)}">
+                <div class="label">Net profit</div>
+                <div class="value ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCompactMoney(netProfit)}</div>
+                <div class="delta flat">After expenses ${formatCompactMoney(totalExpenses)} · losses ${formatCompactMoney(totalLosses)}</div>
+            </div>
+        </div>
+
+        <div class="dash-main-grid">
+            <div class="dash-attention">
+                <h6><i class="bi bi-exclamation-circle text-warning"></i> Needs attention</h6>
+                ${unreconciledCount > 0 ? `<div class="item"><span><strong>${unreconciledCount}</strong> shift(s) not balanced</span><button class="btn btn-sm btn-outline-warning go" onclick="navigate('balancing')">Balance</button></div>` : `<div class="item text-muted"><span>All closed shifts balanced</span><span class="text-success">OK</span></div>`}
+                ${activeShifts > 0 ? `<div class="item"><span><strong>${activeShifts}</strong> active shift(s)</span><button class="btn btn-sm btn-outline-primary go" onclick="navigate('shifts')">Shifts</button></div>` : ''}
+                ${lowCount > 0 ? `<div class="item"><span><strong>${lowCount}</strong> low stock item(s)</span><button class="btn btn-sm btn-outline-danger go" onclick="navigate('inventory')">Inventory</button></div>` : `<div class="item text-muted"><span>Stock levels OK</span><span class="text-success">OK</span></div>`}
+                ${openShortage > 0 ? `<div class="item"><span>Cashier shortages ~ <strong>${formatCompactMoney(openShortage)}</strong></span><button class="btn btn-sm btn-outline-secondary go" onclick="navigate('payroll')">Payroll</button></div>` : ''}
+                ${creditOverdue > 0 ? `<div class="item"><span><strong>${creditOverdue}</strong> customer(s) with balance due</span><button class="btn btn-sm btn-outline-secondary go" onclick="navigate('customers')">Customers</button></div>` : ''}
+                ${unreconciledCount === 0 && lowCount === 0 && openShortage === 0 && creditOverdue === 0 && activeShifts === 0 ? `<div class="item text-muted"><span>Nothing urgent right now</span></div>` : ''}
+            </div>
+            <div>
+                <div class="dash-sec-metrics">
+                    <div class="dash-sec-metric" title="${formatMoney(totalExpenses)}"><div class="v">${formatCompactMoney(totalExpenses)}</div><div class="l">Expenses</div></div>
+                    <div class="dash-sec-metric"><div class="v">${totalLitres >= 1000 ? (totalLitres/1000).toFixed(1)+'k' : totalLitres.toFixed(0)} L</div><div class="l">Total stock</div></div>
+                    <div class="dash-sec-metric"><div class="v">${activeShifts}</div><div class="l">Open shifts</div></div>
+                    <div class="dash-sec-metric"><div class="v">${totalCustomers}</div><div class="l">Customers</div></div>
+                    <div class="dash-sec-metric"><div class="v">${totalSuppliers}</div><div class="l">Suppliers</div></div>
+                    <div class="dash-sec-metric" title="${formatMoney(totalLosses)}"><div class="v text-danger">${formatCompactMoney(totalLosses)}</div><div class="l">Inv. losses</div></div>
+                </div>
+                <div class="mt-3">
+                    <div class="small text-muted mb-2 fw-semibold">Stock by product</div>
+                    <div class="dash-sec-metrics">
+                        ${Object.keys(stockByProduct).length ? Object.keys(stockByProduct).map(p => `
+                            <div class="dash-sec-metric"><div class="v">${Number(stockByProduct[p]).toFixed(0)} L</div><div class="l">${esc(p)}</div></div>
+                        `).join('') : '<div class="text-muted small">No inventory yet</div>'}
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Primary KPIs (compact) -->
-        <div class="row g-2 g-md-3 mb-3 kpi-compact">
-            <div class="col-6 col-md-3"><div class="stat-item" title="${formatMoney(totalRevenue)}"><div class="icon" style="background:#198754;"><i class="bi bi-cash-stack"></i></div>
-                <div><div class="num">${formatCompactMoney(totalRevenue)}</div><div class="lbl">Revenue</div></div></div></div>
-            <div class="col-6 col-md-3"><div class="stat-item" title="${formatMoney(totalExpenses)}"><div class="icon" style="background:#dc3545;"><i class="bi bi-cart"></i></div>
-                <div><div class="num">${formatCompactMoney(totalExpenses)}</div><div class="lbl">Expenses</div></div></div></div>
-            <div class="col-6 col-md-3"><div class="stat-item" title="${formatMoney(grossProfit)}"><div class="icon" style="background:#0d6efd;"><i class="bi bi-graph-up-arrow"></i></div>
-                <div><div class="num ${grossProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCompactMoney(grossProfit)}</div><div class="lbl">Gross Profit</div></div></div></div>
-            <div class="col-6 col-md-3"><div class="stat-item" title="${formatMoney(netProfit)}"><div class="icon" style="background:#6f42c1;"><i class="bi bi-pie-chart"></i></div>
-                <div><div class="num ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCompactMoney(netProfit)}</div><div class="lbl">Net · ${totalRevenue > 0 ? (grossProfit / totalRevenue * 100).toFixed(0) : 0}%</div></div></div></div>
-        </div>
-        <div class="stat-grid kpi-compact mb-3">
-            <div class="stat-item" title="${formatMoney(todaySales)}"><div class="icon" style="background:#ffc107;"><i class="bi bi-calendar-day"></i></div>
-                <div><div class="num">${formatCompactMoney(todaySales)}</div><div class="lbl">Today Sales</div></div></div>
-            <div class="stat-item" title="${formatMoney(totalLosses)}"><div class="icon" style="background:#dc3545;"><i class="bi bi-arrow-down-circle"></i></div>
-                <div><div class="num text-danger">${formatCompactMoney(totalLosses)}</div><div class="lbl">Losses</div></div></div>
-            <div class="stat-item"><div class="icon" style="background:#0d6efd;"><i class="bi bi-box-seam"></i></div>
-                <div><div class="num">${totalLitres >= 1000 ? (totalLitres/1000).toFixed(1) + 'k' : totalLitres.toFixed(0)} L</div><div class="lbl">Stock</div></div></div>
-            <div class="stat-item"><div class="icon" style="background:#17a2b8;"><i class="bi bi-clock-history"></i></div>
-                <div><div class="num">${activeShifts}</div><div class="lbl">Active Shifts</div></div></div>
-            <div class="stat-item"><div class="icon" style="background:#dc3545;"><i class="bi bi-exclamation-triangle"></i></div>
-                <div><div class="num">${lowCount}</div><div class="lbl">Low Stock</div></div></div>
-            <div class="stat-item"><div class="icon" style="background:#6c757d;"><i class="bi bi-people"></i></div>
-                <div><div class="num">${totalCustomers} / ${totalSuppliers}</div><div class="lbl">Cust / Supp</div></div></div>
+        <!-- Quick actions -->
+        <div class="row g-2 mb-3">
+            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('sales')"><i class="bi bi-cart-plus fs-4 text-primary"></i><div class="small fw-semibold mt-1">Sales</div></div></div>
+            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('balancing')"><i class="bi bi-balance-scale fs-4 text-warning"></i><div class="small fw-semibold mt-1">Balance</div></div></div>
+            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('inventory')"><i class="bi bi-box-seam fs-4 text-success"></i><div class="small fw-semibold mt-1">Inventory</div></div></div>
+            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('stock')"><i class="bi bi-truck fs-4 text-info"></i><div class="small fw-semibold mt-1">Offload</div></div></div>
+            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('financials')"><i class="bi bi-wallet2 fs-4" style="color:#6f42c1"></i><div class="small fw-semibold mt-1">Finance</div></div></div>
+            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('payroll')"><i class="bi bi-people fs-4 text-success"></i><div class="small fw-semibold mt-1">Payroll</div></div></div>
         </div>
 
-        <!-- Stock by product -->
-        <div class="stat-grid mb-3">
-            ${Object.keys(stockByProduct).map(p => `
-                <div class="stat-item">
-                    <div class="icon" style="background:#6c757d;"><i class="bi bi-droplet"></i></div>
-                    <div><div class="num">${stockByProduct[p].toFixed(0)} L</div><div class="lbl">${p}</div></div>
-                </div>
-            `).join('')}
-            ${Object.keys(stockByProduct).length === 0 ? '<div class="text-muted">No inventory items yet. Add products in Inventory.</div>' : ''}
+        <div class="dash-charts">
+            <div class="card-box"><h6 class="mb-3">Sales by product</h6><canvas id="productChart" height="200"></canvas></div>
+            <div class="card-box"><h6 class="mb-3">Last 7 days</h6><canvas id="trendChart" height="200"></canvas></div>
         </div>
-
-        <!-- Quick Actions -->
-        <div class="row g-3 mb-4">
-            <div class="col-6 col-md-4 col-lg-2"><div class="card-box text-center quick-action-card" onclick="navigate('sales')">
-                <i class="bi bi-cart-plus fs-3 text-primary"></i><div class="fw-semibold mt-1">Sales</div></div></div>
-            <div class="col-6 col-md-4 col-lg-2"><div class="card-box text-center quick-action-card" onclick="navigate('balancing')">
-                <i class="bi bi-balance-scale fs-3 text-warning"></i><div class="fw-semibold mt-1">Balance</div></div></div>
-            <div class="col-6 col-md-4 col-lg-2"><div class="card-box text-center quick-action-card" onclick="navigate('inventory')">
-                <i class="bi bi-box-seam fs-3 text-success"></i><div class="fw-semibold mt-1">Inventory</div></div></div>
-            <div class="col-6 col-md-4 col-lg-2"><div class="card-box text-center quick-action-card" onclick="navigate('stock')">
-                <i class="bi bi-truck fs-3 text-info"></i><div class="fw-semibold mt-1">Offloading</div></div></div>
-            <div class="col-6 col-md-4 col-lg-2"><div class="card-box text-center quick-action-card" onclick="navigate('financials')">
-                <i class="bi bi-wallet2 fs-3" style="color:#6f42c1;"></i><div class="fw-semibold mt-1">Financials</div></div></div>
-            <div class="col-6 col-md-4 col-lg-2"><div class="card-box text-center quick-action-card" onclick="navigate('payroll')">
-                <i class="bi bi-wallet2 fs-3 text-success"></i><div class="fw-semibold mt-1">Payroll</div></div></div>
-        </div>
-
-        <!-- Widgets / Charts -->
-        <div class="row g-3">
-            <div class="col-md-6"><div class="card-box"><h6>Sales by Product</h6><canvas id="productChart" height="200"></canvas></div></div>
-            <div class="col-md-6"><div class="card-box"><h6>Last 7 Days Sales</h6><canvas id="trendChart" height="200"></canvas></div></div>
-        </div>
-        <div class="row g-3 mt-2">
-            <div class="col-md-12"><div class="card-box">
-                <h6>P&L Summary</h6>
-                <canvas id="pnlChart" height="80"></canvas>
-            </div></div>
+        <div class="card-box mb-2">
+            <h6 class="mb-3">P&amp;L overview</h6>
+            <canvas id="pnlChart" height="80"></canvas>
         </div>`;
 
     document.getElementById('pageContent').innerHTML = html;
@@ -3500,40 +3593,65 @@ async function renderShifts() {
         formHtml = '<p class="text-muted small">Cashiers manage their own shifts. View history below.</p>';
     }
 
-    let headerRow = '<tr><th>Station</th><th>Type</th>';
-    displayProducts.forEach(p => { headerRow += `<th>${p}</th>`; });
-    headerRow += '<th>Status</th></tr>';
+    // Professional table: separate Start / End / Sold per product + cashier
+    const allUsersForShifts = await getAll('users') || [];
+    const colCount = 6 + (displayProducts.length * 3) + 1; // station, cashier, type, status, opened, closed + 3 per product + total
+
+    let headerRow = `<tr class="table-light align-middle">
+        <th rowspan="2" class="align-middle">Station</th>
+        <th rowspan="2" class="align-middle">Cashier</th>
+        <th rowspan="2" class="align-middle">Shift</th>
+        <th rowspan="2" class="align-middle">Status</th>
+        <th rowspan="2" class="align-middle">Opened</th>
+        <th rowspan="2" class="align-middle">Closed</th>`;
+    displayProducts.forEach(p => {
+        headerRow += `<th colspan="3" class="text-center border-start">${esc(p)}</th>`;
+    });
+    headerRow += `<th rowspan="2" class="align-middle text-end">Total Sold (L)</th></tr><tr class="table-light">`;
+    displayProducts.forEach(() => {
+        headerRow += `<th class="text-center border-start small">Start</th><th class="text-center small">End</th><th class="text-center small">Sold</th>`;
+    });
+    headerRow += `</tr>`;
 
     let bodyRows = '';
     if (shifts.length === 0) {
-        bodyRows = '<tr><td colspan="' + (3 + displayProducts.length) + '" class="text-muted text-center">No shifts</td></tr>';
+        bodyRows = '<tr><td colspan="' + colCount + '" class="text-muted text-center">No shifts</td></tr>';
     } else {
-        shifts.slice(0, 30).forEach(s => {
-            let startStr = '',
-                endStr = '';
+        shifts.slice(0, 40).forEach(s => {
+            const cashier = allUsersForShifts.find(u => u.id === s.cashier_id);
+            const cashierName = cashier ? (cashier.name || cashier.username) : (s.cashier_id ? String(s.cashier_id).slice(0, 8) : '—');
+            let totalSold = 0;
+            let meterCells = '';
             displayProducts.forEach(p => {
-                const key = 'start_' + p.toLowerCase();
-                const endKey = 'end_' + p.toLowerCase();
-                startStr += (s[key] || 0).toFixed(1) + '/';
-                endStr += (s[endKey] || 0).toFixed(1) + '/';
+                const start = Number(s['start_' + p.toLowerCase()] || 0);
+                const end = Number(s['end_' + p.toLowerCase()] || 0);
+                const closed = s.status === 'closed';
+                const sold = closed ? (end - start) : null;
+                if (sold !== null) totalSold += sold;
+                const soldCls = sold === null ? '' : (sold < 0 ? 'text-danger' : (sold > 0 ? 'text-success' : 'text-muted'));
+                meterCells += `<td class="text-end border-start font-monospace small">${start.toFixed(2)}</td>` +
+                    `<td class="text-end font-monospace small">${closed ? end.toFixed(2) : '—'}</td>` +
+                    `<td class="text-end font-monospace small fw-semibold ${soldCls}">${sold === null ? '—' : sold.toFixed(2)}</td>`;
             });
-            startStr = startStr.replace(/\/$/, '');
-            endStr = endStr.replace(/\/$/, '');
             bodyRows += `<tr>
-                <td>${stationName(s.station_id)}</td>
-                <td><span class="${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${s.shift_type}</span></td>
-                <td class="fs-xs">${startStr}</td>
-                <td class="fs-xs">${s.status === 'closed' ? endStr : '—'}</td>
-                <td><span class="${s.status === 'active' ? 'badge-active' : 'badge-closed'}">${s.status}</span></td>
+                <td class="small">${esc(stationName(s.station_id))}</td>
+                <td class="small">${esc(cashierName)}</td>
+                <td><span class="badge ${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${esc(s.shift_type || '—')}</span></td>
+                <td><span class="badge ${s.status === 'active' ? 'badge-active' : 'badge-closed'}">${esc(s.status || '—')}</span></td>
+                <td class="fs-xs text-nowrap">${formatDateTime(s.created_at || s._createdAt)}</td>
+                <td class="fs-xs text-nowrap">${s.status === 'closed' ? formatDateTime(s.ended_at || s.closed_at) : '—'}</td>
+                ${meterCells}
+                <td class="text-end fw-bold small">${s.status === 'closed' ? totalSold.toFixed(2) : '—'}</td>
             </tr>`;
         });
     }
 
     let html = `<div class="row g-4">
         <div class="col-lg-4"><div class="card-box"><h5 class="mb-3"><i class="bi bi-clock"></i> ${isCashier ? 'My Shift' : 'Shifts'}</h5> ${formHtml}</div></div>
-        <div class="col-lg-8"><div class="card-box"><h5 class="mb-3">Shift History</h5>
-            <div class="table-responsive"><table class="table table-sm table-hover">
-                <thead>${headerRow}</thead>
+        <div class="col-lg-8"><div class="card-box"><h5 class="mb-3"><i class="bi bi-clock-history"></i> Shift History</h5>
+            <p class="small text-muted mb-2">Each product has separate <strong>Start</strong>, <strong>End</strong>, and <strong>Sold</strong> (End − Start) columns.</p>
+            <div class="table-responsive" style="max-height:520px;"><table class="table table-sm table-hover table-bordered align-middle mb-0" style="min-width:960px;">
+                <thead class="sticky-top">${headerRow}</thead>
                 <tbody>${bodyRows}</tbody>
             </table></div></div></div></div>`;
 
@@ -3583,41 +3701,68 @@ async function renderMeters() {
     const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
     const displayProducts = productTypes.length > 0 ? productTypes : ['Petrol', 'Diesel', 'Gas', 'Paraffin'];
 
-    let headerRow = '<tr><th>Station</th><th>Shift</th><th>Status</th>';
-    displayProducts.forEach(p => { headerRow += `<th>${p}</th>`; });
-    headerRow += '<th>Date</th></tr>';
+    const allUsersForMeters = await getAll('users') || [];
+    const colCount = 6 + (displayProducts.length * 3) + 1;
+
+    let headerRow = `<tr class="table-light align-middle">
+        <th rowspan="2" class="align-middle">Station</th>
+        <th rowspan="2" class="align-middle">Cashier</th>
+        <th rowspan="2" class="align-middle">Shift</th>
+        <th rowspan="2" class="align-middle">Status</th>
+        <th rowspan="2" class="align-middle">Opened</th>
+        <th rowspan="2" class="align-middle">Closed</th>`;
+    displayProducts.forEach(p => {
+        headerRow += `<th colspan="3" class="text-center border-start">${esc(p)}</th>`;
+    });
+    headerRow += `<th rowspan="2" class="align-middle text-end">Total Sold (L)</th></tr><tr class="table-light">`;
+    displayProducts.forEach(() => {
+        headerRow += `<th class="text-center border-start small">Start</th><th class="text-center small">End</th><th class="text-center small">Sold</th>`;
+    });
+    headerRow += `</tr>`;
 
     let bodyRows = '';
     if (shifts.length === 0) {
-        bodyRows = '<tr><td colspan="' + (4 + displayProducts.length) + '" class="text-muted text-center">No meter data</td></tr>';
+        bodyRows = '<tr><td colspan="' + colCount + '" class="text-muted text-center">No meter data</td></tr>';
     } else {
-        shifts.slice(0, 40).forEach(s => {
-            let startStr = '',
-                endStr = '';
+        shifts.slice(0, 50).forEach(s => {
+            const cashier = allUsersForMeters.find(u => u.id === s.cashier_id);
+            const cashierName = cashier ? (cashier.name || cashier.username) : (s.cashier_id ? String(s.cashier_id).slice(0, 8) : '—');
+            let totalSold = 0;
+            let meterCells = '';
             displayProducts.forEach(p => {
-                const key = 'start_' + p.toLowerCase();
-                const endKey = 'end_' + p.toLowerCase();
-                startStr += (s[key] || 0).toFixed(1) + '/';
-                endStr += (s[endKey] || 0).toFixed(1) + '/';
+                const start = Number(s['start_' + p.toLowerCase()] || 0);
+                const end = Number(s['end_' + p.toLowerCase()] || 0);
+                const closed = s.status === 'closed';
+                const sold = closed ? (end - start) : null;
+                if (sold !== null) totalSold += sold;
+                const soldCls = sold === null ? '' : (sold < 0 ? 'text-danger' : (sold > 0 ? 'text-success' : 'text-muted'));
+                meterCells += `<td class="text-end border-start font-monospace small">${start.toFixed(2)}</td>` +
+                    `<td class="text-end font-monospace small">${closed ? end.toFixed(2) : '—'}</td>` +
+                    `<td class="text-end font-monospace small fw-semibold ${soldCls}">${sold === null ? '—' : sold.toFixed(2)}</td>`;
             });
-            startStr = startStr.replace(/\/$/, '');
-            endStr = endStr.replace(/\/$/, '');
             bodyRows += `<tr>
-                <td>${stationName(s.station_id)}</td>
-                <td><span class="${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${s.shift_type}</span></td>
-                <td><span class="${s.status === 'active' ? 'badge-active' : 'badge-closed'}">${s.status}</span></td>
-                <td class="fs-xs">${startStr}</td>
-                <td class="fs-xs">${s.status === 'closed' ? endStr : '—'}</td>
-                <td class="fs-xs">${formatDateTime(s.created_at)}</td>
+                <td class="small">${esc(stationName(s.station_id))}</td>
+                <td class="small">${esc(cashierName)}</td>
+                <td><span class="badge ${s.shift_type === 'day' ? 'badge-day' : 'badge-night'}">${esc(s.shift_type || '—')}</span></td>
+                <td><span class="badge ${s.status === 'active' ? 'badge-active' : 'badge-closed'}">${esc(s.status || '—')}</span></td>
+                <td class="fs-xs text-nowrap">${formatDateTime(s.created_at || s._createdAt)}</td>
+                <td class="fs-xs text-nowrap">${s.status === 'closed' ? formatDateTime(s.ended_at || s.closed_at) : '—'}</td>
+                ${meterCells}
+                <td class="text-end fw-bold small">${s.status === 'closed' ? totalSold.toFixed(2) : '—'}</td>
             </tr>`;
         });
     }
 
-    let html = `<div class="card-box"><h5 class="mb-3">Meter Readings (from shifts)</h5>
-        <div class="table-responsive"><table class="table table-sm table-hover">
-            <thead>${headerRow}</thead>
-            <tbody>${bodyRows}</tbody>
-        </table></div></div>`;
+    let html = `<div class="card-box">
+        <h5 class="mb-2"><i class="bi bi-speedometer2"></i> Meter Readings</h5>
+        <p class="small text-muted mb-3">Readings from shifts. Each product shows <strong>Start</strong>, <strong>End</strong>, and <strong>Sold</strong> (End − Start) in separate columns.</p>
+        <div class="table-responsive" style="max-height:560px;">
+            <table class="table table-sm table-hover table-bordered align-middle mb-0" style="min-width:980px;">
+                <thead class="sticky-top">${headerRow}</thead>
+                <tbody>${bodyRows}</tbody>
+            </table>
+        </div>
+    </div>`;
     document.getElementById('pageContent').innerHTML = html;
 }
 
