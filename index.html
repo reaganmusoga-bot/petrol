@@ -3557,6 +3557,20 @@ async function renderSales() {
                     }
                 }
 
+                // Cash till: non-credit sales deposit into station Cash Till (read before writes)
+                const payLower = String(payment || 'cash').toLowerCase();
+                const depositsToTill = payLower !== 'credit' && Number(grandTotal) > 0;
+                let tillRef = null;
+                let tillBal = 0;
+                let tillExists = false;
+                if (depositsToTill) {
+                    const tillId = systemCashAccountId('cash_till', stationId);
+                    tillRef = db.collection('bank_accounts').doc(tillId);
+                    const tillDoc = await tx.get(tillRef);
+                    tillExists = tillDoc.exists;
+                    tillBal = tillExists ? Number(tillDoc.data().balance || 0) : 0;
+                }
+
                 // --- writes only below this line ---
                 updates.forEach(u => {
                     tx.set(u.preferredRef, {
@@ -3647,6 +3661,32 @@ async function renderSales() {
                     currency: currency,
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
+
+                // Auto-bank cash / mobile / card sales into this station's Cash Till
+                if (depositsToTill && tillRef) {
+                    const newTillBal = tillBal + Number(grandTotal);
+                    if (tillExists) {
+                        tx.update(tillRef, {
+                            balance: newTillBal,
+                            last_sale_at: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } else {
+                        tx.set(tillRef, {
+                            bank_name: 'Cash Till · ' + (stationName(stationId) || String(stationId)),
+                            account_name: 'Station Cash Till',
+                            account_number: 'cash_till_' + String(stationId),
+                            branch: 'System',
+                            currency: currency || currencySymbol(),
+                            balance: newTillBal,
+                            is_system: true,
+                            system_kind: 'cash_till',
+                            station_id: String(stationId),
+                            companyId: companyId,
+                            created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                            last_sale_at: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                }
             });
 
             await logAudit('cart_sale', { station: stationId, items: cart.length, total: grandTotal });
@@ -6555,6 +6595,7 @@ async function renderTankLevels() {
 // ----- FINANCIALS (full tabs) -----
 async function renderFinancials() {
     try {
+        try { await ensureSystemCashAccounts(); } catch (_) {}
         const accounts = await getAll('bank_accounts') || [];
         const expenses = await getAll('expenses') || [];
         const bankings = await getAll('bankings') || [];
@@ -6564,6 +6605,9 @@ async function renderFinancials() {
         const creditLimits = await getAll('credit_limits') || [];
         const recurringExpenses = await getAll('recurring_expenses') || [];
         const customers = await getAll('customers') || [];
+        if (!state.stations || !state.stations.length) {
+            try { await loadStations(); } catch (_) {}
+        }
 
         const userOpts = allUsers.filter(u => u.active !== false)
             .map(u => `<option value="${esc(u.id)}">${esc(u.name || u.username)}</option>`).join('');
@@ -6617,13 +6661,18 @@ async function renderFinancials() {
 
         function accountRows() {
             if (accounts.length === 0) return '<tr><td colspan="6" class="text-muted text-center">No accounts</td></tr>';
+            const filterSid = state._acctStationFilter || '';
             // Group by station
             const byStation = {};
             accounts.forEach(a => {
                 const sid = a.station_id != null && a.station_id !== '' ? String(a.station_id) : 'unassigned';
+                if (filterSid && sid !== String(filterSid)) return;
                 if (!byStation[sid]) byStation[sid] = [];
                 byStation[sid].push(a);
             });
+            if (Object.keys(byStation).length === 0) {
+                return '<tr><td colspan="6" class="text-muted text-center">No accounts for this station filter</td></tr>';
+            }
             let rows = '';
             Object.keys(byStation).sort().forEach(sid => {
                 const label = sid === 'unassigned' ? 'Unassigned / Company-wide' : stationName(sid);
@@ -6640,8 +6689,10 @@ async function renderFinancials() {
                         <td class="${balCls}">${formatMoney(bal)}${bal < 0 ? ' <span class="badge bg-danger">Negative</span>' : ''}</td>
                         <td class="small text-muted">${sid === 'unassigned' ? '—' : esc(stationName(sid))}</td>
                         <td class="text-nowrap">
-                          <button type="button" class="btn btn-sm btn-outline-primary set-balance-btn" data-id="${esc(a.id)}" data-bal="${bal}" title="Set / correct balance"><i class="bi bi-pencil"></i></button>
-                          ${canDelete ? `<button class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${esc(a.id)}"><i class="bi bi-trash"></i></button>` : (a.is_system ? '' : `<button class="btn btn-sm btn-outline-secondary" disabled title="Has balance"><i class="bi bi-lock"></i></button>`)}
+                          <button type="button" class="btn btn-sm btn-outline-primary set-balance-btn" data-id="${esc(a.id)}" data-bal="${bal}" title="Edit balance amount">
+                            <i class="bi bi-pencil-square"></i> Edit amount
+                          </button>
+                          ${canDelete ? `<button class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${esc(a.id)}"><i class="bi bi-trash"></i></button>` : ''}
                         </td>
                     </tr>`;
                 });
@@ -6819,29 +6870,46 @@ async function renderFinancials() {
                     <div class="tab-pane fade show active" id="accounts" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-lg-5">
-                                <div class="card-box">
-                                    <h6 class="mb-3">Add Bank Account</h6>
+                                <div class="card-box border border-primary">
+                                    <h6 class="mb-3"><i class="bi bi-bank2"></i> Add Bank Account</h6>
                                     <form id="baForm">
-                                        <div class="mb-2"><label class="form-label small">Station *</label>
+                                        <div class="mb-3 p-2 rounded" style="background:var(--bs-primary-bg-subtle,#e7f1ff);border:1px solid #b6d4fe;">
+                                            <label class="form-label small fw-bold mb-1"><i class="bi bi-geo-alt-fill text-primary"></i> Station for this account *</label>
                                             <select id="baStation" class="form-select form-select-sm" required>
-                                                <option value="">— Select Station —</option>
-                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-                                            </select></div>
-                                        <div class="mb-2"><input id="baName" class="form-control form-control-sm" placeholder="Bank Name *" required></div>
-                                        <div class="mb-2"><input id="baAccName" class="form-control form-control-sm" placeholder="Account Name *" required></div>
-                                        <div class="mb-2"><input id="baAccNum" class="form-control form-control-sm" placeholder="Account Number *" required></div>
-                                        <div class="mb-2"><input id="baBranch" class="form-control form-control-sm" placeholder="Branch"></div>
+                                                <option value="">— Select which station owns this account —</option>
+                                                ${(state.stations && state.stations.length
+                                                    ? state.stations
+                                                    : []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                            </select>
+                                            ${!(state.stations && state.stations.length)
+                                                ? '<div class="text-danger small mt-1">No stations found. Add a station under Company Profile first.</div>'
+                                                : '<div class="text-muted small mt-1">Required — each bank account belongs to one station.</div>'}
+                                        </div>
+                                        <div class="mb-2"><label class="form-label small">Bank name *</label>
+                                            <input id="baName" class="form-control form-control-sm" placeholder="e.g. Stanbic, Centenary" required></div>
+                                        <div class="mb-2"><label class="form-label small">Account name *</label>
+                                            <input id="baAccName" class="form-control form-control-sm" placeholder="e.g. Station Operations" required></div>
+                                        <div class="mb-2"><label class="form-label small">Account number *</label>
+                                            <input id="baAccNum" class="form-control form-control-sm" placeholder="Account number" required></div>
+                                        <div class="mb-2"><label class="form-label small">Branch</label>
+                                            <input id="baBranch" class="form-control form-control-sm" placeholder="Branch (optional)"></div>
                                         <div class="mb-2"><label class="form-label small">Opening balance</label>
                                             <input type="number" id="baOpening" class="form-control form-control-sm" placeholder="0" step="1" min="0" value="0"></div>
                                         <button class="btn btn-primary w-100">Add Account</button>
                                     </form>
-                                    <p class="small text-muted mt-2 mb-0">Each station should have its own bank / till accounts. System Cash Till and Petty Cash are created per station automatically.</p>
+                                    <p class="small text-muted mt-2 mb-0">Cash Till is filled automatically from <strong>cash / mobile sales</strong> at that station. Use <strong>Edit amount</strong> on Cash Till to correct the balance anytime.</p>
                                 </div>
                             </div>
                             <div class="col-lg-7">
                                 <div class="card-box">
-                                    <h6 class="mb-3">Bank Accounts by Station</h6>
-                                    <p class="small text-muted">Negative balances usually mean money was paid/transferred out before cash was deposited into that account. Use <strong>pencil</strong> to set the correct balance.</p>
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                        <h6 class="mb-0"><i class="bi bi-list-ul"></i> Bank Accounts by Station</h6>
+                                        <select id="acctStationFilter" class="form-select form-select-sm" style="max-width:220px;">
+                                            <option value="">All stations</option>
+                                            ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <p class="small text-muted">Cash Till / Petty Cash are system accounts per station. Click <strong>Edit amount</strong> to change any balance including Cash Till.</p>
                                     <div class="table-responsive">
                                         <table class="table table-sm">
                                             <thead><tr><th>Bank</th><th>Account</th><th>Number</th><th>Balance</th><th>Station</th><th>Actions</th></tr></thead>
@@ -7192,34 +7260,55 @@ async function renderFinancials() {
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
         };
 
-        // Set / correct account balance (fixes negatives)
+        // Set / correct account balance (Cash Till and all accounts are editable)
         document.querySelectorAll('.set-balance-btn').forEach(btn => {
             btn.onclick = async function() {
                 const id = this.dataset.id;
                 const current = Number(this.dataset.bal) || 0;
                 const acc = accounts.find(a => a.id === id);
                 const label = acc ? (acc.bank_name + ' – ' + (acc.account_name || '')) : id;
+                const isTill = acc && (acc.system_kind === 'cash_till' || /cash till/i.test(acc.bank_name || ''));
                 const input = prompt(
-                    'Set correct balance for:\n' + label + '\n\nCurrent: ' + formatMoney(current) +
-                    '\n\nEnter the real balance this account should show (use 0 to clear a wrong negative):',
-                    String(current < 0 ? 0 : current)
+                    (isTill ? 'Edit Cash Till amount\n\n' : 'Set account balance\n\n') +
+                    label + '\nCurrent: ' + formatMoney(current) +
+                    '\n\nEnter the new balance amount:',
+                    String(current)
                 );
                 if (input === null) return;
                 const newBal = parseFloat(String(input).replace(/,/g, ''));
                 if (isNaN(newBal)) { toast('Invalid amount', 'warning'); return; }
-                if (!confirm('Set balance of "' + label + '" to ' + formatMoney(newBal) + '?')) return;
+                if (!confirm('Set "' + label + '" to ' + formatMoney(newBal) + '?')) return;
                 try {
                     await updateDoc('bank_accounts', id, {
                         balance: newBal,
                         balance_corrected_at: firebase.firestore.FieldValue.serverTimestamp(),
                         balance_corrected_by: state.user.id
                     });
-                    await logAudit('account_balance_set', { accountId: id, from: current, to: newBal });
-                    toast('Balance updated to ' + formatMoney(newBal), 'success');
+                    await logAudit('account_balance_set', { accountId: id, from: current, to: newBal, system: !!(acc && acc.is_system) });
+                    toast((isTill ? 'Cash Till' : 'Balance') + ' updated to ' + formatMoney(newBal), 'success');
                     renderFinancials();
                 } catch (err) { toast('Error: ' + err.message, 'danger'); }
             };
         });
+
+        // Filter accounts table by station
+        const acctFilter = document.getElementById('acctStationFilter');
+        if (acctFilter) {
+            acctFilter.onchange = function() {
+                const sid = this.value;
+                const tbody = document.querySelector('#accounts table tbody');
+                if (!tbody) return;
+                // Re-render is simpler: filter is visual via row station text — full re-group on change
+                state._acctStationFilter = sid;
+                renderFinancials().then(() => {
+                    const tab = document.getElementById('accounts-tab');
+                    if (tab) tab.click();
+                });
+            };
+            if (state._acctStationFilter != null) {
+                acctFilter.value = state._acctStationFilter;
+            }
+        }
 
         // ---- Reverse a bank transfer (atomic) ----
         document.querySelectorAll('.reverse-transfer-btn').forEach(btn => {
@@ -8119,7 +8208,35 @@ async function renderCustomers() {
                 created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // 4. Audit log
+            // 4. Deposit collection into station Cash Till (cash/mobile — not pure credit notes)
+            try {
+                const m = String(method || 'cash').toLowerCase();
+                if (m !== 'credit' && amount > 0) {
+                    await ensureSystemCashAccounts(stationId);
+                    const tillId = systemCashAccountId('cash_till', stationId);
+                    const till = await getDoc('bank_accounts', tillId);
+                    const bal = till ? Number(till.balance || 0) : 0;
+                    if (till) {
+                        await updateDoc('bank_accounts', tillId, { balance: bal + amount });
+                    } else {
+                        await db.collection('bank_accounts').doc(tillId).set({
+                            bank_name: 'Cash Till · ' + stationName(stationId),
+                            account_name: 'Station Cash Till',
+                            account_number: 'cash_till_' + String(stationId),
+                            branch: 'System',
+                            currency: currencySymbol(),
+                            balance: amount,
+                            is_system: true,
+                            system_kind: 'cash_till',
+                            station_id: String(stationId),
+                            companyId: state.user.companyId,
+                            created_at: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                }
+            } catch (tillErr) { console.warn('Cash till deposit on payment:', tillErr); }
+
+            // 5. Audit log
             await logAudit('customer_payment', {
                 customer: customer.name,
                 amount: amount,
