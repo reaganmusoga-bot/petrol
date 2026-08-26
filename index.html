@@ -7,12 +7,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js">
-    </script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* ===== BASE STYLES with Dark Mode ===== */
         :root {
@@ -707,7 +705,7 @@
                 <i class="bi bi-fuel-pump"></i>
                 <h4>PetroManager Pro</h4>
                 <p>Multi-Company Fuel Management</p>
-                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.0.5</strong> First Edition</p>
+                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.3.0</strong> International Foundation</p>
             </div>
             <div id="normalLogin">
                 <form id="loginForm" autocomplete="off">
@@ -762,7 +760,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.0.5</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.3.0</div>
             </div>
         </nav>
         <div class="main-content">
@@ -911,6 +909,10 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
+// Auth is optional until Email/Password is enabled in Firebase Console.
+// Existing username login still works; when authUid is on the user doc,
+// we also sign in with Firebase Auth for future security rules.
 db.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Persistence not enabled', err));
 
 // ===== Global State =====
@@ -927,7 +929,12 @@ const state = {
     dashboardWidgets: [],
     licenseValid: false,
     trialDaysLeft: 0,
-    licenseBlocked: false
+    licenseBlocked: false,
+    companyCache: null,
+    dashPeriod: localStorage.getItem('petro_dash_period') || 'mtd',
+    loginAttempts: 0,
+    loginLockUntil: 0,
+    sessionTimer: null
 };
 
 // ===== Utility Functions =====
@@ -945,11 +952,46 @@ function toast(msg, type = 'success') {
     setTimeout(() => el.remove(), 4500);
 }
 
-function formatMoney(n, symbol = 'UGX') {
-    return symbol + ' ' + (Number(n) || 0).toLocaleString();
+// ===== Company settings (currency, tax, locale) =====
+function getCompanySettings() {
+    const c = state.companyCache || {};
+    const s = c.settings || {};
+    return {
+        currency_symbol: s.currency_symbol || 'UGX',
+        tax_rate: Number(s.tax_rate != null ? s.tax_rate : 0),
+        tax_label: s.tax_label || 'VAT',
+        tax_inclusive: s.tax_inclusive !== false,
+        date_format: s.date_format || 'DD/MM/YYYY',
+        timezone: s.timezone || 'Africa/Kampala',
+        receipt_footer: s.receipt_footer || 'Thank you for your business!',
+        receipt_show_tax: s.receipt_show_tax !== false,
+        receipt_show_discount: s.receipt_show_discount !== false
+    };
+}
+function currencySymbol() {
+    return getCompanySettings().currency_symbol || 'UGX';
+}
+function calcTax(netAmount) {
+    const s = getCompanySettings();
+    const rate = Number(s.tax_rate) || 0;
+    if (rate <= 0) return { net: Number(netAmount) || 0, tax: 0, gross: Number(netAmount) || 0, rate: 0, label: s.tax_label };
+    const net = Number(netAmount) || 0;
+    if (s.tax_inclusive) {
+        const gross = net;
+        const tax = gross - (gross / (1 + rate / 100));
+        return { net: gross - tax, tax, gross, rate, label: s.tax_label };
+    }
+    const tax = net * (rate / 100);
+    return { net, tax, gross: net + tax, rate, label: s.tax_label };
 }
 
-function formatCompactMoney(n, symbol = 'UGX') {
+function formatMoney(n, symbol) {
+    if (symbol == null || symbol === '') symbol = currencySymbol();
+    return symbol + ' ' + (Number(n) || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function formatCompactMoney(n, symbol) {
+    if (symbol == null || symbol === '') symbol = currencySymbol();
     const v = Number(n) || 0;
     const abs = Math.abs(v);
     const sign = v < 0 ? '-' : '';
@@ -957,6 +999,63 @@ function formatCompactMoney(n, symbol = 'UGX') {
     if (abs >= 1e6) return sign + symbol + ' ' + (abs / 1e6).toFixed(abs >= 1e7 ? 1 : 2) + 'M';
     if (abs >= 1e4) return sign + symbol + ' ' + (abs / 1e3).toFixed(abs >= 1e5 ? 0 : 1) + 'K';
     return sign + symbol + ' ' + abs.toLocaleString();
+}
+
+// ===== Double-entry style journal (foundation ledger) =====
+async function postJournal(entry) {
+    try {
+        const companyId = state.user && state.user.companyId;
+        await db.collection('journal_entries').add({
+            companyId: companyId || null,
+            station_id: entry.station_id || state.currentStationId || null,
+            entry_type: entry.entry_type || 'general',
+            reference_id: entry.reference_id || null,
+            description: entry.description || '',
+            lines: entry.lines || [],
+            total_debit: (entry.lines || []).reduce((s, l) => s + (Number(l.debit) || 0), 0),
+            total_credit: (entry.lines || []).reduce((s, l) => s + (Number(l.credit) || 0), 0),
+            currency: entry.currency || currencySymbol(),
+            created_by: state.user ? state.user.id : null,
+            created_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch (e) {
+        console.warn('postJournal failed (non-blocking):', e);
+    }
+}
+
+// ===== Session security =====
+function resetSessionTimer() {
+    if (state.sessionTimer) clearTimeout(state.sessionTimer);
+    if (!state.user) return;
+    // Auto-logout after 8 hours of inactivity
+    state.sessionTimer = setTimeout(() => {
+        toast('Session expired. Please sign in again.', 'warning');
+        logout();
+    }, 8 * 60 * 60 * 1000);
+}
+['click', 'keydown', 'mousemove', 'touchstart'].forEach(ev => {
+    document.addEventListener(ev, () => { if (state.user) resetSessionTimer(); }, { passive: true });
+});
+
+function checkLoginRateLimit() {
+    const now = Date.now();
+    if (state.loginLockUntil && now < state.loginLockUntil) {
+        const secs = Math.ceil((state.loginLockUntil - now) / 1000);
+        return 'Too many failed attempts. Try again in ' + secs + 's.';
+    }
+    return null;
+}
+function recordLoginFailure() {
+    state.loginAttempts = (state.loginAttempts || 0) + 1;
+    if (state.loginAttempts >= 5) {
+        state.loginLockUntil = Date.now() + 60 * 1000;
+        state.loginAttempts = 0;
+    }
+}
+function recordLoginSuccess() {
+    state.loginAttempts = 0;
+    state.loginLockUntil = 0;
+    resetSessionTimer();
 }
 
 function lockSubmit(el, busyText) {
@@ -1486,63 +1585,88 @@ function exportExcel(headers, rows, filename = 'report.xlsx') {
 
 // ===== Print Receipt =====
 function printReceipt(saleData) {
-    const receiptWindow = window.open('', '_blank', 'width=400,height=600');
+    const receiptWindow = window.open('', '_blank', 'width=320,height=640');
     if (!receiptWindow) { toast('Please allow popups for this site', 'warning'); return; }
     const now = new Date();
     const dateStr = now.toLocaleString('en-GB');
+    const cur = saleData.currency || currencySymbol();
+    const co = state.companyCache || {};
+    const footerMsg = (getCompanySettings().receipt_footer) || 'Thank you for your business!';
     let itemsHtml = '';
     (saleData.items || []).forEach(item => {
-        itemsHtml += `<tr><td>${item.product}</td><td style="text-align:right;">${Number(item.qty).toFixed(2)}L</td><td style="text-align:right;">${formatMoney(item.price, saleData.currency || 'UGX')}</td><td style="text-align:right;">${formatMoney(item.qty * item.price, saleData.currency || 'UGX')}</td></tr>`;
+        const line = (Number(item.qty) || 0) * (Number(item.price) || 0);
+        itemsHtml += `<tr>
+          <td colspan="2" class="prod">${esc(item.product)}</td>
+        </tr><tr>
+          <td class="muted">${Number(item.qty).toFixed(2)}L × ${formatMoney(item.price, cur)}</td>
+          <td class="right">${formatMoney(line, cur)}</td>
+        </tr>`;
     });
-    const discountLine = saleData.discount > 0 ? `<tr><td colspan="3">Discount</td><td style="text-align:right;">-${formatMoney(saleData.discount, saleData.currency || 'UGX')}</td></tr>` : '';
+    const discountLine = saleData.discount > 0
+        ? `<tr><td class="muted">Discount</td><td class="right">-${formatMoney(saleData.discount, cur)}</td></tr>` : '';
+    const taxLine = (saleData.tax > 0)
+        ? `<tr><td class="muted">${esc(saleData.tax_label || 'Tax')}</td><td class="right">${formatMoney(saleData.tax, cur)}</td></tr>` : '';
     receiptWindow.document.write(`
     <html>
-    <head><title>Receipt #${saleData.transactionId}</title>
+    <head><title>Receipt #${saleData.transactionId || ''}</title>
     <style>
-      body { font-family: 'Courier New', monospace; font-size: 14px; padding: 20px; max-width: 350px; margin: 0 auto; }
-      .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 10px; margin-bottom: 10px; }
-      .header h2 { margin: 0; font-size: 18px; }
-      .header p { margin: 2px 0; font-size: 12px; color: #666; }
-      table { width: 100%; border-collapse: collapse; margin: 10px 0; }
-      th { text-align: left; font-size: 12px; border-bottom: 1px solid #ddd; }
-      td { padding: 4px 0; }
-      .total-row { border-top: 2px solid #333; font-weight: bold; }
-      .footer { text-align: center; border-top: 2px dashed #333; padding-top: 10px; margin-top: 10px; font-size: 12px; color: #666; }
-      .thankyou { font-size: 16px; font-weight: bold; text-align: center; margin: 10px 0; }
-      .label { color: #666; font-size: 12px; }
+      /* 80mm thermal printer profile */
+      @page { size: 80mm auto; margin: 2mm; }
+      * { box-sizing: border-box; }
+      body {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 12px; line-height: 1.35;
+        width: 72mm; max-width: 72mm; margin: 0 auto; padding: 4mm 3mm;
+        color: #000; background: #fff;
+      }
+      .center { text-align: center; }
       .right { text-align: right; }
-      @media print { body { padding: 10px; } .no-print { display: none; } }
+      .muted { color: #333; font-size: 11px; }
+      .brand { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; margin: 0; }
+      .sep { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+      table { width: 100%; border-collapse: collapse; }
+      td { padding: 1px 0; vertical-align: top; }
+      td.prod { font-weight: 600; padding-top: 4px; }
+      .totals td { padding-top: 3px; }
+      .grand { font-size: 14px; font-weight: 700; }
+      .footer { font-size: 10px; margin-top: 8px; }
+      .no-print { margin-top: 12px; text-align: center; }
+      .no-print button {
+        padding: 8px 14px; margin: 0 4px; border: none; border-radius: 4px;
+        cursor: pointer; font-size: 12px;
+      }
+      @media print {
+        .no-print { display: none !important; }
+        body { width: 72mm; padding: 0; }
+      }
     </style>
     </head>
     <body>
-      <div class="header">
-        <h2>🏪 PetroManager</h2>
-        <p>${saleData.station || 'PetroManager Station'}</p>
-        <p>${dateStr}</p>
-        <p><strong>Receipt #${saleData.transactionId}</strong></p>
+      <div class="center">
+        <p class="brand">${esc(co.name || 'PetroManager')}</p>
+        <div class="muted">${esc(saleData.station || '')}</div>
+        ${co.phone ? `<div class="muted">${esc(co.phone)}</div>` : ''}
+        ${co.tax_id ? `<div class="muted">TIN: ${esc(co.tax_id)}</div>` : ''}
       </div>
-      <p><span class="label">Customer:</span> ${saleData.customer || 'Walk-in'}</p>
-      <p><span class="label">Cashier:</span> ${saleData.cashier || '—'}</p>
-      <p><span class="label">Payment:</span> ${saleData.payment || 'Cash'}</p>
-      <table>
-        <thead><tr><th>Product</th><th class="right">Qty</th><th class="right">Price</th><th class="right">Total</th></tr></thead>
-        <tbody>${itemsHtml}${discountLine}</tbody>
-        <tfoot>
-          <tr class="total-row">
-            <td colspan="3"><strong>TOTAL</strong></td>
-            <td class="right"><strong>${formatMoney(saleData.total, saleData.currency || 'UGX')}</strong></td>
-          </tr>
-        </tfoot>
+      <hr class="sep">
+      <div class="muted">#${esc(String(saleData.transactionId || ''))}</div>
+      <div class="muted">${dateStr}</div>
+      <div class="muted">Cashier: ${esc(saleData.cashier || '—')}</div>
+      <div class="muted">Customer: ${esc(saleData.customer || 'Walk-in')}</div>
+      <div class="muted">Pay: ${esc(saleData.payment || 'Cash')}</div>
+      <hr class="sep">
+      <table>${itemsHtml}${discountLine}${taxLine}
+        <tr class="totals grand"><td>TOTAL</td><td class="right">${formatMoney(saleData.total, cur)}</td></tr>
       </table>
-      <div class="thankyou">Thank You!</div>
-      <div class="footer">
-        <p>Visit us again!<br>Fueling Uganda's Future</p>
-        <button class="no-print" onclick="window.print()" style="margin-top:10px;padding:8px 20px;background:#0d6efd;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨️ Print Receipt</button>
-        <button class="no-print" onclick="window.close()" style="margin-top:10px;padding:8px 20px;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:5px;">Close</button>
+      <hr class="sep">
+      <div class="center footer">${esc(footerMsg)}</div>
+      <div class="center footer muted">PetroManager Pro</div>
+      <div class="no-print">
+        <button onclick="window.print()" style="background:#0b1a33;color:#fff;">Print</button>
+        <button onclick="window.close()" style="background:#dc3545;color:#fff;">Close</button>
       </div>
     </body>
-    </html>
-  `);
+    </html>`);
     receiptWindow.document.close();
 }
 
@@ -1957,6 +2081,8 @@ async function doLogin(username, password) {
         showErr('Please fill in all fields');
         return false;
     }
+    const rateMsg = checkLoginRateLimit();
+    if (rateMsg) { showErr(rateMsg); return false; }
     // Warn if opened as local file — Firebase + crypto need HTTPS
     if (location.protocol === 'file:') {
         showErr('Do not open app.html as a file. Use your hosted HTTPS URL (e.g. Firebase Hosting).');
@@ -1966,6 +2092,7 @@ async function doLogin(username, password) {
         showLoading(true);
         const snap = await db.collection('users').where('username', '==', username.toLowerCase().trim()).get();
         if (snap.empty) {
+            recordLoginFailure();
             showErr('User not found');
             return false;
         }
@@ -1977,6 +2104,7 @@ async function doLogin(username, password) {
         }
         const hashed = await hashPassword(password);
         if (user.password !== hashed && user.password !== password) {
+            recordLoginFailure();
             showErr('Incorrect password');
             return false;
         }
@@ -1985,11 +2113,44 @@ async function doLogin(username, password) {
             user.password = hashed;
         }
         state.user = user;
+        recordLoginSuccess();
         localStorage.setItem('petro_session', JSON.stringify({
             userId: user.id,
             companyId: user.companyId,
             ts: Date.now()
         }));
+        // Optional Firebase Auth bridge (enable Email/Password in Firebase Console)
+        try {
+            if (user.email && typeof auth !== 'undefined') {
+                const authEmail = String(user.email).toLowerCase().trim();
+                try {
+                    await auth.signInWithEmailAndPassword(authEmail, password);
+                } catch (authErr) {
+                    if (authErr && authErr.code === 'auth/user-not-found') {
+                        try {
+                            const cred = await auth.createUserWithEmailAndPassword(authEmail, password);
+                            await db.collection('users').doc(user.id).update({
+                                authUid: cred.user.uid,
+                                email: authEmail
+                            });
+                        } catch (createErr) {
+                            console.warn('Auth create skipped:', createErr && createErr.code);
+                        }
+                    } else if (authErr && authErr.code === 'auth/wrong-password') {
+                        console.warn('Auth password mismatch — update Auth password or re-link user');
+                    } else if (authErr && authErr.code === 'auth/operation-not-allowed') {
+                        console.warn('Enable Email/Password in Firebase Console → Authentication');
+                    } else {
+                        console.warn('Auth sign-in skipped:', authErr && authErr.code);
+                    }
+                }
+            }
+        } catch (bridgeErr) {
+            console.warn('Auth bridge:', bridgeErr);
+        }
+        try {
+            state.companyCache = await getCompany(user.companyId);
+        } catch (_) { state.companyCache = null; }
         await loadStations();
         await loadCashiers();
         await loadAllUsers();
@@ -2047,8 +2208,11 @@ async function tryRestoreSession() {
 }
 
 function logout() {
+    if (state.sessionTimer) { clearTimeout(state.sessionTimer); state.sessionTimer = null; }
+    try { if (typeof auth !== 'undefined') auth.signOut(); } catch (_) {}
     localStorage.removeItem('petro_session');
     state.user = null;
+    state.companyCache = null;
     state.stations = [];
     state.cashiers = [];
     state.allUsers = [];
@@ -2641,25 +2805,49 @@ async function renderDashboard() {
     fInv.forEach(i => { const p = i.product_type; if (stockByProduct[p] !== undefined) stockByProduct[p] += (i.quantity || 0); else stockByProduct[p] = (i.quantity || 0); });
     const totalLitres = Object.values(stockByProduct).reduce((a, b) => a + b, 0);
 
-    // Sales & Profit (fuel only)
+    // Period filter for dashboard KPIs
+    const period = state.dashPeriod || 'mtd';
+    const periodStart = (() => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        if (period === 'today') return d;
+        if (period === '7d') { d.setDate(d.getDate() - 6); return d; }
+        if (period === 'mtd') { d.setDate(1); return d; }
+        if (period === 'ytd') { d.setMonth(0, 1); return d; }
+        return null; // all
+    })();
+    const inPeriod = (s) => {
+        if (!periodStart) return true;
+        const dt = s.created_at && s.created_at.toDate ? s.created_at.toDate()
+            : (s.sale_date ? new Date(s.sale_date) : (s.created_at ? new Date(s.created_at) : null));
+        if (!dt || isNaN(dt.getTime())) return false;
+        return dt >= periodStart;
+    };
+    const pSales = fSales.filter(inPeriod);
+    const pPayments = fPayments.filter(inPeriod);
+    const pExpenses = fExpenses.filter(inPeriod);
+    const pAdjustments = fAdjustments.filter(inPeriod);
+
+    // Sales & Profit (fuel only, period-scoped)
     let totalRevenue = 0,
         totalCOGS = 0;
-    fSales.forEach(s => {
+    pSales.forEach(s => {
         totalRevenue += Number(s.amount) || 0;
         totalCOGS += (Number(s.cost_price) || 0) * (Number(s.quantity) || 0);
     });
-    const totalCollections = fPayments.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+    const totalCollections = pPayments.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
     const grossProfit = totalRevenue - totalCOGS;
-    const totalExpenses = fExpenses.reduce((sum, x) => sum + (x.amount || 0), 0);
+    const totalExpenses = pExpenses.reduce((sum, x) => sum + (x.amount || 0), 0);
     // Losses from adjustments: negative quantity changes * cost_price_at_change
     let totalLosses = 0;
-    fAdjustments.forEach(a => {
+    pAdjustments.forEach(a => {
         if (a.adj_type === 'quantity' && Number(a.quantity) < 0) {
             const cost = a.cost_price_at_change || 0;
             totalLosses += Math.abs(Number(a.quantity)) * cost;
         }
     });
     const netProfit = grossProfit - totalExpenses - totalLosses;
+    const periodLabel = ({ today: 'Today', '7d': 'Last 7 days', mtd: 'This month', ytd: 'This year', all: 'All time' })[period] || 'Period';
 
     const now = new Date();
     const todayStr = now.toDateString();
@@ -2714,28 +2902,35 @@ async function renderDashboard() {
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-2 align-items-center">
+                <div class="dash-period" id="dashPeriodBtns">
+                    <button type="button" data-period="today" class="${period === 'today' ? 'active' : ''}">Today</button>
+                    <button type="button" data-period="7d" class="${period === '7d' ? 'active' : ''}">7D</button>
+                    <button type="button" data-period="mtd" class="${period === 'mtd' ? 'active' : ''}">MTD</button>
+                    <button type="button" data-period="ytd" class="${period === 'ytd' ? 'active' : ''}">YTD</button>
+                    <button type="button" data-period="all" class="${period === 'all' ? 'active' : ''}">All</button>
+                </div>
                 ${canManageCompany(state.user.role) ? `<button class="btn btn-sm btn-outline-secondary" id="editCompanyBtn"><i class="bi bi-pencil"></i> Company</button>` : ''}
                 <button class="btn btn-sm btn-outline-secondary" id="dailyReportBtn"><i class="bi bi-envelope"></i> Email report</button>
                 <button class="btn btn-sm btn-outline-secondary" id="lowStockAlertBtn"><i class="bi bi-bell"></i> Stock check</button>
             </div>
         </div>
 
-        <!-- Hero metrics -->
+        <!-- Hero metrics (period-scoped) -->
         <div class="dash-hero-row">
             <div class="dash-hero-metric" title="${formatMoney(todaySales)}">
-                <div class="label">Today's sales</div>
+                <div class="label">Today's fuel sales</div>
                 <div class="value text-primary">${formatCompactMoney(todaySales)}</div>
                 <div class="delta ${deltaClass(todayDeltaPct)}">${deltaLabel(todayDeltaPct)} · yday ${formatCompactMoney(yesterdaySales)}</div>
             </div>
             <div class="dash-hero-metric" title="${formatMoney(totalRevenue)}">
-                <div class="label">Total revenue</div>
+                <div class="label">Fuel revenue · ${periodLabel}</div>
                 <div class="value">${formatCompactMoney(totalRevenue)}</div>
-                <div class="delta flat">Gross margin ${marginPct.toFixed(1)}% · GP ${formatCompactMoney(grossProfit)}</div>
+                <div class="delta flat">Margin ${marginPct.toFixed(1)}% · GP ${formatCompactMoney(grossProfit)} · Collections ${formatCompactMoney(totalCollections)}</div>
             </div>
             <div class="dash-hero-metric" title="${formatMoney(netProfit)}">
-                <div class="label">Net profit</div>
+                <div class="label">Net profit · ${periodLabel}</div>
                 <div class="value ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCompactMoney(netProfit)}</div>
-                <div class="delta flat">After expenses ${formatCompactMoney(totalExpenses)} · losses ${formatCompactMoney(totalLosses)}</div>
+                <div class="delta flat">Expenses ${formatCompactMoney(totalExpenses)} · losses ${formatCompactMoney(totalLosses)}</div>
             </div>
         </div>
 
@@ -2795,12 +2990,19 @@ async function renderDashboard() {
     if (editBtn) editBtn.onclick = function() { navigate('company'); };
     const dailyBtn = document.getElementById('dailyReportBtn');
     if (dailyBtn) dailyBtn.onclick = sendDailyReportEmail;
+    document.querySelectorAll('#dashPeriodBtns button').forEach(btn => {
+        btn.onclick = function() {
+            state.dashPeriod = this.dataset.period || 'mtd';
+            localStorage.setItem('petro_dash_period', state.dashPeriod);
+            renderDashboard();
+        };
+    });
     const stockBtn = document.getElementById('lowStockAlertBtn');
     if (stockBtn) stockBtn.onclick = function() { checkLowStock(); };
 
     // Render charts
     setTimeout(() => {
-        const salesData = fSales;
+        const salesData = pSales;
         const byProduct = {};
         salesData.forEach(s => { const p = s.product_type || 'Unknown'; if (!byProduct[p]) byProduct[p] = 0;
             byProduct[p] += Number(s.amount) || 0; });
@@ -3363,25 +3565,31 @@ async function renderSales() {
                 const lineDiscount = subtotal > 0
                     ? cart.map(item => (item.qty * item.price) / subtotal * disc)
                     : cart.map(() => 0);
+                const taxInfo = calcTax(grandTotal);
                 cart.forEach((item, idx) => {
                     const saleRef = db.collection('sales').doc();
                     const lineAmount = item.qty * item.price;
                     const lineDisc = lineDiscount[idx] || 0;
+                    const lineNet = lineAmount - lineDisc;
+                    const lineShare = grandTotal > 0 ? lineNet / grandTotal : 0;
                     tx.set(saleRef, {
                         station_id: String(item.stationId),
                         product_type: item.product,
                         quantity: item.qty,
                         selling_price: item.price,
                         cost_price: updates[idx].costPrice,
-                        amount: lineAmount - lineDisc,
+                        amount: lineNet,
                         discount: lineDisc,
+                        tax_amount: taxInfo.tax * lineShare,
+                        tax_rate: taxInfo.rate,
+                        tax_label: taxInfo.label,
                         payment_method: payment,
                         customer_name: customerName,
                         customer_id: customerId,
                         transaction_id: transactionId,
                         recorded_by: cashierId,
                         sale_date: saleDate,
-                        currency: currency,
+                        currency: currency || currencySymbol(),
                         companyId: state.user.companyId,
                         created_at: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -3419,33 +3627,51 @@ async function renderSales() {
             });
 
             await logAudit('cart_sale', { station: stationId, items: cart.length, total: grandTotal });
+            // Ledger foundation: balanced journal entry
+            const taxOnSale = calcTax(grandTotal);
+            await postJournal({
+                entry_type: 'sale',
+                reference_id: transactionId,
+                station_id: stationId,
+                description: 'Sale ' + transactionId + ' · ' + payment,
+                currency: currency || currencySymbol(),
+                lines: [
+                    { account: payment === 'credit' ? 'Accounts Receivable' : 'Cash', debit: taxOnSale.gross, credit: 0 },
+                    { account: 'Sales Revenue', debit: 0, credit: taxOnSale.net },
+                    ...(taxOnSale.tax > 0 ? [{ account: 'Tax Payable (' + taxOnSale.label + ')', debit: 0, credit: taxOnSale.tax }] : [])
+                ]
+            });
             toast('Sale complete!', 'success');
             const cashierName = (state.cashiers.find(c => c.id === cashierId) || {}).name || '—';
             // Print receipt
             printReceipt({
                 transactionId,
                 items: cart.map(i => ({ product: i.product, qty: i.qty, price: i.price })),
-                total: grandTotal,
+                total: taxOnSale.gross,
                 discount: disc,
+                tax: taxOnSale.tax,
+                tax_label: taxOnSale.label,
                 payment,
                 customer: customerName,
                 cashier: cashierName,
                 station: stationName(stationId),
                 date: saleDate,
-                currency: currency
+                currency: currency || currencySymbol()
             });
             // Show invoice
             showInvoice({
                 transactionId,
                 items: cart.map(i => ({ product: i.product, qty: i.qty, price: i.price })),
-                total: grandTotal,
+                total: taxOnSale.gross,
                 discount: disc,
+                tax: taxOnSale.tax,
+                tax_label: taxOnSale.label,
                 payment,
                 customer: customerName,
                 cashier: cashierName,
                 station: stationName(stationId),
                 date: saleDate,
-                currency: currency
+                currency: currency || currencySymbol()
             });
             cart = [];
             renderSales(); // refresh
@@ -3504,14 +3730,16 @@ async function renderSales() {
             showInvoice({
                 transactionId: doc.transaction_id || id,
                 items: items,
-                total: doc.amount || 0,
+                total: (Number(doc.amount) || 0) + (Number(doc.tax_amount) || 0) * (getCompanySettings().tax_inclusive ? 0 : 1),
                 discount: doc.discount || 0,
+                tax: doc.tax_amount || 0,
+                tax_label: doc.tax_label || getCompanySettings().tax_label,
                 payment: doc.payment_method || 'cash',
                 customer: doc.customer_name || 'Walk-in',
                 cashier: (state.cashiers.find(c => c.id === doc.recorded_by) || {}).name || '—',
                 station: stationName(doc.station_id),
                 date: doc.sale_date || doc.created_at,
-                currency: doc.currency || 'UGX'
+                currency: doc.currency || currencySymbol()
             });
         };
     });
@@ -3538,34 +3766,46 @@ async function renderSales() {
 function showInvoice(data) {
     const modal = new bootstrap.Modal(document.getElementById('invoiceModal'));
     const body = document.getElementById('invoiceModalBody');
-    const currencySymbol = data.currency || 'UGX';
+    const cur = data.currency || currencySymbol();
+    const co = state.companyCache || {};
+    const settings = getCompanySettings();
+    const taxAmt = Number(data.tax) || 0;
+    const taxLabel = data.tax_label || settings.tax_label || 'VAT';
+    const subtotal = (data.items || []).reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.price) || 0), 0);
+    const disc = Number(data.discount) || 0;
+    const netAfterDisc = Math.max(0, subtotal - disc);
+    const grand = Number(data.total) != null && data.total !== '' ? Number(data.total) : (netAfterDisc + (settings.tax_inclusive ? 0 : taxAmt));
 
-    const itemsHtml = data.items.map(i =>
-        `<tr><td>${esc(i.product)}</td><td style="text-align:right;">${Number(i.qty).toFixed(2)}L</td><td style="text-align:right;">${formatMoney(i.price, currencySymbol)}</td><td style="text-align:right;">${formatMoney(i.qty * i.price, currencySymbol)}</td></tr>`
+    const itemsHtml = (data.items || []).map(i =>
+        `<tr><td>${esc(i.product)}</td><td style="text-align:right;">${Number(i.qty).toFixed(2)}L</td><td style="text-align:right;">${formatMoney(i.price, cur)}</td><td style="text-align:right;">${formatMoney((Number(i.qty)||0)*(Number(i.price)||0), cur)}</td></tr>`
     ).join('');
 
-    const discountRow = data.discount > 0 ?
-        `<tr class="text-danger"><td colspan="3">Discount</td><td style="text-align:right;">-${formatMoney(data.discount, currencySymbol)}</td></tr>` :
-        '';
+    const discountRow = disc > 0 ?
+        `<tr class="text-danger"><td colspan="3">Discount</td><td style="text-align:right;">-${formatMoney(disc, cur)}</td></tr>` : '';
+    const taxRow = (taxAmt > 0 && settings.receipt_show_tax !== false) ?
+        `<tr><td colspan="3">${esc(taxLabel)}${settings.tax_inclusive ? ' (included)' : ''}</td><td style="text-align:right;">${formatMoney(taxAmt, cur)}</td></tr>` : '';
 
     body.innerHTML = `
         <div class="invoice-box" id="invoiceContent">
             <div class="header">
                 <div class="company">
-                    <h2>🏪 PetroManager</h2>
-                    <p>Fuel Management System</p>
-                    <p>${data.station || 'PetroManager Station'}</p>
+                    <h2>${esc(co.name || 'PetroManager')}</h2>
+                    <p>${esc(co.tagline || 'Fuel Management System')}</p>
+                    <p>${esc(data.station || '')}</p>
+                    ${co.address ? `<p>${esc(co.address)}</p>` : ''}
+                    ${co.phone ? `<p>${esc(co.phone)}</p>` : ''}
+                    ${co.tax_id ? `<p>TIN / Tax ID: ${esc(co.tax_id)}</p>` : ''}
                 </div>
                 <div class="invoice-info">
                     <h5>INVOICE</h5>
-                    <p><strong>#${data.transactionId}</strong></p>
+                    <p><strong>#${esc(String(data.transactionId || ''))}</strong></p>
                     <p>${formatDate(data.date)}</p>
-                    <p>Currency: ${currencySymbol}</p>
+                    <p>Currency: ${esc(cur)}</p>
                 </div>
             </div>
             <div class="details">
                 <div class="customer">
-                    <strong>Customer:</strong> ${esc(data.customer || 'Walk-in')}<br>
+                    <strong>Bill To:</strong> ${esc(data.customer || 'Walk-in')}<br>
                     <strong>Cashier:</strong> ${esc(data.cashier || '—')}<br>
                     <strong>Payment:</strong> ${esc(data.payment || 'Cash')}
                 </div>
@@ -3575,17 +3815,19 @@ function showInvoice(data) {
                 <tbody>
                     ${itemsHtml}
                     ${discountRow}
-                    <tr class="total-row"><td colspan="3"><strong>TOTAL</strong></td><td style="text-align:right;"><strong>${formatMoney(data.total, currencySymbol)}</strong></td></tr>
+                    <tr><td colspan="3">Subtotal</td><td style="text-align:right;">${formatMoney(netAfterDisc, cur)}</td></tr>
+                    ${taxRow}
+                    <tr class="total-row"><td colspan="3"><strong>TOTAL DUE</strong></td><td style="text-align:right;"><strong>${formatMoney(grand, cur)}</strong></td></tr>
                 </tbody>
             </table>
             <div class="footer">
-                <p>Thank you for your business!</p>
+                <p>${esc(settings.receipt_footer || 'Thank you for your business!')}</p>
                 <div class="signature">
                     <div>Authorized Signature</div>
                     <div>Customer Signature</div>
                     <div>Date: ${formatDate(new Date())}</div>
                 </div>
-                <p style="margin-top:12px;font-size:0.7rem;color:#999;">This is a system-generated invoice. For queries, contact your station manager.</p>
+                <p style="margin-top:12px;font-size:0.7rem;color:#999;">System-generated invoice · PetroManager Pro</p>
             </div>
         </div>
     `;
@@ -3811,9 +4053,106 @@ async function renderShifts() {
             await updateDoc('shifts', myActive.id, data);
             await logAudit('end_shift', { shiftId: myActive.id });
             toast('Shift ended');
+            // Z-report for this shift
+            try {
+                await printZReport({ ...myActive, ...data, id: myActive.id }, displayProducts);
+            } catch (zr) { console.warn('Z-report:', zr); }
             renderShifts();
         };
     }
+}
+
+// ===== Shift Z-Report (end-of-shift summary for audit) =====
+async function printZReport(shift, displayProducts) {
+    const stationId = String(shift.station_id || '');
+    const cashierId = shift.cashier_id;
+    const startTs = shift.created_at && shift.created_at.toDate ? shift.created_at.toDate() : new Date(shift.created_at);
+    const endTs = new Date();
+    const allSales = await getAll('sales') || [];
+    const shiftSales = allSales.filter(s => {
+        if (s.status === 'reversed' || s.type === 'payment') return false;
+        if (String(s.station_id) !== stationId) return false;
+        if (cashierId && s.recorded_by && String(s.recorded_by) !== String(cashierId)) return false;
+        const d = s.created_at && s.created_at.toDate ? s.created_at.toDate() : (s.sale_date ? new Date(s.sale_date) : null);
+        if (!d) return false;
+        return d >= startTs && d <= endTs;
+    });
+    let revenue = 0, litres = 0, cash = 0, credit = 0, mobile = 0, other = 0;
+    const byProduct = {};
+    shiftSales.forEach(s => {
+        const amt = Number(s.amount) || 0;
+        const qty = Number(s.quantity) || 0;
+        revenue += amt;
+        litres += qty;
+        const pm = String(s.payment_method || 'cash').toLowerCase();
+        if (pm === 'credit') credit += amt;
+        else if (pm === 'mobile' || pm === 'mobile_money') mobile += amt;
+        else if (pm === 'cash') cash += amt;
+        else other += amt;
+        const p = s.product_type || 'Other';
+        if (!byProduct[p]) byProduct[p] = { qty: 0, amt: 0 };
+        byProduct[p].qty += qty;
+        byProduct[p].amt += amt;
+    });
+    const meterLines = (displayProducts || []).map(p => {
+        const start = Number(shift['start_' + p.toLowerCase()] || 0);
+        const end = Number(shift['end_' + p.toLowerCase()] || 0);
+        const sold = end - start;
+        return { product: p, start, end, sold };
+    });
+    const cashier = (state.allUsers || state.cashiers || []).find(u => u.id === cashierId);
+    const cashierName = cashier ? (cashier.name || cashier.username) : (cashierId || '—');
+    const co = state.companyCache || {};
+    const cur = currencySymbol();
+    const win = window.open('', '_blank', 'width=420,height=700');
+    if (!win) { toast('Allow popups to print Z-report', 'warning'); return; }
+    let meterHtml = meterLines.map(m =>
+        `<tr><td>${esc(m.product)}</td><td class="r">${m.start.toFixed(2)}</td><td class="r">${m.end.toFixed(2)}</td><td class="r">${m.sold.toFixed(2)}</td></tr>`
+    ).join('');
+    let prodHtml = Object.keys(byProduct).map(p =>
+        `<tr><td>${esc(p)}</td><td class="r">${byProduct[p].qty.toFixed(2)}L</td><td class="r">${formatMoney(byProduct[p].amt, cur)}</td></tr>`
+    ).join('') || '<tr><td colspan="3" class="muted">No sales in shift window</td></tr>';
+    win.document.write(`<!DOCTYPE html><html><head><title>Z-Report</title>
+    <style>
+      body{font-family:Courier New,monospace;font-size:12px;width:80mm;margin:0 auto;padding:8px;color:#000}
+      h1{font-size:16px;margin:0;text-align:center} h2{font-size:13px;margin:8px 0 4px;border-bottom:1px dashed #000;padding-bottom:2px}
+      .c{text-align:center}.r{text-align:right}.muted{color:#444}
+      table{width:100%;border-collapse:collapse} td,th{padding:2px 0}
+      .sep{border:none;border-top:1px dashed #000;margin:8px 0}
+      @media print{.no-print{display:none}}
+    </style></head><body>
+    <div class="c"><h1>Z-REPORT</h1>
+      <div>${esc(co.name || 'PetroManager')}</div>
+      <div class="muted">${esc(stationName(stationId))}</div>
+    </div>
+    <hr class="sep">
+    <div>Shift: ${esc(shift.shift_type || '—')} · ${esc(String(shift.id || '').slice(0,8))}</div>
+    <div>Cashier: ${esc(cashierName)}</div>
+    <div>Opened: ${startTs.toLocaleString('en-GB')}</div>
+    <div>Closed: ${endTs.toLocaleString('en-GB')}</div>
+    <h2>Meters (L)</h2>
+    <table><tr><th>Product</th><th class="r">Start</th><th class="r">End</th><th class="r">Sold</th></tr>${meterHtml}</table>
+    <h2>Sales by product</h2>
+    <table>${prodHtml}</table>
+    <h2>Totals</h2>
+    <table>
+      <tr><td>Transactions</td><td class="r">${shiftSales.length}</td></tr>
+      <tr><td>Volume</td><td class="r">${litres.toFixed(2)} L</td></tr>
+      <tr><td>Revenue</td><td class="r"><strong>${formatMoney(revenue, cur)}</strong></td></tr>
+      <tr><td>Cash</td><td class="r">${formatMoney(cash, cur)}</td></tr>
+      <tr><td>Mobile money</td><td class="r">${formatMoney(mobile, cur)}</td></tr>
+      <tr><td>Credit</td><td class="r">${formatMoney(credit, cur)}</td></tr>
+      <tr><td>Other</td><td class="r">${formatMoney(other, cur)}</td></tr>
+    </table>
+    <hr class="sep">
+    <div class="c muted">Keep this report for balancing</div>
+    <div class="c muted">PetroManager Pro</div>
+    <div class="no-print c" style="margin-top:12px">
+      <button onclick="window.print()">Print Z-Report</button>
+      <button onclick="window.close()">Close</button>
+    </div>
+    </body></html>`);
+    win.document.close();
 }
 
 // ----- METERS (read‑only view from shifts) -----
@@ -7956,6 +8295,8 @@ async function renderReports() {
 
     // ---- Report types ----
     const reportTypes = [
+        { value: 'ar_aging', label: '📑 AR Aging (Customer Credit)' },
+        { value: 'ap_aging', label: '📑 AP Aging (Supplier Debt)' },
         { value: 'end_of_day', label: '📅 End of Day Summary' },
         { value: 'profit_loss', label: '📊 Profit & Loss Statement' },
         { value: 'sales_summary', label: '💰 Sales Summary' },
@@ -8289,6 +8630,97 @@ async function renderReports() {
         return { html: body, headers, rows, filename: 'ExpenseSummary' };
     }
 
+    // 4b. AR Aging — customer credit by age buckets (from last credit sale or balance)
+    function generateARAging(f) {
+        const now = new Date();
+        const buckets = { current: 0, d30: 0, d60: 0, d90: 0, d90p: 0 };
+        const headers = ['Customer', 'Phone', 'Balance', 'Current', '1–30', '31–60', '61–90', '90+', 'Oldest Sale'];
+        const rows = [];
+        customers.forEach(c => {
+            const bal = Number(c.current_balance || 0);
+            if (bal <= 0) return;
+            if (f.stationId && c.station_id && String(c.station_id) !== String(f.stationId)) return;
+            // Age from most recent open credit sale for this customer
+            const creditSales = sales.filter(s =>
+                s.customer_id === c.id &&
+                s.status !== 'reversed' &&
+                s.type !== 'payment' &&
+                String(s.payment_method || '').toLowerCase() === 'credit'
+            );
+            let oldest = null;
+            creditSales.forEach(s => {
+                const d = s.created_at && s.created_at.toDate ? s.created_at.toDate()
+                    : (s.sale_date ? new Date(s.sale_date) : null);
+                if (d && (!oldest || d < oldest)) oldest = d;
+            });
+            const ageDays = oldest ? Math.floor((now - oldest) / 86400000) : 0;
+            let bCurrent = 0, b30 = 0, b60 = 0, b90 = 0, b90p = 0;
+            if (ageDays <= 0) { bCurrent = bal; buckets.current += bal; }
+            else if (ageDays <= 30) { b30 = bal; buckets.d30 += bal; }
+            else if (ageDays <= 60) { b60 = bal; buckets.d60 += bal; }
+            else if (ageDays <= 90) { b90 = bal; buckets.d90 += bal; }
+            else { b90p = bal; buckets.d90p += bal; }
+            rows.push([
+                c.name,
+                c.phone || '—',
+                formatMoney(bal),
+                formatMoney(bCurrent),
+                formatMoney(b30),
+                formatMoney(b60),
+                formatMoney(b90),
+                formatMoney(b90p),
+                oldest ? oldest.toLocaleDateString('en-GB') : '—'
+            ]);
+        });
+        rows.sort((a, b) => {
+            const na = parseFloat(String(a[2]).replace(/[^\d.-]/g, '')) || 0;
+            const nb = parseFloat(String(b[2]).replace(/[^\d.-]/g, '')) || 0;
+            return nb - na;
+        });
+        const totalAR = buckets.current + buckets.d30 + buckets.d60 + buckets.d90 + buckets.d90p;
+        let body = `<div class="mb-3"><h5>Accounts Receivable Aging</h5>
+            <p class="text-muted small">Outstanding customer credit balances by age of oldest open credit sale.</p>
+            <div class="row g-2 mb-3">
+              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(buckets.current)}</div><div class="small text-muted">Current</div></div></div>
+              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(buckets.d30)}</div><div class="small text-muted">1–30 days</div></div></div>
+              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(buckets.d60)}</div><div class="small text-muted">31–60</div></div></div>
+              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(buckets.d90)}</div><div class="small text-muted">61–90</div></div></div>
+              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold text-danger">${formatMoney(buckets.d90p)}</div><div class="small text-muted">90+</div></div></div>
+              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(totalAR)}</div><div class="small text-muted">Total AR</div></div></div>
+            </div></div>`;
+        body += generateTable(headers, rows);
+        return { html: body, headers, rows, filename: 'AR_Aging' };
+    }
+
+    // 4c. AP Aging — supplier balances owed
+    function generateAPAging(f) {
+        const headers = ['Supplier', 'Phone', 'Balance Owed', 'Status'];
+        const rows = [];
+        let total = 0;
+        suppliers.forEach(s => {
+            const bal = Number(s.current_balance || 0);
+            if (bal <= 0) return;
+            total += bal;
+            rows.push([
+                s.name,
+                s.phone || '—',
+                formatMoney(bal),
+                bal > 0 ? 'Payable' : '—'
+            ]);
+        });
+        rows.sort((a, b) => {
+            const na = parseFloat(String(a[2]).replace(/[^\d.-]/g, '')) || 0;
+            const nb = parseFloat(String(b[2]).replace(/[^\d.-]/g, '')) || 0;
+            return nb - na;
+        });
+        let body = `<div class="mb-3"><h5>Accounts Payable</h5>
+            <p class="text-muted small">Amounts currently owed to suppliers (positive supplier balance).</p>
+            <div class="alert alert-secondary py-2">Total AP: <strong>${formatMoney(total)}</strong> · ${rows.length} supplier(s)</div>
+            </div>`;
+        body += generateTable(headers, rows);
+        return { html: body, headers, rows, filename: 'AP_Aging' };
+    }
+
     // 5. Customer Balances
     function generateCustomerBalances(f) {
         const cust = customers.filter(c => {
@@ -8552,6 +8984,12 @@ async function renderReports() {
         const f = getFilters();
         let result;
         switch (f.type) {
+            case 'ar_aging':
+                result = generateARAging(f);
+                break;
+            case 'ap_aging':
+                result = generateAPAging(f);
+                break;
             case 'end_of_day':
                 result = generateEndOfDay(f);
                 break;
@@ -8838,7 +9276,8 @@ async function renderCompanyProfile() {
         const stations = await getAll('stations');
         const isTop = isTopAdmin(state.user.role);
         const settings = company.settings || { receipt_footer: 'Thank you for your business!', receipt_logo: '',
-            receipt_show_tax: true, receipt_show_discount: true, currency_symbol: 'UGX', date_format: 'DD/MM/YYYY' };
+            receipt_show_tax: true, receipt_show_discount: true, currency_symbol: 'UGX', date_format: 'DD/MM/YYYY',
+            tax_rate: 0, tax_label: 'VAT', tax_inclusive: true, timezone: 'Africa/Kampala' };
 
         let html = `
             <div class="row g-4">
@@ -8906,12 +9345,39 @@ async function renderCompanyProfile() {
                                     <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" id="receiptShowTax" ${settings.receipt_show_tax !== false ? 'checked' : ''}><label class="form-check-label" for="receiptShowTax">Show Tax</label></div></div>
                                     <div class="col-md-6"><div class="form-check"><input class="form-check-input" type="checkbox" id="receiptShowDiscount" ${settings.receipt_show_discount !== false ? 'checked' : ''}><label class="form-check-label" for="receiptShowDiscount">Show Discount</label></div></div>
                                 </div>
-                                <div class="mb-2"><label class="form-label small">Currency Symbol</label><select id="currencySymbol" class="form-select form-select-sm">
-                                    <option value="UGX" ${settings.currency_symbol === 'UGX' ? 'selected' : ''}>UGX</option>
-                                    <option value="$" ${settings.currency_symbol === '$' ? 'selected' : ''}>$ (USD)</option>
-                                    <option value="KES" ${settings.currency_symbol === 'KES' ? 'selected' : ''}>KES</option>
-                                    <option value="TZS" ${settings.currency_symbol === 'TZS' ? 'selected' : ''}>TZS</option>
-                                </select></div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Currency</label>
+                                        <select id="currencySymbol" class="form-select form-select-sm">
+                                            <option value="UGX" ${settings.currency_symbol === 'UGX' ? 'selected' : ''}>UGX — Uganda</option>
+                                            <option value="KES" ${settings.currency_symbol === 'KES' ? 'selected' : ''}>KES — Kenya</option>
+                                            <option value="TZS" ${settings.currency_symbol === 'TZS' ? 'selected' : ''}>TZS — Tanzania</option>
+                                            <option value="RWF" ${settings.currency_symbol === 'RWF' ? 'selected' : ''}>RWF — Rwanda</option>
+                                            <option value="NGN" ${settings.currency_symbol === 'NGN' ? 'selected' : ''}>NGN — Nigeria</option>
+                                            <option value="GHS" ${settings.currency_symbol === 'GHS' ? 'selected' : ''}>GHS — Ghana</option>
+                                            <option value="ZAR" ${settings.currency_symbol === 'ZAR' ? 'selected' : ''}>ZAR — South Africa</option>
+                                            <option value="USD" ${settings.currency_symbol === 'USD' || settings.currency_symbol === '$' ? 'selected' : ''}>USD</option>
+                                            <option value="EUR" ${settings.currency_symbol === 'EUR' ? 'selected' : ''}>EUR</option>
+                                            <option value="GBP" ${settings.currency_symbol === 'GBP' ? 'selected' : ''}>GBP</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Tax rate (%)</label>
+                                        <input type="number" id="taxRate" class="form-control form-control-sm" step="0.01" min="0" max="100" value="${Number(settings.tax_rate || 0)}">
+                                    </div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label small">Tax label</label>
+                                        <input type="text" id="taxLabel" class="form-control form-control-sm" value="${esc(settings.tax_label || 'VAT')}" placeholder="VAT / GST / Sales Tax">
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <div class="form-check mb-1">
+                                            <input class="form-check-input" type="checkbox" id="taxInclusive" ${settings.tax_inclusive !== false ? 'checked' : ''}>
+                                            <label class="form-check-label" for="taxInclusive">Prices include tax</label>
+                                        </div>
+                                    </div>
+                                </div>
                                 <button type="submit" class="btn btn-outline-primary w-100">Save Settings</button>
                             </div>
                         </form>
@@ -8951,9 +9417,14 @@ async function renderCompanyProfile() {
                 receipt_show_tax: document.getElementById('receiptShowTax').checked,
                 receipt_show_discount: document.getElementById('receiptShowDiscount').checked,
                 currency_symbol: document.getElementById('currencySymbol').value,
+                tax_rate: parseFloat(document.getElementById('taxRate').value) || 0,
+                tax_label: document.getElementById('taxLabel').value.trim() || 'VAT',
+                tax_inclusive: document.getElementById('taxInclusive').checked,
+                timezone: (settings.timezone || 'Africa/Kampala')
             };
             try {
                 await updateCompany(companyId, { settings: settingsData });
+                try { state.companyCache = await getCompany(companyId); } catch (_) {}
                 document.getElementById('settingsResult').innerHTML = '<span class="text-success">✅ Settings saved.</span>';
                 toast('Settings saved', 'success');
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
@@ -10356,7 +10827,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
       }
     });
 
-    console.log('%cPetroManager Pro v1.0.5', 'color:#0b1a33;font-weight:bold;font-size:14px');
+    console.log('%cPetroManager Pro v1.3.0', 'color:#0b1a33;font-weight:bold;font-size:14px');
     console.log('✅ Registered pages (' + Object.keys(window.pageRenderers).length + '):', Object.keys(window.pageRenderers).sort().join(', '));
     if (missing.length) {
       console.error('❌ Missing render functions:', missing.join(', '));
