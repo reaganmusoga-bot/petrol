@@ -4975,53 +4975,30 @@ async function renderStock() {
         try {
             showLoading(true);
             await db.runTransaction(async (tx) => {
-                // Firestore rule: ALL reads must complete before ANY writes
-                const invReads = [];
                 for (let item of items) {
                     const invRef = db.collection('inventory').doc(`${stationId}_${item.product_type}`);
                     const doc = await tx.get(invRef);
-                    invReads.push({
-                        item,
-                        invRef,
-                        exists: doc.exists,
-                        currentQty: doc.exists ? (doc.data().quantity || 0) : 0,
-                        sellingPrice: doc.exists ? (doc.data().selling_price || 0) : 0
-                    });
-                }
-
-                let supRef = null;
-                let supDoc = null;
-                let currentBal = 0;
-                if (supplierId) {
-                    supRef = db.collection('suppliers').doc(supplierId);
-                    supDoc = await tx.get(supRef);
-                    if (supDoc.exists) {
-                        currentBal = Number(supDoc.data().current_balance || 0);
-                    }
-                }
-
-                // --- writes only below this line ---
-                for (const r of invReads) {
-                    const newQty = r.currentQty + r.item.quantity;
-                    tx.set(r.invRef, {
+                    let currentQty = doc.exists ? doc.data().quantity || 0 : 0;
+                    const newQty = currentQty + item.quantity;
+                    tx.set(invRef, {
                         station_id: stationId,
-                        product_type: r.item.product_type,
+                        product_type: item.product_type,
                         quantity: newQty,
-                        cost_price: r.item.cost_price,
-                        selling_price: r.sellingPrice,
+                        cost_price: item.cost_price,
+                        selling_price: doc.exists ? (doc.data().selling_price || 0) : 0,
                         companyId: state.user.companyId,
                         last_updated: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
                     const histRef = db.collection('inventory_history').doc();
                     tx.set(histRef, {
                         station_id: stationId,
-                        product_type: r.item.product_type,
-                        old_quantity: r.currentQty,
+                        product_type: item.product_type,
+                        old_quantity: currentQty,
                         new_quantity: newQty,
-                        change: r.item.quantity,
+                        change: item.quantity,
                         source: 'offload',
                         reason: `Offloading invoice ${invoiceNo}`,
-                        cost_price_at_change: r.item.cost_price,
+                        cost_price_at_change: item.cost_price,
                         user_id: state.user.id,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -5043,28 +5020,34 @@ async function renderStock() {
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                if (supplierId && supRef && supDoc && supDoc.exists) {
-                    const prepaidBefore = currentBal < 0 ? Math.abs(currentBal) : 0;
-                    const prepaidApplied = Math.min(prepaidBefore, totalCost);
-                    const newBal = currentBal + totalCost;
-                    tx.update(supRef, {
-                        current_balance: newBal,
-                        last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    const transRef = db.collection('supplier_transactions').doc();
-                    tx.set(transRef, {
-                        supplier_id: supplierId,
-                        amount: totalCost,
-                        balance_after: newBal,
-                        source: 'offload',
-                        prepaid_applied: prepaidApplied,
-                        note: prepaidApplied > 0
-                            ? ('Offload applied prepaid credit of ' + prepaidApplied)
-                            : null,
-                        reference_id: stockRef.id,
-                        user_id: state.user.id,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                if (supplierId) {
+                    const supRef = db.collection('suppliers').doc(supplierId);
+                    const supDoc = await tx.get(supRef);
+                    if (supDoc.exists) {
+                        const currentBal = Number(supDoc.data().current_balance || 0);
+                        // If currentBal < 0, supplier had prepaid credit; offload consumes it
+                        const prepaidBefore = currentBal < 0 ? Math.abs(currentBal) : 0;
+                        const prepaidApplied = Math.min(prepaidBefore, totalCost);
+                        const newBal = currentBal + totalCost;
+                        tx.update(supRef, {
+                            current_balance: newBal,
+                            last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        const transRef = db.collection('supplier_transactions').doc();
+                        tx.set(transRef, {
+                            supplier_id: supplierId,
+                            amount: totalCost,
+                            balance_after: newBal,
+                            source: 'offload',
+                            prepaid_applied: prepaidApplied,
+                            note: prepaidApplied > 0
+                                ? ('Offload applied prepaid credit of ' + prepaidApplied)
+                                : null,
+                            reference_id: stockRef.id,
+                            user_id: state.user.id,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
                 }
             });
 
