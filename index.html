@@ -707,7 +707,7 @@
                 <i class="bi bi-fuel-pump"></i>
                 <h4>PetroManager Pro</h4>
                 <p>Multi-Company Fuel Management</p>
-                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.0.0</strong> First Edition</p>
+                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.0.5</strong> First Edition</p>
             </div>
             <div id="normalLogin">
                 <form id="loginForm" autocomplete="off">
@@ -762,7 +762,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.0.0</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.0.5</div>
             </div>
         </nav>
         <div class="main-content">
@@ -1133,27 +1133,94 @@ async function deleteDoc(col, id) {
     await ref.delete();
 }
 
+// ===== Inventory document ID (company-scoped; legacy stationId_product still read) =====
+function inventoryDocId(stationId, product, companyId) {
+    const cid = companyId || (state.user && state.user.companyId) || 'unknown';
+    return `${cid}_${String(stationId || '')}_${String(product || '')}`;
+}
+function inventoryLegacyDocId(stationId, product) {
+    return `${String(stationId || '')}_${String(product || '')}`;
+}
+
+// ===== System cash accounts (Cash Till / Petty Cash) =====
+function systemCashAccountId(kind) {
+    const cid = (state.user && state.user.companyId) || 'unknown';
+    if (kind === 'cash_till') return 'cash_till_' + cid;
+    if (kind === 'petty_cash') return 'petty_cash_' + cid;
+    return null;
+}
+function resolveAccountRefId(source) {
+    if (source === 'cash_till' || source === 'petty_cash') return systemCashAccountId(source);
+    return source || null;
+}
+async function ensureSystemCashAccounts() {
+    if (!state.user || !state.user.companyId) return;
+    const companyId = state.user.companyId;
+    const defs = [
+        { kind: 'cash_till', name: 'Cash Till', account_name: 'Station Cash Till' },
+        { kind: 'petty_cash', name: 'Petty Cash', account_name: 'Petty Cash' }
+    ];
+    for (const d of defs) {
+        const id = systemCashAccountId(d.kind);
+        try {
+            const ref = db.collection('bank_accounts').doc(id);
+            const snap = await ref.get();
+            if (!snap.exists) {
+                await ref.set({
+                    bank_name: d.name,
+                    account_name: d.account_name,
+                    account_number: d.kind,
+                    branch: 'System',
+                    currency: 'UGX',
+                    balance: 0,
+                    is_system: true,
+                    system_kind: d.kind,
+                    companyId: companyId,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        } catch (e) { console.warn('ensureSystemCashAccounts', d.kind, e); }
+    }
+}
+
 // ===== Inventory adjustment with history logging =====
 async function adjustInventory(stationId, product, delta, costPrice = null, reason = '', source = 'adjustment') {
-    const ref = db.collection('inventory').doc(`${stationId}_${product}`);
+    const companyId = state.user ? state.user.companyId : null;
+    const preferredId = inventoryDocId(stationId, product, companyId);
+    const legacyId = inventoryLegacyDocId(stationId, product);
+    const preferredRef = db.collection('inventory').doc(preferredId);
+    const legacyRef = preferredId !== legacyId ? db.collection('inventory').doc(legacyId) : null;
+
     return db.runTransaction(async (tx) => {
-        const doc = await tx.get(ref);
-        let currentQty = 0,
-            currentCost = 0;
-        if (doc.exists) { currentQty = doc.data().quantity || 0;
-            currentCost = doc.data().cost_price || 0; }
+        const preferredDoc = await tx.get(preferredRef);
+        let legacyDoc = null;
+        if (legacyRef) legacyDoc = await tx.get(legacyRef);
+
+        let currentQty = 0, currentCost = 0, currentSell = 0;
+        if (preferredDoc.exists) {
+            currentQty = preferredDoc.data().quantity || 0;
+            currentCost = preferredDoc.data().cost_price || 0;
+            currentSell = preferredDoc.data().selling_price || 0;
+        } else if (legacyDoc && legacyDoc.exists) {
+            currentQty = legacyDoc.data().quantity || 0;
+            currentCost = legacyDoc.data().cost_price || 0;
+            currentSell = legacyDoc.data().selling_price || 0;
+        }
+
         const newQty = currentQty + delta;
         if (newQty < 0) throw new Error(`Insufficient stock for ${product}. Available: ${currentQty.toFixed(2)} L`);
         const newCost = (costPrice !== null && costPrice !== undefined) ? costPrice : currentCost;
-        tx.set(ref, {
+
+        tx.set(preferredRef, {
             station_id: String(stationId),
             product_type: product,
             quantity: newQty,
             cost_price: newCost,
-            selling_price: doc.exists ? (doc.data().selling_price || 0) : 0,
-            companyId: state.user ? state.user.companyId : null,
+            selling_price: currentSell,
+            companyId: companyId,
             last_updated: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
+        if (legacyRef && legacyDoc && legacyDoc.exists) tx.delete(legacyRef);
 
         const historyRef = db.collection('inventory_history').doc();
         tx.set(historyRef, {
@@ -1165,6 +1232,7 @@ async function adjustInventory(stationId, product, delta, costPrice = null, reas
             source: source,
             reason: reason || '',
             cost_price_at_change: newCost,
+            companyId: companyId,
             user_id: state.user ? state.user.id : 'system',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -1925,6 +1993,7 @@ async function doLogin(username, password) {
         await loadStations();
         await loadCashiers();
         await loadAllUsers();
+        try { await ensureSystemCashAccounts(); } catch (_) {}
         await enforceLicense();
         initApp();
         try { await logAudit('login', { username: user.username }); } catch (_) {}
@@ -2558,9 +2627,11 @@ async function renderDashboard() {
     const suppliers = await getAll('suppliers');
 
     const fInv = inv.filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId));
-    const fSales = sales.filter(s => s.status !== 'reversed' && (!state.currentStationId || String(s.station_id) === String(state.currentStationId)));
+    // Fuel sales only — exclude reversed and customer-payment receipts (those are not fuel revenue)
+    const fSales = sales.filter(s => s.status !== 'reversed' && s.type !== 'payment' && (!state.currentStationId || String(s.station_id) === String(state.currentStationId)));
+    const fPayments = sales.filter(s => s.status !== 'reversed' && s.type === 'payment' && (!state.currentStationId || String(s.station_id) === String(state.currentStationId)));
     const fShifts = shifts.filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId));
-    const fExpenses = expenses.filter(e => !state.currentStationId || String(e.station_id) === String(state.currentStationId));
+    const fExpenses = expenses.filter(e => e.status !== 'reversed' && e.reversed !== true && (!state.currentStationId || String(e.station_id) === String(state.currentStationId)));
     const fAdjustments = adjustments.filter(a => !state.currentStationId || String(a.station_id) === String(state.currentStationId));
 
     // Stock by product
@@ -2570,13 +2641,14 @@ async function renderDashboard() {
     fInv.forEach(i => { const p = i.product_type; if (stockByProduct[p] !== undefined) stockByProduct[p] += (i.quantity || 0); else stockByProduct[p] = (i.quantity || 0); });
     const totalLitres = Object.values(stockByProduct).reduce((a, b) => a + b, 0);
 
-    // Sales & Profit
+    // Sales & Profit (fuel only)
     let totalRevenue = 0,
         totalCOGS = 0;
     fSales.forEach(s => {
         totalRevenue += Number(s.amount) || 0;
         totalCOGS += (Number(s.cost_price) || 0) * (Number(s.quantity) || 0);
     });
+    const totalCollections = fPayments.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
     const grossProfit = totalRevenue - totalCOGS;
     const totalExpenses = fExpenses.reduce((sum, x) => sum + (x.amount || 0), 0);
     // Losses from adjustments: negative quantity changes * cost_price_at_change
@@ -2984,7 +3056,7 @@ async function renderSales() {
                 ${isAdmin(state.user.role) ? (isReversed
                     ? `<td><span class="badge bg-secondary">Reversed</span></td>`
                     : `<td>
-                        <button class="btn btn-sm btn-outline-warning reverse-sale-btn" data-id="${s.id}" data-qty="${s.quantity}" data-product="${s.product_type}" data-station="${s.station_id}" title="Reverse"><i class="bi bi-arrow-counterclockwise"></i></button>
+                        <button class="btn btn-sm btn-outline-warning reverse-sale-btn" data-id="${s.id}" data-qty="${s.quantity}" data-product="${s.product_type}" data-station="${s.station_id}" data-amount="${s.amount || 0}" data-payment="${s.payment_method || 'cash'}" data-customer="${s.customer_id || ''}" title="Reverse"><i class="bi bi-arrow-counterclockwise"></i></button>
                         <button class="btn btn-sm btn-outline-primary invoice-btn" data-id="${s.id}" title="Invoice"><i class="bi bi-file-pdf"></i></button>
                     </td>`
                 ) : ''}
@@ -3175,8 +3247,32 @@ async function renderSales() {
         const selectedCust = saleCustomerSelect.value;
         if (selectedCust !== 'walk-in' && selectedCust !== 'custom') {
             customerId = selectedCust;
-        } else if (selectedCust === 'custom') {
-            // Optionally create new customer? We'll just use the name.
+        }
+
+        // Credit sales require a registered customer
+        if (payment === 'credit' && !customerId) {
+            toast('Credit sales require a registered customer. Select a customer from the list.', 'warning');
+            this.dataset.submitting = '0';
+            return;
+        }
+        // Enforce credit limit if set
+        if (payment === 'credit' && customerId) {
+            try {
+                const custDoc = await getDoc('customers', customerId);
+                const currentBal = custDoc ? Number(custDoc.current_balance || 0) : 0;
+                const limits = await getAll('credit_limits') || [];
+                const cl = limits.find(l => l.customer_id && String(l.customer_id) === String(customerId));
+                if (cl && Number(cl.limit) > 0) {
+                    const projected = currentBal + grandTotal;
+                    if (projected > Number(cl.limit)) {
+                        toast('Credit limit exceeded. Limit: ' + formatMoney(cl.limit) +
+                            ' · Current: ' + formatMoney(currentBal) +
+                            ' · This sale: ' + formatMoney(grandTotal), 'danger');
+                        this.dataset.submitting = '0';
+                        return;
+                    }
+                }
+            } catch (limErr) { console.warn('Credit limit check:', limErr); }
         }
 
         const btn = this;
@@ -3188,23 +3284,39 @@ async function renderSales() {
             // Use transaction for inventory and customer balance
             await db.runTransaction(async (tx) => {
                 // Firestore rule: ALL reads first, then ALL writes
+                const companyId = state.user.companyId;
                 const updates = [];
                 for (let item of cart) {
-                    const ref = db.collection('inventory').doc(String(item.stationId) + '_' + item.product);
-                    const doc = await tx.get(ref);
-                    if (!doc.exists) throw new Error('No inventory for ' + item.product);
-                    const data = doc.data() || {};
+                    const preferredId = inventoryDocId(item.stationId, item.product, companyId);
+                    const legacyId = inventoryLegacyDocId(item.stationId, item.product);
+                    const preferredRef = db.collection('inventory').doc(preferredId);
+                    const legacyRef = preferredId !== legacyId ? db.collection('inventory').doc(legacyId) : null;
+                    const preferredDoc = await tx.get(preferredRef);
+                    let legacyDoc = null;
+                    if (legacyRef) legacyDoc = await tx.get(legacyRef);
+
+                    let data = null, migrateFromLegacy = false;
+                    if (preferredDoc.exists) {
+                        data = preferredDoc.data() || {};
+                    } else if (legacyDoc && legacyDoc.exists) {
+                        data = legacyDoc.data() || {};
+                        migrateFromLegacy = true;
+                    } else {
+                        throw new Error('No inventory for ' + item.product);
+                    }
                     const currentQty = data.quantity || 0;
                     if (currentQty < item.qty) {
                         throw new Error('Insufficient ' + item.product + '. Available: ' + currentQty.toFixed(2) + 'L');
                     }
                     updates.push({
-                        ref,
+                        preferredRef,
+                        legacyRef: migrateFromLegacy ? legacyRef : null,
                         product: item.product,
                         stationId: item.stationId,
                         oldQty: currentQty,
                         newQty: currentQty - item.qty,
                         costPrice: data.cost_price || 0,
+                        sellingPrice: data.selling_price || 0,
                         qty: item.qty
                     });
                 }
@@ -3222,10 +3334,16 @@ async function renderSales() {
 
                 // --- writes only below this line ---
                 updates.forEach(u => {
-                    tx.update(u.ref, {
+                    tx.set(u.preferredRef, {
+                        station_id: String(u.stationId),
+                        product_type: u.product,
                         quantity: u.newQty,
+                        cost_price: u.costPrice,
+                        selling_price: u.sellingPrice,
+                        companyId: companyId,
                         last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    }, { merge: true });
+                    if (u.legacyRef) tx.delete(u.legacyRef);
                     const histRef = db.collection('inventory_history').doc();
                     tx.set(histRef, {
                         station_id: String(u.stationId),
@@ -3236,6 +3354,7 @@ async function renderSales() {
                         source: 'sale',
                         reason: 'Sale ' + transactionId,
                         cost_price_at_change: u.costPrice,
+                        companyId: companyId,
                         user_id: state.user.id,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -3339,29 +3458,35 @@ async function renderSales() {
         }
     };
 
-    // ---- Reverse sale ----
+    // ---- Reverse sale (stock + sale status + credit balance) ----
     document.querySelectorAll('.reverse-sale-btn').forEach(btn => {
         btn.onclick = async function() {
             const id = this.dataset.id;
             const qty = parseFloat(this.dataset.qty);
             const product = this.dataset.product;
             const stationId = String(this.dataset.station);
-            if (!confirm('Reverse sale of ' + qty + 'L ' + product + '?\n\nHistory is kept. Stock is restored.'))
+            const amount = parseFloat(this.dataset.amount) || 0;
+            const payment = (this.dataset.payment || 'cash').toLowerCase();
+            const customerId = this.dataset.customer || '';
+            if (!confirm('Reverse sale of ' + qty + 'L ' + product + '?\n\nHistory is kept. Stock is restored.' +
+                (payment === 'credit' && customerId ? '\nCustomer credit balance will also be reduced.' : '')))
                 return;
             try {
-                // Restore inventory (positive delta)
+                showLoading(true);
                 await adjustInventory(stationId, product, qty, null, 'Sale reversal', 'reversal');
-                // Mark sale as reversed
                 await updateDoc('sales', id, {
                     status: 'reversed',
                     reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
                     reversed_by: state.user.id
                 });
-                // Also reverse customer balance if it was credit? For simplicity we'll skip.
-                await logAudit('reverse_sale', { saleId: id, product, qty });
-                toast('Sale reversed. Stock restored.', 'success');
+                if (payment === 'credit' && customerId && amount > 0) {
+                    await updateCustomerBalance(customerId, -amount, 'sale_reversal', id);
+                }
+                await logAudit('reverse_sale', { saleId: id, product, qty, amount, payment, customerId: customerId || null });
+                toast('Sale reversed. Stock restored' + (payment === 'credit' && customerId ? ' and customer balance updated.' : '.'), 'success');
                 renderSales();
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
+            finally { showLoading(false); }
         };
     });
 
@@ -4546,7 +4671,7 @@ async function renderInventory() {
             if (!product) { toast('Product name is required', 'warning'); return; }
             if (qty < 0 || cost < 0 || sell < 0) { toast('Values cannot be negative', 'warning'); return; }
             try {
-                const docId = stationId + '_' + product;
+                const docId = inventoryDocId(stationId, product);
                 const ref = db.collection('inventory').doc(docId);
                 await ref.set({
                     station_id: stationId,
@@ -4670,7 +4795,7 @@ async function renderInventory() {
                 if (!product) { toast('Product name is required', 'warning'); return; }
                 if (qty < 0 || cost < 0 || sell < 0) { toast('Values cannot be negative', 'warning'); return; }
                 try {
-                    const docId = station + '_' + product;
+                    const docId = inventoryDocId(station, product);
                     const ref = db.collection('inventory').doc(docId);
                     await ref.set({
                         station_id: station,
@@ -4867,7 +4992,7 @@ async function renderStock() {
                 <td class="fs-xs">${formatDate(r.received_date || r.created_at)}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary view-offload-voucher-btn" data-id="${r.id}"><i class="bi bi-receipt"></i></button>
-                    <button class="btn btn-sm btn-outline-danger delete-stock-btn" data-id="${r.id}" data-station="${r.station_id}" data-items='${JSON.stringify(r.items || [])}'><i class="bi bi-trash"></i></button>
+                    <button class="btn btn-sm btn-outline-danger delete-stock-btn" data-id="${r.id}" data-station="${r.station_id}" data-supplier="${r.supplier_id || ''}" data-total="${r.total_cost || 0}" data-items='${JSON.stringify(r.items || [])}'><i class="bi bi-trash"></i></button>
                 </td>
             </tr>`;
         });
@@ -4975,30 +5100,65 @@ async function renderStock() {
         try {
             showLoading(true);
             await db.runTransaction(async (tx) => {
+                // Firestore rule: ALL reads must complete before ANY writes
+                const companyId = state.user.companyId;
+                const invReads = [];
                 for (let item of items) {
-                    const invRef = db.collection('inventory').doc(`${stationId}_${item.product_type}`);
-                    const doc = await tx.get(invRef);
-                    let currentQty = doc.exists ? doc.data().quantity || 0 : 0;
-                    const newQty = currentQty + item.quantity;
-                    tx.set(invRef, {
+                    const preferredId = inventoryDocId(stationId, item.product_type, companyId);
+                    const legacyId = inventoryLegacyDocId(stationId, item.product_type);
+                    const preferredRef = db.collection('inventory').doc(preferredId);
+                    const legacyRef = preferredId !== legacyId ? db.collection('inventory').doc(legacyId) : null;
+                    const preferredDoc = await tx.get(preferredRef);
+                    let legacyDoc = null;
+                    if (legacyRef) legacyDoc = await tx.get(legacyRef);
+
+                    let currentQty = 0, sellingPrice = 0, migrateFromLegacy = false;
+                    if (preferredDoc.exists) {
+                        currentQty = preferredDoc.data().quantity || 0;
+                        sellingPrice = preferredDoc.data().selling_price || 0;
+                    } else if (legacyDoc && legacyDoc.exists) {
+                        currentQty = legacyDoc.data().quantity || 0;
+                        sellingPrice = legacyDoc.data().selling_price || 0;
+                        migrateFromLegacy = true;
+                    }
+                    invReads.push({
+                        item, preferredRef,
+                        legacyRef: migrateFromLegacy ? legacyRef : null,
+                        currentQty, sellingPrice
+                    });
+                }
+
+                let supRef = null, supDoc = null, currentBal = 0;
+                if (supplierId) {
+                    supRef = db.collection('suppliers').doc(supplierId);
+                    supDoc = await tx.get(supRef);
+                    if (supDoc.exists) currentBal = Number(supDoc.data().current_balance || 0);
+                }
+
+                // --- writes only below this line ---
+                for (const r of invReads) {
+                    const newQty = r.currentQty + r.item.quantity;
+                    tx.set(r.preferredRef, {
                         station_id: stationId,
-                        product_type: item.product_type,
+                        product_type: r.item.product_type,
                         quantity: newQty,
-                        cost_price: item.cost_price,
-                        selling_price: doc.exists ? (doc.data().selling_price || 0) : 0,
-                        companyId: state.user.companyId,
+                        cost_price: r.item.cost_price,
+                        selling_price: r.sellingPrice,
+                        companyId: companyId,
                         last_updated: firebase.firestore.FieldValue.serverTimestamp()
                     }, { merge: true });
+                    if (r.legacyRef) tx.delete(r.legacyRef);
                     const histRef = db.collection('inventory_history').doc();
                     tx.set(histRef, {
                         station_id: stationId,
-                        product_type: item.product_type,
-                        old_quantity: currentQty,
+                        product_type: r.item.product_type,
+                        old_quantity: r.currentQty,
                         new_quantity: newQty,
-                        change: item.quantity,
+                        change: r.item.quantity,
                         source: 'offload',
                         reason: `Offloading invoice ${invoiceNo}`,
-                        cost_price_at_change: item.cost_price,
+                        cost_price_at_change: r.item.cost_price,
+                        companyId: companyId,
                         user_id: state.user.id,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
@@ -5016,38 +5176,33 @@ async function renderStock() {
                     items: items,
                     total_cost: totalCost,
                     created_by: state.user.id,
-                    companyId: state.user.companyId,
+                    companyId: companyId,
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                if (supplierId) {
-                    const supRef = db.collection('suppliers').doc(supplierId);
-                    const supDoc = await tx.get(supRef);
-                    if (supDoc.exists) {
-                        const currentBal = Number(supDoc.data().current_balance || 0);
-                        // If currentBal < 0, supplier had prepaid credit; offload consumes it
-                        const prepaidBefore = currentBal < 0 ? Math.abs(currentBal) : 0;
-                        const prepaidApplied = Math.min(prepaidBefore, totalCost);
-                        const newBal = currentBal + totalCost;
-                        tx.update(supRef, {
-                            current_balance: newBal,
-                            last_updated: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        const transRef = db.collection('supplier_transactions').doc();
-                        tx.set(transRef, {
-                            supplier_id: supplierId,
-                            amount: totalCost,
-                            balance_after: newBal,
-                            source: 'offload',
-                            prepaid_applied: prepaidApplied,
-                            note: prepaidApplied > 0
-                                ? ('Offload applied prepaid credit of ' + prepaidApplied)
-                                : null,
-                            reference_id: stockRef.id,
-                            user_id: state.user.id,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
+                if (supplierId && supRef && supDoc && supDoc.exists) {
+                    const prepaidBefore = currentBal < 0 ? Math.abs(currentBal) : 0;
+                    const prepaidApplied = Math.min(prepaidBefore, totalCost);
+                    const newBal = currentBal + totalCost;
+                    tx.update(supRef, {
+                        current_balance: newBal,
+                        last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    const transRef = db.collection('supplier_transactions').doc();
+                    tx.set(transRef, {
+                        supplier_id: supplierId,
+                        amount: totalCost,
+                        balance_after: newBal,
+                        source: 'offload',
+                        prepaid_applied: prepaidApplied,
+                        note: prepaidApplied > 0
+                            ? ('Offload applied prepaid credit of ' + prepaidApplied)
+                            : null,
+                        reference_id: stockRef.id,
+                        companyId: companyId,
+                        user_id: state.user.id,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
                 }
             });
 
@@ -5091,22 +5246,28 @@ async function renderStock() {
         }
     };
 
-    // ---- Delete ----
+    // ---- Delete (also reverse supplier balance) ----
     document.querySelectorAll('.delete-stock-btn').forEach(btn => {
         btn.onclick = async function() {
             const id = this.dataset.id;
             const stationId = String(this.dataset.station);
+            const supplierId = this.dataset.supplier || '';
+            const totalCost = parseFloat(this.dataset.total) || 0;
             const items = JSON.parse(this.dataset.items);
-            if (!confirm('Delete this offloading record? This will REMOVE stock from inventory.')) return;
+            if (!confirm('Delete this offloading record? This will REMOVE stock from inventory.' +
+                (supplierId && totalCost > 0 ? '\nSupplier balance will also be reduced by ' + formatMoney(totalCost) + '.' : ''))) return;
             if (!confirm('Are you sure? This cannot be undone!')) return;
             try {
                 showLoading(true);
                 for (let item of items) {
                     await adjustInventory(stationId, item.product_type, -item.quantity, null, 'Reversal of offload ' + id);
                 }
+                if (supplierId && totalCost > 0) {
+                    await updateSupplierBalance(supplierId, -totalCost, 'offload_reversal', id);
+                }
                 await deleteDoc('stock', id);
-                await logAudit('delete_offload', { station: stationId, items });
-                toast('Offloading record deleted. Inventory adjusted.', 'success');
+                await logAudit('delete_offload', { station: stationId, items, supplierId: supplierId || null, totalCost });
+                toast('Offloading record deleted. Inventory' + (supplierId && totalCost > 0 ? ' and supplier balance' : '') + ' adjusted.', 'success');
                 renderStock();
             } catch (err) {
                 toast('Error: ' + err.message, 'danger');
@@ -5632,7 +5793,7 @@ async function renderAdjustments() {
             return;
           }
           const oldCost = currentItem ? (currentItem.cost_price || 0) : 0;
-          await db.collection('inventory').doc(`${stationId}_${product}`).set({
+          await db.collection('inventory').doc(inventoryDocId(stationId, product)).set({
             cost_price: newCost,
             last_updated: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
@@ -5654,7 +5815,7 @@ async function renderAdjustments() {
             return;
           }
           const oldSell = currentItem ? (currentItem.selling_price || 0) : 0;
-          await db.collection('inventory').doc(`${stationId}_${product}`).set({
+          await db.collection('inventory').doc(inventoryDocId(stationId, product)).set({
             selling_price: newSell,
             last_updated: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
@@ -5678,7 +5839,7 @@ async function renderAdjustments() {
           }
           const oldCost = currentItem ? (currentItem.cost_price || 0) : 0;
           const oldSell = currentItem ? (currentItem.selling_price || 0) : 0;
-          await db.collection('inventory').doc(`${stationId}_${product}`).set({
+          await db.collection('inventory').doc(inventoryDocId(stationId, product)).set({
             cost_price: newCost,
             selling_price: newSell,
             last_updated: firebase.firestore.FieldValue.serverTimestamp()
@@ -5757,7 +5918,7 @@ async function renderAdjustments() {
           });
         } else if (type === 'cost_price') {
           const restoreCost = Number(record.old_cost || 0);
-          await db.collection('inventory').doc(stationId + '_' + product).set({
+          await db.collection('inventory').doc(inventoryDocId(stationId, product)).set({
             cost_price: restoreCost,
             last_updated: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
@@ -5774,7 +5935,7 @@ async function renderAdjustments() {
           });
         } else if (type === 'selling_price') {
           const restoreSell = Number(record.old_sell || 0);
-          await db.collection('inventory').doc(stationId + '_' + product).set({
+          await db.collection('inventory').doc(inventoryDocId(stationId, product)).set({
             selling_price: restoreSell,
             last_updated: firebase.firestore.FieldValue.serverTimestamp()
           }, { merge: true });
@@ -5792,7 +5953,7 @@ async function renderAdjustments() {
         } else if (type === 'both_prices') {
           const restoreCost = Number(record.old_cost || 0);
           const restoreSell = Number(record.old_sell || 0);
-          await db.collection('inventory').doc(stationId + '_' + product).set({
+          await db.collection('inventory').doc(inventoryDocId(stationId, product)).set({
             cost_price: restoreCost,
             selling_price: restoreSell,
             last_updated: firebase.firestore.FieldValue.serverTimestamp()
@@ -6183,12 +6344,17 @@ async function renderFinancials() {
             creditLimits.forEach(cl => {
                 const isSupplier = !!cl.supplier_id;
                 let name = 'Unknown';
-                if (isSupplier) { const sup = suppliers.find(s => s.id === cl.supplier_id); if (sup) name = sup.name; } else { const cust = customers.find(c => c.id === cl.customer_id); if (cust) name = cust.name; }
-                const totalUsed = isSupplier ?
-                    supplierPayments.filter(p => p.supplier_id === cl.supplier_id)
-                    .reduce((s, p) => s + Number(p.amount || 0), 0) :
-                    0;
-                const remaining = cl.limit - totalUsed;
+                let totalUsed = 0;
+                if (isSupplier) {
+                    const sup = suppliers.find(s => s.id === cl.supplier_id);
+                    if (sup) name = sup.name;
+                    totalUsed = Math.max(0, Number(sup && sup.current_balance || 0));
+                } else {
+                    const cust = customers.find(c => c.id === cl.customer_id);
+                    if (cust) name = cust.name;
+                    totalUsed = Math.max(0, Number(cust && cust.current_balance || 0));
+                }
+                const remaining = Number(cl.limit || 0) - totalUsed;
                 const statusClass = remaining < 0 ? 'credit-limit-exceeded' : 'credit-limit-ok';
                 rows += `<tr>
                         <td><strong>${esc(name)}</strong></td>
@@ -6570,22 +6736,44 @@ async function renderFinancials() {
             const desc = document.getElementById('bfDesc').value.trim();
             if (!accId || !amount || amount <= 0) { toast('Fill required fields', 'warning'); return; }
             try {
-                await addDoc('bankings', { station_id: state.currentStationId || '1', source_account: source,
-                    bank_account_id: accId, depositor, amount, description: desc || null,
-                    status: 'active',
-                    created_by: state.user.id });
-                const acc = await getDoc('bank_accounts', accId);
-                if (acc) { await updateDoc('bank_accounts', accId, { balance: (acc.balance || 0) + amount }); }
-                if (source !== 'cash_till' && source !== 'petty_cash') {
-                    const srcAcc = await getDoc('bank_accounts', source);
-                    if (srcAcc) { await updateDoc('bank_accounts', source, { balance: (srcAcc.balance || 0) - amount }); }
-                }
+                await ensureSystemCashAccounts();
+                const targetRef = db.collection('bank_accounts').doc(String(accId));
+                const sourceResolved = resolveAccountRefId(source);
+                const sourceRef = sourceResolved ? db.collection('bank_accounts').doc(String(sourceResolved)) : null;
+
+                await db.runTransaction(async (tx) => {
+                    const targetDoc = await tx.get(targetRef);
+                    if (!targetDoc.exists) throw new Error('Target bank account not found');
+                    let sourceBal = 0, sourceExists = false;
+                    if (sourceRef) {
+                        const sourceDoc = await tx.get(sourceRef);
+                        if (sourceDoc.exists) {
+                            sourceExists = true;
+                            sourceBal = Number(sourceDoc.data().balance || 0);
+                        }
+                    }
+                    const targetBal = Number(targetDoc.data().balance || 0);
+                    tx.update(targetRef, { balance: targetBal + amount });
+                    if (sourceRef && sourceExists) tx.update(sourceRef, { balance: sourceBal - amount });
+                    const bankingRef = db.collection('bankings').doc();
+                    tx.set(bankingRef, {
+                        station_id: state.currentStationId || '1',
+                        source_account: source,
+                        bank_account_id: accId,
+                        depositor, amount,
+                        description: desc || null,
+                        status: 'active',
+                        companyId: state.user.companyId,
+                        created_by: state.user.id,
+                        created_at: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
                 toast('Transfer recorded');
                 renderFinancials();
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
         };
 
-        // ---- Reverse a bank transfer ----
+        // ---- Reverse a bank transfer (atomic) ----
         document.querySelectorAll('.reverse-transfer-btn').forEach(btn => {
             btn.onclick = async function() {
                 const id = this.dataset.id;
@@ -6601,48 +6789,65 @@ async function renderFinancials() {
 
                 const confirmMsg = `Reverse this transfer of ${formatMoney(amount)}?\n\n` +
                     `• The target bank balance will decrease by ${formatMoney(amount)}\n` +
-                    `• The source account (if a bank account) will be restored\n` +
+                    `• The source account will be restored\n` +
                     `• The original entry will be marked as Reversed\n\nThis cannot be undone automatically.`;
                 if (!confirm(confirmMsg)) return;
 
                 try {
                     showLoading(true);
-                    await updateDoc('bankings', id, {
-                        status: 'reversed',
-                        reversed: true,
-                        reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
-                        reversed_by: state.user.id
-                    });
-
+                    await ensureSystemCashAccounts();
                     const targetId = transfer.bank_account_id;
-                    if (targetId) {
-                        const targetAcc = await getDoc('bank_accounts', targetId);
-                        if (targetAcc) {
-                            await updateDoc('bank_accounts', targetId, {
-                                balance: (Number(targetAcc.balance) || 0) - amount
-                            });
-                        }
-                    }
                     const source = transfer.source_account;
-                    if (source && source !== 'cash_till' && source !== 'petty_cash') {
-                        const srcAcc = await getDoc('bank_accounts', source);
-                        if (srcAcc) {
-                            await updateDoc('bank_accounts', source, {
-                                balance: (Number(srcAcc.balance) || 0) + amount
-                            });
-                        }
-                    }
+                    const originalRef = db.collection('bankings').doc(id);
+                    const targetRef = targetId ? db.collection('bank_accounts').doc(String(targetId)) : null;
+                    const sourceResolved = resolveAccountRefId(source);
+                    const sourceRef = sourceResolved ? db.collection('bank_accounts').doc(String(sourceResolved)) : null;
 
-                    await addDoc('bankings', {
-                        station_id: transfer.station_id || state.currentStationId || '1',
-                        source_account: transfer.bank_account_id,
-                        bank_account_id: transfer.source_account || null,
-                        depositor: state.user.name || state.user.username || 'System',
-                        amount: amount,
-                        description: 'REVERSAL of transfer ' + String(id).slice(0, 8),
-                        status: 'reversal',
-                        reverses_id: id,
-                        created_by: state.user.id
+                    await db.runTransaction(async (tx) => {
+                        const originalDoc = await tx.get(originalRef);
+                        if (!originalDoc.exists) throw new Error('Transfer not found');
+                        const origData = originalDoc.data() || {};
+                        if (origData.status === 'reversed' || origData.reversed === true) {
+                            throw new Error('This transfer has already been reversed');
+                        }
+                        let targetBal = 0, targetExists = false;
+                        if (targetRef) {
+                            const targetDoc = await tx.get(targetRef);
+                            if (targetDoc.exists) {
+                                targetExists = true;
+                                targetBal = Number(targetDoc.data().balance || 0);
+                            }
+                        }
+                        let sourceBal = 0, sourceExists = false;
+                        if (sourceRef) {
+                            const sourceDoc = await tx.get(sourceRef);
+                            if (sourceDoc.exists) {
+                                sourceExists = true;
+                                sourceBal = Number(sourceDoc.data().balance || 0);
+                            }
+                        }
+                        tx.update(originalRef, {
+                            status: 'reversed',
+                            reversed: true,
+                            reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
+                            reversed_by: state.user.id
+                        });
+                        if (targetRef && targetExists) tx.update(targetRef, { balance: targetBal - amount });
+                        if (sourceRef && sourceExists) tx.update(sourceRef, { balance: sourceBal + amount });
+                        const reversalRef = db.collection('bankings').doc();
+                        tx.set(reversalRef, {
+                            station_id: transfer.station_id || state.currentStationId || '1',
+                            source_account: transfer.bank_account_id,
+                            bank_account_id: sourceResolved || null,
+                            depositor: state.user.name || state.user.username || 'System',
+                            amount: amount,
+                            description: 'REVERSAL of transfer ' + String(id).slice(0, 8),
+                            status: 'reversal',
+                            reverses_id: id,
+                            companyId: state.user.companyId,
+                            created_by: state.user.id,
+                            created_at: firebase.firestore.FieldValue.serverTimestamp()
+                        });
                     });
 
                     await logAudit('bank_transfer_reversed', {
@@ -10151,7 +10356,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
       }
     });
 
-    console.log('%cPetroManager Pro v1.0.0', 'color:#0b1a33;font-weight:bold;font-size:14px');
+    console.log('%cPetroManager Pro v1.0.5', 'color:#0b1a33;font-weight:bold;font-size:14px');
     console.log('✅ Registered pages (' + Object.keys(window.pageRenderers).length + '):', Object.keys(window.pageRenderers).sort().join(', '));
     if (missing.length) {
       console.error('❌ Missing render functions:', missing.join(', '));
