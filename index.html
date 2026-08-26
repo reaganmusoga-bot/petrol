@@ -1241,44 +1241,67 @@ function inventoryLegacyDocId(stationId, product) {
     return `${String(stationId || '')}_${String(product || '')}`;
 }
 
-// ===== System cash accounts (Cash Till / Petty Cash) =====
-function systemCashAccountId(kind) {
+// ===== System cash accounts (Cash Till / Petty Cash) — per station =====
+function systemCashAccountId(kind, stationId) {
+    const cid = (state.user && state.user.companyId) || 'unknown';
+    const sid = stationId != null && stationId !== '' ? String(stationId) : (state.currentStationId ? String(state.currentStationId) : 'all');
+    if (kind === 'cash_till') return 'cash_till_' + cid + '_' + sid;
+    if (kind === 'petty_cash') return 'petty_cash_' + cid + '_' + sid;
+    return null;
+}
+/** Legacy company-wide system ids (pre station-scoping) */
+function systemCashAccountIdLegacy(kind) {
     const cid = (state.user && state.user.companyId) || 'unknown';
     if (kind === 'cash_till') return 'cash_till_' + cid;
     if (kind === 'petty_cash') return 'petty_cash_' + cid;
     return null;
 }
-function resolveAccountRefId(source) {
-    if (source === 'cash_till' || source === 'petty_cash') return systemCashAccountId(source);
+function resolveAccountRefId(source, stationId) {
+    if (source === 'cash_till' || source === 'petty_cash') {
+        return systemCashAccountId(source, stationId);
+    }
     return source || null;
 }
-async function ensureSystemCashAccounts() {
+async function ensureSystemCashAccounts(stationId) {
     if (!state.user || !state.user.companyId) return;
     const companyId = state.user.companyId;
+    const stations = (state.stations && state.stations.length)
+        ? state.stations
+        : [{ id: stationId || state.currentStationId || '1' }];
+    const targetStations = stationId
+        ? stations.filter(s => String(s.id) === String(stationId))
+        : stations;
+    if (targetStations.length === 0 && (stationId || state.currentStationId)) {
+        targetStations.push({ id: stationId || state.currentStationId });
+    }
     const defs = [
         { kind: 'cash_till', name: 'Cash Till', account_name: 'Station Cash Till' },
         { kind: 'petty_cash', name: 'Petty Cash', account_name: 'Petty Cash' }
     ];
-    for (const d of defs) {
-        const id = systemCashAccountId(d.kind);
-        try {
-            const ref = db.collection('bank_accounts').doc(id);
-            const snap = await ref.get();
-            if (!snap.exists) {
-                await ref.set({
-                    bank_name: d.name,
-                    account_name: d.account_name,
-                    account_number: d.kind,
-                    branch: 'System',
-                    currency: 'UGX',
-                    balance: 0,
-                    is_system: true,
-                    system_kind: d.kind,
-                    companyId: companyId,
-                    created_at: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }
-        } catch (e) { console.warn('ensureSystemCashAccounts', d.kind, e); }
+    for (const st of targetStations) {
+        const sid = String(st.id);
+        for (const d of defs) {
+            const id = systemCashAccountId(d.kind, sid);
+            try {
+                const ref = db.collection('bank_accounts').doc(id);
+                const snap = await ref.get();
+                if (!snap.exists) {
+                    await ref.set({
+                        bank_name: d.name + ' · ' + (st.name || sid),
+                        account_name: d.account_name,
+                        account_number: d.kind + '_' + sid,
+                        branch: 'System',
+                        currency: currencySymbol(),
+                        balance: 0,
+                        is_system: true,
+                        system_kind: d.kind,
+                        station_id: sid,
+                        companyId: companyId,
+                        created_at: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } catch (e) { console.warn('ensureSystemCashAccounts', d.kind, sid, e); }
+        }
     }
 }
 
@@ -6545,15 +6568,30 @@ async function renderFinancials() {
         const userOpts = allUsers.filter(u => u.active !== false)
             .map(u => `<option value="${esc(u.id)}">${esc(u.name || u.username)}</option>`).join('');
 
-        let accountOptions = '<option value="">Select Account</option><option value="petty_cash">💰 Petty Cash</option>';
-        accounts.forEach(a => {
-            accountOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)} – ${esc(a.account_number)}</option>`;
+        // Prefer accounts for current station; still list others labelled
+        const sidFilter = state.currentStationId ? String(state.currentStationId) : null;
+        const sortedAccounts = [...accounts].sort((a, b) => {
+            const as = String(a.station_id || '');
+            const bs = String(b.station_id || '');
+            if (sidFilter) {
+                if (as === sidFilter && bs !== sidFilter) return -1;
+                if (bs === sidFilter && as !== sidFilter) return 1;
+            }
+            return (a.bank_name || '').localeCompare(b.bank_name || '');
+        });
+        let accountOptions = '<option value="">Select Account</option><option value="petty_cash">💰 Petty Cash (this station)</option>';
+        sortedAccounts.forEach(a => {
+            if (a.is_system && a.system_kind === 'petty_cash') return; // use alias
+            const st = a.station_id ? ' · ' + stationName(a.station_id) : '';
+            accountOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)} – ${esc(a.account_number || '')}${esc(st)}</option>`;
         });
 
         let depositSourceOptions =
-            '<option value="cash_till">Cash Till</option><option value="petty_cash">Petty Cash</option>';
-        accounts.forEach(a => {
-            depositSourceOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)}</option>`;
+            '<option value="cash_till">Cash Till (this station)</option><option value="petty_cash">Petty Cash (this station)</option>';
+        sortedAccounts.forEach(a => {
+            if (a.is_system) return;
+            const st = a.station_id ? ' · ' + stationName(a.station_id) : '';
+            depositSourceOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)}${esc(st)}</option>`;
         });
 
         let supplierOptions = '<option value="">— Select Supplier —</option>';
@@ -6578,18 +6616,35 @@ async function renderFinancials() {
         const today = new Date().toISOString().slice(0, 10);
 
         function accountRows() {
-            if (accounts.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No accounts</td></tr>';
-            let rows = '';
+            if (accounts.length === 0) return '<tr><td colspan="6" class="text-muted text-center">No accounts</td></tr>';
+            // Group by station
+            const byStation = {};
             accounts.forEach(a => {
-                const bal = Number(a.balance) || 0;
-                const canDelete = bal <= 0;
-                rows += `<tr>
-                        <td>${esc(a.bank_name)}</td>
-                        <td>${esc(a.account_name)}</td>
-                        <td>${esc(a.account_number)}</td>
-                        <td>${formatMoney(bal)}</td>
-                        <td>${canDelete ? `<button class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${esc(a.id)}"><i class="bi bi-trash"></i></button>` : `<button class="btn btn-sm btn-outline-secondary" disabled title="Account has balance"><i class="bi bi-lock"></i></button>`}</td>
+                const sid = a.station_id != null && a.station_id !== '' ? String(a.station_id) : 'unassigned';
+                if (!byStation[sid]) byStation[sid] = [];
+                byStation[sid].push(a);
+            });
+            let rows = '';
+            Object.keys(byStation).sort().forEach(sid => {
+                const label = sid === 'unassigned' ? 'Unassigned / Company-wide' : stationName(sid);
+                rows += `<tr class="table-light"><td colspan="6" class="fw-semibold small py-2"><i class="bi bi-geo-alt"></i> ${esc(label)}</td></tr>`;
+                byStation[sid].forEach(a => {
+                    const bal = Number(a.balance) || 0;
+                    const balCls = bal < 0 ? 'text-danger fw-bold' : '';
+                    const sys = a.is_system ? ' <span class="badge bg-secondary">System</span>' : '';
+                    const canDelete = !a.is_system && bal <= 0;
+                    rows += `<tr>
+                        <td>${esc(a.bank_name)}${sys}</td>
+                        <td>${esc(a.account_name || '—')}</td>
+                        <td>${esc(a.account_number || '—')}</td>
+                        <td class="${balCls}">${formatMoney(bal)}${bal < 0 ? ' <span class="badge bg-danger">Negative</span>' : ''}</td>
+                        <td class="small text-muted">${sid === 'unassigned' ? '—' : esc(stationName(sid))}</td>
+                        <td class="text-nowrap">
+                          <button type="button" class="btn btn-sm btn-outline-primary set-balance-btn" data-id="${esc(a.id)}" data-bal="${bal}" title="Set / correct balance"><i class="bi bi-pencil"></i></button>
+                          ${canDelete ? `<button class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${esc(a.id)}"><i class="bi bi-trash"></i></button>` : (a.is_system ? '' : `<button class="btn btn-sm btn-outline-secondary" disabled title="Has balance"><i class="bi bi-lock"></i></button>`)}
+                        </td>
                     </tr>`;
+                });
             });
             return rows;
         }
@@ -6767,20 +6822,29 @@ async function renderFinancials() {
                                 <div class="card-box">
                                     <h6 class="mb-3">Add Bank Account</h6>
                                     <form id="baForm">
+                                        <div class="mb-2"><label class="form-label small">Station *</label>
+                                            <select id="baStation" class="form-select form-select-sm" required>
+                                                <option value="">— Select Station —</option>
+                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                            </select></div>
                                         <div class="mb-2"><input id="baName" class="form-control form-control-sm" placeholder="Bank Name *" required></div>
                                         <div class="mb-2"><input id="baAccName" class="form-control form-control-sm" placeholder="Account Name *" required></div>
                                         <div class="mb-2"><input id="baAccNum" class="form-control form-control-sm" placeholder="Account Number *" required></div>
                                         <div class="mb-2"><input id="baBranch" class="form-control form-control-sm" placeholder="Branch"></div>
+                                        <div class="mb-2"><label class="form-label small">Opening balance</label>
+                                            <input type="number" id="baOpening" class="form-control form-control-sm" placeholder="0" step="1" min="0" value="0"></div>
                                         <button class="btn btn-primary w-100">Add Account</button>
                                     </form>
+                                    <p class="small text-muted mt-2 mb-0">Each station should have its own bank / till accounts. System Cash Till and Petty Cash are created per station automatically.</p>
                                 </div>
                             </div>
                             <div class="col-lg-7">
                                 <div class="card-box">
-                                    <h6 class="mb-3">Bank Accounts</h6>
+                                    <h6 class="mb-3">Bank Accounts by Station</h6>
+                                    <p class="small text-muted">Negative balances usually mean money was paid/transferred out before cash was deposited into that account. Use <strong>pencil</strong> to set the correct balance.</p>
                                     <div class="table-responsive">
                                         <table class="table table-sm">
-                                            <thead><tr><th>Bank</th><th>Account</th><th>Number</th><th>Balance</th><th>Actions</th></tr></thead>
+                                            <thead><tr><th>Bank</th><th>Account</th><th>Number</th><th>Balance</th><th>Station</th><th>Actions</th></tr></thead>
                                             <tbody>${accountRows()}</tbody>
                                         </table>
                                     </div>
@@ -6803,7 +6867,7 @@ async function renderFinancials() {
                                                 <option value="">— Select Person —</option>${userOpts}
                                             </select></div>
                                         <div class="mb-2"><input id="expDesc" class="form-control form-control-sm" placeholder="Description *" required></div>
-                                        <div class="mb-2"><input type="number" id="expAmount" class="form-control form-control-sm" placeholder="Amount *" step="100" required></div>
+                                        <div class="mb-2"><input type="number" id="expAmount" class="form-control form-control-sm" placeholder="Amount *" step="1" min="0.01" required></div>
                                         <div class="mb-2"><label class="form-label small">Category</label>
                                             <select id="expCategory" class="form-select form-select-sm">${expenseCategories}</select></div>
                                         <div class="mb-2"><label class="form-label small">Date</label>
@@ -6850,7 +6914,7 @@ async function renderFinancials() {
                                                 ${accounts.map(a => `<option value="${a.id}">${esc(a.bank_name)} – ${esc(a.account_number)}</option>`).join('')}
                                             </select></div>
                                         <div class="mb-2"><input id="bfDepositor" class="form-control form-control-sm" placeholder="Transferred By *" required></div>
-                                        <div class="mb-2"><input type="number" id="bfAmount" class="form-control form-control-sm" placeholder="Amount *" step="100" required></div>
+                                        <div class="mb-2"><input type="number" id="bfAmount" class="form-control form-control-sm" placeholder="Amount *" step="1" min="0.01" required></div>
                                         <div class="mb-2"><input id="bfDesc" class="form-control form-control-sm" placeholder="Description"></div>
                                         <div class="mb-2"><label class="form-label small">Date</label>
                                             <input type="date" id="bfDate" class="form-control form-control-sm" value="${today}"></div>
@@ -6886,7 +6950,7 @@ async function renderFinancials() {
                                         <div class="mb-2"><label class="form-label small">Pay From *</label>
                                             <select id="paySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
                                         <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
-                                            <input type="number" id="payAmount" class="form-control form-control-sm" placeholder="0" step="100" min="1" required></div>
+                                            <input type="number" id="payAmount" class="form-control form-control-sm" placeholder="0" step="1" min="0.01" required></div>
                                         <div class="mb-2"><label class="form-label small">Invoice / Reference</label>
                                             <input id="payReference" class="form-control form-control-sm" placeholder="Invoice #"></div>
                                         <div class="mb-2"><label class="form-label small">Note</label>
@@ -6907,7 +6971,7 @@ async function renderFinancials() {
                                         <div class="mb-2"><label class="form-label small">Pay From *</label>
                                             <select id="prepaySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
                                         <div class="mb-2"><label class="form-label small">Prepayment Amount (UGX) *</label>
-                                            <input type="number" id="prepayAmount" class="form-control form-control-sm" placeholder="0" step="100" min="1" required></div>
+                                            <input type="number" id="prepayAmount" class="form-control form-control-sm" placeholder="0" step="1" min="0.01" required></div>
                                         <div class="mb-2"><label class="form-label small">Reference</label>
                                             <input id="prepayReference" class="form-control form-control-sm" placeholder="e.g. Advance for next delivery"></div>
                                         <div class="mb-2"><label class="form-label small">Note</label>
@@ -7047,9 +7111,21 @@ async function renderFinancials() {
             const branch = document.getElementById('baBranch').value.trim();
             if (!bankName || !accName || !accNum) { toast('Fill all required fields', 'warning'); return; }
             try {
-                await addDoc('bank_accounts', { bank_name: bankName, account_name: accName,
-                    account_number: accNum, branch: branch || '', currency: 'UGX', balance: 0 });
-                toast('Bank account added');
+                const stationId = (document.getElementById('baStation') && document.getElementById('baStation').value) || state.currentStationId || '';
+                const opening = parseFloat((document.getElementById('baOpening') && document.getElementById('baOpening').value) || '0') || 0;
+                if (!stationId) { toast('Select a station for this account', 'warning'); return; }
+                await addDoc('bank_accounts', {
+                    bank_name: bankName,
+                    account_name: accName,
+                    account_number: accNum,
+                    branch: branch || '',
+                    currency: currencySymbol(),
+                    balance: opening,
+                    station_id: String(stationId),
+                    companyId: state.user.companyId,
+                    is_system: false
+                });
+                toast('Bank account added for ' + stationName(stationId));
                 renderFinancials();
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
         };
@@ -7075,9 +7151,10 @@ async function renderFinancials() {
             const desc = document.getElementById('bfDesc').value.trim();
             if (!accId || !amount || amount <= 0) { toast('Fill required fields', 'warning'); return; }
             try {
-                await ensureSystemCashAccounts();
+                const stationId = state.currentStationId || '1';
+                await ensureSystemCashAccounts(stationId);
                 const targetRef = db.collection('bank_accounts').doc(String(accId));
-                const sourceResolved = resolveAccountRefId(source);
+                const sourceResolved = resolveAccountRefId(source, stationId);
                 const sourceRef = sourceResolved ? db.collection('bank_accounts').doc(String(sourceResolved)) : null;
 
                 await db.runTransaction(async (tx) => {
@@ -7091,12 +7168,15 @@ async function renderFinancials() {
                             sourceBal = Number(sourceDoc.data().balance || 0);
                         }
                     }
+                    if (sourceRef && sourceExists && sourceBal < amount) {
+                        throw new Error('Insufficient balance in source account (' + formatMoney(sourceBal) + '). Deposit cash into Cash Till / Petty Cash first, or use Set Balance to correct the till.');
+                    }
                     const targetBal = Number(targetDoc.data().balance || 0);
                     tx.update(targetRef, { balance: targetBal + amount });
                     if (sourceRef && sourceExists) tx.update(sourceRef, { balance: sourceBal - amount });
                     const bankingRef = db.collection('bankings').doc();
                     tx.set(bankingRef, {
-                        station_id: state.currentStationId || '1',
+                        station_id: String(stationId),
                         source_account: source,
                         bank_account_id: accId,
                         depositor, amount,
@@ -7111,6 +7191,35 @@ async function renderFinancials() {
                 renderFinancials();
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
         };
+
+        // Set / correct account balance (fixes negatives)
+        document.querySelectorAll('.set-balance-btn').forEach(btn => {
+            btn.onclick = async function() {
+                const id = this.dataset.id;
+                const current = Number(this.dataset.bal) || 0;
+                const acc = accounts.find(a => a.id === id);
+                const label = acc ? (acc.bank_name + ' – ' + (acc.account_name || '')) : id;
+                const input = prompt(
+                    'Set correct balance for:\n' + label + '\n\nCurrent: ' + formatMoney(current) +
+                    '\n\nEnter the real balance this account should show (use 0 to clear a wrong negative):',
+                    String(current < 0 ? 0 : current)
+                );
+                if (input === null) return;
+                const newBal = parseFloat(String(input).replace(/,/g, ''));
+                if (isNaN(newBal)) { toast('Invalid amount', 'warning'); return; }
+                if (!confirm('Set balance of "' + label + '" to ' + formatMoney(newBal) + '?')) return;
+                try {
+                    await updateDoc('bank_accounts', id, {
+                        balance: newBal,
+                        balance_corrected_at: firebase.firestore.FieldValue.serverTimestamp(),
+                        balance_corrected_by: state.user.id
+                    });
+                    await logAudit('account_balance_set', { accountId: id, from: current, to: newBal });
+                    toast('Balance updated to ' + formatMoney(newBal), 'success');
+                    renderFinancials();
+                } catch (err) { toast('Error: ' + err.message, 'danger'); }
+            };
+        });
 
         // ---- Reverse a bank transfer (atomic) ----
         document.querySelectorAll('.reverse-transfer-btn').forEach(btn => {
@@ -7583,7 +7692,7 @@ async function renderCustomers() {
                         <form id="paymentReceiveForm">
                             <div class="mb-3">
                                 <label class="form-label">Amount (UGX) *</label>
-                                <input type="number" id="payAmount" class="form-control" step="100" min="1" required>
+                                <input type="number" id="payAmount" class="form-control" step="1" min="0.01" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Payment Method</label>
