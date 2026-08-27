@@ -705,7 +705,7 @@
                 <i class="bi bi-fuel-pump"></i>
                 <h4>PetroManager Pro</h4>
                 <p>Multi-Company Fuel Management</p>
-                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.3.1</strong> International Foundation</p>
+                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.3.2</strong> International Foundation</p>
             </div>
             <div id="normalLogin">
                 <form id="loginForm" autocomplete="off">
@@ -760,7 +760,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.3.1</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.3.2</div>
             </div>
         </nav>
         <div class="main-content">
@@ -6659,10 +6659,18 @@ async function renderFinancials() {
 
         const today = new Date().toISOString().slice(0, 10);
 
+        function stationSelectHtml(selectedId, extraClass) {
+            let opts = `<option value="">— Station —</option>`;
+            (state.stations || []).forEach(s => {
+                const sel = String(s.id) === String(selectedId || '') ? ' selected' : '';
+                opts += `<option value="${esc(s.id)}"${sel}>${esc(s.name)}</option>`;
+            });
+            return `<select class="form-select form-select-sm ${extraClass || ''}">${opts}</select>`;
+        }
+
         function accountRows() {
-            if (accounts.length === 0) return '<tr><td colspan="6" class="text-muted text-center">No accounts</td></tr>';
+            if (accounts.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No accounts</td></tr>';
             const filterSid = state._acctStationFilter || '';
-            // Group by station
             const byStation = {};
             accounts.forEach(a => {
                 const sid = a.station_id != null && a.station_id !== '' ? String(a.station_id) : 'unassigned';
@@ -6671,28 +6679,44 @@ async function renderFinancials() {
                 byStation[sid].push(a);
             });
             if (Object.keys(byStation).length === 0) {
-                return '<tr><td colspan="6" class="text-muted text-center">No accounts for this station filter</td></tr>';
+                return '<tr><td colspan="7" class="text-muted text-center">No accounts for this station filter</td></tr>';
             }
             let rows = '';
             Object.keys(byStation).sort().forEach(sid => {
                 const label = sid === 'unassigned' ? 'Unassigned / Company-wide' : stationName(sid);
-                rows += `<tr class="table-light"><td colspan="6" class="fw-semibold small py-2"><i class="bi bi-geo-alt"></i> ${esc(label)}</td></tr>`;
+                rows += `<tr class="table-light"><td colspan="7" class="fw-semibold small py-2"><i class="bi bi-geo-alt"></i> ${esc(label)}</td></tr>`;
                 byStation[sid].forEach(a => {
                     const bal = Number(a.balance) || 0;
                     const balCls = bal < 0 ? 'text-danger fw-bold' : '';
                     const sys = a.is_system ? ' <span class="badge bg-secondary">System</span>' : '';
                     const canDelete = !a.is_system && bal <= 0;
-                    rows += `<tr>
-                        <td>${esc(a.bank_name)}${sys}</td>
+                    const aid = esc(a.id);
+                    // View row
+                    rows += `<tr class="acct-view-row" data-id="${aid}">
+                        <td>${esc(a.bank_name || '')}${sys}</td>
                         <td>${esc(a.account_name || '—')}</td>
                         <td>${esc(a.account_number || '—')}</td>
-                        <td class="${balCls}">${formatMoney(bal)}${bal < 0 ? ' <span class="badge bg-danger">Negative</span>' : ''}</td>
+                        <td class="small">${esc(a.branch || '—')}</td>
+                        <td class="${balCls}">${formatMoney(bal)}${bal < 0 ? ' <span class="badge bg-danger">Neg</span>' : ''}</td>
                         <td class="small text-muted">${sid === 'unassigned' ? '—' : esc(stationName(sid))}</td>
                         <td class="text-nowrap">
-                          <button type="button" class="btn btn-sm btn-outline-primary set-balance-btn" data-id="${esc(a.id)}" data-bal="${bal}" title="Edit balance amount">
-                            <i class="bi bi-pencil-square"></i> Edit amount
+                          <button type="button" class="btn btn-sm btn-outline-primary acct-edit-btn" data-id="${aid}" title="Edit all fields">
+                            <i class="bi bi-pencil-square"></i> Edit
                           </button>
-                          ${canDelete ? `<button class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${esc(a.id)}"><i class="bi bi-trash"></i></button>` : ''}
+                          ${canDelete ? `<button type="button" class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${aid}"><i class="bi bi-trash"></i></button>` : ''}
+                        </td>
+                    </tr>`;
+                    // Inline edit row (hidden until Edit)
+                    rows += `<tr class="acct-edit-row table-warning" data-id="${aid}" style="display:none;">
+                        <td><input type="text" class="form-control form-control-sm ae-bank" value="${esc(a.bank_name || '')}" ${a.is_system ? 'readonly' : ''}></td>
+                        <td><input type="text" class="form-control form-control-sm ae-name" value="${esc(a.account_name || '')}"></td>
+                        <td><input type="text" class="form-control form-control-sm ae-num" value="${esc(a.account_number || '')}" ${a.is_system ? 'readonly' : ''}></td>
+                        <td><input type="text" class="form-control form-control-sm ae-branch" value="${esc(a.branch || '')}"></td>
+                        <td><input type="number" class="form-control form-control-sm ae-bal" step="1" value="${bal}"></td>
+                        <td>${a.is_system ? `<span class="small">${esc(stationName(a.station_id) || '—')}</span><input type="hidden" class="ae-station" value="${esc(a.station_id || '')}">` : stationSelectHtml(a.station_id, 'ae-station')}</td>
+                        <td class="text-nowrap">
+                          <button type="button" class="btn btn-sm btn-success acct-save-btn" data-id="${aid}"><i class="bi bi-check-lg"></i> Save</button>
+                          <button type="button" class="btn btn-sm btn-outline-secondary acct-cancel-btn" data-id="${aid}"><i class="bi bi-x-lg"></i></button>
                         </td>
                     </tr>`;
                 });
@@ -6909,11 +6933,11 @@ async function renderFinancials() {
                                             ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
                                         </select>
                                     </div>
-                                    <p class="small text-muted">Cash Till / Petty Cash are system accounts per station. Click <strong>Edit amount</strong> to change any balance including Cash Till.</p>
+                                    <p class="small text-muted">Click <strong>Edit</strong> on a row to change bank name, account name, number, branch, balance, and station in the table. Cash Till / Petty Cash: balance and labels are editable; system id stays fixed.</p>
                                     <div class="table-responsive">
                                         <table class="table table-sm">
-                                            <thead><tr><th>Bank</th><th>Account</th><th>Number</th><th>Balance</th><th>Station</th><th>Actions</th></tr></thead>
-                                            <tbody>${accountRows()}</tbody>
+                                            <thead><tr><th>Bank</th><th>Account name</th><th>Number</th><th>Branch</th><th>Balance</th><th>Station</th><th>Actions</th></tr></thead>
+                                            <tbody id="accountsTableBody">${accountRows()}</tbody>
                                         </table>
                                     </div>
                                 </div>
@@ -7260,32 +7284,68 @@ async function renderFinancials() {
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
         };
 
-        // Set / correct account balance (Cash Till and all accounts are editable)
-        document.querySelectorAll('.set-balance-btn').forEach(btn => {
+        // Inline table edit: all account fields (not prompt)
+        document.querySelectorAll('.acct-edit-btn').forEach(btn => {
+            btn.onclick = function() {
+                const id = this.dataset.id;
+                document.querySelectorAll('.acct-edit-row').forEach(r => { r.style.display = 'none'; });
+                document.querySelectorAll('.acct-view-row').forEach(r => { r.style.display = ''; });
+                const view = document.querySelector(`.acct-view-row[data-id="${id}"]`);
+                const edit = document.querySelector(`.acct-edit-row[data-id="${id}"]`);
+                if (view) view.style.display = 'none';
+                if (edit) edit.style.display = '';
+            };
+        });
+        document.querySelectorAll('.acct-cancel-btn').forEach(btn => {
+            btn.onclick = function() {
+                const id = this.dataset.id;
+                const view = document.querySelector(`.acct-view-row[data-id="${id}"]`);
+                const edit = document.querySelector(`.acct-edit-row[data-id="${id}"]`);
+                if (edit) edit.style.display = 'none';
+                if (view) view.style.display = '';
+            };
+        });
+        document.querySelectorAll('.acct-save-btn').forEach(btn => {
             btn.onclick = async function() {
                 const id = this.dataset.id;
-                const current = Number(this.dataset.bal) || 0;
+                const row = document.querySelector(`.acct-edit-row[data-id="${id}"]`);
+                if (!row) return;
                 const acc = accounts.find(a => a.id === id);
-                const label = acc ? (acc.bank_name + ' – ' + (acc.account_name || '')) : id;
-                const isTill = acc && (acc.system_kind === 'cash_till' || /cash till/i.test(acc.bank_name || ''));
-                const input = prompt(
-                    (isTill ? 'Edit Cash Till amount\n\n' : 'Set account balance\n\n') +
-                    label + '\nCurrent: ' + formatMoney(current) +
-                    '\n\nEnter the new balance amount:',
-                    String(current)
-                );
-                if (input === null) return;
-                const newBal = parseFloat(String(input).replace(/,/g, ''));
-                if (isNaN(newBal)) { toast('Invalid amount', 'warning'); return; }
-                if (!confirm('Set "' + label + '" to ' + formatMoney(newBal) + '?')) return;
+                const bank_name = (row.querySelector('.ae-bank') && row.querySelector('.ae-bank').value || '').trim();
+                const account_name = (row.querySelector('.ae-name') && row.querySelector('.ae-name').value || '').trim();
+                const account_number = (row.querySelector('.ae-num') && row.querySelector('.ae-num').value || '').trim();
+                const branch = (row.querySelector('.ae-branch') && row.querySelector('.ae-branch').value || '').trim();
+                const balance = parseFloat(row.querySelector('.ae-bal') && row.querySelector('.ae-bal').value);
+                const stationEl = row.querySelector('.ae-station');
+                const station_id = stationEl ? String(stationEl.value || '') : (acc && acc.station_id ? String(acc.station_id) : '');
+                if (!bank_name) { toast('Bank name is required', 'warning'); return; }
+                if (isNaN(balance)) { toast('Enter a valid balance', 'warning'); return; }
+                if (!acc || !acc.is_system) {
+                    if (!station_id) { toast('Select a station', 'warning'); return; }
+                }
                 try {
-                    await updateDoc('bank_accounts', id, {
-                        balance: newBal,
-                        balance_corrected_at: firebase.firestore.FieldValue.serverTimestamp(),
-                        balance_corrected_by: state.user.id
-                    });
-                    await logAudit('account_balance_set', { accountId: id, from: current, to: newBal, system: !!(acc && acc.is_system) });
-                    toast((isTill ? 'Cash Till' : 'Balance') + ' updated to ' + formatMoney(newBal), 'success');
+                    const payload = {
+                        bank_name,
+                        account_name,
+                        account_number,
+                        branch,
+                        balance,
+                        station_id: station_id || null,
+                        updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+                        updated_by: state.user.id
+                    };
+                    if (acc && acc.is_system) {
+                        // Keep system identity; still allow name/branch/balance edits
+                        payload.bank_name = bank_name;
+                        payload.account_name = account_name || acc.account_name;
+                        payload.branch = branch;
+                        payload.balance = balance;
+                        // station locked for system accounts
+                        delete payload.station_id;
+                    }
+                    await updateDoc('bank_accounts', id, payload);
+                    await logAudit('account_updated', { accountId: id, balance, station_id: station_id || (acc && acc.station_id) });
+                    toast('Account saved', 'success');
                     renderFinancials();
                 } catch (err) { toast('Error: ' + err.message, 'danger'); }
             };
@@ -10994,7 +11054,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 </script>
 <script>
 // ============================================================
-// PETROMANAGER PRO v1.3.1 — FINAL PAGE REGISTRY (LAUNCH)
+// PETROMANAGER PRO v1.3.2 — FINAL PAGE REGISTRY (LAUNCH)
 // ============================================================
 (function ensureAllPageRenderers() {
   try {
@@ -11053,7 +11113,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
       }
     });
 
-    console.log('%cPetroManager Pro v1.3.1', 'color:#0b1a33;font-weight:bold;font-size:14px');
+    console.log('%cPetroManager Pro v1.3.2', 'color:#0b1a33;font-weight:bold;font-size:14px');
     console.log('✅ Registered pages (' + Object.keys(window.pageRenderers).length + '):', Object.keys(window.pageRenderers).sort().join(', '));
     if (missing.length) {
       console.error('❌ Missing render functions:', missing.join(', '));
