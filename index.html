@@ -705,7 +705,7 @@
                 <i class="bi bi-fuel-pump"></i>
                 <h4>PetroManager Pro</h4>
                 <p>Multi-Company Fuel Management</p>
-                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.4.2</strong> International Foundation</p>
+                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.4.3</strong> International Foundation</p>
             </div>
             <div id="normalLogin">
                 <form id="loginForm" autocomplete="off">
@@ -760,7 +760,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.4.2</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.4.3</div>
             </div>
         </nav>
         <div class="main-content">
@@ -1213,18 +1213,49 @@ function tsMillis(t) {
 
 /**
  * Single equality filter + client sort/filter.
- * Avoids Firestore composite-index errors (where + orderBy / multi-where).
+ * On index/query error, falls back to full collection + client filter.
  */
 async function queryByField(col, field, value, opts) {
     opts = opts || {};
-    const snap = await db.collection(col).where(field, '==', value).get();
-    let rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    if (typeof opts.filter === 'function') rows = rows.filter(opts.filter);
     const sortKey = opts.sortKey || 'timestamp';
     const dir = opts.dir === 'asc' ? 1 : -1;
-    rows.sort((a, b) => dir * (tsMillis(a[sortKey]) - tsMillis(b[sortKey])));
-    if (opts.limit && opts.limit > 0) rows = rows.slice(0, opts.limit);
-    return rows;
+    const apply = (rows) => {
+        if (typeof opts.filter === 'function') rows = rows.filter(opts.filter);
+        rows.sort((a, b) => dir * (tsMillis(a[sortKey]) - tsMillis(b[sortKey])));
+        if (opts.limit && opts.limit > 0) rows = rows.slice(0, opts.limit);
+        return rows;
+    };
+    try {
+        const snap = await db.collection(col).where(field, '==', value).get();
+        return apply(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+        console.warn('queryByField failed, client fallback:', col, field, err && err.message);
+        let rows = [];
+        try {
+            rows = await getAll(col) || [];
+        } catch (_) {
+            const snap2 = await db.collection(col).limit(2000).get();
+            rows = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        rows = rows.filter(r => String(r[field]) === String(value));
+        return apply(rows);
+    }
+}
+
+/** Customer/supplier statements — never depends on composite indexes */
+async function loadLedgerRows(col, idField, entityId, limit) {
+    const id = String(entityId);
+    try {
+        return await queryByField(col, idField, id, {
+            sortKey: 'timestamp', dir: 'desc', limit: limit || 200
+        });
+    } catch (e) {
+        const all = await getAll(col).catch(() => []);
+        return (all || [])
+            .filter(t => String(t[idField]) === id)
+            .sort((a, b) => tsMillis(b.timestamp) - tsMillis(a.timestamp))
+            .slice(0, limit || 200);
+    }
 }
 
 async function getDoc(col, id) {
@@ -8257,10 +8288,7 @@ async function renderCustomers() {
             modal.show();
 
             try {
-                // Single-field query + client sort (no composite index required)
-                const transList = await queryByField('customer_transactions', 'customer_id', String(id), {
-                    sortKey: 'timestamp', dir: 'desc', limit: 100
-                });
+                const transList = await loadLedgerRows('customer_transactions', 'customer_id', id, 100);
 
                 let rows = '';
                 if (!transList.length) {
@@ -8623,10 +8651,7 @@ async function renderSuppliers() {
             modal.show();
 
             try {
-                // Single-field query + client sort (no composite index required)
-                const transList = await queryByField('supplier_transactions', 'supplier_id', String(id), {
-                    sortKey: 'timestamp', dir: 'desc', limit: 100
-                });
+                const transList = await loadLedgerRows('supplier_transactions', 'supplier_id', id, 100);
 
                 let rows = '';
                 if (!transList.length) {
@@ -11233,7 +11258,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 </script>
 <script>
 // ============================================================
-// PETROMANAGER PRO v1.4.2 — FINAL PAGE REGISTRY (LAUNCH)
+// PETROMANAGER PRO v1.4.3 — FINAL PAGE REGISTRY (LAUNCH)
 // ============================================================
 (function ensureAllPageRenderers() {
   try {
@@ -11292,7 +11317,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
       }
     });
 
-    console.log('%cPetroManager Pro v1.4.2', 'color:#0b1a33;font-weight:bold;font-size:14px');
+    console.log('%cPetroManager Pro v1.4.3', 'color:#0b1a33;font-weight:bold;font-size:14px');
     console.log('✅ Registered pages (' + Object.keys(window.pageRenderers).length + '):', Object.keys(window.pageRenderers).sort().join(', '));
     if (missing.length) {
       console.error('❌ Missing render functions:', missing.join(', '));
