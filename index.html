@@ -705,14 +705,14 @@
                 <i class="bi bi-fuel-pump"></i>
                 <h4>PetroManager Pro</h4>
                 <p>Multi-Company Fuel Management</p>
-                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.3.2</strong> International Foundation</p>
+                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.4.1</strong> International Foundation</p>
             </div>
             <div id="normalLogin">
                 <form id="loginForm" autocomplete="off">
                     <div class="form-floating autocomplete-wrapper">
-                        <input type="text" id="loginUsername" class="form-control" required placeholder=" " autocomplete="off" />
+                        <input type="text" id="loginUsername" class="form-control" required placeholder=" " autocomplete="off" autocapitalize="off" spellcheck="false" />
                         <label for="loginUsername">Username</label>
-                        <div id="usernameSuggestions" class="autocomplete-dropdown"></div>
+                        <div id="usernameSuggestions" class="autocomplete-dropdown" style="display:none;"></div>
                     </div>
                     <div class="form-floating position-relative">
                         <input type="password" id="loginPassword" class="form-control" required placeholder=" " autocomplete="current-password" />
@@ -760,7 +760,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.3.2</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.4.1</div>
             </div>
         </nav>
         <div class="main-content">
@@ -1988,103 +1988,16 @@ console.log('✅ Part 2 fully loaded – all utilities, license logic with Super
 // PART 3: AUTHENTICATION & SESSION (UPDATED)
 // ============================================================
 
-let allUsernames = [];
-
-async function loadUsernamesForAutocomplete() {
-    try {
-        const snap = await db.collection('users').where('active', '==', true).get();
-        const companies = await getAllCompanies();
-        const companyMap = {};
-        companies.forEach(c => companyMap[c.id] = c.name || c.id);
-        allUsernames = snap.docs.map(doc => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                username: data.username || '',
-                name: data.name || '',
-                companyId: data.companyId,
-                companyName: companyMap[data.companyId] || 'Unknown Company',
-                displayName: data.name || data.username || ''
-            };
-        }).filter(u => u.username).sort((a, b) => a.username.localeCompare(b.username));
-        console.log('Usernames loaded for autocomplete:', allUsernames.length);
-    } catch (err) {
-        console.error('Error loading usernames:', err);
-        setTimeout(loadUsernamesForAutocomplete, 5000);
-    }
-}
-
-let selectedIndex = -1;
-
+// Username autocomplete REMOVED — it listed usernames + company names across tenants (privacy leak).
+async function loadUsernamesForAutocomplete() { /* disabled for multi-company privacy */ }
 function setupAutocomplete() {
     const input = $('#loginUsername');
     const dropdown = $('#usernameSuggestions');
-    if (!input || !dropdown) return;
-    input.addEventListener('input', function() {
-        const value = this.value.trim().toLowerCase();
-        if (value.length === 0) { dropdown.style.display = 'none';
-            selectedIndex = -1; return; }
-        const matches = allUsernames.filter(u =>
-            u.username.toLowerCase().includes(value) || (u.name && u.name.toLowerCase().includes(value))
-        ).slice(0, 12);
-        if (matches.length === 0) {
-            dropdown.innerHTML = '<div class="no-results">No matching usernames</div>';
-            dropdown.style.display = 'block';
-            selectedIndex = -1;
-            return;
-        }
-        let html = '';
-        matches.forEach((u, idx) => {
-            const activeClass = idx === selectedIndex ? 'active' : '';
-            html += `<div class="item ${activeClass}" data-index="${idx}" data-username="${u.username}" data-id="${u.id}">
-                        <span class="username">${u.username}</span>
-                        <span class="company-name">${u.companyName}</span>
-                    </div>`;
-        });
-        dropdown.innerHTML = html;
-        dropdown.style.display = 'block';
-        dropdown.querySelectorAll('.item').forEach(el => {
-            el.addEventListener('click', function() {
-                input.value = this.dataset.username;
-                dropdown.style.display = 'none';
-                selectedIndex = -1;
-                input.focus();
-            });
-        });
-    });
-    input.addEventListener('keydown', function(e) {
-        const items = dropdown.querySelectorAll('.item');
-        if (items.length === 0) return;
-        if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
-            updateActiveItem(items);
-        } else if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            selectedIndex = Math.max(selectedIndex - 1, -1);
-            updateActiveItem(items);
-        } else if (e.key === 'Enter') {
-            if (selectedIndex >= 0 && items[selectedIndex]) {
-                e.preventDefault();
-                input.value = items[selectedIndex].dataset.username;
-                dropdown.style.display = 'none';
-                selectedIndex = -1;
-                document.getElementById('loginForm').dispatchEvent(new Event('submit'));
-            }
-        } else if (e.key === 'Escape') {
-            dropdown.style.display = 'none';
-            selectedIndex = -1;
-        }
-    });
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.autocomplete-wrapper')) { dropdown.style.display = 'none'; }
-    });
-
-    function updateActiveItem(items) {
-        items.forEach((el, idx) => { el.classList.toggle('active', idx === selectedIndex); });
-        if (selectedIndex >= 0 && items[selectedIndex]) {
-            items[selectedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-        }
+    if (dropdown) dropdown.style.display = 'none';
+    if (input) {
+        input.setAttribute('autocomplete', 'username');
+        input.setAttribute('autocapitalize', 'off');
+        input.setAttribute('spellcheck', 'false');
     }
 }
 
@@ -2113,24 +2026,51 @@ async function doLogin(username, password) {
     }
     try {
         showLoading(true);
-        const snap = await db.collection('users').where('username', '==', username.toLowerCase().trim()).get();
+        const uname = username.toLowerCase().trim();
+        const snap = await db.collection('users').where('username', '==', uname).get();
         if (snap.empty) {
             recordLoginFailure();
-            showErr('User not found');
-            return false;
-        }
-        const doc = snap.docs[0];
-        const user = { id: doc.id, ...doc.data() };
-        if (user.active === false) {
-            showErr('This account is disabled');
+            // Generic message — do not reveal whether username exists
+            showErr('Invalid username or password');
             return false;
         }
         const hashed = await hashPassword(password);
-        if (user.password !== hashed && user.password !== password) {
+        // Match password against ALL accounts with this username (multi-company collision)
+        const candidates = [];
+        for (const doc of snap.docs) {
+            const data = doc.data() || {};
+            if (data.active === false) continue;
+            const ok = (data.password === hashed) || (data.password === password);
+            if (ok) candidates.push({ id: doc.id, ...data });
+        }
+        if (candidates.length === 0) {
             recordLoginFailure();
-            showErr('Incorrect password');
+            showErr('Invalid username or password');
             return false;
         }
+        let user = candidates[0];
+        if (candidates.length > 1) {
+            // Same username+password in more than one company — ask which company
+            let companies = [];
+            try { companies = await getAllCompanies(); } catch (_) {}
+            const cmap = {};
+            companies.forEach(c => { cmap[c.id] = c.name || c.id; });
+            const labels = candidates.map((c, i) =>
+                (i + 1) + ') ' + (cmap[c.companyId] || c.companyId || 'Company') +
+                (c.name ? ' — ' + c.name : '')
+            ).join('\n');
+            const pick = prompt(
+                'This username exists in more than one company.\nChoose number:\n\n' + labels,
+                '1'
+            );
+            const idx = (parseInt(pick, 10) || 1) - 1;
+            if (idx < 0 || idx >= candidates.length) {
+                showErr('Login cancelled');
+                return false;
+            }
+            user = candidates[idx];
+        }
+        // Upgrade plaintext password to hash if needed
         if (user.password === password) {
             await db.collection('users').doc(user.id).update({ password: hashed });
             user.password = hashed;
@@ -2692,13 +2632,63 @@ document.addEventListener('DOMContentLoaded', async function() {
     const toggle = document.getElementById('sidebarToggle');
     if (toggle) { toggle.onclick = function() { document.getElementById('sidebar').classList.toggle('open'); }; }
 
-    // Service worker (HTTPS only — never on file://)
-    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-        navigator.serviceWorker.register('/sw.js')
-            .then(() => console.log('Service Worker registered'))
-            .catch(() => console.log('SW registration failed'));
+    // Service worker OFF by default — was causing staff to see old app versions.
+    // Set localStorage petro_enable_sw = '1' only when offline mode is intentionally used.
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(r => r.unregister());
+        }).catch(() => {});
+        if (localStorage.getItem('petro_enable_sw') === '1' && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        }
     }
 });
+
+// ===== Day close / period lock =====
+function dayCloseDocId(stationId, dateStr) {
+    const cid = (state.user && state.user.companyId) || 'unknown';
+    return 'close_' + cid + '_' + String(stationId || 'all') + '_' + String(dateStr || '');
+}
+async function isDayClosed(stationId, dateStr) {
+    try {
+        const id = dayCloseDocId(stationId, dateStr);
+        const snap = await db.collection('day_closes').doc(id).get();
+        return snap.exists && snap.data().status === 'closed';
+    } catch (_) { return false; }
+}
+async function assertDayOpen(stationId, dateStr) {
+    const d = dateStr || new Date().toISOString().slice(0, 10);
+    const sid = stationId || state.currentStationId;
+    if (await isDayClosed(sid, d)) {
+        throw new Error('This day is closed for station ' + stationName(sid) + ' (' + d + '). Re-open the day in Balancing to post changes.');
+    }
+}
+async function closeDay(stationId, dateStr, note) {
+    const sid = String(stationId || state.currentStationId || '');
+    const d = dateStr || new Date().toISOString().slice(0, 10);
+    const id = dayCloseDocId(sid, d);
+    await db.collection('day_closes').doc(id).set({
+        companyId: state.user.companyId,
+        station_id: sid,
+        date: d,
+        status: 'closed',
+        note: note || null,
+        closed_by: state.user.id,
+        closed_at: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    await logAudit('day_closed', { station_id: sid, date: d });
+}
+async function reopenDay(stationId, dateStr) {
+    const sid = String(stationId || state.currentStationId || '');
+    const d = dateStr || new Date().toISOString().slice(0, 10);
+    const id = dayCloseDocId(sid, d);
+    await db.collection('day_closes').doc(id).set({
+        status: 'open',
+        reopened_by: state.user.id,
+        reopened_at: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+    await logAudit('day_reopened', { station_id: sid, date: d });
+}
 
 console.log('Part 3 loaded – Authentication with license modal integration');
 </script>
@@ -2987,6 +2977,33 @@ async function renderDashboard() {
             </div>
         </div>
 
+        <!-- Multi-station owner scorecard -->
+        ${(!state.currentStationId && state.stations && state.stations.length > 1) ? (() => {
+            let rows = '';
+            state.stations.forEach(st => {
+                const sid = String(st.id);
+                const stSales = pSales.filter(s => String(s.station_id) === sid);
+                const rev = stSales.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+                const stExp = pExpenses.filter(x => String(x.station_id) === sid).reduce((s, x) => s + (Number(x.amount) || 0), 0);
+                const stActive = fShifts.filter(x => String(x.station_id) === sid && x.status === 'active').length;
+                const stStock = (inv || []).filter(i => String(i.station_id) === sid).reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+                rows += `<tr>
+                    <td>${esc(st.name)}</td>
+                    <td class="text-end">${formatCompactMoney(rev)}</td>
+                    <td class="text-end">${formatCompactMoney(stExp)}</td>
+                    <td class="text-end">${stStock.toFixed(0)} L</td>
+                    <td class="text-end">${stActive}</td>
+                </tr>`;
+            });
+            return `<div class="card-box mb-3">
+                <h6 class="mb-2"><i class="bi bi-building"></i> Stations comparison · ${esc(periodLabel)}</h6>
+                <div class="table-responsive"><table class="table table-sm mb-0">
+                    <thead><tr><th>Station</th><th class="text-end">Fuel sales</th><th class="text-end">Expenses</th><th class="text-end">Stock</th><th class="text-end">Open shifts</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table></div>
+            </div>`;
+        })() : ''}
+
         <!-- Quick actions -->
         <div class="row g-2 mb-3">
             <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('sales')"><i class="bi bi-cart-plus fs-4 text-primary"></i><div class="small fw-semibold mt-1">Sales</div></div></div>
@@ -3227,10 +3244,17 @@ async function renderSales() {
                             <div class="col-7"><input type="number" id="saleDiscValue" class="form-control form-control-sm" min="0" step="1" placeholder="0" disabled></div>
                         </div>
                     </div>
+                    <div class="mb-2" id="mmRefWrap" style="display:none;">
+                        <label class="form-label small">Mobile money reference</label>
+                        <input type="text" id="saleMmRef" class="form-control form-control-sm" placeholder="e.g. MTN / Airtel receipt no.">
+                    </div>
                     <div id="cartBox" class="mb-3"></div>
                     <button type="button" class="btn btn-success w-100" id="completeSaleBtn" disabled>
                         <i class="bi bi-check-circle"></i> Complete Sale & Generate Invoice
                     </button>
+                    <div class="small text-muted mt-2">
+                        <strong>Keys:</strong> <kbd>Enter</kbd> add to cart · <kbd>F9</kbd> complete sale · <kbd>F2</kbd> focus qty
+                    </div>
                 </div>
             </div>
 
@@ -3436,7 +3460,7 @@ async function renderSales() {
     }
 
     // ---- Add to cart ----
-    $('#addToCartBtn').onclick = function() {
+    function addCurrentLineToCart() {
         const stationId = String(saleStation.value);
         if (!stationId) { toast('Select a station', 'warning'); return; }
         const product = saleProduct.value;
@@ -3450,7 +3474,37 @@ async function renderSales() {
         saleQty.value = '';
         renderCartBox();
         toast(product + ' added to cart');
-    };
+        try { saleQty.focus(); } catch (_) {}
+    }
+    $('#addToCartBtn').onclick = addCurrentLineToCart;
+
+    // Mobile money reference toggle
+    const salePayEl = document.getElementById('salePayment');
+    function syncMmRefVisibility() {
+        const wrap = document.getElementById('mmRefWrap');
+        if (!wrap) return;
+        const v = (salePayEl && salePayEl.value || '').toLowerCase();
+        wrap.style.display = (v === 'mobile' || v === 'mobile_money') ? '' : 'none';
+    }
+    if (salePayEl) salePayEl.onchange = syncMmRefVisibility;
+    syncMmRefVisibility();
+
+    // Keyboard: Enter on qty = add; F9 = complete; F2 = focus qty
+    document.getElementById('saleQty').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); addCurrentLineToCart(); }
+    });
+    document.addEventListener('keydown', function saleHotkeys(e) {
+        if (state.currentPage !== 'sales') return;
+        if (e.key === 'F9') {
+            e.preventDefault();
+            if (completeBtn && !completeBtn.disabled) completeBtn.click();
+        }
+        if (e.key === 'F2') {
+            e.preventDefault();
+            const q = document.getElementById('saleQty');
+            if (q) q.focus();
+        }
+    });
 
     // ---- Complete sale ----
     completeBtn.onclick = async function() {
@@ -3461,11 +3515,20 @@ async function renderSales() {
         const cashierId = $('#saleCashier').value;
         const saleDate = $('#saleDate').value;
         const payment = $('#salePayment').value;
+        const mmRef = (document.getElementById('saleMmRef') && document.getElementById('saleMmRef').value || '').trim();
         const customerName = saleCustomerName.value.trim() || 'Walk-in';
         const currency = $('#saleCurrency').value || 'UGX';
         const subtotal = cart.reduce((s, i) => s + i.qty * i.price, 0);
         const disc = calcDiscount(subtotal);
         const grandTotal = Math.max(0, subtotal - disc);
+
+        try {
+            await assertDayOpen(stationId, saleDate || new Date().toISOString().slice(0, 10));
+        } catch (dayErr) {
+            toast(dayErr.message, 'danger');
+            this.dataset.submitting = '0';
+            return;
+        }
 
         // Determine customer ID if selected
         let customerId = null;
@@ -3621,6 +3684,7 @@ async function renderSales() {
                         tax_rate: taxInfo.rate,
                         tax_label: taxInfo.label,
                         payment_method: payment,
+                        mobile_money_ref: mmRef || null,
                         customer_name: customerName,
                         customer_id: customerId,
                         transaction_id: transactionId,
@@ -4007,17 +4071,26 @@ async function renderShifts() {
                     </select></div>
                 <div class="mb-2"><label class="form-label small">Shift Type</label>
                     <select id="shiftType" class="form-select form-select-sm"><option value="day">Day</option><option value="night">Night</option></select></div>
+                <div class="mb-2"><label class="form-label small">Opening cash float</label>
+                    <input type="number" id="shiftOpeningFloat" class="form-control form-control-sm" step="1" min="0" value="0" placeholder="Cash in drawer at start">
+                </div>
                 <div class="mb-2"><label class="form-label small">Opening Meters (L)</label>
                     <div class="row g-1">${startFields}</div>
                 </div>
                 <button type="submit" class="btn btn-success w-100">Start Shift</button></form>`;
         } else {
+            const openFloat = Number(myActive.opening_float || 0);
             formHtml = `<form id="endShiftForm">
                 <p class="small text-muted">Active ${myActive.shift_type} shift since ${formatDateTime(myActive.created_at)}</p>
+                <div class="mb-2"><label class="form-label small">Opening float</label>
+                    <input type="text" class="form-control form-control-sm" value="${formatMoney(openFloat)}" readonly></div>
+                <div class="mb-2"><label class="form-label small">Closing cash counted *</label>
+                    <input type="number" id="shiftClosingCash" class="form-control form-control-sm" step="1" min="0" placeholder="Physical cash counted" required>
+                </div>
                 <div class="mb-2"><label class="form-label small">Closing Meters (L)</label>
                     <div class="row g-1">${endFields}</div>
                 </div>
-                <button type="submit" class="btn btn-danger w-100">End Shift</button></form>`;
+                <button type="submit" class="btn btn-danger w-100">End Shift & Z-Report</button></form>`;
         }
     } else {
         formHtml = '<p class="text-muted small">Cashiers manage their own shifts. View history below.</p>';
@@ -4091,15 +4164,22 @@ async function renderShifts() {
     if (startForm) {
         startForm.onsubmit = async function(e) {
             e.preventDefault();
-            const data = { station_id: String(state.user.station_id), cashier_id: state.user.id,
-                shift_type: document.getElementById('shiftType').value, status: 'active' };
+            const openingFloat = parseFloat(document.getElementById('shiftOpeningFloat').value) || 0;
+            const data = {
+                station_id: String(state.user.station_id),
+                cashier_id: state.user.id,
+                shift_type: document.getElementById('shiftType').value,
+                status: 'active',
+                opening_float: openingFloat,
+                companyId: state.user.companyId
+            };
             displayProducts.forEach(p => {
                 const id = 'start_' + p.replace(/[^a-zA-Z0-9]/g, '_');
                 data['start_' + p.toLowerCase()] = parseFloat(document.getElementById(id).value) || 0;
             });
             await addDoc('shifts', data);
-            await logAudit('start_shift', {});
-            toast('Shift started');
+            await logAudit('start_shift', { opening_float: openingFloat });
+            toast('Shift started · float ' + formatMoney(openingFloat));
             renderShifts();
         };
     }
@@ -4108,15 +4188,23 @@ async function renderShifts() {
     if (endForm) {
         endForm.onsubmit = async function(e) {
             e.preventDefault();
-            const data = { status: 'closed', ended_at: firebase.firestore.FieldValue.serverTimestamp() };
+            const closingCash = parseFloat(document.getElementById('shiftClosingCash').value);
+            if (isNaN(closingCash) || closingCash < 0) {
+                toast('Enter counted closing cash', 'warning');
+                return;
+            }
+            const data = {
+                status: 'closed',
+                ended_at: firebase.firestore.FieldValue.serverTimestamp(),
+                closing_cash: closingCash
+            };
             displayProducts.forEach(p => {
                 const id = 'end_' + p.replace(/[^a-zA-Z0-9]/g, '_');
                 data['end_' + p.toLowerCase()] = parseFloat(document.getElementById(id).value) || 0;
             });
             await updateDoc('shifts', myActive.id, data);
-            await logAudit('end_shift', { shiftId: myActive.id });
+            await logAudit('end_shift', { shiftId: myActive.id, closing_cash: closingCash });
             toast('Shift ended');
-            // Z-report for this shift
             try {
                 await printZReport({ ...myActive, ...data, id: myActive.id }, displayProducts);
             } catch (zr) { console.warn('Z-report:', zr); }
@@ -4202,10 +4290,17 @@ async function printZReport(shift, displayProducts) {
       <tr><td>Transactions</td><td class="r">${shiftSales.length}</td></tr>
       <tr><td>Volume</td><td class="r">${litres.toFixed(2)} L</td></tr>
       <tr><td>Revenue</td><td class="r"><strong>${formatMoney(revenue, cur)}</strong></td></tr>
-      <tr><td>Cash</td><td class="r">${formatMoney(cash, cur)}</td></tr>
+      <tr><td>Cash sales</td><td class="r">${formatMoney(cash, cur)}</td></tr>
       <tr><td>Mobile money</td><td class="r">${formatMoney(mobile, cur)}</td></tr>
       <tr><td>Credit</td><td class="r">${formatMoney(credit, cur)}</td></tr>
       <tr><td>Other</td><td class="r">${formatMoney(other, cur)}</td></tr>
+    </table>
+    <h2>Cash drawer</h2>
+    <table>
+      <tr><td>Opening float</td><td class="r">${formatMoney(Number(shift.opening_float || 0), cur)}</td></tr>
+      <tr><td>Expected cash</td><td class="r">${formatMoney(Number(shift.opening_float || 0) + cash, cur)}</td></tr>
+      <tr><td>Counted cash</td><td class="r">${formatMoney(Number(shift.closing_cash || 0), cur)}</td></tr>
+      <tr><td><strong>Variance</strong></td><td class="r"><strong>${formatMoney(Number(shift.closing_cash || 0) - (Number(shift.opening_float || 0) + cash), cur)}</strong></td></tr>
     </table>
     <hr class="sep">
     <div class="c muted">Keep this report for balancing</div>
@@ -4317,7 +4412,25 @@ async function renderBalancing() {
     startDate.setDate(startDate.getDate() - 7);
     const endDate = today;
 
+    const todayISO = today.toISOString().slice(0, 10);
     const html = `
+        <div class="card-box mb-3 border border-warning">
+            <h6 class="mb-2"><i class="bi bi-lock-fill text-warning"></i> Day close (period lock)</h6>
+            <p class="small text-muted mb-2">Closing a day blocks new sales for that station on that date until reopened by a manager.</p>
+            <div class="row g-2 align-items-end">
+                <div class="col-md-3"><label class="form-label small">Station</label>
+                    <select id="dayCloseStation" class="form-select form-select-sm"><option value="">— Select —</option>${stationOptions}</select></div>
+                <div class="col-md-3"><label class="form-label small">Date</label>
+                    <input type="date" id="dayCloseDate" class="form-control form-control-sm" value="${todayISO}"></div>
+                <div class="col-md-3"><label class="form-label small">Note</label>
+                    <input type="text" id="dayCloseNote" class="form-control form-control-sm" placeholder="Optional"></div>
+                <div class="col-md-3 d-flex gap-1">
+                    <button type="button" class="btn btn-warning btn-sm flex-fill" id="btnCloseDay"><i class="bi bi-lock"></i> Close day</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" id="btnReopenDay"><i class="bi bi-unlock"></i> Reopen</button>
+                </div>
+            </div>
+            <div id="dayCloseStatus" class="small mt-2 text-muted"></div>
+        </div>
         <div class="card-box">
             <h5 class="mb-3"><i class="bi bi-scales"></i> Cashier Balancing</h5>
             <p class="text-muted small">Select a station and cashier. The system will show the <strong>most recent unreconciled</strong> closed shift.</p>
@@ -4339,6 +4452,30 @@ async function renderBalancing() {
         </div>`;
 
     document.getElementById('pageContent').innerHTML = html;
+
+    document.getElementById('btnCloseDay').onclick = async function() {
+        const sid = document.getElementById('dayCloseStation').value;
+        const d = document.getElementById('dayCloseDate').value;
+        const note = document.getElementById('dayCloseNote').value.trim();
+        if (!sid || !d) { toast('Select station and date', 'warning'); return; }
+        if (!confirm('Close ' + d + ' for ' + stationName(sid) + '? New sales for that day will be blocked.')) return;
+        try {
+            await closeDay(sid, d, note);
+            document.getElementById('dayCloseStatus').innerHTML = '<span class="text-success">Day closed for ' + esc(stationName(sid)) + ' · ' + esc(d) + '</span>';
+            toast('Day closed', 'success');
+        } catch (err) { toast(err.message, 'danger'); }
+    };
+    document.getElementById('btnReopenDay').onclick = async function() {
+        const sid = document.getElementById('dayCloseStation').value;
+        const d = document.getElementById('dayCloseDate').value;
+        if (!sid || !d) { toast('Select station and date', 'warning'); return; }
+        if (!confirm('Reopen ' + d + ' for ' + stationName(sid) + '?')) return;
+        try {
+            await reopenDay(sid, d);
+            document.getElementById('dayCloseStatus').innerHTML = '<span class="text-primary">Day reopened for ' + esc(stationName(sid)) + ' · ' + esc(d) + '</span>';
+            toast('Day reopened', 'success');
+        } catch (err) { toast(err.message, 'danger'); }
+    };
 
     // Store unreconciled shifts and current index in closure
     let unreconciledShifts = [];
@@ -8361,10 +8498,10 @@ async function renderSuppliers() {
                             <th>Phone</th>
                             <th>Address</th>
                             <th>Opening Balance</th>
-                            <th>Current Balance</th>
                             <th>Total Offloads</th>
                             <th>Total Payments</th>
                             <th>Actions</th>
+                            <th>Current Balance</th>
                         </tr>
                     </thead>
                     <tbody>`;
@@ -8379,24 +8516,22 @@ async function renderSuppliers() {
             const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
             const balance = Number(s.current_balance || 0);
             const prepayTotal = payments.filter(p => p.is_prepayment).reduce((sum, p) => sum + Number(p.amount || 0), 0);
-            // Negative balance = remaining prepaid credit still available against future supplies
             const prepaidCredit = balance < 0 ? Math.abs(balance) : 0;
-            const status = balance > 0 ? 'Company Owes' : (balance < 0 ? 'Prepaid Credit' : 'Settled');
 
             html += `<tr>
                         <td><strong>${esc(s.name)}</strong></td>
                         <td>${esc(s.phone || '—')}</td>
                         <td>${esc(s.address || '—')}</td>
                         <td>${formatMoney(s.opening_balance || 0)}</td>
-                        <td class="${balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : 'balance-zero'}">
-                            ${formatMoney(balance)}
-                            ${prepaidCredit > 0 ? '<br><span class="badge bg-success">Prepaid left: ' + formatMoney(prepaidCredit) + '</span>' : ''}
-                        </td>
                         <td>${formatMoney(totalOffloads)}</td>
                         <td>${formatMoney(totalPayments)}${prepayTotal > 0 ? '<br><span class="small text-warning">of which prepay: ' + formatMoney(prepayTotal) + '</span>' : ''}</td>
                         <td>
                             <button class="btn btn-sm btn-outline-info statement-btn" data-id="${s.id}" data-name="${esc(s.name)}" data-type="supplier"><i class="bi bi-receipt"></i></button>
                             <button class="btn btn-sm btn-outline-danger delete-supplier-btn" data-id="${s.id}" data-balance="${balance}"><i class="bi bi-trash"></i></button>
+                        </td>
+                        <td class="${balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : 'balance-zero'}">
+                            <strong>${formatMoney(balance)}</strong>
+                            ${prepaidCredit > 0 ? '<br><span class="badge bg-success">Prepaid left: ' + formatMoney(prepaidCredit) + '</span>' : ''}
                         </td>
                     </tr>`;
         }
@@ -9103,9 +9238,28 @@ async function renderReports() {
             ]);
         });
         if (rows.length === 0) rows.push(['No transactions found', '', '', '', '']);
-        let body = `<div class="mb-3"><h5>Statement for ${customer.name}</h5>
+        const balNow = Number(customer.current_balance || 0);
+        const shareText = encodeURIComponent(
+            'Account statement — ' + (customer.name || '') +
+            '\nBalance due: ' + formatMoney(balNow) +
+            '\nPlease settle at your earliest convenience. — ' + ((state.companyCache && state.companyCache.name) || 'PetroManager')
+        );
+        const phone = String(customer.phone || '').replace(/[^\d+]/g, '');
+        const waUrl = phone
+            ? 'https://wa.me/' + phone.replace(/^\+/, '') + '?text=' + shareText
+            : 'https://wa.me/?text=' + shareText;
+        const mailUrl = 'mailto:' + encodeURIComponent(customer.email || '') +
+            '?subject=' + encodeURIComponent('Account statement') +
+            '&body=' + shareText;
+        let body = `<div class="mb-3"><h5>Statement for ${esc(customer.name)}</h5>
             <p>Opening Balance: ${formatMoney(customer.opening_balance || 0)}</p>
-            <p>Current Balance: ${formatMoney(customer.current_balance || 0)}</p></div>`;
+            <p>Current Balance: <strong>${formatMoney(balNow)}</strong></p>
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              <a class="btn btn-sm btn-success" href="${waUrl}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> WhatsApp</a>
+              <a class="btn btn-sm btn-outline-primary" href="${mailUrl}"><i class="bi bi-envelope"></i> Email</a>
+              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="navigator.clipboard.writeText(decodeURIComponent('${shareText.replace(/'/g, "\\'")}'))"><i class="bi bi-clipboard"></i> Copy text</button>
+            </div>
+            </div>`;
         body += generateTable(['Date', 'Type', 'Description', 'Amount', 'Balance'], rows);
         return { html: body, headers: ['Date', 'Type', 'Description', 'Amount', 'Balance'], rows, filename: 'CustomerStatement_' + customer.name };
     }
@@ -9494,7 +9648,10 @@ async function renderUsers() {
         const stationId = document.getElementById('uStation').value ? String(document.getElementById('uStation').value) : null;
         if (password.length < 4) { toast('Password must be at least 4 characters', 'warning'); return; }
         const existing = await db.collection('users').where('username', '==', username).get();
-        if (!existing.empty) { toast('Username already exists', 'warning'); return; }
+        if (!existing.empty) {
+            toast('Username already taken (must be unique across all companies). Choose another, e.g. ' + username + '1 or company prefix.', 'warning');
+            return;
+        }
         try {
             await addDoc('users', {
                 username,
@@ -9502,7 +9659,9 @@ async function renderUsers() {
                 password: await hashPassword(password),
                 role,
                 station_id: stationId,
-                active: true
+                companyId: state.user.companyId,
+                active: true,
+                created_at: firebase.firestore.FieldValue.serverTimestamp()
             });
             toast('User created!', 'success');
             renderUsers();
@@ -11054,7 +11213,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 </script>
 <script>
 // ============================================================
-// PETROMANAGER PRO v1.3.2 — FINAL PAGE REGISTRY (LAUNCH)
+// PETROMANAGER PRO v1.4.1 — FINAL PAGE REGISTRY (LAUNCH)
 // ============================================================
 (function ensureAllPageRenderers() {
   try {
@@ -11113,7 +11272,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
       }
     });
 
-    console.log('%cPetroManager Pro v1.3.2', 'color:#0b1a33;font-weight:bold;font-size:14px');
+    console.log('%cPetroManager Pro v1.4.1', 'color:#0b1a33;font-weight:bold;font-size:14px');
     console.log('✅ Registered pages (' + Object.keys(window.pageRenderers).length + '):', Object.keys(window.pageRenderers).sort().join(', '));
     if (missing.length) {
       console.error('❌ Missing render functions:', missing.join(', '));
