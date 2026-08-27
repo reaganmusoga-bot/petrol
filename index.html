@@ -705,7 +705,7 @@
                 <i class="bi bi-fuel-pump"></i>
                 <h4>PetroManager Pro</h4>
                 <p>Multi-Company Fuel Management</p>
-                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.4.1</strong> International Foundation</p>
+                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.4.2</strong> International Foundation</p>
             </div>
             <div id="normalLogin">
                 <form id="loginForm" autocomplete="off">
@@ -760,7 +760,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.4.1</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.4.2</div>
             </div>
         </nav>
         <div class="main-content">
@@ -1202,6 +1202,31 @@ async function getAll(col, queryFn = null) {
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
+/** Timestamp → ms for client-side sorting */
+function tsMillis(t) {
+    if (!t) return 0;
+    if (typeof t.toDate === 'function') return t.toDate().getTime();
+    if (t.seconds != null) return Number(t.seconds) * 1000;
+    const d = new Date(t);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+}
+
+/**
+ * Single equality filter + client sort/filter.
+ * Avoids Firestore composite-index errors (where + orderBy / multi-where).
+ */
+async function queryByField(col, field, value, opts) {
+    opts = opts || {};
+    const snap = await db.collection(col).where(field, '==', value).get();
+    let rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (typeof opts.filter === 'function') rows = rows.filter(opts.filter);
+    const sortKey = opts.sortKey || 'timestamp';
+    const dir = opts.dir === 'asc' ? 1 : -1;
+    rows.sort((a, b) => dir * (tsMillis(a[sortKey]) - tsMillis(b[sortKey])));
+    if (opts.limit && opts.limit > 0) rows = rows.slice(0, opts.limit);
+    return rows;
+}
+
 async function getDoc(col, id) {
     const d = await db.collection(col).doc(String(id)).get();
     return d.exists ? Object.assign({ id: d.id }, d.data()) : null;
@@ -1371,12 +1396,13 @@ async function checkLicense(companyId) {
     
     if (!companyId) return { valid: false, trialDays: 0, message: 'No company ID' };
     try {
+        // Single-field query (no composite index); filter isActive client-side
         const snap = await db.collection('licenses')
             .where('companyId', '==', companyId)
-            .where('isActive', '==', true)
             .get();
-        if (!snap.empty) {
-            const license = snap.docs[0].data();
+        const activeLic = snap.docs.map(d => d.data()).filter(l => l.isActive !== false);
+        if (activeLic.length) {
+            const license = activeLic[0];
             const expiry = license.expiryDate && license.expiryDate.toDate ? license.expiryDate.toDate() : new Date(license.expiryDate);
             if (expiry > new Date()) {
                 return { valid: true, trialDays: 0, message: 'Licensed until ' + expiry.toLocaleDateString() };
@@ -4499,18 +4525,16 @@ async function renderBalancing() {
         showLoading(true);
 
         try {
-            const shiftsSnap = await db.collection('shifts')
-                .where('station_id', '==', stationId)
-                .where('cashier_id', '==', cashierId)
-                .where('status', '==', 'closed')
-                .get();
+            // Single-field query + client filters (avoids composite index on station+cashier+status)
+            const shiftsRaw = await queryByField('shifts', 'station_id', String(stationId), {
+                filter: s => String(s.cashier_id) === String(cashierId) && s.status === 'closed',
+                sortKey: 'created_at', dir: 'desc'
+            });
             const shifts = [];
-            shiftsSnap.forEach(doc => {
-                const data = doc.data();
+            shiftsRaw.forEach(data => {
                 const createdAt = data.created_at && data.created_at.toDate ? data.created_at.toDate() :
                     new Date(data.created_at);
-                if (createdAt >= start && createdAt <= end) shifts.push({ id: doc.id, ...data,
-                    _createdAt: createdAt });
+                if (createdAt >= start && createdAt <= end) shifts.push({ ...data, _createdAt: createdAt });
             });
             if (shifts.length === 0) {
                 document.getElementById('balancingResult').innerHTML =
@@ -4519,12 +4543,11 @@ async function renderBalancing() {
                 return;
             }
 
-            const reconSnap = await db.collection('reconciliations')
-                .where('cashier_id', '==', cashierId)
-                .where('station_id', '==', stationId)
-                .get();
+            const reconRaw = await queryByField('reconciliations', 'cashier_id', String(cashierId), {
+                filter: r => String(r.station_id) === String(stationId)
+            });
             const reconciledShiftIds = new Set();
-            reconSnap.forEach(doc => { const data = doc.data(); if (data.shift_id) reconciledShiftIds.add(data.shift_id); });
+            reconRaw.forEach(data => { if (data.shift_id) reconciledShiftIds.add(data.shift_id); });
             unreconciledShifts = shifts.filter(s => !reconciledShiftIds.has(s.id));
             if (unreconciledShifts.length === 0) {
                 document.getElementById('balancingResult').innerHTML =
@@ -5367,27 +5390,25 @@ async function renderInventory() {
             modal.show();
 
             try {
-                const historySnap = await db.collection('inventory_history')
-                    .where('station_id', '==', stationId)
-                    .where('product_type', '==', product)
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
-                    .get();
+                // Avoid composite index: filter product + sort on client
+                const historyList = await queryByField('inventory_history', 'station_id', String(stationId), {
+                    filter: h => String(h.product_type || '') === String(product),
+                    sortKey: 'timestamp', dir: 'desc', limit: 100
+                });
                 let rows = '';
-                if (historySnap.empty) {
-                    rows = '<tr><td colspan="6" class="text-muted text-center">No history found</td></tr>';
+                if (!historyList.length) {
+                    rows = '<tr><td colspan="8" class="text-muted text-center">No history found</td></tr>';
                 } else {
-                    historySnap.forEach(doc => {
-                        const h = doc.data();
+                    historyList.forEach(h => {
                         const change = h.change || 0;
                         const cls = change < 0 ? 'text-danger' : (change > 0 ? 'text-success' : 'text-muted');
                         const sign = change >= 0 ? '+' : '';
                         rows += `<tr>
                             <td>${formatDateTime(h.timestamp)}</td>
                             <td>${esc(h.source || '—')}</td>
-                            <td>${h.old_quantity.toFixed(2)} L</td>
-                            <td>${h.new_quantity.toFixed(2)} L</td>
-                            <td class="${cls}">${sign}${change.toFixed(2)} L</td>
+                            <td>${Number(h.old_quantity || 0).toFixed(2)} L</td>
+                            <td>${Number(h.new_quantity || 0).toFixed(2)} L</td>
+                            <td class="${cls}">${sign}${Number(change).toFixed(2)} L</td>
                             <td>${formatMoney(h.cost_price_at_change || 0)}</td>
                             <td>${esc(h.reason || '—')}</td>
                             <td>${h.user_id || 'system'}</td>
@@ -8236,18 +8257,16 @@ async function renderCustomers() {
             modal.show();
 
             try {
-                const transSnap = await db.collection('customer_transactions')
-                    .where('customer_id', '==', String(id))
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
-                    .get();
+                // Single-field query + client sort (no composite index required)
+                const transList = await queryByField('customer_transactions', 'customer_id', String(id), {
+                    sortKey: 'timestamp', dir: 'desc', limit: 100
+                });
 
                 let rows = '';
-                if (transSnap.empty) {
+                if (!transList.length) {
                     rows = '<tr><td colspan="4" class="text-muted text-center">No transactions</td></tr>';
                 } else {
-                    transSnap.forEach(doc => {
-                        const t = doc.data();
+                    transList.forEach(t => {
                         const amount = t.amount || 0;
                         const cls = amount > 0 ? 'debit' : 'credit';
                         rows += `<tr>
@@ -8604,18 +8623,16 @@ async function renderSuppliers() {
             modal.show();
 
             try {
-                const transSnap = await db.collection('supplier_transactions')
-                    .where('supplier_id', '==', String(id))
-                    .orderBy('timestamp', 'desc')
-                    .limit(100)
-                    .get();
+                // Single-field query + client sort (no composite index required)
+                const transList = await queryByField('supplier_transactions', 'supplier_id', String(id), {
+                    sortKey: 'timestamp', dir: 'desc', limit: 100
+                });
 
                 let rows = '';
-                if (transSnap.empty) {
+                if (!transList.length) {
                     rows = '<tr><td colspan="4" class="text-muted text-center">No transactions</td></tr>';
                 } else {
-                    transSnap.forEach(doc => {
-                        const t = doc.data();
+                    transList.forEach(t => {
                         const amount = t.amount || 0;
                         const cls = amount > 0 ? 'debit' : 'credit';
                         rows += `<tr>
@@ -10464,16 +10481,19 @@ async function renderMessages() {
     document.getElementById('pageContent').innerHTML = html;
 
     const companyId = currentUser.companyId;
-    const messagesRef = db.collection('messages').where('companyId', '==', companyId).orderBy('timestamp', 'asc');
+    // No orderBy — avoids composite index; sort client-side on each snapshot
+    const messagesRef = db.collection('messages').where('companyId', '==', companyId);
     let unsubscribe = null;
 
     function renderMessagesList(snapshot) {
         const container = document.getElementById('chatMessages');
         if (!container) return;
         if (snapshot.empty) { container.innerHTML = '<div class="text-muted text-center">No messages yet. Start the conversation!</div>'; return; }
+        const list = [];
+        snapshot.forEach(doc => list.push({ id: doc.id, ...doc.data() }));
+        list.sort((a, b) => tsMillis(a.timestamp) - tsMillis(b.timestamp));
         let msgs = '';
-        snapshot.forEach(doc => {
-            const data = doc.data();
+        list.forEach(data => {
             const senderName = data.senderName || 'Unknown';
             const recipient = data.recipientId;
             let recipientLabel = '';
@@ -11213,7 +11233,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 </script>
 <script>
 // ============================================================
-// PETROMANAGER PRO v1.4.1 — FINAL PAGE REGISTRY (LAUNCH)
+// PETROMANAGER PRO v1.4.2 — FINAL PAGE REGISTRY (LAUNCH)
 // ============================================================
 (function ensureAllPageRenderers() {
   try {
@@ -11272,7 +11292,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
       }
     });
 
-    console.log('%cPetroManager Pro v1.4.1', 'color:#0b1a33;font-weight:bold;font-size:14px');
+    console.log('%cPetroManager Pro v1.4.2', 'color:#0b1a33;font-weight:bold;font-size:14px');
     console.log('✅ Registered pages (' + Object.keys(window.pageRenderers).length + '):', Object.keys(window.pageRenderers).sort().join(', '));
     if (missing.length) {
       console.error('❌ Missing render functions:', missing.join(', '));
