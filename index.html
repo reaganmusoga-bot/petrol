@@ -5465,7 +5465,7 @@ async function renderInventory() {
 async function renderStock() {
     const stock = (await getAll('stock'))
         .filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId))
-        .sort((a, b) => tsMillis(b.received_date || b.created_at) - tsMillis(a.received_date || a.created_at));
+        .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
 
     const inv = await getAll('inventory');
     const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
@@ -5563,33 +5563,52 @@ async function renderStock() {
 
             <div class="col-lg-5">
                 <div class="card-box">
-                    <h5 class="mb-3"><i class="bi bi-clock-history"></i> Offloading History</h5>
-                    <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
-                        <table class="table table-sm table-hover">
-                            <thead><tr><th>#</th><th>Supplier</th><th>Items</th><th>Total</th><th>Date</th><th>Actions</th></tr></thead>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Offloading History</h5>
+                        <span class="badge bg-light text-muted border">${stock.length} record(s)</span>
+                    </div>
+                    <div class="table-responsive" style="max-height:420px; overflow-y:auto;">
+                        <table class="table table-sm align-middle mb-0" style="font-size:0.85rem;">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th style="min-width:90px;">Date</th>
+                                    <th>Supplier</th>
+                                    <th>Items</th>
+                                    <th class="text-end">Total</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
                             <tbody>`;
 
     if (stock.length === 0) {
-        html += '<tr><td colspan="6" class="text-muted text-center">No offloading records</td></tr>';
+        html += '<tr><td colspan="6" class="text-muted text-center py-4"><i class="bi bi-inbox d-block mb-2" style="font-size:1.5rem;opacity:0.35;"></i>No offloading records yet</td></tr>';
     } else {
-        stock.slice(0, 20).forEach(r => {
-            const itemsSummary = (r.items || []).map(it => it.product_type + ' ' + it.quantity + 'L').join(', ');
-            const totalCost = (r.items || []).reduce((sum, it) => sum + (it.quantity * it.cost_price || 0), 0) + (r.freight || 0);
-            html += `<tr>
-                <td>${String(r.id).slice(0,6)}</td>
-                <td>${r.supplier_name || '—'}</td>
-                <td class="fs-xs">${itemsSummary}</td>
-                <td>${formatMoney(totalCost)}</td>
-                <td class="fs-xs">${formatDate(r.received_date || r.created_at)}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary view-offload-voucher-btn" data-id="${r.id}"><i class="bi bi-receipt"></i></button>
-                    <button class="btn btn-sm btn-outline-danger delete-stock-btn" data-id="${r.id}" data-station="${r.station_id}" data-supplier="${r.supplier_id || ''}" data-total="${r.total_cost || 0}" data-items='${JSON.stringify(r.items || [])}'><i class="bi bi-trash"></i></button>
+        stock.slice(0, 40).forEach(r => {
+            const isRev = r.status === 'reversed' || r.reversed === true;
+            const itemsSummary = (r.items || []).map(it => (it.product_type || '') + ' ' + (Number(it.quantity)||0) + 'L').join(', ') || '—';
+            const totalCost = Number(r.total_cost) || ((r.items || []).reduce((sum, it) => sum + ((Number(it.quantity)||0) * (Number(it.cost_price)||0)), 0) + (Number(r.freight)||0));
+            const statusBadge = isRev
+                ? '<span class="badge bg-secondary">Reversed</span>'
+                : '<span class="badge bg-success">Active</span>';
+            const rowClass = isRev ? ' style="opacity:0.65;"' : '';
+            html += `<tr${rowClass}>
+                <td class="text-nowrap small">${formatDate(r.received_date || r.created_at)}</td>
+                <td><div class="fw-semibold">${esc(r.supplier_name || '—')}</div><div class="text-muted small">${esc(r.invoice_number || String(r.id).slice(0,8))}</div></td>
+                <td class="small text-muted" style="max-width:140px;" title="${esc(itemsSummary)}">${esc(itemsSummary)}</td>
+                <td class="text-end text-nowrap fw-semibold">${formatMoney(totalCost)}</td>
+                <td>${statusBadge}</td>
+                <td class="text-end text-nowrap">
+                    <button class="btn btn-sm btn-outline-primary view-offload-voucher-btn" data-id="${r.id}" title="View voucher"><i class="bi bi-receipt"></i></button>
+                    ${isRev ? '' : `<button class="btn btn-sm btn-outline-warning reverse-stock-btn ms-1" data-id="${r.id}" data-station="${r.station_id}" data-supplier="${r.supplier_id || ''}" data-total="${totalCost}" data-items='${esc(JSON.stringify(r.items || []))}' title="Reverse (keep history)"><i class="bi bi-arrow-counterclockwise"></i></button>`}
                 </td>
             </tr>`;
         });
     }
 
-    html += `</tbody></table></div></div></div></div>`;
+    html += `</tbody></table></div>
+                    <p class="small text-muted mt-2 mb-0"><i class="bi bi-info-circle"></i> Reverse keeps the record and undoes stock &amp; supplier balance. It does not permanently delete.</p>
+                </div></div></div></div>`;
 
     document.getElementById('pageContent').innerHTML = html;
 
@@ -5766,6 +5785,7 @@ async function renderStock() {
                     freight: freight,
                     items: items,
                     total_cost: totalCost,
+                    status: 'active',
                     created_by: state.user.id,
                     companyId: companyId,
                     created_at: firebase.firestore.FieldValue.serverTimestamp()
@@ -5837,28 +5857,39 @@ async function renderStock() {
         }
     };
 
-    // ---- Delete (also reverse supplier balance) ----
-    document.querySelectorAll('.delete-stock-btn').forEach(btn => {
+    // ---- Reverse offload (keep history; undo inventory + supplier balance) ----
+    document.querySelectorAll('.reverse-stock-btn').forEach(btn => {
         btn.onclick = async function() {
             const id = this.dataset.id;
             const stationId = String(this.dataset.station);
             const supplierId = this.dataset.supplier || '';
             const totalCost = parseFloat(this.dataset.total) || 0;
-            const items = JSON.parse(this.dataset.items);
-            if (!confirm('Delete this offloading record? This will REMOVE stock from inventory.' +
-                (supplierId && totalCost > 0 ? '\nSupplier balance will also be reduced by ' + formatMoney(totalCost) + '.' : ''))) return;
-            if (!confirm('Are you sure? This cannot be undone!')) return;
+            let items = [];
+            try { items = JSON.parse(this.dataset.items || '[]'); } catch (_) { items = []; }
+            if (!confirm('Reverse this offloading?\n\n• Stock will be removed from inventory\n• Supplier balance will be adjusted\n• The record stays in history as Reversed')) return;
             try {
                 showLoading(true);
+                const existing = await getDoc('stock', id);
+                if (!existing) throw new Error('Offload record not found');
+                if (existing.status === 'reversed' || existing.reversed === true) {
+                    toast('Already reversed', 'warning');
+                    return;
+                }
                 for (let item of items) {
-                    await adjustInventory(stationId, item.product_type, -item.quantity, null, 'Reversal of offload ' + id);
+                    await adjustInventory(stationId, item.product_type, -(Number(item.quantity) || 0), null, 'Reversal of offload ' + id, 'offload_reversal');
                 }
                 if (supplierId && totalCost > 0) {
+                    // Undo the offload debit on supplier (offload had increased amount owed)
                     await updateSupplierBalance(supplierId, -totalCost, 'offload_reversal', id);
                 }
-                await deleteDoc('stock', id);
-                await logAudit('delete_offload', { station: stationId, items, supplierId: supplierId || null, totalCost });
-                toast('Offloading record deleted. Inventory' + (supplierId && totalCost > 0 ? ' and supplier balance' : '') + ' adjusted.', 'success');
+                await updateDoc('stock', id, {
+                    status: 'reversed',
+                    reversed: true,
+                    reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    reversed_by: state.user.id
+                });
+                await logAudit('reverse_offload', { station: stationId, items, supplierId: supplierId || null, totalCost });
+                toast('Offload reversed. Inventory and supplier balance updated. History kept.', 'success');
                 renderStock();
             } catch (err) {
                 toast('Error: ' + err.message, 'danger');
@@ -6815,7 +6846,7 @@ async function renderFinancials() {
         let accountOptions = '<option value="">Select Account</option><option value="petty_cash">💰 Petty Cash (this station)</option>';
         sortedAccounts.forEach(a => {
             if (a.is_system && a.system_kind === 'petty_cash') return; // use alias
-            const st = a.station_id ? ' · ' + stationName(a.station_id) : '';
+            const st = (a.company_wide || !a.station_id) ? ' · All stations' : (' · ' + stationName(a.station_id));
             accountOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)} – ${esc(a.account_number || '')}${esc(st)}</option>`;
         });
 
@@ -6823,7 +6854,7 @@ async function renderFinancials() {
             '<option value="cash_till">Cash Till (this station)</option><option value="petty_cash">Petty Cash (this station)</option>';
         sortedAccounts.forEach(a => {
             if (a.is_system) return;
-            const st = a.station_id ? ' · ' + stationName(a.station_id) : '';
+            const st = (a.company_wide || !a.station_id) ? ' · All stations' : (' · ' + stationName(a.station_id));
             depositSourceOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)}${esc(st)}</option>`;
         });
 
@@ -6864,14 +6895,16 @@ async function renderFinancials() {
             const filterSid = state._acctStationFilter || '';
             const byStation = {};
             accounts.forEach(a => {
-                const sid = a.station_id != null && a.station_id !== '' ? String(a.station_id) : 'unassigned';
-                if (filterSid && sid !== String(filterSid)) return;
+                const isWide = a.company_wide === true || a.station_id == null || a.station_id === '';
+                const sid = isWide ? 'company_wide' : String(a.station_id);
+                // When filtering by a station, still show company-wide accounts
+                if (filterSid && sid !== String(filterSid) && sid !== 'company_wide') return;
                 if (!byStation[sid]) byStation[sid] = [];
                 byStation[sid].push(a);
             });
             const stationKeys = Object.keys(byStation).sort((a, b) => {
-                if (a === 'unassigned') return 1;
-                if (b === 'unassigned') return -1;
+                if (a === 'company_wide') return -1;
+                if (b === 'company_wide') return 1;
                 return stationName(a).localeCompare(stationName(b));
             });
             if (stationKeys.length === 0) {
@@ -6889,7 +6922,7 @@ async function renderFinancials() {
 
             let html = '';
             stationKeys.forEach(sid => {
-                const label = sid === 'unassigned' ? 'Unassigned / Company-wide' : stationName(sid);
+                const label = sid === 'company_wide' || sid === 'unassigned' ? '🌐 All stations (company-wide)' : stationName(sid);
                 const list = byStation[sid].slice().sort((a, b) => {
                     const rank = (x) => (x.system_kind === 'cash_till' ? 0 : (x.is_system ? 1 : 2));
                     const ra = rank(a), rb = rank(b);
@@ -7069,20 +7102,25 @@ async function renderFinancials() {
         }
 
         function paymentRows() {
-            if (supplierPayments.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No supplier payments or prepayments</td></tr>';
+            if (supplierPayments.length === 0) return '<tr><td colspan="8" class="text-muted text-center">No supplier payments or prepayments</td></tr>';
             let rows = '';
-            const sorted = [...supplierPayments].sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
-            sorted.slice(0, 30).forEach(p => {
+            const sorted = [...supplierPayments].sort((a, b) => tsMillis(b.payment_date || b.created_at) - tsMillis(a.payment_date || a.created_at));
+            sorted.slice(0, 40).forEach(p => {
+                const isRev = p.status === 'reversed' || p.reversed === true;
                 const sup = suppliers.find(s => s.id === p.supplier_id);
                 const supName = sup ? sup.name : 'Unknown';
                 let sourceLabel = 'Unknown';
                 if (p.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
+                else if (p.source_account === 'cash_till') sourceLabel = 'Cash Till';
                 else { const acc = accounts.find(a => a.id === p.source_account); if (acc) sourceLabel = acc.bank_name || acc.name || 'Bank'; }
                 const isPre = !!p.is_prepayment;
-                const typeBadge = isPre
-                    ? '<span class="badge bg-warning text-dark">Prepayment</span>'
-                    : '<span class="badge bg-primary">Payment</span>';
-                rows += `<tr>
+                const typeBadge = isRev
+                    ? '<span class="badge bg-secondary">Reversed</span>'
+                    : (isPre
+                        ? '<span class="badge bg-warning text-dark">Prepayment</span>'
+                        : '<span class="badge bg-primary">Payment</span>');
+                const rowStyle = isRev ? ' style="opacity:0.65;"' : '';
+                rows += `<tr${rowStyle}>
                         <td><strong>${esc(supName)}</strong></td>
                         <td>${typeBadge}</td>
                         <td>${esc(sourceLabel)}</td>
@@ -7090,6 +7128,9 @@ async function renderFinancials() {
                         <td>${esc(p.reference || '—')}</td>
                         <td class="fs-xs">${formatDate(p.payment_date || p.created_at)}</td>
                         <td class="small text-muted">${esc(p.note || '—')}</td>
+                        <td class="text-end text-nowrap">
+                            ${isRev ? '<span class="text-muted small">—</span>' : `<button type="button" class="btn btn-sm btn-outline-warning reverse-supplier-pay-btn" data-id="${p.id}" title="Reverse payment"><i class="bi bi-arrow-counterclockwise"></i></button>`}
+                        </td>
                     </tr>`;
             });
             return rows;
@@ -7188,7 +7229,7 @@ async function renderFinancials() {
                                         <div class="mb-2">
                                             <label class="form-label small fw-semibold"><i class="bi bi-geo-alt-fill text-primary"></i> Station *</label>
                                             <select id="baStation" class="form-select form-select-sm" required>
-                                                <option value="">— Select station —</option>
+                                                <option value="all">🌐 All stations (company-wide)</option>
                                                 ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
                                             </select>
                                         </div>
@@ -7371,7 +7412,7 @@ async function renderFinancials() {
                             <h6 class="mb-3"><i class="bi bi-clock-history"></i> Payment &amp; Prepayment History</h6>
                             <div class="table-responsive">
                                 <table class="table table-sm table-hover">
-                                    <thead><tr><th>Supplier</th><th>Type</th><th>From Account</th><th>Amount</th><th>Reference</th><th>Date</th><th>Note</th></tr></thead>
+                                    <thead><tr><th>Supplier</th><th>Type</th><th>From Account</th><th>Amount</th><th>Reference</th><th>Date</th><th>Note</th><th class="text-end">Actions</th></tr></thead>
                                     <tbody>${paymentRows()}</tbody>
                                 </table>
                             </div>
@@ -7493,10 +7534,12 @@ async function renderFinancials() {
             const accName = (document.getElementById('baAccName').value || '').trim();
             const accNum = (document.getElementById('baAccNum').value || '').trim();
             const branch = (document.getElementById('baBranch').value || '').trim();
-            const stationId = (document.getElementById('baStation') && document.getElementById('baStation').value) || '';
+            const stationIdRaw = (document.getElementById('baStation') && document.getElementById('baStation').value) || '';
             const opening = parseFloat((document.getElementById('baOpening') && document.getElementById('baOpening').value) || '0') || 0;
-            if (!stationId) { toast('Select a station', 'warning'); return; }
+            if (!stationIdRaw) { toast('Select a station or All stations', 'warning'); return; }
             if (!bankName || !accName || !accNum) { toast('Fill all required fields', 'warning'); return; }
+            const isCompanyWide = (stationIdRaw === 'all' || stationIdRaw === '*');
+            const stationId = isCompanyWide ? null : String(stationIdRaw);
             try {
                 await addDoc('bank_accounts', {
                     bank_name: bankName,
@@ -7505,11 +7548,12 @@ async function renderFinancials() {
                     branch: branch || '',
                     currency: currencySymbol(),
                     balance: opening,
-                    station_id: String(stationId),
+                    station_id: stationId, // null = company-wide (all stations)
+                    company_wide: isCompanyWide,
                     companyId: state.user.companyId,
                     is_system: false
                 });
-                toast('Bank account added for ' + stationName(stationId), 'success');
+                toast(isCompanyWide ? 'Company-wide bank account added (all stations)' : ('Bank account added for ' + stationName(stationId)), 'success');
                 renderFinancials().then(() => {
                     const tab = document.getElementById('accounts-tab');
                     if (tab) tab.click();
@@ -7931,10 +7975,14 @@ async function renderFinancials() {
             });
             // Negative delta: reduces amount owed OR builds prepaid credit (negative balance)
             await updateSupplierBalance(supplierId, -amount, sourceLabel, reference || '');
-            if (source !== 'petty_cash' && source !== '') {
-                const acc = await getDoc('bank_accounts', source);
-                if (acc) {
-                    await updateDoc('bank_accounts', source, { balance: (Number(acc.balance) || 0) - amount });
+            // Debit bank / system cash account
+            {
+                const resolved = resolveAccountRefId(source, state.currentStationId) || source;
+                if (resolved) {
+                    const acc = await getDoc('bank_accounts', resolved);
+                    if (acc) {
+                        await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) - amount });
+                    }
                 }
             }
             return true;
@@ -7985,6 +8033,52 @@ async function renderFinancials() {
                 } catch (err) { unlockSubmit(this); toast('Error: ' + err.message, 'danger'); }
             };
         }
+
+        
+        // ---- Reverse supplier payment / prepayment ----
+        document.querySelectorAll('.reverse-supplier-pay-btn').forEach(btn => {
+            btn.onclick = async function() {
+                const id = this.dataset.id;
+                if (!confirm('Reverse this supplier payment?\n\n• Supplier balance will be restored\n• Bank / cash account will be credited\n• Payment stays in history as Reversed')) return;
+                try {
+                    showLoading(true);
+                    const p = await getDoc('supplier_payments', id);
+                    if (!p) throw new Error('Payment not found');
+                    if (p.status === 'reversed' || p.reversed === true) {
+                        toast('Already reversed', 'warning');
+                        return;
+                    }
+                    const amount = Number(p.amount) || 0;
+                    const supplierId = p.supplier_id;
+                    if (!supplierId || amount <= 0) throw new Error('Invalid payment data');
+
+                    await updateDoc('supplier_payments', id, {
+                        status: 'reversed',
+                        reversed: true,
+                        reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
+                        reversed_by: state.user.id
+                    });
+                    // Undo supplier balance change (payment had applied -amount)
+                    await updateSupplierBalance(supplierId, amount, 'payment_reversal', id);
+                    // Credit bank / system account
+                    const source = p.source_account || '';
+                    const resolved = resolveAccountRefId(source, p.station_id || state.currentStationId) || source;
+                    if (resolved) {
+                        const acc = await getDoc('bank_accounts', resolved);
+                        if (acc) {
+                            await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) + amount });
+                        }
+                    }
+                    await logAudit('reverse_supplier_payment', { payment_id: id, supplier_id: supplierId, amount: amount });
+                    toast('Payment reversed. Supplier and account balances updated.', 'success');
+                    renderFinancials();
+                } catch (err) {
+                    toast('Error: ' + err.message, 'danger');
+                } finally {
+                    showLoading(false);
+                }
+            };
+        });
 
         document.getElementById('creditForm').onsubmit = async function(e) {
             e.preventDefault();
@@ -8762,9 +8856,9 @@ async function renderSuppliers() {
         html += `<tr><td colspan="8" class="text-center text-muted">No suppliers registered.</td></tr>`;
     } else {
         for (const s of suppliers) {
-            const offloads = stock.filter(o => o.supplier_id === s.id);
+            const offloads = stock.filter(o => o.supplier_id === s.id && o.status !== 'reversed' && o.reversed !== true);
             const totalOffloads = offloads.reduce((sum, o) => sum + (o.total_cost || 0), 0);
-            const payments = supplierPayments.filter(p => p.supplier_id === s.id);
+            const payments = supplierPayments.filter(p => p.supplier_id === s.id && p.status !== 'reversed' && p.reversed !== true);
             const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
             const balance = Number(s.current_balance || 0);
             const prepayTotal = payments.filter(p => p.is_prepayment).reduce((sum, p) => sum + Number(p.amount || 0), 0);
@@ -8857,8 +8951,6 @@ async function renderSuppliers() {
 
             try {
                 const transList = await loadLedgerRows('supplier_transactions', 'supplier_id', id, 100);
-                // Ensure newest first
-                transList.sort((a, b) => tsMillis(b.timestamp || b.created_at) - tsMillis(a.timestamp || a.created_at));
 
                 let rows = '';
                 if (!transList.length) {
@@ -9523,7 +9615,7 @@ async function renderReports() {
         // Combine offloads (debit) and supplier_transactions (credit)
         const transactions = [];
         // Offloads (increase balance, positive amount)
-        const offloads = stock.filter(s => s.supplier_id === supplierId);
+        const offloads = stock.filter(s => s.supplier_id === supplierId && s.status !== 'reversed' && s.reversed !== true);
         offloads.forEach(o => {
             const total = o.total_cost || (o.items || []).reduce((sum, it) => sum + it.quantity * it.cost_price, 0);
             transactions.push({
@@ -9547,7 +9639,7 @@ async function renderReports() {
             });
         });
         // Also include payments from supplier_payments collection (duplicate? but safe)
-        const payments = supplierPayments.filter(p => p.supplier_id === supplierId);
+        const payments = supplierPayments.filter(p => p.supplier_id === supplierId && p.status !== 'reversed' && p.reversed !== true);
         payments.forEach(p => {
             transactions.push({
                 date: p.created_at,
@@ -9575,8 +9667,6 @@ async function renderReports() {
             ]);
         });
         if (rows.length === 0) rows.push(['No transactions found', '', '', '', '']);
-        // Newest first for history display (balances already computed chronologically)
-        if (rows.length && rows[0][0] !== 'No transactions found') rows.reverse();
         let body = `<div class="mb-3"><h5>Statement for ${supplier.name}</h5>
             <p>Opening Balance: ${formatMoney(supplier.opening_balance || 0)}</p>
             <p>Current Balance: ${formatMoney(supplier.current_balance || 0)}</p></div>`;
