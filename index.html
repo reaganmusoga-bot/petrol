@@ -6859,7 +6859,11 @@ async function renderFinancials() {
 
         function accountsByStationHtml() {
             if (accounts.length === 0) {
-                return '<div class="text-muted text-center py-4"><i class="bi bi-bank fs-3 d-block mb-2 opacity-25"></i>No bank accounts yet. Add one on the left.</div>';
+                return `<div class="text-center py-5 px-3" style="background:linear-gradient(180deg,#f8fafc 0%,#fff 100%);border:1px dashed #cbd5e1;border-radius:14px;">
+                    <i class="bi bi-bank2 d-block mb-2" style="font-size:2.2rem;color:#94a3b8;"></i>
+                    <div class="fw-semibold text-muted">No bank accounts yet</div>
+                    <div class="small text-muted mt-1">Add an account on the left to get started.</div>
+                </div>`;
             }
             const filterSid = state._acctStationFilter || '';
             const byStation = {};
@@ -6875,91 +6879,136 @@ async function renderFinancials() {
                 return stationName(a).localeCompare(stationName(b));
             });
             if (stationKeys.length === 0) {
-                return '<div class="text-muted text-center py-4">No accounts for this station filter.</div>';
+                return `<div class="text-center py-4 text-muted">No accounts for this station filter.</div>`;
             }
+
+            // Stable per-station numbering: sort by created_at then id, assign 1..n
+            const sortedForNumber = {};
+            stationKeys.forEach(sid => {
+                sortedForNumber[sid] = byStation[sid].slice().sort((a, b) => {
+                    const ta = tsMillis(a.created_at);
+                    const tb = tsMillis(b.created_at);
+                    if (ta !== tb) return ta - tb;
+                    return String(a.id).localeCompare(String(b.id));
+                });
+            });
+            const numberMap = {}; // accountId -> display number within station
+            stationKeys.forEach(sid => {
+                sortedForNumber[sid].forEach((a, i) => { numberMap[a.id] = i + 1; });
+            });
+
             let html = '';
             stationKeys.forEach(sid => {
                 const label = sid === 'unassigned' ? 'Unassigned / Company-wide' : stationName(sid);
+                // Display order: system first, then by number
                 const list = byStation[sid].slice().sort((a, b) => {
                     if (a.is_system && !b.is_system) return -1;
                     if (!a.is_system && b.is_system) return 1;
-                    return String(a.account_name || a.bank_name || '').localeCompare(String(b.account_name || b.bank_name || ''));
+                    return (numberMap[a.id] || 0) - (numberMap[b.id] || 0);
                 });
                 let stationTotal = 0;
                 list.forEach(a => { stationTotal += Number(a.balance) || 0; });
-                const totalCls = stationTotal < 0 ? 'text-danger' : 'text-success';
+                const totalPos = stationTotal >= 0;
+
                 html += `
                 <div class="bank-station-block mb-4">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 px-1">
-                        <h6 class="mb-0 fw-bold" style="letter-spacing:-0.01em;">
-                            <i class="bi bi-geo-alt-fill text-warning me-1"></i>${esc(label)}
-                        </h6>
-                        <span class="badge rounded-pill ${stationTotal < 0 ? 'bg-danger' : 'bg-dark'} px-3 py-2">
-                            Station total: <strong class="${totalCls}" style="color:inherit;">${formatMoney(stationTotal)}</strong>
-                        </span>
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-0 px-3 py-2"
+                         style="background:linear-gradient(135deg,#0b1a33 0%,#1a3a6a 100%);border-radius:12px 12px 0 0;color:#fff;">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle"
+                                  style="width:28px;height:28px;background:rgba(255,193,7,.2);">
+                                <i class="bi bi-geo-alt-fill" style="color:#ffc107;font-size:0.9rem;"></i>
+                            </span>
+                            <span class="fw-bold" style="letter-spacing:0.01em;font-size:0.95rem;">${esc(label)}</span>
+                            <span class="badge" style="background:rgba(255,255,255,.15);font-weight:500;">${list.length} account${list.length === 1 ? '' : 's'}</span>
+                        </div>
+                        <div class="small" style="opacity:.95;">
+                            Total&nbsp;
+                            <strong style="color:${totalPos ? '#86efac' : '#fca5a5'};font-size:1rem;">${formatMoney(stationTotal)}</strong>
+                        </div>
                     </div>
-                    <div class="table-responsive border rounded-3 overflow-hidden" style="border-color:var(--border-color)!important;">
-                        <table class="table table-sm table-hover mb-0 align-middle bank-acct-table">
-                            <thead style="background:#0b1a33;color:#fff;">
-                                <tr>
-                                    <th class="ps-3 py-2" style="width:32%;">Account Name</th>
-                                    <th class="py-2" style="width:22%;">Account Number</th>
-                                    <th class="py-2 text-end" style="width:22%;">Balance</th>
-                                    <th class="py-2 pe-3 text-end" style="width:24%;">Actions</th>
+                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;overflow:hidden;box-shadow:0 4px 14px rgba(11,26,51,.06);">
+                        <table class="table table-hover mb-0 align-middle bank-acct-table" style="font-size:0.9rem;">
+                            <thead>
+                                <tr style="background:#f1f5f9;color:#334155;border-bottom:2px solid #e2e8f0;">
+                                    <th class="text-center py-2 ps-2" style="width:48px;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;">#</th>
+                                    <th class="py-2" style="width:42%;min-width:180px;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;">Account Name</th>
+                                    <th class="py-2" style="width:20%;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;">Account Number</th>
+                                    <th class="py-2 text-end" style="width:18%;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;">Balance</th>
+                                    <th class="py-2 pe-3 text-end" style="width:20%;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>`;
-                list.forEach(a => {
+                list.forEach((a, idx) => {
                     const bal = Number(a.balance) || 0;
-                    const balCls = bal < 0 ? 'text-danger fw-bold' : 'fw-semibold';
-                    const sys = a.is_system ? '<span class="badge bg-secondary ms-1" style="font-size:0.65rem;">System</span>' : '';
-                    const canDelete = !a.is_system && bal <= 0;
+                    const n = numberMap[a.id] || (idx + 1);
+                    const isNeg = bal < 0;
+                    const isSys = !!a.is_system;
+                    const canDelete = !isSys && bal <= 0;
                     const aid = esc(a.id);
                     const displayName = (a.account_name && String(a.account_name).trim())
-                        ? a.account_name
+                        ? String(a.account_name).trim()
                         : (a.bank_name || 'Unnamed account');
-                    const bankSub = (a.bank_name && a.account_name && String(a.bank_name).trim() !== String(a.account_name).trim())
-                        ? `<div class="small text-muted">${esc(a.bank_name)}</div>` : '';
-                    // View row
+                    // Single-line name; bank shown only as subtle suffix on same line if different
+                    let nameLine = esc(displayName);
+                    if (a.bank_name && String(a.bank_name).trim() && String(a.bank_name).trim() !== displayName) {
+                        nameLine += ` <span class="text-muted fw-normal">· ${esc(String(a.bank_name).trim())}</span>`;
+                    }
+                    if (isSys) {
+                        nameLine += ` <span class="badge rounded-pill ms-1" style="background:#e2e8f0;color:#475569;font-size:0.65rem;font-weight:600;">System</span>`;
+                    }
+                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                    const balColor = isNeg ? '#dc2626' : '#059669';
+                    const numBg = isSys ? 'linear-gradient(135deg,#64748b,#475569)' : 'linear-gradient(135deg,#0b1a33,#1a3a6a)';
+
                     html += `
-                            <tr class="acct-view-row" data-id="${aid}">
-                                <td class="ps-3">
-                                    <div class="fw-semibold">${esc(displayName)}${sys}</div>
-                                    ${bankSub}
+                            <tr class="acct-view-row" data-id="${aid}" style="background:${rowBg};border-bottom:1px solid #f1f5f9;">
+                                <td class="text-center ps-2 py-2">
+                                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle text-white fw-bold"
+                                          style="width:26px;height:26px;font-size:0.72rem;background:${numBg};">${n}</span>
                                 </td>
-                                <td class="font-monospace small">${esc(a.account_number || '—')}</td>
-                                <td class="text-end ${balCls}">${formatMoney(bal)}${bal < 0 ? ' <span class="badge bg-danger">Neg</span>' : ''}</td>
-                                <td class="text-end pe-3 text-nowrap">
-                                    <button type="button" class="btn btn-sm btn-outline-info acct-history-btn me-1" data-id="${aid}" data-name="${esc(displayName)}" title="Banking history">
-                                        <i class="bi bi-clock-history"></i> History
-                                    </button>
-                                    <button type="button" class="btn btn-sm btn-outline-primary acct-edit-btn me-1" data-id="${aid}" title="Edit account">
-                                        <i class="bi bi-pencil-square"></i> Edit
-                                    </button>
-                                    ${canDelete ? `<button type="button" class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${aid}" title="Delete"><i class="bi bi-trash"></i></button>` : ''}
+                                <td class="py-2" style="max-width:0;">
+                                    <div class="text-truncate fw-semibold" style="color:#0f172a;" title="${esc(displayName)}">${nameLine}</div>
+                                </td>
+                                <td class="py-2">
+                                    <span class="font-monospace small px-2 py-1 rounded" style="background:#f1f5f9;color:#334155;letter-spacing:0.02em;">${esc(a.account_number || '—')}</span>
+                                </td>
+                                <td class="text-end py-2 fw-bold" style="color:${balColor};font-variant-numeric:tabular-nums;">
+                                    ${formatMoney(bal)}${isNeg ? ' <span class="badge bg-danger" style="font-size:0.65rem;">Neg</span>' : ''}
+                                </td>
+                                <td class="text-end pe-3 py-2 text-nowrap">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-outline-secondary acct-history-btn" data-id="${aid}" data-name="${esc(displayName)}" title="Banking history"
+                                            style="border-color:#cbd5e1;">
+                                            <i class="bi bi-clock-history"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary acct-edit-btn" data-id="${aid}" title="Edit account">
+                                            <i class="bi bi-pencil-square"></i>
+                                        </button>
+                                        ${canDelete ? `<button type="button" class="btn btn-outline-danger delete-account-btn" data-id="${aid}" title="Delete"><i class="bi bi-trash"></i></button>` : ''}
+                                    </div>
                                 </td>
                             </tr>
-                            <tr class="acct-edit-row table-warning" data-id="${aid}" style="display:none;">
-                                <td class="ps-3">
-                                    <label class="form-label small mb-0 text-muted">Account name</label>
-                                    <input type="text" class="form-control form-control-sm ae-name mb-1" value="${esc(a.account_name || '')}" placeholder="Account name">
-                                    <label class="form-label small mb-0 text-muted">Bank name</label>
-                                    <input type="text" class="form-control form-control-sm ae-bank" value="${esc(a.bank_name || '')}" placeholder="Bank name" ${a.is_system ? 'readonly' : ''}>
-                                    ${a.is_system
-                                        ? `<input type="hidden" class="ae-station" value="${esc(a.station_id || '')}">`
-                                        : `<label class="form-label small mb-0 text-muted mt-1">Station</label>${stationSelectHtml(a.station_id, 'ae-station')}`}
+                            <tr class="acct-edit-row" data-id="${aid}" style="display:none;background:#fffbeb;">
+                                <td class="text-center ps-2 align-middle">
+                                    <span class="d-inline-flex align-items-center justify-content-center rounded-circle text-white fw-bold"
+                                          style="width:26px;height:26px;font-size:0.72rem;background:${numBg};">${n}</span>
                                 </td>
-                                <td>
-                                    <label class="form-label small mb-0 text-muted">Account number</label>
-                                    <input type="text" class="form-control form-control-sm ae-num" value="${esc(a.account_number || '')}" ${a.is_system ? 'readonly' : ''}>
-                                    <label class="form-label small mb-0 text-muted mt-1">Branch</label>
+                                <td class="py-2">
+                                    <input type="text" class="form-control form-control-sm ae-name mb-1" value="${esc(a.account_name || '')}" placeholder="Account name">
+                                    <input type="text" class="form-control form-control-sm ae-bank" value="${esc(a.bank_name || '')}" placeholder="Bank name" ${isSys ? 'readonly' : ''}>
+                                    ${isSys
+                                        ? `<input type="hidden" class="ae-station" value="${esc(a.station_id || '')}">`
+                                        : `<div class="mt-1">${stationSelectHtml(a.station_id, 'ae-station')}</div>`}
+                                </td>
+                                <td class="py-2">
+                                    <input type="text" class="form-control form-control-sm ae-num mb-1" value="${esc(a.account_number || '')}" placeholder="Account number" ${isSys ? 'readonly' : ''}>
                                     <input type="text" class="form-control form-control-sm ae-branch" value="${esc(a.branch || '')}" placeholder="Branch">
                                 </td>
-                                <td class="text-end">
-                                    <label class="form-label small mb-0 text-muted">Balance</label>
+                                <td class="text-end py-2">
                                     <input type="number" class="form-control form-control-sm ae-bal text-end" step="0.01" value="${bal}">
                                 </td>
-                                <td class="text-end pe-3 text-nowrap align-middle">
+                                <td class="text-end pe-3 py-2 text-nowrap align-middle">
                                     <button type="button" class="btn btn-sm btn-success acct-save-btn" data-id="${aid}"><i class="bi bi-check-lg"></i> Save</button>
                                     <button type="button" class="btn btn-sm btn-outline-secondary acct-cancel-btn" data-id="${aid}"><i class="bi bi-x-lg"></i></button>
                                 </td>
@@ -6967,6 +7016,13 @@ async function renderFinancials() {
                 });
                 html += `
                             </tbody>
+                            <tfoot>
+                                <tr style="background:#f8fafc;border-top:2px solid #e2e8f0;">
+                                    <td colspan="3" class="ps-3 py-2 small text-muted fw-semibold text-uppercase" style="letter-spacing:0.04em;font-size:0.7rem;">Station total</td>
+                                    <td class="text-end py-2 fw-bold" style="color:${totalPos ? '#059669' : '#dc2626'};font-variant-numeric:tabular-nums;">${formatMoney(stationTotal)}</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 </div>`;
