@@ -6998,56 +6998,71 @@ async function renderFinancials() {
         }
 
         function expenseRows() {
-            if (expenses.length === 0) return '<tr><td colspan="8" class="text-muted text-center">No expenses</td></tr>';
+            if (expenses.length === 0) {
+                return '<tr><td colspan="5" class="text-muted text-center py-4">No expenses recorded yet</td></tr>';
+            }
+            const sorted = [...expenses].sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
             let rows = '';
-            expenses.slice(0, 15).forEach(e => {
+            sorted.slice(0, 20).forEach((e, idx) => {
                 let sourceLabel = 'Unknown';
-                if (e.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
-                else { const acc = accounts.find(a => a.id === e.source_account); if (acc) sourceLabel = acc.bank_name; }
-                const person = e.person_name || '—';
-                const isRecurring = e.is_recurring ? '<span class="recurring-badge">Recurring</span>' : '';
-                const autoRecorded = e.auto_recorded ? '<span class="badge bg-info">Auto</span>' : '';
-                rows += `<tr>
-                        <td>${esc(sourceLabel)}</td>
-                        <td>${esc(person)}</td>
-                        <td>${esc(e.description || '—')}</td>
-                        <td><span class="badge bg-secondary">${esc(e.category || 'other')}</span></td>
-                        <td class="text-danger">${formatMoney(e.amount)}</td>
-                        <td class="fs-xs">${formatDate(e.created_at)}</td>
-                        <td>${isRecurring}</td>
-                        <td>${autoRecorded}</td>
+                if (e.source_account === 'petty_cash' || e.source_account === 'cash_till') {
+                    sourceLabel = e.source_account === 'petty_cash' ? 'Petty Cash' : 'Cash Till';
+                } else {
+                    const acc = accounts.find(a => a.id === e.source_account);
+                    if (acc) sourceLabel = acc.account_name || acc.bank_name || 'Account';
+                }
+                const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                const cat = (e.category || 'other').toString();
+                rows += `<tr style="background:${rowBg};border-bottom:1px solid #f1f5f9;">
+                        <td class="py-2 ps-3">
+                            <div class="fw-semibold text-truncate" style="max-width:140px;font-size:0.85rem;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</div>
+                        </td>
+                        <td class="py-2">
+                            <div class="text-truncate" style="max-width:280px;font-size:0.85rem;" title="${esc(e.description || '')}">${esc(e.description || '—')}</div>
+                        </td>
+                        <td class="py-2"><span class="badge rounded-pill" style="background:#e2e8f0;color:#334155;font-weight:500;font-size:0.7rem;">${esc(cat)}</span></td>
+                        <td class="py-2 text-end fw-bold text-nowrap" style="color:#dc2626;font-variant-numeric:tabular-nums;min-width:7.5rem;">${formatMoney(e.amount)}</td>
+                        <td class="py-2 pe-3 text-nowrap small text-muted">${formatDate(e.expense_date || e.date || e.created_at)}</td>
                     </tr>`;
             });
             return rows;
         }
 
         function transferRows() {
-            if (bankings.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No transfers</td></tr>';
-            let rows = '';
+            if (bankings.length === 0) {
+                return '<tr><td colspan="5" class="text-muted text-center py-4">No deposits recorded yet</td></tr>';
+            }
             const sorted = [...bankings].sort((a, b) =>
-                (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0)
+                tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date)
             );
-            sorted.slice(0, 25).forEach(b => {
+            let rows = '';
+            sorted.slice(0, 30).forEach((b, idx) => {
                 const acc = accounts.find(a => a.id === b.bank_account_id);
-                let fromLabel = 'Unknown';
-                if (b.source_account === 'cash_till') fromLabel = 'Cash Till';
-                else if (b.source_account === 'petty_cash') fromLabel = 'Petty Cash';
-                else { const src = accounts.find(a => a.id === b.source_account); if (src) fromLabel = src.bank_name; }
+                const acctLabel = acc
+                    ? ((acc.account_name || acc.bank_name || 'Account') + (acc.account_number ? ' · ' + acc.account_number : ''))
+                    : '—';
+                // Depositor: explicit name, else cashier, else description for sales, else source
+                let depositor = (b.depositor || b.cashier_name || b.cashier || b.created_by_name || '').trim();
+                if (!depositor && b.source_type === 'sale') depositor = b.cashier_name || 'Cashier';
+                if (!depositor && (b.description || '').toLowerCase().includes('sale')) {
+                    depositor = b.cashier_name || b.cashier || 'Cashier';
+                }
+                if (!depositor) depositor = '—';
                 const isReversed = b.status === 'reversed' || b.reversed === true;
                 const statusBadge = isReversed
-                    ? '<span class="badge bg-secondary">Reversed</span>'
-                    : '<span class="badge bg-success">Active</span>';
-                const actions = isReversed
-                    ? '<span class="text-muted small">—</span>'
-                    : `<button class="btn btn-sm btn-outline-danger reverse-transfer-btn" data-id="${b.id}" title="Reverse this transfer"><i class="bi bi-arrow-counterclockwise"></i> Reverse</button>`;
-                rows += `<tr class="${isReversed ? 'table-secondary text-muted' : ''}">
-                        <td>${esc(fromLabel)}</td>
-                        <td>${esc(acc ? acc.bank_name : '—')}</td>
-                        <td>${esc(b.depositor || '—')}</td>
-                        <td class="fw-bold">${formatMoney(b.amount)}</td>
-                        <td class="fs-xs">${formatDate(b.created_at)}</td>
-                        <td>${statusBadge}</td>
-                        <td>${actions}</td>
+                    ? '<span class="badge rounded-pill" style="background:#e2e8f0;color:#64748b;">Reversed</span>'
+                    : '<span class="badge rounded-pill" style="background:#d1fae5;color:#065f46;">Posted</span>';
+                const rowBg = isReversed ? '#f1f5f9' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
+                rows += `<tr style="background:${rowBg};border-bottom:1px solid #f1f5f9;${isReversed ? 'opacity:0.75;' : ''}">
+                        <td class="py-2 ps-3">
+                            <div class="fw-semibold text-truncate" style="max-width:160px;font-size:0.85rem;" title="${esc(depositor)}">${esc(depositor)}</div>
+                        </td>
+                        <td class="py-2">
+                            <div class="text-truncate" style="max-width:200px;font-size:0.85rem;" title="${esc(acctLabel)}">${esc(acctLabel)}</div>
+                        </td>
+                        <td class="py-2 text-end fw-bold text-nowrap" style="color:#059669;font-variant-numeric:tabular-nums;min-width:7.5rem;">${formatMoney(b.amount)}</td>
+                        <td class="py-2 text-nowrap small text-muted">${formatDate(b.date || b.created_at)}</td>
+                        <td class="py-2 pe-3">${statusBadge}</td>
                     </tr>`;
             });
             return rows;
@@ -7241,10 +7256,18 @@ async function renderFinancials() {
                             </div>
                             <div class="col-lg-7">
                                 <div class="card-box">
-                                    <h6 class="mb-3">Recent Expenses</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead><tr><th>Source</th><th>Person</th><th>Description</th><th>Category</th><th>Amount</th><th>Date</th><th>Recurring</th><th>Auto</th></tr></thead>
+                                                                        <h6 class="mb-3"><i class="bi bi-receipt"></i> Recent Expenses</h6>
+                                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;max-height:320px;">
+                                        <table class="table table-sm mb-0 align-middle" style="font-size:0.85rem;">
+                                            <thead style="position:sticky;top:0;z-index:1;">
+                                                <tr style="background:linear-gradient(135deg,#0b1a33,#1a3a6a);color:#fff;">
+                                                    <th class="py-2 ps-3" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:18%;">Source</th>
+                                                    <th class="py-2" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:36%;">Description</th>
+                                                    <th class="py-2" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:14%;">Category</th>
+                                                    <th class="py-2 text-end" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:18%;">Amount</th>
+                                                    <th class="py-2 pe-3" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:14%;">Date</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>${expenseRows()}</tbody>
                                         </table>
                                     </div>
@@ -7258,7 +7281,7 @@ async function renderFinancials() {
                         <div class="row g-3">
                             <div class="col-lg-5">
                                 <div class="card-box">
-                                    <h6 class="mb-3">Record Transfer / Deposit</h6>
+                                    <h6 class="mb-3"><i class="bi bi-bank"></i> Record Deposit</h6>
                                     <form id="bankForm">
                                         <div class="mb-2"><label class="form-label small">From Account</label>
                                             <select id="bfSource" class="form-select form-select-sm" required>${depositSourceOptions}</select></div>
@@ -7267,7 +7290,7 @@ async function renderFinancials() {
                                                 <option value="">Select Bank Account</option>
                                                 ${accounts.map(a => `<option value="${a.id}">${esc(a.bank_name)} – ${esc(a.account_number)}</option>`).join('')}
                                             </select></div>
-                                        <div class="mb-2"><input id="bfDepositor" class="form-control form-control-sm" placeholder="Transferred By *" required></div>
+                                        <div class="mb-2"><label class="form-label small">Depositor name *</label><input id="bfDepositor" class="form-control form-control-sm" placeholder="Cashier or person depositing" required></div>
                                         <div class="mb-2"><input type="number" id="bfAmount" class="form-control form-control-sm" placeholder="Amount *" step="0.01" min="0" required></div>
                                         <div class="mb-2"><input id="bfDesc" class="form-control form-control-sm" placeholder="Description"></div>
                                         <div class="mb-2"><label class="form-label small">Date</label>
@@ -7278,11 +7301,18 @@ async function renderFinancials() {
                             </div>
                             <div class="col-lg-7">
                                 <div class="card-box">
-                                    <h6 class="mb-3">Transfer History</h6>
-                                    <p class="small text-muted mb-2">You can reverse an active transfer. Balances will be adjusted automatically and the original entry will be marked as reversed.</p>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead><tr><th>From</th><th>To</th><th>By</th><th>Amount</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+                                                                        <h6 class="mb-3"><i class="bi bi-arrow-left-right"></i> Deposit History</h6>
+                                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;max-height:360px;">
+                                        <table class="table table-sm mb-0 align-middle" style="font-size:0.85rem;">
+                                            <thead style="position:sticky;top:0;z-index:1;">
+                                                <tr style="background:linear-gradient(135deg,#0b1a33,#1a3a6a);color:#fff;">
+                                                    <th class="py-2 ps-3" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Depositor</th>
+                                                    <th class="py-2" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Account Deposited</th>
+                                                    <th class="py-2 text-end" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Amount</th>
+                                                    <th class="py-2" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Date</th>
+                                                    <th class="py-2 pe-3" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Status</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>${transferRows()}</tbody>
                                         </table>
                                     </div>
