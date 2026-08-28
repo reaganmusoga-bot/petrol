@@ -6857,8 +6857,10 @@ async function renderFinancials() {
             return `<select class="form-select form-select-sm ${extraClass || ''}">${opts}</select>`;
         }
 
-        function accountRows() {
-            if (accounts.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No accounts</td></tr>';
+        function accountsByStationHtml() {
+            if (accounts.length === 0) {
+                return '<div class="text-muted text-center py-4"><i class="bi bi-bank fs-3 d-block mb-2 opacity-25"></i>No bank accounts yet. Add one on the left.</div>';
+            }
             const filterSid = state._acctStationFilter || '';
             const byStation = {};
             accounts.forEach(a => {
@@ -6867,50 +6869,109 @@ async function renderFinancials() {
                 if (!byStation[sid]) byStation[sid] = [];
                 byStation[sid].push(a);
             });
-            if (Object.keys(byStation).length === 0) {
-                return '<tr><td colspan="7" class="text-muted text-center">No accounts for this station filter</td></tr>';
+            const stationKeys = Object.keys(byStation).sort((a, b) => {
+                if (a === 'unassigned') return 1;
+                if (b === 'unassigned') return -1;
+                return stationName(a).localeCompare(stationName(b));
+            });
+            if (stationKeys.length === 0) {
+                return '<div class="text-muted text-center py-4">No accounts for this station filter.</div>';
             }
-            let rows = '';
-            Object.keys(byStation).sort().forEach(sid => {
+            let html = '';
+            stationKeys.forEach(sid => {
                 const label = sid === 'unassigned' ? 'Unassigned / Company-wide' : stationName(sid);
-                rows += `<tr class="table-light"><td colspan="7" class="fw-semibold small py-2"><i class="bi bi-geo-alt"></i> ${esc(label)}</td></tr>`;
-                byStation[sid].forEach(a => {
+                const list = byStation[sid].slice().sort((a, b) => {
+                    if (a.is_system && !b.is_system) return -1;
+                    if (!a.is_system && b.is_system) return 1;
+                    return String(a.account_name || a.bank_name || '').localeCompare(String(b.account_name || b.bank_name || ''));
+                });
+                let stationTotal = 0;
+                list.forEach(a => { stationTotal += Number(a.balance) || 0; });
+                const totalCls = stationTotal < 0 ? 'text-danger' : 'text-success';
+                html += `
+                <div class="bank-station-block mb-4">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 px-1">
+                        <h6 class="mb-0 fw-bold" style="letter-spacing:-0.01em;">
+                            <i class="bi bi-geo-alt-fill text-warning me-1"></i>${esc(label)}
+                        </h6>
+                        <span class="badge rounded-pill ${stationTotal < 0 ? 'bg-danger' : 'bg-dark'} px-3 py-2">
+                            Station total: <strong class="${totalCls}" style="color:inherit;">${formatMoney(stationTotal)}</strong>
+                        </span>
+                    </div>
+                    <div class="table-responsive border rounded-3 overflow-hidden" style="border-color:var(--border-color)!important;">
+                        <table class="table table-sm table-hover mb-0 align-middle bank-acct-table">
+                            <thead style="background:#0b1a33;color:#fff;">
+                                <tr>
+                                    <th class="ps-3 py-2" style="width:32%;">Account Name</th>
+                                    <th class="py-2" style="width:22%;">Account Number</th>
+                                    <th class="py-2 text-end" style="width:22%;">Balance</th>
+                                    <th class="py-2 pe-3 text-end" style="width:24%;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                list.forEach(a => {
                     const bal = Number(a.balance) || 0;
-                    const balCls = bal < 0 ? 'text-danger fw-bold' : '';
-                    const sys = a.is_system ? ' <span class="badge bg-secondary">System</span>' : '';
+                    const balCls = bal < 0 ? 'text-danger fw-bold' : 'fw-semibold';
+                    const sys = a.is_system ? '<span class="badge bg-secondary ms-1" style="font-size:0.65rem;">System</span>' : '';
                     const canDelete = !a.is_system && bal <= 0;
                     const aid = esc(a.id);
+                    const displayName = (a.account_name && String(a.account_name).trim())
+                        ? a.account_name
+                        : (a.bank_name || 'Unnamed account');
+                    const bankSub = (a.bank_name && a.account_name && String(a.bank_name).trim() !== String(a.account_name).trim())
+                        ? `<div class="small text-muted">${esc(a.bank_name)}</div>` : '';
                     // View row
-                    rows += `<tr class="acct-view-row" data-id="${aid}">
-                        <td>${esc(a.bank_name || '')}${sys}</td>
-                        <td>${esc(a.account_name || '—')}</td>
-                        <td>${esc(a.account_number || '—')}</td>
-                        <td class="small">${esc(a.branch || '—')}</td>
-                        <td class="${balCls}">${formatMoney(bal)}${bal < 0 ? ' <span class="badge bg-danger">Neg</span>' : ''}</td>
-                        <td class="small text-muted">${sid === 'unassigned' ? '—' : esc(stationName(sid))}</td>
-                        <td class="text-nowrap">
-                          <button type="button" class="btn btn-sm btn-outline-primary acct-edit-btn" data-id="${aid}" title="Edit all fields">
-                            <i class="bi bi-pencil-square"></i> Edit
-                          </button>
-                          ${canDelete ? `<button type="button" class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${aid}"><i class="bi bi-trash"></i></button>` : ''}
-                        </td>
-                    </tr>`;
-                    // Inline edit row (hidden until Edit)
-                    rows += `<tr class="acct-edit-row table-warning" data-id="${aid}" style="display:none;">
-                        <td><input type="text" class="form-control form-control-sm ae-bank" value="${esc(a.bank_name || '')}" ${a.is_system ? 'readonly' : ''}></td>
-                        <td><input type="text" class="form-control form-control-sm ae-name" value="${esc(a.account_name || '')}"></td>
-                        <td><input type="text" class="form-control form-control-sm ae-num" value="${esc(a.account_number || '')}" ${a.is_system ? 'readonly' : ''}></td>
-                        <td><input type="text" class="form-control form-control-sm ae-branch" value="${esc(a.branch || '')}"></td>
-                        <td><input type="number" class="form-control form-control-sm ae-bal" step="1" value="${bal}"></td>
-                        <td>${a.is_system ? `<span class="small">${esc(stationName(a.station_id) || '—')}</span><input type="hidden" class="ae-station" value="${esc(a.station_id || '')}">` : stationSelectHtml(a.station_id, 'ae-station')}</td>
-                        <td class="text-nowrap">
-                          <button type="button" class="btn btn-sm btn-success acct-save-btn" data-id="${aid}"><i class="bi bi-check-lg"></i> Save</button>
-                          <button type="button" class="btn btn-sm btn-outline-secondary acct-cancel-btn" data-id="${aid}"><i class="bi bi-x-lg"></i></button>
-                        </td>
-                    </tr>`;
+                    html += `
+                            <tr class="acct-view-row" data-id="${aid}">
+                                <td class="ps-3">
+                                    <div class="fw-semibold">${esc(displayName)}${sys}</div>
+                                    ${bankSub}
+                                </td>
+                                <td class="font-monospace small">${esc(a.account_number || '—')}</td>
+                                <td class="text-end ${balCls}">${formatMoney(bal)}${bal < 0 ? ' <span class="badge bg-danger">Neg</span>' : ''}</td>
+                                <td class="text-end pe-3 text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-info acct-history-btn me-1" data-id="${aid}" data-name="${esc(displayName)}" title="Banking history">
+                                        <i class="bi bi-clock-history"></i> History
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary acct-edit-btn me-1" data-id="${aid}" title="Edit account">
+                                        <i class="bi bi-pencil-square"></i> Edit
+                                    </button>
+                                    ${canDelete ? `<button type="button" class="btn btn-sm btn-outline-danger delete-account-btn" data-id="${aid}" title="Delete"><i class="bi bi-trash"></i></button>` : ''}
+                                </td>
+                            </tr>
+                            <tr class="acct-edit-row table-warning" data-id="${aid}" style="display:none;">
+                                <td class="ps-3">
+                                    <label class="form-label small mb-0 text-muted">Account name</label>
+                                    <input type="text" class="form-control form-control-sm ae-name mb-1" value="${esc(a.account_name || '')}" placeholder="Account name">
+                                    <label class="form-label small mb-0 text-muted">Bank name</label>
+                                    <input type="text" class="form-control form-control-sm ae-bank" value="${esc(a.bank_name || '')}" placeholder="Bank name" ${a.is_system ? 'readonly' : ''}>
+                                    ${a.is_system
+                                        ? `<input type="hidden" class="ae-station" value="${esc(a.station_id || '')}">`
+                                        : `<label class="form-label small mb-0 text-muted mt-1">Station</label>${stationSelectHtml(a.station_id, 'ae-station')}`}
+                                </td>
+                                <td>
+                                    <label class="form-label small mb-0 text-muted">Account number</label>
+                                    <input type="text" class="form-control form-control-sm ae-num" value="${esc(a.account_number || '')}" ${a.is_system ? 'readonly' : ''}>
+                                    <label class="form-label small mb-0 text-muted mt-1">Branch</label>
+                                    <input type="text" class="form-control form-control-sm ae-branch" value="${esc(a.branch || '')}" placeholder="Branch">
+                                </td>
+                                <td class="text-end">
+                                    <label class="form-label small mb-0 text-muted">Balance</label>
+                                    <input type="number" class="form-control form-control-sm ae-bal text-end" step="0.01" value="${bal}">
+                                </td>
+                                <td class="text-end pe-3 text-nowrap align-middle">
+                                    <button type="button" class="btn btn-sm btn-success acct-save-btn" data-id="${aid}"><i class="bi bi-check-lg"></i> Save</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary acct-cancel-btn" data-id="${aid}"><i class="bi bi-x-lg"></i></button>
+                                </td>
+                            </tr>`;
                 });
+                html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
             });
-            return rows;
+            return html;
         }
 
         function expenseRows() {
@@ -7116,19 +7177,14 @@ async function renderFinancials() {
                             <div class="col-lg-7">
                                 <div class="card-box">
                                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                                        <h6 class="mb-0"><i class="bi bi-list-ul"></i> Bank Accounts by Station</h6>
+                                        <h6 class="mb-0"><i class="bi bi-bank2"></i> Bank Accounts by Station</h6>
                                         <select id="acctStationFilter" class="form-select form-select-sm" style="max-width:220px;">
                                             <option value="">All stations</option>
                                             ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
                                         </select>
                                     </div>
-                                    <p class="small text-muted">Click <strong>Edit</strong> on a row to change bank name, account name, number, branch, balance, and station in the table. Cash Till / Petty Cash: balance and labels are editable; system id stays fixed.</p>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead><tr><th>Bank</th><th>Account name</th><th>Number</th><th>Branch</th><th>Balance</th><th>Station</th><th>Actions</th></tr></thead>
-                                            <tbody id="accountsTableBody">${accountRows()}</tbody>
-                                        </table>
-                                    </div>
+                                    <p class="small text-muted mb-3">Each station has its own table. Use <strong>Edit</strong> to update name, number and balance. <strong>History</strong> shows banking activity for that account.</p>
+                                    <div id="accountsTableBody">${accountsByStationHtml()}</div>
                                 </div>
                             </div>
                         </div>
@@ -7494,6 +7550,102 @@ async function renderFinancials() {
                 if (view) view.style.display = '';
             };
         });
+
+        document.querySelectorAll('.acct-history-btn').forEach(btn => {
+            btn.onclick = function() {
+                const id = this.dataset.id;
+                const name = this.dataset.name || 'Account';
+                const acc = accounts.find(a => a.id === id);
+                // Movements: transfers in/out + expenses from this account
+                const relatedBankings = (bankings || []).filter(b => {
+                    if (b.status === 'reversed' || b.reversed === true) return false;
+                    return String(b.bank_account_id) === String(id) || String(b.source_account) === String(id)
+                        || String(resolveAccountRefId(b.source_account, b.station_id)) === String(id);
+                });
+                const relatedExpenses = (expenses || []).filter(e => {
+                    const src = e.source_account;
+                    if (String(src) === String(id)) return true;
+                    try {
+                        return String(resolveAccountRefId(src, e.station_id)) === String(id);
+                    } catch (_) { return false; }
+                });
+                const rows = [];
+                relatedBankings.forEach(b => {
+                    const isIn = String(b.bank_account_id) === String(id);
+                    const amt = Number(b.amount) || 0;
+                    rows.push({
+                        date: b.date || b.created_at,
+                        type: isIn ? 'Deposit / Transfer In' : 'Transfer Out',
+                        dir: isIn ? 'in' : 'out',
+                        amount: amt,
+                        ref: b.depositor || b.description || b.note || '—',
+                        status: b.status || 'active'
+                    });
+                });
+                relatedExpenses.forEach(e => {
+                    rows.push({
+                        date: e.date || e.expense_date || e.created_at,
+                        type: 'Expense',
+                        dir: 'out',
+                        amount: Number(e.amount) || 0,
+                        ref: e.description || e.category || '—',
+                        status: 'posted'
+                    });
+                });
+                rows.sort((a, b) => tsMillis(b.date) - tsMillis(a.date));
+                let bodyHtml = `
+                    <div class="mb-2">
+                        <div class="fw-bold">${esc(name)}</div>
+                        <div class="small text-muted">${esc(acc && acc.bank_name ? acc.bank_name : '')} · ${esc(acc && acc.account_number ? acc.account_number : '—')}</div>
+                        <div class="mt-1">Current balance: <strong>${formatMoney(acc ? (Number(acc.balance) || 0) : 0)}</strong></div>
+                    </div>
+                    <div class="table-responsive" style="max-height:420px;overflow-y:auto;">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light sticky-top"><tr>
+                                <th>Date</th><th>Type</th><th>Reference</th><th class="text-end">Amount</th>
+                            </tr></thead>
+                            <tbody>`;
+                if (rows.length === 0) {
+                    bodyHtml += '<tr><td colspan="4" class="text-muted text-center py-4">No banking history for this account yet.</td></tr>';
+                } else {
+                    rows.slice(0, 200).forEach(r => {
+                        const sign = r.dir === 'in' ? '+' : '−';
+                        const cls = r.dir === 'in' ? 'text-success fw-semibold' : 'text-danger fw-semibold';
+                        bodyHtml += `<tr>
+                            <td class="fs-xs text-nowrap">${formatDate(r.date)}</td>
+                            <td><span class="badge ${r.dir === 'in' ? 'bg-success' : 'bg-secondary'}">${esc(r.type)}</span></td>
+                            <td class="small">${esc(r.ref)}</td>
+                            <td class="text-end ${cls}">${sign}${formatMoney(r.amount)}</td>
+                        </tr>`;
+                    });
+                }
+                bodyHtml += '</tbody></table></div>';
+                // reuse statement modal if present, else history modal, else dynamic
+                let modalEl = document.getElementById('accountHistoryModal');
+                if (!modalEl) {
+                    const wrap = document.createElement('div');
+                    wrap.innerHTML = `
+                    <div class="modal fade" id="accountHistoryModal" tabindex="-1" aria-hidden="true">
+                      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                          <div class="modal-header bg-info text-white">
+                            <h5 class="modal-title"><i class="bi bi-clock-history"></i> Account Banking History</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                          </div>
+                          <div class="modal-body" id="accountHistoryModalBody"></div>
+                          <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>`;
+                    document.body.appendChild(wrap.firstElementChild);
+                    modalEl = document.getElementById('accountHistoryModal');
+                }
+                document.getElementById('accountHistoryModalBody').innerHTML = bodyHtml;
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            };
+        });
         document.querySelectorAll('.acct-save-btn').forEach(btn => {
             btn.onclick = async function() {
                 const id = this.dataset.id;
@@ -7544,17 +7696,13 @@ async function renderFinancials() {
         const acctFilter = document.getElementById('acctStationFilter');
         if (acctFilter) {
             acctFilter.onchange = function() {
-                const sid = this.value;
-                const tbody = document.querySelector('#accounts table tbody');
-                if (!tbody) return;
-                // Re-render is simpler: filter is visual via row station text — full re-group on change
-                state._acctStationFilter = sid;
+                state._acctStationFilter = this.value || '';
                 renderFinancials().then(() => {
                     const tab = document.getElementById('accounts-tab');
                     if (tab) tab.click();
                 });
             };
-            if (state._acctStationFilter != null) {
+            if (state._acctStationFilter != null && state._acctStationFilter !== '') {
                 acctFilter.value = state._acctStationFilter;
             }
         }
