@@ -7148,7 +7148,7 @@ async function renderFinancials() {
                                                 <option value="">— Select Person —</option>${userOpts}
                                             </select></div>
                                         <div class="mb-2"><input id="expDesc" class="form-control form-control-sm" placeholder="Description *" required></div>
-                                        <div class="mb-2"><input type="number" id="expAmount" class="form-control form-control-sm" placeholder="Amount *" step="1" min="0.01" required></div>
+                                        <div class="mb-2"><input type="number" id="expAmount" class="form-control form-control-sm" placeholder="Amount *" step="0.01" min="0" required></div>
                                         <div class="mb-2"><label class="form-label small">Category</label>
                                             <select id="expCategory" class="form-select form-select-sm">${expenseCategories}</select></div>
                                         <div class="mb-2"><label class="form-label small">Date</label>
@@ -7195,7 +7195,7 @@ async function renderFinancials() {
                                                 ${accounts.map(a => `<option value="${a.id}">${esc(a.bank_name)} – ${esc(a.account_number)}</option>`).join('')}
                                             </select></div>
                                         <div class="mb-2"><input id="bfDepositor" class="form-control form-control-sm" placeholder="Transferred By *" required></div>
-                                        <div class="mb-2"><input type="number" id="bfAmount" class="form-control form-control-sm" placeholder="Amount *" step="1" min="0.01" required></div>
+                                        <div class="mb-2"><input type="number" id="bfAmount" class="form-control form-control-sm" placeholder="Amount *" step="0.01" min="0" required></div>
                                         <div class="mb-2"><input id="bfDesc" class="form-control form-control-sm" placeholder="Description"></div>
                                         <div class="mb-2"><label class="form-label small">Date</label>
                                             <input type="date" id="bfDate" class="form-control form-control-sm" value="${today}"></div>
@@ -7231,7 +7231,7 @@ async function renderFinancials() {
                                         <div class="mb-2"><label class="form-label small">Pay From *</label>
                                             <select id="paySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
                                         <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
-                                            <input type="number" id="payAmount" class="form-control form-control-sm" placeholder="0" step="1" min="0.01" required></div>
+                                            <input type="number" id="payAmount" class="form-control form-control-sm" placeholder="0" step="0.01" min="0" required></div>
                                         <div class="mb-2"><label class="form-label small">Invoice / Reference</label>
                                             <input id="payReference" class="form-control form-control-sm" placeholder="Invoice #"></div>
                                         <div class="mb-2"><label class="form-label small">Note</label>
@@ -7252,7 +7252,7 @@ async function renderFinancials() {
                                         <div class="mb-2"><label class="form-label small">Pay From *</label>
                                             <select id="prepaySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
                                         <div class="mb-2"><label class="form-label small">Prepayment Amount (UGX) *</label>
-                                            <input type="number" id="prepayAmount" class="form-control form-control-sm" placeholder="0" step="1" min="0.01" required></div>
+                                            <input type="number" id="prepayAmount" class="form-control form-control-sm" placeholder="0" step="0.01" min="0" required></div>
                                         <div class="mb-2"><label class="form-label small">Reference</label>
                                             <input id="prepayReference" class="form-control form-control-sm" placeholder="e.g. Advance for next delivery"></div>
                                         <div class="mb-2"><label class="form-label small">Note</label>
@@ -8030,7 +8030,7 @@ async function renderCustomers() {
                         <form id="paymentReceiveForm">
                             <div class="mb-3">
                                 <label class="form-label">Amount (UGX) *</label>
-                                <input type="number" id="payAmount" class="form-control" step="1" min="0.01" required>
+                                <input type="number" id="payAmount" class="form-control" step="0.01" min="0" required>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Payment Method</label>
