@@ -6858,11 +6858,11 @@ async function renderFinancials() {
         }
 
         function accountsByStationHtml() {
-            if (accounts.length === 0) {
+            if (accounts.length === 0 && !(state.stations && state.stations.length)) {
                 return `<div class="text-center py-5 px-3" style="background:linear-gradient(180deg,#f8fafc 0%,#fff 100%);border:1px dashed #cbd5e1;border-radius:14px;">
                     <i class="bi bi-bank2 d-block mb-2" style="font-size:2.2rem;color:#94a3b8;"></i>
                     <div class="fw-semibold text-muted">No bank accounts yet</div>
-                    <div class="small text-muted mt-1">Add an account on the left to get started.</div>
+                    <div class="small text-muted mt-1">Add a station under Company Profile first, then add accounts here.</div>
                 </div>`;
             }
             const filterSid = state._acctStationFilter || '';
@@ -6873,16 +6873,24 @@ async function renderFinancials() {
                 if (!byStation[sid]) byStation[sid] = [];
                 byStation[sid].push(a);
             });
+            // Ensure every station appears (so Add form shows) when filter is All or that station
+            (state.stations || []).forEach(s => {
+                const sid = String(s.id);
+                if (filterSid && sid !== String(filterSid)) return;
+                if (!byStation[sid]) byStation[sid] = [];
+            });
+            if (!filterSid && !byStation['unassigned'] && accounts.some(a => a.station_id == null || a.station_id === '')) {
+                byStation['unassigned'] = accounts.filter(a => a.station_id == null || a.station_id === '');
+            }
             const stationKeys = Object.keys(byStation).sort((a, b) => {
                 if (a === 'unassigned') return 1;
                 if (b === 'unassigned') return -1;
                 return stationName(a).localeCompare(stationName(b));
             });
             if (stationKeys.length === 0) {
-                return `<div class="text-center py-4 text-muted">No accounts for this station filter.</div>`;
+                return `<div class="text-center py-4 text-muted">No stations available.</div>`;
             }
 
-            // Stable per-station numbering: sort by created_at then id, assign 1..n
             const sortedForNumber = {};
             stationKeys.forEach(sid => {
                 sortedForNumber[sid] = byStation[sid].slice().sort((a, b) => {
@@ -6892,7 +6900,7 @@ async function renderFinancials() {
                     return String(a.id).localeCompare(String(b.id));
                 });
             });
-            const numberMap = {}; // accountId -> display number within station
+            const numberMap = {};
             stationKeys.forEach(sid => {
                 sortedForNumber[sid].forEach((a, i) => { numberMap[a.id] = i + 1; });
             });
@@ -6900,10 +6908,15 @@ async function renderFinancials() {
             let html = '';
             stationKeys.forEach(sid => {
                 const label = sid === 'unassigned' ? 'Unassigned / Company-wide' : stationName(sid);
-                // Display order: system first, then by number
                 const list = byStation[sid].slice().sort((a, b) => {
-                    if (a.is_system && !b.is_system) return -1;
-                    if (!a.is_system && b.is_system) return 1;
+                    // Cash till first, then other system, then by number
+                    const rank = (x) => {
+                        if (x.system_kind === 'cash_till') return 0;
+                        if (x.is_system) return 1;
+                        return 2;
+                    };
+                    const ra = rank(a), rb = rank(b);
+                    if (ra !== rb) return ra - rb;
                     return (numberMap[a.id] || 0) - (numberMap[b.id] || 0);
                 });
                 let stationTotal = 0;
@@ -6927,7 +6940,7 @@ async function renderFinancials() {
                             <strong style="color:${totalPos ? '#86efac' : '#fca5a5'};font-size:1rem;">${formatMoney(stationTotal)}</strong>
                         </div>
                     </div>
-                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;overflow:hidden;box-shadow:0 4px 14px rgba(11,26,51,.06);">
+                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-top:none;border-radius:0;overflow:hidden;box-shadow:0 4px 14px rgba(11,26,51,.06);">
                         <table class="table table-hover mb-0 align-middle bank-acct-table" style="font-size:0.9rem;">
                             <thead>
                                 <tr style="background:#f1f5f9;color:#334155;border-bottom:2px solid #e2e8f0;">
@@ -6939,30 +6952,43 @@ async function renderFinancials() {
                                 </tr>
                             </thead>
                             <tbody>`;
+                if (list.length === 0) {
+                    html += `<tr><td colspan="5" class="text-center text-muted py-4">No accounts for this station yet. Add one below.</td></tr>`;
+                }
                 list.forEach((a, idx) => {
                     const bal = Number(a.balance) || 0;
                     const n = numberMap[a.id] || (idx + 1);
                     const isNeg = bal < 0;
                     const isSys = !!a.is_system;
+                    const isCashTill = a.system_kind === 'cash_till' || (isSys && /cash\\s*till/i.test(String(a.account_name || '') + String(a.bank_name || '')));
+                    const isPetty = a.system_kind === 'petty_cash';
                     const canDelete = !isSys && bal <= 0;
                     const aid = esc(a.id);
                     const displayName = (a.account_name && String(a.account_name).trim())
                         ? String(a.account_name).trim()
                         : (a.bank_name || 'Unnamed account');
-                    // Single-line name; bank shown only as subtle suffix on same line if different
                     let nameLine = esc(displayName);
                     if (a.bank_name && String(a.bank_name).trim() && String(a.bank_name).trim() !== displayName) {
                         nameLine += ` <span class="text-muted fw-normal">· ${esc(String(a.bank_name).trim())}</span>`;
                     }
-                    if (isSys) {
+                    if (isCashTill) {
+                        nameLine += ` <span class="badge rounded-pill ms-1" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:0.65rem;font-weight:600;"><i class="bi bi-cash-stack"></i> Cash Till · Daily sales</span>`;
+                    } else if (isPetty) {
+                        nameLine += ` <span class="badge rounded-pill ms-1" style="background:#e0e7ff;color:#3730a3;font-size:0.65rem;font-weight:600;">Petty Cash</span>`;
+                    } else if (isSys) {
                         nameLine += ` <span class="badge rounded-pill ms-1" style="background:#e2e8f0;color:#475569;font-size:0.65rem;font-weight:600;">System</span>`;
                     }
-                    const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                    const rowBg = isCashTill
+                        ? (idx % 2 === 0 ? '#fffbeb' : '#fef3c7')
+                        : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
                     const balColor = isNeg ? '#dc2626' : '#059669';
-                    const numBg = isSys ? 'linear-gradient(135deg,#64748b,#475569)' : 'linear-gradient(135deg,#0b1a33,#1a3a6a)';
+                    const numBg = isCashTill
+                        ? 'linear-gradient(135deg,#f59e0b,#b45309)'
+                        : (isSys ? 'linear-gradient(135deg,#64748b,#475569)' : 'linear-gradient(135deg,#0b1a33,#1a3a6a)');
+                    const cashBorder = isCashTill ? 'border-left:3px solid #f59e0b;' : '';
 
                     html += `
-                            <tr class="acct-view-row" data-id="${aid}" style="background:${rowBg};border-bottom:1px solid #f1f5f9;">
+                            <tr class="acct-view-row" data-id="${aid}" style="background:${rowBg};border-bottom:1px solid #f1f5f9;${cashBorder}">
                                 <td class="text-center ps-2 py-2">
                                     <span class="d-inline-flex align-items-center justify-content-center rounded-circle text-white fw-bold"
                                           style="width:26px;height:26px;font-size:0.72rem;background:${numBg};">${n}</span>
@@ -6995,17 +7021,22 @@ async function renderFinancials() {
                                           style="width:26px;height:26px;font-size:0.72rem;background:${numBg};">${n}</span>
                                 </td>
                                 <td class="py-2">
+                                    <label class="form-label small mb-0 text-muted">Account name</label>
                                     <input type="text" class="form-control form-control-sm ae-name mb-1" value="${esc(a.account_name || '')}" placeholder="Account name">
-                                    <input type="text" class="form-control form-control-sm ae-bank" value="${esc(a.bank_name || '')}" placeholder="Bank name" ${isSys ? 'readonly' : ''}>
-                                    ${isSys
-                                        ? `<input type="hidden" class="ae-station" value="${esc(a.station_id || '')}">`
-                                        : `<div class="mt-1">${stationSelectHtml(a.station_id, 'ae-station')}</div>`}
+                                    <label class="form-label small mb-0 text-muted">Bank name</label>
+                                    <input type="text" class="form-control form-control-sm ae-bank" value="${esc(a.bank_name || '')}" placeholder="Bank name">
+                                    <label class="form-label small mb-0 text-muted mt-1">Station</label>
+                                    ${stationSelectHtml(a.station_id, 'ae-station')}
+                                    ${isCashTill ? '<div class="small text-warning mt-1"><i class="bi bi-info-circle"></i> Cash Till receives automatic cash/mobile sales for its station.</div>' : ''}
                                 </td>
                                 <td class="py-2 text-nowrap" style="width:1%;max-width:8.5rem;">
-                                    <input type="text" class="form-control form-control-sm ae-num mb-1" value="${esc(a.account_number || '')}" placeholder="Account no." maxlength="20" ${isSys ? 'readonly' : ''} style="max-width:8.2rem;">
+                                    <label class="form-label small mb-0 text-muted">Account number</label>
+                                    <input type="text" class="form-control form-control-sm ae-num mb-1" value="${esc(a.account_number || '')}" placeholder="Account no." maxlength="20" style="max-width:8.2rem;">
+                                    <label class="form-label small mb-0 text-muted">Branch</label>
                                     <input type="text" class="form-control form-control-sm ae-branch" value="${esc(a.branch || '')}" placeholder="Branch" style="max-width:8.2rem;">
                                 </td>
                                 <td class="text-end py-2" style="width:1%;min-width:9.5rem;">
+                                    <label class="form-label small mb-0 text-muted">Balance</label>
                                     <input type="number" class="form-control form-control-sm ae-bal text-end" step="0.01" value="${bal}" style="min-width:8.5rem;">
                                 </td>
                                 <td class="text-end pe-3 py-2 text-nowrap align-middle" style="width:1%;min-width:9rem;">
@@ -7026,8 +7057,43 @@ async function renderFinancials() {
                                 </tr>
                             </tfoot>
                         </table>
-                    </div>
-                </div>`;
+                    </div>`;
+                // Add account under this station (not for unassigned)
+                if (sid !== 'unassigned') {
+                    html += `
+                    <div class="px-3 py-3" style="background:#f8fafc;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;">
+                        <div class="fw-semibold small mb-2 text-muted text-uppercase" style="letter-spacing:0.04em;font-size:0.7rem;">
+                            <i class="bi bi-plus-circle text-primary"></i> Add bank account for ${esc(label)}
+                        </div>
+                        <form class="station-add-acct-form row g-2 align-items-end" data-station="${esc(sid)}">
+                            <div class="col-md-3 col-sm-6">
+                                <label class="form-label small mb-0">Bank name *</label>
+                                <input type="text" class="form-control form-control-sm sa-bank" placeholder="e.g. Stanbic" required>
+                            </div>
+                            <div class="col-md-3 col-sm-6">
+                                <label class="form-label small mb-0">Account name *</label>
+                                <input type="text" class="form-control form-control-sm sa-name" placeholder="e.g. Operations" required>
+                            </div>
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label small mb-0">Account number *</label>
+                                <input type="text" class="form-control form-control-sm sa-num" placeholder="11 digits" maxlength="20" required>
+                            </div>
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label small mb-0">Opening balance</label>
+                                <input type="number" class="form-control form-control-sm sa-bal" step="0.01" min="0" value="0" placeholder="0">
+                            </div>
+                            <div class="col-md-2 col-sm-12">
+                                <button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-plus-lg"></i> Add</button>
+                            </div>
+                            <div class="col-12">
+                                <input type="text" class="form-control form-control-sm sa-branch" placeholder="Branch (optional)">
+                            </div>
+                        </form>
+                    </div>`;
+                } else {
+                    html += `<div style="border:1px solid #e2e8f0;border-top:none;border-radius:0 0 12px 12px;height:8px;background:#f8fafc;"></div>`;
+                }
+                html += `</div>`;
             });
             return html;
         }
@@ -7200,51 +7266,21 @@ async function renderFinancials() {
                 <div class="tab-content pt-3" id="financeTabsContent">
                     <!-- Accounts -->
                     <div class="tab-pane fade show active" id="accounts" role="tabpanel">
-                        <div class="row g-3">
-                            <div class="col-lg-5">
-                                <div class="card-box border border-primary">
-                                    <h6 class="mb-3"><i class="bi bi-bank2"></i> Add Bank Account</h6>
-                                    <form id="baForm">
-                                        <div class="mb-3 p-2 rounded" style="background:var(--bs-primary-bg-subtle,#e7f1ff);border:1px solid #b6d4fe;">
-                                            <label class="form-label small fw-bold mb-1"><i class="bi bi-geo-alt-fill text-primary"></i> Station for this account *</label>
-                                            <select id="baStation" class="form-select form-select-sm" required>
-                                                <option value="">— Select which station owns this account —</option>
-                                                ${(state.stations && state.stations.length
-                                                    ? state.stations
-                                                    : []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-                                            </select>
-                                            ${!(state.stations && state.stations.length)
-                                                ? '<div class="text-danger small mt-1">No stations found. Add a station under Company Profile first.</div>'
-                                                : '<div class="text-muted small mt-1">Required — each bank account belongs to one station.</div>'}
-                                        </div>
-                                        <div class="mb-2"><label class="form-label small">Bank name *</label>
-                                            <input id="baName" class="form-control form-control-sm" placeholder="e.g. Stanbic, Centenary" required></div>
-                                        <div class="mb-2"><label class="form-label small">Account name *</label>
-                                            <input id="baAccName" class="form-control form-control-sm" placeholder="e.g. Station Operations" required></div>
-                                        <div class="mb-2"><label class="form-label small">Account number *</label>
-                                            <input id="baAccNum" class="form-control form-control-sm" placeholder="Account number" required></div>
-                                        <div class="mb-2"><label class="form-label small">Branch</label>
-                                            <input id="baBranch" class="form-control form-control-sm" placeholder="Branch (optional)"></div>
-                                        <div class="mb-2"><label class="form-label small">Opening balance</label>
-                                            <input type="number" id="baOpening" class="form-control form-control-sm" placeholder="0" step="1" min="0" value="0"></div>
-                                        <button class="btn btn-primary w-100">Add Account</button>
-                                    </form>
-                                    <p class="small text-muted mt-2 mb-0">Cash Till is filled automatically from <strong>cash / mobile sales</strong> at that station. Use <strong>Edit amount</strong> on Cash Till to correct the balance anytime.</p>
+                        <div class="card-box">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                                <div>
+                                    <h6 class="mb-1"><i class="bi bi-bank2"></i> Bank Accounts by Station</h6>
+                                    <p class="small text-muted mb-0">
+                                        All accounts are editable. <span class="badge rounded-pill" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:0.65rem;"><i class="bi bi-cash-stack"></i> Cash Till</span>
+                                        receives automatic cash &amp; mobile sales for that station.
+                                    </p>
                                 </div>
+                                <select id="acctStationFilter" class="form-select form-select-sm" style="max-width:220px;">
+                                    <option value="">All stations</option>
+                                    ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                </select>
                             </div>
-                            <div class="col-lg-7">
-                                <div class="card-box">
-                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                                        <h6 class="mb-0"><i class="bi bi-bank2"></i> Bank Accounts by Station</h6>
-                                        <select id="acctStationFilter" class="form-select form-select-sm" style="max-width:220px;">
-                                            <option value="">All stations</option>
-                                            ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-                                        </select>
-                                    </div>
-                                    <p class="small text-muted mb-3">Each station has its own table. Use <strong>Edit</strong> to update name, number and balance. <strong>History</strong> shows banking activity for that account.</p>
-                                    <div id="accountsTableBody">${accountsByStationHtml()}</div>
-                                </div>
-                            </div>
+                            <div id="accountsTableBody">${accountsByStationHtml()}</div>
                         </div>
                     </div>
 
@@ -7498,32 +7534,37 @@ async function renderFinancials() {
         showTab('accounts');
 
         // ---- Form handlers ----
-        document.getElementById('baForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const bankName = document.getElementById('baName').value.trim();
-            const accName = document.getElementById('baAccName').value.trim();
-            const accNum = document.getElementById('baAccNum').value.trim();
-            const branch = document.getElementById('baBranch').value.trim();
-            if (!bankName || !accName || !accNum) { toast('Fill all required fields', 'warning'); return; }
-            try {
-                const stationId = (document.getElementById('baStation') && document.getElementById('baStation').value) || state.currentStationId || '';
-                const opening = parseFloat((document.getElementById('baOpening') && document.getElementById('baOpening').value) || '0') || 0;
-                if (!stationId) { toast('Select a station for this account', 'warning'); return; }
-                await addDoc('bank_accounts', {
-                    bank_name: bankName,
-                    account_name: accName,
-                    account_number: accNum,
-                    branch: branch || '',
-                    currency: currencySymbol(),
-                    balance: opening,
-                    station_id: String(stationId),
-                    companyId: state.user.companyId,
-                    is_system: false
-                });
-                toast('Bank account added for ' + stationName(stationId));
-                renderFinancials();
-            } catch (err) { toast('Error: ' + err.message, 'danger'); }
-        };
+        document.querySelectorAll('.station-add-acct-form').forEach(form => {
+            form.onsubmit = async function(e) {
+                e.preventDefault();
+                const stationId = this.dataset.station || '';
+                const bankName = (this.querySelector('.sa-bank') && this.querySelector('.sa-bank').value || '').trim();
+                const accName = (this.querySelector('.sa-name') && this.querySelector('.sa-name').value || '').trim();
+                const accNum = (this.querySelector('.sa-num') && this.querySelector('.sa-num').value || '').trim();
+                const branch = (this.querySelector('.sa-branch') && this.querySelector('.sa-branch').value || '').trim();
+                const opening = parseFloat((this.querySelector('.sa-bal') && this.querySelector('.sa-bal').value) || '0') || 0;
+                if (!stationId) { toast('Station missing', 'warning'); return; }
+                if (!bankName || !accName || !accNum) { toast('Fill bank name, account name and number', 'warning'); return; }
+                try {
+                    await addDoc('bank_accounts', {
+                        bank_name: bankName,
+                        account_name: accName,
+                        account_number: accNum,
+                        branch: branch || '',
+                        currency: currencySymbol(),
+                        balance: opening,
+                        station_id: String(stationId),
+                        companyId: state.user.companyId,
+                        is_system: false
+                    });
+                    toast('Bank account added for ' + stationName(stationId), 'success');
+                    renderFinancials().then(() => {
+                        const tab = document.getElementById('accounts-tab');
+                        if (tab) tab.click();
+                    });
+                } catch (err) { toast('Error: ' + err.message, 'danger'); }
+            };
+        });
 
         document.querySelectorAll('.delete-account-btn').forEach(btn => {
             btn.onclick = async function() {
@@ -7717,15 +7758,13 @@ async function renderFinancials() {
                 const balance = parseFloat(row.querySelector('.ae-bal') && row.querySelector('.ae-bal').value);
                 const stationEl = row.querySelector('.ae-station');
                 const station_id = stationEl ? String(stationEl.value || '') : (acc && acc.station_id ? String(acc.station_id) : '');
-                if (!bank_name) { toast('Bank name is required', 'warning'); return; }
+                if (!bank_name && !account_name) { toast('Account name or bank name is required', 'warning'); return; }
                 if (isNaN(balance)) { toast('Enter a valid balance', 'warning'); return; }
-                if (!acc || !acc.is_system) {
-                    if (!station_id) { toast('Select a station', 'warning'); return; }
-                }
+                if (!station_id) { toast('Select a station', 'warning'); return; }
                 try {
                     const payload = {
-                        bank_name,
-                        account_name,
+                        bank_name: bank_name || account_name,
+                        account_name: account_name || bank_name,
                         account_number,
                         branch,
                         balance,
@@ -7733,14 +7772,10 @@ async function renderFinancials() {
                         updated_at: firebase.firestore.FieldValue.serverTimestamp(),
                         updated_by: state.user.id
                     };
+                    // System accounts stay system (identity preserved) but all display fields + station are editable
                     if (acc && acc.is_system) {
-                        // Keep system identity; still allow name/branch/balance edits
-                        payload.bank_name = bank_name;
-                        payload.account_name = account_name || acc.account_name;
-                        payload.branch = branch;
-                        payload.balance = balance;
-                        // station locked for system accounts
-                        delete payload.station_id;
+                        payload.is_system = true;
+                        if (acc.system_kind) payload.system_kind = acc.system_kind;
                     }
                     await updateDoc('bank_accounts', id, payload);
                     await logAudit('account_updated', { accountId: id, balance, station_id: station_id || (acc && acc.station_id) });
