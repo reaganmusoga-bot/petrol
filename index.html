@@ -6869,18 +6869,13 @@ async function renderFinancials() {
                 if (!byStation[sid]) byStation[sid] = [];
                 byStation[sid].push(a);
             });
-            (state.stations || []).forEach(s => {
-                const sid = String(s.id);
-                if (filterSid && sid !== String(filterSid)) return;
-                if (!byStation[sid]) byStation[sid] = [];
-            });
             const stationKeys = Object.keys(byStation).sort((a, b) => {
                 if (a === 'unassigned') return 1;
                 if (b === 'unassigned') return -1;
                 return stationName(a).localeCompare(stationName(b));
             });
             if (stationKeys.length === 0) {
-                return `<div class="text-center py-3 text-muted">No stations available.</div>`;
+                return `<div class="text-center py-3 text-muted">No accounts for this filter.</div>`;
             }
 
             const numberMap = {};
@@ -6907,30 +6902,27 @@ async function renderFinancials() {
 
                 html += `
                 <div class="bank-station-block mb-3">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-3 py-2"
-                         style="background:linear-gradient(135deg,#0b1a33,#1a3a6a);border-radius:10px 10px 0 0;color:#fff;">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-2 py-1"
+                         style="background:linear-gradient(135deg,#0b1a33,#1a3a6a);border-radius:8px 8px 0 0;color:#fff;">
                         <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-geo-alt-fill" style="color:#ffc107;"></i>
-                            <span class="fw-bold small">${esc(label)}</span>
-                            <span class="badge" style="background:rgba(255,255,255,.15);font-size:0.7rem;">${list.length}</span>
+                            <i class="bi bi-geo-alt-fill" style="color:#ffc107;font-size:0.85rem;"></i>
+                            <span class="fw-bold" style="font-size:0.82rem;">${esc(label)}</span>
+                            <span class="badge" style="background:rgba(255,255,255,.15);font-size:0.65rem;">${list.length}</span>
                         </div>
-                        <span class="small">Total <strong style="color:${totalPos ? '#86efac' : '#fca5a5'};">${formatMoney(stationTotal)}</strong></span>
+                        <span style="font-size:0.78rem;">Total <strong style="color:${totalPos ? '#86efac' : '#fca5a5'};">${formatMoney(stationTotal)}</strong></span>
                     </div>
-                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-top:0;max-height:280px;overflow:auto;">
-                        <table class="table table-sm table-hover mb-0 align-middle" style="font-size:0.85rem;">
+                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-top:0;border-radius:0 0 8px 8px;max-height:220px;overflow:auto;">
+                        <table class="table table-sm table-hover mb-0 align-middle" style="font-size:0.8rem;table-layout:fixed;width:100%;">
                             <thead style="position:sticky;top:0;z-index:1;">
                                 <tr style="background:#f1f5f9;color:#64748b;">
-                                    <th class="text-center py-1 ps-2" style="width:36px;font-size:0.68rem;text-transform:uppercase;">#</th>
-                                    <th class="py-1" style="font-size:0.68rem;text-transform:uppercase;">Account Name</th>
-                                    <th class="py-1 text-nowrap" style="width:1%;font-size:0.68rem;text-transform:uppercase;">Account No.</th>
-                                    <th class="py-1 text-end text-nowrap" style="width:1%;min-width:8rem;font-size:0.68rem;text-transform:uppercase;">Balance</th>
-                                    <th class="py-1 pe-2 text-end text-nowrap" style="width:1%;min-width:7.5rem;font-size:0.68rem;text-transform:uppercase;">Actions</th>
+                                    <th class="text-center py-1" style="width:32px;font-size:0.65rem;text-transform:uppercase;">#</th>
+                                    <th class="py-1" style="width:28%;font-size:0.65rem;text-transform:uppercase;">Account Name</th>
+                                    <th class="py-1" style="width:18%;font-size:0.65rem;text-transform:uppercase;">Account No.</th>
+                                    <th class="py-1 text-end" style="width:26%;font-size:0.65rem;text-transform:uppercase;">Balance</th>
+                                    <th class="py-1 text-end pe-2" style="width:28%;font-size:0.65rem;text-transform:uppercase;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>`;
-                if (list.length === 0) {
-                    html += `<tr><td colspan="5" class="text-center text-muted py-3 small">No accounts yet — add one below.</td></tr>`;
-                }
                 list.forEach((a, idx) => {
                     const bal = Number(a.balance) || 0;
                     const n = numberMap[a.id] || (idx + 1);
@@ -6938,20 +6930,16 @@ async function renderFinancials() {
                     const isSys = !!a.is_system;
                     const isCashTill = a.system_kind === 'cash_till' || (isSys && /cash\\s*till/i.test(String(a.account_name || '') + String(a.bank_name || '')));
                     const isPetty = a.system_kind === 'petty_cash';
+                    const canDelete = bal === 0;
                     const aid = esc(a.id);
                     const displayName = (a.account_name && String(a.account_name).trim())
                         ? String(a.account_name).trim()
-                        : (a.bank_name || 'Unnamed account');
+                        : (a.bank_name || 'Unnamed');
                     let nameLine = esc(displayName);
-                    if (a.bank_name && String(a.bank_name).trim() && String(a.bank_name).trim() !== displayName) {
-                        nameLine += ` <span class="text-muted fw-normal">· ${esc(String(a.bank_name).trim())}</span>`;
-                    }
                     if (isCashTill) {
-                        nameLine += ` <span class="badge rounded-pill ms-1" style="background:#f59e0b;color:#fff;font-size:0.62rem;">Cash Till</span>`;
+                        nameLine += ` <span class="badge rounded-pill" style="background:#f59e0b;color:#fff;font-size:0.58rem;">Till</span>`;
                     } else if (isPetty) {
-                        nameLine += ` <span class="badge rounded-pill ms-1" style="background:#e0e7ff;color:#3730a3;font-size:0.62rem;">Petty</span>`;
-                    } else if (isSys) {
-                        nameLine += ` <span class="badge rounded-pill ms-1" style="background:#e2e8f0;color:#475569;font-size:0.62rem;">System</span>`;
+                        nameLine += ` <span class="badge rounded-pill" style="background:#e0e7ff;color:#3730a3;font-size:0.58rem;">Petty</span>`;
                     }
                     const rowBg = isCashTill ? (idx % 2 === 0 ? '#fffbeb' : '#fef3c7') : (idx % 2 === 0 ? '#fff' : '#f8fafc');
                     const balColor = isNeg ? '#dc2626' : '#059669';
@@ -6960,23 +6948,25 @@ async function renderFinancials() {
 
                     html += `
                             <tr class="acct-view-row" data-id="${aid}" style="background:${rowBg};${cashBorder}">
-                                <td class="text-center ps-2 py-1">
+                                <td class="text-center py-1">
                                     <span class="d-inline-flex align-items-center justify-content-center rounded-circle text-white fw-bold"
-                                          style="width:22px;height:22px;font-size:0.68rem;background:${numBg};">${n}</span>
+                                          style="width:20px;height:20px;font-size:0.62rem;background:${numBg};">${n}</span>
                                 </td>
-                                <td class="py-1" style="max-width:0;"><div class="text-truncate fw-semibold" title="${esc(displayName)}">${nameLine}</div></td>
-                                <td class="py-1 text-nowrap"><span class="font-monospace small px-1 rounded" style="background:#f1f5f9;font-size:0.78rem;">${esc(a.account_number || '—')}</span></td>
-                                <td class="text-end py-1 fw-bold text-nowrap" style="color:${balColor};font-variant-numeric:tabular-nums;">${formatMoney(bal)}</td>
+                                <td class="py-1" style="overflow:hidden;"><div class="text-truncate fw-semibold" style="font-size:0.8rem;" title="${esc(displayName)}">${nameLine}</div></td>
+                                <td class="py-1 text-nowrap"><span class="font-monospace" style="font-size:0.72rem;background:#f1f5f9;padding:1px 5px;border-radius:4px;">${esc(a.account_number || '—')}</span></td>
+                                <td class="text-end py-1 fw-bold text-nowrap" style="color:${balColor};font-variant-numeric:tabular-nums;font-size:0.8rem;">${formatMoney(bal)}</td>
                                 <td class="text-end pe-2 py-1 text-nowrap">
                                     <div class="d-inline-flex gap-1">
                                         <button type="button" class="btn btn-sm btn-outline-secondary acct-history-btn px-1 py-0" data-id="${aid}" data-name="${esc(displayName)}" title="History"><i class="bi bi-clock-history"></i></button>
                                         <button type="button" class="btn btn-sm btn-outline-primary acct-edit-btn px-1 py-0" data-id="${aid}" title="Edit"><i class="bi bi-pencil-square"></i></button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger delete-account-btn px-1 py-0" data-id="${aid}" title="Delete"><i class="bi bi-trash"></i></button>
+                                        ${canDelete
+                                            ? `<button type="button" class="btn btn-sm btn-outline-danger delete-account-btn px-1 py-0" data-id="${aid}" title="Delete"><i class="bi bi-trash"></i></button>`
+                                            : `<button type="button" class="btn btn-sm btn-outline-secondary px-1 py-0" disabled title="Clear balance before delete"><i class="bi bi-trash"></i></button>`}
                                     </div>
                                 </td>
                             </tr>
                             <tr class="acct-edit-row" data-id="${aid}" style="display:none;background:#fffbeb;">
-                                <td class="text-center ps-2 align-middle"><span class="rounded-circle text-white fw-bold d-inline-flex align-items-center justify-content-center" style="width:22px;height:22px;font-size:0.68rem;background:${numBg};">${n}</span></td>
+                                <td class="text-center py-1 align-middle"><span class="rounded-circle text-white fw-bold d-inline-flex align-items-center justify-content-center" style="width:20px;height:20px;font-size:0.62rem;background:${numBg};">${n}</span></td>
                                 <td class="py-1">
                                     <input type="text" class="form-control form-control-sm ae-name mb-1" value="${esc(a.account_name || '')}" placeholder="Account name">
                                     <input type="text" class="form-control form-control-sm ae-bank mb-1" value="${esc(a.bank_name || '')}" placeholder="Bank name">
@@ -7001,23 +6991,8 @@ async function renderFinancials() {
                                 <td></td>
                             </tr></tfoot>
                         </table>
-                    </div>`;
-                if (sid !== 'unassigned') {
-                    html += `
-                    <div class="px-2 py-2" style="background:#f8fafc;border:1px solid #e2e8f0;border-top:0;border-radius:0 0 10px 10px;">
-                        <form class="station-add-acct-form row g-1 align-items-end" data-station="${esc(sid)}">
-                            <div class="col"><input type="text" class="form-control form-control-sm sa-bank" placeholder="Bank *" required></div>
-                            <div class="col"><input type="text" class="form-control form-control-sm sa-name" placeholder="Account name *" required></div>
-                            <div class="col-auto" style="width:7.5rem;"><input type="text" class="form-control form-control-sm sa-num" placeholder="Number *" maxlength="20" required></div>
-                            <div class="col-auto" style="width:7rem;"><input type="number" class="form-control form-control-sm sa-bal" step="0.01" min="0" value="0" placeholder="Opening"></div>
-                            <div class="col-auto"><button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i></button></div>
-                            <input type="hidden" class="sa-branch" value="">
-                        </form>
-                    </div>`;
-                } else {
-                    html += `<div style="border:1px solid #e2e8f0;border-top:0;border-radius:0 0 10px 10px;height:6px;background:#f8fafc;"></div>`;
-                }
-                html += `</div>`;
+                    </div>
+                </div>`;
             });
             return html;
         }
@@ -7190,18 +7165,45 @@ async function renderFinancials() {
                 <div class="tab-content pt-3" id="financeTabsContent">
                     <!-- Accounts -->
                     <div class="tab-pane fade show active" id="accounts" role="tabpanel">
-                        <div class="card-box">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                                <div>
-                                    <h6 class="mb-1"><i class="bi bi-bank2"></i> Bank Accounts by Station</h6>
-                                    <p class="small text-muted mb-0">Editable accounts · <span class="badge rounded-pill" style="background:#f59e0b;color:#fff;font-size:0.62rem;">Cash Till</span> = daily sales</p>
+                        <div class="row g-3">
+                            <div class="col-lg-4">
+                                <div class="card-box border border-primary h-100">
+                                    <h6 class="mb-3"><i class="bi bi-bank2"></i> Add Bank Account</h6>
+                                    <form id="baForm">
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-semibold"><i class="bi bi-geo-alt-fill text-primary"></i> Station *</label>
+                                            <select id="baStation" class="form-select form-select-sm" required>
+                                                <option value="">— Select station —</option>
+                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                            </select>
+                                        </div>
+                                        <div class="mb-2"><label class="form-label small">Bank name *</label>
+                                            <input id="baName" class="form-control form-control-sm" placeholder="e.g. Stanbic" required></div>
+                                        <div class="mb-2"><label class="form-label small">Account name *</label>
+                                            <input id="baAccName" class="form-control form-control-sm" placeholder="e.g. Operations" required></div>
+                                        <div class="mb-2"><label class="form-label small">Account number *</label>
+                                            <input id="baAccNum" class="form-control form-control-sm" placeholder="Account number" maxlength="20" required></div>
+                                        <div class="mb-2"><label class="form-label small">Branch</label>
+                                            <input id="baBranch" class="form-control form-control-sm" placeholder="Optional"></div>
+                                        <div class="mb-3"><label class="form-label small">Opening balance</label>
+                                            <input type="number" id="baOpening" class="form-control form-control-sm" step="0.01" min="0" value="0"></div>
+                                        <button type="submit" class="btn btn-primary w-100 btn-sm"><i class="bi bi-plus-lg"></i> Add Account</button>
+                                    </form>
+                                    <p class="small text-muted mt-2 mb-0"><span class="badge rounded-pill" style="background:#f59e0b;color:#fff;font-size:0.62rem;">Cash Till</span> is auto-created per station and receives cash/mobile sales.</p>
                                 </div>
-                                <select id="acctStationFilter" class="form-select form-select-sm" style="max-width:220px;">
-                                    <option value="">All stations</option>
-                                    ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-                                </select>
                             </div>
-                            <div id="accountsTableBody">${accountsByStationHtml()}</div>
+                            <div class="col-lg-8">
+                                <div class="card-box">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                                        <h6 class="mb-0"><i class="bi bi-list-ul"></i> Accounts by Station</h6>
+                                        <select id="acctStationFilter" class="form-select form-select-sm" style="max-width:180px;">
+                                            <option value="">All stations</option>
+                                            ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                        </select>
+                                    </div>
+                                    <div id="accountsTableBody">${accountsByStationHtml()}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -7455,54 +7457,49 @@ async function renderFinancials() {
         showTab('accounts');
 
         // ---- Form handlers ----
-        document.querySelectorAll('.station-add-acct-form').forEach(form => {
-            form.onsubmit = async function(e) {
-                e.preventDefault();
-                const stationId = this.dataset.station || '';
-                const bankName = (this.querySelector('.sa-bank') && this.querySelector('.sa-bank').value || '').trim();
-                const accName = (this.querySelector('.sa-name') && this.querySelector('.sa-name').value || '').trim();
-                const accNum = (this.querySelector('.sa-num') && this.querySelector('.sa-num').value || '').trim();
-                const branch = (this.querySelector('.sa-branch') && this.querySelector('.sa-branch').value || '').trim();
-                const opening = parseFloat((this.querySelector('.sa-bal') && this.querySelector('.sa-bal').value) || '0') || 0;
-                if (!stationId) { toast('Station missing', 'warning'); return; }
-                if (!bankName || !accName || !accNum) { toast('Fill bank name, account name and number', 'warning'); return; }
-                try {
-                    await addDoc('bank_accounts', {
-                        bank_name: bankName,
-                        account_name: accName,
-                        account_number: accNum,
-                        branch: branch || '',
-                        currency: currencySymbol(),
-                        balance: opening,
-                        station_id: String(stationId),
-                        companyId: state.user.companyId,
-                        is_system: false
-                    });
-                    toast('Bank account added for ' + stationName(stationId), 'success');
-                    renderFinancials().then(() => {
-                        const tab = document.getElementById('accounts-tab');
-                        if (tab) tab.click();
-                    });
-                } catch (err) { toast('Error: ' + err.message, 'danger'); }
-            };
-        });
+        document.getElementById('baForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const bankName = (document.getElementById('baName').value || '').trim();
+            const accName = (document.getElementById('baAccName').value || '').trim();
+            const accNum = (document.getElementById('baAccNum').value || '').trim();
+            const branch = (document.getElementById('baBranch').value || '').trim();
+            const stationId = (document.getElementById('baStation') && document.getElementById('baStation').value) || '';
+            const opening = parseFloat((document.getElementById('baOpening') && document.getElementById('baOpening').value) || '0') || 0;
+            if (!stationId) { toast('Select a station', 'warning'); return; }
+            if (!bankName || !accName || !accNum) { toast('Fill all required fields', 'warning'); return; }
+            try {
+                await addDoc('bank_accounts', {
+                    bank_name: bankName,
+                    account_name: accName,
+                    account_number: accNum,
+                    branch: branch || '',
+                    currency: currencySymbol(),
+                    balance: opening,
+                    station_id: String(stationId),
+                    companyId: state.user.companyId,
+                    is_system: false
+                });
+                toast('Bank account added for ' + stationName(stationId), 'success');
+                renderFinancials().then(() => {
+                    const tab = document.getElementById('accounts-tab');
+                    if (tab) tab.click();
+                });
+            } catch (err) { toast('Error: ' + err.message, 'danger'); }
+        };
 
-        document.querySelectorAll('.delete-account-btn').forEach(btn => {
+                document.querySelectorAll('.delete-account-btn').forEach(btn => {
             btn.onclick = async function() {
                 const id = this.dataset.id;
                 const acc = accounts.find(a => a.id === id);
                 const bal = acc ? (Number(acc.balance) || 0) : 0;
-                const isSys = acc && acc.is_system;
+                if (bal !== 0) {
+                    toast('Cannot delete an account that still has a balance. Set balance to 0 first.', 'warning');
+                    return;
+                }
                 const isCashTill = acc && acc.system_kind === 'cash_till';
                 let msg = 'Delete this bank account permanently?';
-                if (isCashTill) {
-                    msg = 'This is the Cash Till (daily sales account).\n\nDeleting it may break automatic sales deposits until the system recreates it.\n\nDelete anyway?';
-                } else if (isSys) {
-                    msg = 'This is a system account.\n\nDelete it permanently?';
-                }
-                if (bal !== 0) {
-                    msg += '\n\nCurrent balance: ' + formatMoney(bal) + ' — it will be cleared from the list only.';
-                }
+                if (isCashTill) msg = 'This is the Cash Till (daily sales). Deleting may affect automatic deposits until it is recreated.\n\nDelete anyway?';
+                else if (acc && acc.is_system) msg = 'This is a system account. Delete permanently?';
                 if (!confirm(msg)) return;
                 try {
                     await deleteDoc('bank_accounts', id);
