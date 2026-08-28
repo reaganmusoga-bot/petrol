@@ -5465,7 +5465,7 @@ async function renderInventory() {
 async function renderStock() {
     const stock = (await getAll('stock'))
         .filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId))
-        .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+        .sort((a, b) => tsMillis(b.received_date || b.created_at) - tsMillis(a.received_date || a.created_at));
 
     const inv = await getAll('inventory');
     const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
@@ -8857,6 +8857,8 @@ async function renderSuppliers() {
 
             try {
                 const transList = await loadLedgerRows('supplier_transactions', 'supplier_id', id, 100);
+                // Ensure newest first
+                transList.sort((a, b) => tsMillis(b.timestamp || b.created_at) - tsMillis(a.timestamp || a.created_at));
 
                 let rows = '';
                 if (!transList.length) {
@@ -9573,6 +9575,8 @@ async function renderReports() {
             ]);
         });
         if (rows.length === 0) rows.push(['No transactions found', '', '', '', '']);
+        // Newest first for history display (balances already computed chronologically)
+        if (rows.length && rows[0][0] !== 'No transactions found') rows.reverse();
         let body = `<div class="mb-3"><h5>Statement for ${supplier.name}</h5>
             <p>Opening Balance: ${formatMoney(supplier.opening_balance || 0)}</p>
             <p>Current Balance: ${formatMoney(supplier.current_balance || 0)}</p></div>`;
