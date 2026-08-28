@@ -5465,7 +5465,7 @@ async function renderInventory() {
 async function renderStock() {
     const stock = (await getAll('stock'))
         .filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId))
-        .sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+        .sort((a, b) => tsMillis(b.received_date || b.created_at) - tsMillis(a.received_date || a.created_at));
 
     const inv = await getAll('inventory');
     const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
@@ -5600,7 +5600,7 @@ async function renderStock() {
                 <td>${statusBadge}</td>
                 <td class="text-end text-nowrap">
                     <button class="btn btn-sm btn-outline-primary view-offload-voucher-btn" data-id="${r.id}" title="View voucher"><i class="bi bi-receipt"></i></button>
-                    ${isRev ? '' : `<button class="btn btn-sm btn-outline-warning reverse-stock-btn ms-1" data-id="${r.id}" data-station="${r.station_id}" data-supplier="${r.supplier_id || ''}" data-total="${totalCost}" data-items='${esc(JSON.stringify(r.items || []))}' title="Reverse (keep history)"><i class="bi bi-arrow-counterclockwise"></i></button>`}
+                    ${isRev ? '' : `<button class="btn btn-sm btn-outline-warning reverse-stock-btn ms-1" data-id="${r.id}" data-station="${esc(String(r.station_id||''))}" data-supplier="${esc(String(r.supplier_id||''))}" data-total="${totalCost}" data-items='${esc(JSON.stringify(r.items || []))}' title="Reverse (keep history)"><i class="bi bi-arrow-counterclockwise"></i></button>`}
                 </td>
             </tr>`;
         });
@@ -5861,7 +5861,7 @@ async function renderStock() {
     document.querySelectorAll('.reverse-stock-btn').forEach(btn => {
         btn.onclick = async function() {
             const id = this.dataset.id;
-            const stationId = String(this.dataset.station);
+            const stationId = String(this.dataset.station || '');
             const supplierId = this.dataset.supplier || '';
             const totalCost = parseFloat(this.dataset.total) || 0;
             let items = [];
@@ -5879,7 +5879,6 @@ async function renderStock() {
                     await adjustInventory(stationId, item.product_type, -(Number(item.quantity) || 0), null, 'Reversal of offload ' + id, 'offload_reversal');
                 }
                 if (supplierId && totalCost > 0) {
-                    // Undo the offload debit on supplier (offload had increased amount owed)
                     await updateSupplierBalance(supplierId, -totalCost, 'offload_reversal', id);
                 }
                 await updateDoc('stock', id, {
@@ -6897,7 +6896,6 @@ async function renderFinancials() {
             accounts.forEach(a => {
                 const isWide = a.company_wide === true || a.station_id == null || a.station_id === '';
                 const sid = isWide ? 'company_wide' : String(a.station_id);
-                // When filtering by a station, still show company-wide accounts
                 if (filterSid && sid !== String(filterSid) && sid !== 'company_wide') return;
                 if (!byStation[sid]) byStation[sid] = [];
                 byStation[sid].push(a);
@@ -6922,7 +6920,7 @@ async function renderFinancials() {
 
             let html = '';
             stationKeys.forEach(sid => {
-                const label = sid === 'company_wide' || sid === 'unassigned' ? '🌐 All stations (company-wide)' : stationName(sid);
+                const label = (sid === 'company_wide' || sid === 'unassigned') ? '🌐 All stations (company-wide)' : stationName(sid);
                 const list = byStation[sid].slice().sort((a, b) => {
                     const rank = (x) => (x.system_kind === 'cash_till' ? 0 : (x.is_system ? 1 : 2));
                     const ra = rank(a), rb = rank(b);
@@ -7270,8 +7268,17 @@ async function renderFinancials() {
                                 <div class="card-box">
                                     <h6 class="mb-3">Record Expense</h6>
                                     <form id="expForm">
-                                        <div class="mb-2"><label class="form-label small">Source Account</label>
-                                            <select id="expSource" class="form-select form-select-sm" required>${accountOptions}</select></div>
+                                        <div class="mb-2"><label class="form-label small">Station * <span class="text-muted fw-normal">(where expense is made)</span></label>
+                                            <select id="expStation" class="form-select form-select-sm" required>
+                                                <option value="">— Select station —</option>
+                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                            </select>
+                                        </div>
+                                        <div class="mb-2"><label class="form-label small">Source Account * <span class="text-muted fw-normal">(from selected station only)</span></label>
+                                            <select id="expSource" class="form-select form-select-sm" required>
+                                                <option value="">— Select station first —</option>
+                                            </select>
+                                        </div>
                                         <div class="mb-2"><label class="form-label small">Person (who made the expense)</label>
                                             <select id="expPerson" class="form-select form-select-sm">
                                                 <option value="">— Select Person —</option>${userOpts}
@@ -7370,9 +7377,15 @@ async function renderFinancials() {
                                     <h6 class="mb-2"><i class="bi bi-cash-stack text-primary"></i> Pay Supplier (after goods / invoice)</h6>
                                     <p class="small text-muted mb-3">Payment for goods already received or against an open invoice. Reduces what the company owes.</p>
                                     <form id="paymentForm">
+                                        <div class="mb-2"><label class="form-label small">Station <span class="text-muted fw-normal">(optional tag — any station / account allowed)</span></label>
+                                            <select id="payStation" class="form-select form-select-sm">
+                                                <option value="">— Any / All stations —</option>
+                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                            </select>
+                                        </div>
                                         <div class="mb-2"><label class="form-label small">Supplier *</label>
                                             <select id="paySupplier" class="form-select form-select-sm" required>${supplierOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Pay From *</label>
+                                        <div class="mb-2"><label class="form-label small">Pay From * <span class="text-muted fw-normal">(any station account)</span></label>
                                             <select id="paySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
                                         <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
                                             <input type="number" id="payAmount" class="form-control form-control-sm" placeholder="0" step="0.01" min="0" required></div>
@@ -7391,9 +7404,15 @@ async function renderFinancials() {
                                     <h6 class="mb-2"><i class="bi bi-wallet2 text-warning"></i> Prepayment (before supplying goods)</h6>
                                     <p class="small text-muted mb-3">Give the supplier money <strong>before</strong> delivery. Creates a <strong>prepaid credit</strong> on their account. When they later offload goods, that credit is used up automatically (balance rises toward zero).</p>
                                     <form id="prepaymentForm">
+                                        <div class="mb-2"><label class="form-label small">Station <span class="text-muted fw-normal">(optional — any account allowed)</span></label>
+                                            <select id="prepayStation" class="form-select form-select-sm">
+                                                <option value="">— Any / All stations —</option>
+                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                            </select>
+                                        </div>
                                         <div class="mb-2"><label class="form-label small">Supplier *</label>
                                             <select id="prepaySupplier" class="form-select form-select-sm" required>${supplierOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Pay From *</label>
+                                        <div class="mb-2"><label class="form-label small">Pay From * <span class="text-muted fw-normal">(any station account)</span></label>
                                             <select id="prepaySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
                                         <div class="mb-2"><label class="form-label small">Prepayment Amount (UGX) *</label>
                                             <input type="number" id="prepayAmount" class="form-control form-control-sm" placeholder="0" step="0.01" min="0" required></div>
@@ -7548,7 +7567,7 @@ async function renderFinancials() {
                     branch: branch || '',
                     currency: currencySymbol(),
                     balance: opening,
-                    station_id: stationId, // null = company-wide (all stations)
+                    station_id: stationId,
                     company_wide: isCompanyWide,
                     companyId: state.user.companyId,
                     is_system: false
@@ -7903,9 +7922,48 @@ async function renderFinancials() {
             };
         });
 
+        // Build expense source accounts for a given station (station-only; fail if none)
+        function buildExpenseAccountOptions(stationId) {
+            let html = '<option value="">— Select account —</option>';
+            if (!stationId) {
+                return '<option value="">— Select station first —</option>';
+            }
+            const sid = String(stationId);
+            html += `<option value="petty_cash">💰 Petty Cash · ${esc(stationName(sid))}</option>`;
+            html += `<option value="cash_till">💵 Cash Till · ${esc(stationName(sid))}</option>`;
+            let count = 2;
+            (accounts || []).forEach(a => {
+                if (a.is_system) return; // system shown via aliases above
+                // Only this station's accounts (company-wide NOT allowed for expenses)
+                if (String(a.station_id || '') !== sid) return;
+                html += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name || a.account_name || 'Account')} – ${esc(a.account_number || '')}</option>`;
+                count++;
+            });
+            if (count <= 2) {
+                // still ok — petty/cash till always available as options
+            }
+            return html;
+        }
+
+        function refreshExpenseAccounts() {
+            const stEl = document.getElementById('expStation');
+            const srcEl = document.getElementById('expSource');
+            if (!stEl || !srcEl) return;
+            const sid = stEl.value;
+            srcEl.innerHTML = buildExpenseAccountOptions(sid);
+        }
+
+        const expStationEl = document.getElementById('expStation');
+        if (expStationEl) {
+            expStationEl.addEventListener('change', refreshExpenseAccounts);
+            // Initial populate if station pre-selected
+            refreshExpenseAccounts();
+        }
+
         document.getElementById('expForm').onsubmit = async function(e) {
             e.preventDefault();
             if (lockSubmit(this, 'Saving...')) return;
+            const stationId = (document.getElementById('expStation') && document.getElementById('expStation').value) || '';
             const source = document.getElementById('expSource').value;
             const personId = document.getElementById('expPerson').value;
             const desc = document.getElementById('expDesc').value.trim();
@@ -7914,12 +7972,35 @@ async function renderFinancials() {
             const date = document.getElementById('expDate').value;
             const isRecurring = document.getElementById('expRecurring').checked;
             const autoRecord = document.getElementById('expAutoRecord').checked;
-            if (!source || !desc || !amount || amount <= 0) { toast('Fill all required fields', 'warning'); return; }
+            if (!stationId) {
+                unlockSubmit(this);
+                toast('Select the station where this expense is made', 'warning');
+                return;
+            }
+            if (!source || !desc || !amount || amount <= 0) {
+                unlockSubmit(this);
+                toast('Fill all required fields (station, account, description, amount)', 'warning');
+                return;
+            }
+            // Validate account belongs to selected station
+            if (source !== 'petty_cash' && source !== 'cash_till') {
+                const acc = accounts.find(a => String(a.id) === String(source));
+                if (!acc) {
+                    unlockSubmit(this);
+                    toast('Selected account not found. Expense blocked.', 'danger');
+                    return;
+                }
+                if (String(acc.station_id || '') !== String(stationId)) {
+                    unlockSubmit(this);
+                    toast('Account does not belong to the selected station. Expense blocked.', 'danger');
+                    return;
+                }
+            }
             try {
                 const personUser = personId ? allUsers.find(u => u.id === personId) : null;
                 const personName = personUser ? (personUser.name || personUser.username || '') : '';
                 await addDoc('expenses', {
-                    station_id: state.currentStationId || '1',
+                    station_id: String(stationId),
                     source_account: source,
                     person_id: personId || null,
                     person_name: personName || null,
@@ -7931,9 +8012,15 @@ async function renderFinancials() {
                     auto_recorded: false,
                     created_by: state.user.id
                 });
-                if (source !== 'petty_cash' && source !== '') {
-                    const acc = await getDoc('bank_accounts', source);
-                    if (acc) { await updateDoc('bank_accounts', source, { balance: (acc.balance || 0) - amount }); }
+                // Debit station account (including system cash till / petty cash)
+                const resolved = resolveAccountRefId(source, stationId) || source;
+                if (resolved) {
+                    const acc = await getDoc('bank_accounts', resolved);
+                    if (acc) {
+                        await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) - amount });
+                    } else if (source !== 'petty_cash' && source !== 'cash_till') {
+                        throw new Error('Could not debit account — account record missing');
+                    }
                 }
                 if (isRecurring) {
                     const dayOfMonth = new Date().getDate();
@@ -7942,6 +8029,7 @@ async function renderFinancials() {
                         amount: amount,
                         category: category,
                         source_account: source,
+                        station_id: String(stationId),
                         day_of_month: dayOfMonth,
                         active: true,
                         auto_record: autoRecord,
@@ -7949,21 +8037,26 @@ async function renderFinancials() {
                     });
                     toast('Expense recorded and recurring schedule set!', 'success');
                 } else {
-                    toast('Expense recorded');
+                    toast('Expense recorded for ' + stationName(stationId), 'success');
                 }
                 renderFinancials();
-            } catch (err) { toast('Error: ' + err.message, 'danger'); }
+            } catch (err) {
+                unlockSubmit(this);
+                toast('Error: ' + err.message, 'danger');
+            }
         };
 
         async function recordSupplierPay(opts) {
-            const { supplierId, source, amount, reference, note, isPrepayment, dateVal } = opts;
+            const { supplierId, source, amount, reference, note, isPrepayment, dateVal, stationId } = opts;
             if (!supplierId || !source || !amount || amount <= 0) {
                 toast('Fill all required fields', 'warning');
                 return false;
             }
+            // Any station / any account allowed for supplier payments
+            const sid = stationId || state.currentStationId || null;
             const sourceLabel = isPrepayment ? 'prepayment' : 'payment';
             await addDoc('supplier_payments', {
-                station_id: state.currentStationId || '1',
+                station_id: sid ? String(sid) : null,
                 supplier_id: supplierId,
                 source_account: source,
                 amount: amount,
@@ -7975,9 +8068,9 @@ async function renderFinancials() {
             });
             // Negative delta: reduces amount owed OR builds prepaid credit (negative balance)
             await updateSupplierBalance(supplierId, -amount, sourceLabel, reference || '');
-            // Debit bank / system cash account
+            // Debit any selected account (any station / company-wide allowed)
             {
-                const resolved = resolveAccountRefId(source, state.currentStationId) || source;
+                const resolved = resolveAccountRefId(source, sid) || source;
                 if (resolved) {
                     const acc = await getDoc('bank_accounts', resolved);
                     if (acc) {
@@ -7999,7 +8092,8 @@ async function renderFinancials() {
                     reference: document.getElementById('payReference').value.trim(),
                     note: document.getElementById('payNote').value.trim(),
                     isPrepayment: false,
-                    dateVal: document.getElementById('payDate').value
+                    dateVal: document.getElementById('payDate').value,
+                    stationId: (document.getElementById('payStation') && document.getElementById('payStation').value) || null
                 });
                 if (ok) {
                     toast('Supplier payment recorded', 'success');
@@ -8023,7 +8117,8 @@ async function renderFinancials() {
                         reference: document.getElementById('prepayReference').value.trim(),
                         note: document.getElementById('prepayNote').value.trim(),
                         isPrepayment: true,
-                        dateVal: document.getElementById('prepayDate').value
+                        dateVal: document.getElementById('prepayDate').value,
+                        stationId: (document.getElementById('prepayStation') && document.getElementById('prepayStation').value) || null
                     });
                     if (ok) {
                         toast('Prepayment recorded — prepaid credit on supplier account: ' + formatMoney(amount), 'success');
@@ -8051,16 +8146,13 @@ async function renderFinancials() {
                     const amount = Number(p.amount) || 0;
                     const supplierId = p.supplier_id;
                     if (!supplierId || amount <= 0) throw new Error('Invalid payment data');
-
                     await updateDoc('supplier_payments', id, {
                         status: 'reversed',
                         reversed: true,
                         reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
                         reversed_by: state.user.id
                     });
-                    // Undo supplier balance change (payment had applied -amount)
                     await updateSupplierBalance(supplierId, amount, 'payment_reversal', id);
-                    // Credit bank / system account
                     const source = p.source_account || '';
                     const resolved = resolveAccountRefId(source, p.station_id || state.currentStationId) || source;
                     if (resolved) {
@@ -9615,7 +9707,7 @@ async function renderReports() {
         // Combine offloads (debit) and supplier_transactions (credit)
         const transactions = [];
         // Offloads (increase balance, positive amount)
-        const offloads = stock.filter(s => s.supplier_id === supplierId && s.status !== 'reversed' && s.reversed !== true);
+        const offloads = stock.filter(s => s.supplier_id === supplierId);
         offloads.forEach(o => {
             const total = o.total_cost || (o.items || []).reduce((sum, it) => sum + it.quantity * it.cost_price, 0);
             transactions.push({
@@ -9639,7 +9731,7 @@ async function renderReports() {
             });
         });
         // Also include payments from supplier_payments collection (duplicate? but safe)
-        const payments = supplierPayments.filter(p => p.supplier_id === supplierId && p.status !== 'reversed' && p.reversed !== true);
+        const payments = supplierPayments.filter(p => p.supplier_id === supplierId);
         payments.forEach(p => {
             transactions.push({
                 date: p.created_at,
