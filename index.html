@@ -4806,7 +4806,7 @@ async function renderBalancing() {
                 <div class="input-group input-group-sm" style="max-width:280px;">
                     <span class="input-group-text">UGX</span>
                     <input type="number" id="balDiscountInput" class="form-control form-control-sm text-danger fw-bold"
-                        step="100" min="0" value="${Number(totalDiscountsGiven || 0).toFixed(0)}"
+                        step="1" min="0" value="${Number(totalDiscountsGiven || 0).toFixed(0)}"
                         placeholder="0">
                 </div>
                 <div class="small text-muted mt-1">Suggested from sales: ${formatMoney(totalDiscountsGiven)}. Edit if needed.</div>
@@ -4885,7 +4885,7 @@ async function renderBalancing() {
                 <div class="row g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-bold">Actual Cash Presented by Cashier</label>
-                        <input type="number" id="actualCashInput" class="form-control" step="100" min="0" placeholder="Enter amount in UGX">
+                        <input type="number" id="actualCashInput" class="form-control" step="1" min="0" placeholder="Enter amount in UGX">
                         <div class="form-text">Recorded cashier expenses are added to this amount so they do not create a false shortage.</div>
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
@@ -5517,7 +5517,7 @@ async function renderStock() {
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small">Freight / Other Cost</label>
-                                <input type="number" id="recFreight" class="form-control form-control-sm" step="100" min="0" placeholder="0" value="0">
+                                <input type="number" id="recFreight" class="form-control form-control-sm" step="1" min="0" placeholder="0" value="0">
                             </div>
                         </div>
 
@@ -7389,7 +7389,7 @@ async function renderFinancials() {
                                             <select id="creditSupplier" class="form-select form-select-sm">${supplierOptions}</select></div>
                                         <div class="mb-2"><label class="form-label small">Customer</label>
                                             <select id="creditCustomer" class="form-select form-select-sm">${customerOptions}</select></div>
-                                        <div class="mb-2"><input type="number" id="creditLimit" class="form-control form-control-sm" placeholder="Credit Limit (UGX) *" step="100" required></div>
+                                        <div class="mb-2"><input type="number" id="creditLimit" class="form-control form-control-sm" placeholder="Credit Limit (UGX) *" step="1" required></div>
                                         <button class="btn btn-warning w-100">Set Credit Limit</button>
                                     </form>
                                 </div>
@@ -7418,7 +7418,7 @@ async function renderFinancials() {
                                         <div class="mb-2"><label class="form-label small">Description *</label>
                                             <input type="text" id="recDesc" class="form-control form-control-sm" placeholder="e.g. Rent" required></div>
                                         <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
-                                            <input type="number" id="recAmount" class="form-control form-control-sm" placeholder="Amount" step="100" required></div>
+                                            <input type="number" id="recAmount" class="form-control form-control-sm" placeholder="Amount" step="1" required></div>
                                         <div class="mb-2"><label class="form-label small">Category</label>
                                             <select id="recCategory" class="form-select form-select-sm">${expenseCategories}</select></div>
                                         <div class="mb-2"><label class="form-label small">Source Account</label>
@@ -8130,7 +8130,7 @@ async function renderCustomers() {
                         <div class="mb-2"><label class="form-label small">Address</label>
                             <input type="text" id="custAddress" class="form-control form-control-sm" placeholder="Location"></div>
                         <div class="mb-2"><label class="form-label small">Opening Balance (UGX) – Amount they owe the company</label>
-                            <input type="number" id="custOpeningBal" class="form-control form-control-sm" step="100" min="0" value="0"></div>
+                            <input type="number" id="custOpeningBal" class="form-control form-control-sm" step="1" min="0" value="0"></div>
                         <div class="mb-2"><label class="form-label small">Station</label>
                             <select id="custStation" class="form-select form-select-sm">
                                 <option value="">All Stations</option>
@@ -8799,7 +8799,7 @@ async function renderSuppliers() {
                 <div class="col-md-3"><label class="form-label small">Name *</label><input type="text" id="supName" class="form-control form-control-sm" required></div>
                 <div class="col-md-2"><label class="form-label small">Phone</label><input type="text" id="supPhone" class="form-control form-control-sm"></div>
                 <div class="col-md-3"><label class="form-label small">Address</label><input type="text" id="supAddress" class="form-control form-control-sm"></div>
-                <div class="col-md-2"><label class="form-label small">Opening Balance</label><input type="number" id="supOpening" class="form-control form-control-sm" step="100" min="0" value="0"></div>
+                <div class="col-md-2"><label class="form-label small">Opening Balance</label><input type="number" id="supOpening" class="form-control form-control-sm" step="1" min="0" value="0"></div>
                 <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm w-100">Add Supplier</button></div>
             </form>
             <div id="supplierResult" class="mt-2 small"></div>
@@ -10357,25 +10357,25 @@ async function renderPayroll() {
                         <div class="mb-2"><label class="form-label small">Period (Month/Year) *</label>
                             <input type="month" id="salaryPeriod" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,7)}" required></div>
                         <div class="mb-2"><label class="form-label small">Base Salary (UGX) *</label>
-                            <input type="number" id="salaryBase" class="form-control form-control-sm" step="1000" min="0" placeholder="e.g. 500000" required></div>
+                            <input type="number" id="salaryBase" class="form-control form-control-sm" step="1" min="0" placeholder="e.g. 500000" required></div>
                         <div class="mb-2"><label class="form-label small">Bonus / Allowance</label>
-                            <input type="number" id="salaryBonus" class="form-control form-control-sm" step="1000" min="0" placeholder="e.g. 100000" value="0"></div>
+                            <input type="number" id="salaryBonus" class="form-control form-control-sm" step="1" min="0" placeholder="e.g. 100000" value="0"></div>
                         <div id="shortageSection" class="mb-2" style="display:none;">
                             <label class="form-label small">Shortage Deduction</label>
-                            <div class="input-group"><span class="input-group-text">UGX</span><input type="number" id="salaryShortage" class="form-control form-control-sm" step="100" min="0" readonly><span class="input-group-text bg-danger text-white" id="shortageLabel">0</span></div>
+                            <div class="input-group"><span class="input-group-text">UGX</span><input type="number" id="salaryShortage" class="form-control form-control-sm" step="1" min="0" readonly><span class="input-group-text bg-danger text-white" id="shortageLabel">0</span></div>
                             <small class="text-muted">Accumulated shortage from reconciliations. This will be deducted from salary.</small>
                         </div>
                         <div id="excessSection" class="mb-2" style="display:none;">
                             <label class="form-label small">Excess (not deducted)</label>
-                            <div class="input-group"><span class="input-group-text">UGX</span><input type="number" id="salaryExcess" class="form-control form-control-sm" step="100" min="0" readonly><span class="input-group-text bg-success text-white" id="excessLabel">0</span></div>
+                            <div class="input-group"><span class="input-group-text">UGX</span><input type="number" id="salaryExcess" class="form-control form-control-sm" step="1" min="0" readonly><span class="input-group-text bg-success text-white" id="excessLabel">0</span></div>
                         </div>
                         <div class="mb-2"><label class="form-label small">Other Deductions</label>
-                            <input type="number" id="salaryOtherDeductions" class="form-control form-control-sm" step="100" min="0" placeholder="e.g. 20000" value="0"></div>
+                            <input type="number" id="salaryOtherDeductions" class="form-control form-control-sm" step="1" min="0" placeholder="e.g. 20000" value="0"></div>
                         <div id="advanceSection" class="mb-2" style="display:none;">
                             <label class="form-label small text-warning fw-bold">Salary Advance (to recover)</label>
                             <div class="input-group">
                                 <span class="input-group-text">UGX</span>
-                                <input type="number" id="salaryAdvanceDeduct" class="form-control form-control-sm" step="100" min="0" value="0">
+                                <input type="number" id="salaryAdvanceDeduct" class="form-control form-control-sm" step="1" min="0" value="0">
                                 <button type="button" class="btn btn-outline-warning btn-sm" id="deductFullAdvanceBtn" title="Recover full outstanding">Full</button>
                             </div>
                             <small class="text-muted">Outstanding advance for this employee. Deducted from this month's net pay.</small>
@@ -10396,7 +10396,7 @@ async function renderPayroll() {
                         <div class="mb-2"><label class="form-label small">Employee *</label>
                             <select id="advEmployee" class="form-select form-select-sm" required><option value="">— Select —</option>${userOpts}</select></div>
                         <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
-                            <input type="number" id="advAmount" class="form-control form-control-sm" step="1000" min="1" required placeholder="e.g. 100000"></div>
+                            <input type="number" id="advAmount" class="form-control form-control-sm" step="1" min="1" required placeholder="e.g. 100000"></div>
                         <div class="mb-2"><label class="form-label small">Date *</label>
                             <input type="date" id="advDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}" required></div>
                         <div class="mb-2"><label class="form-label small">Reason / Note</label>
@@ -10941,7 +10941,7 @@ async function renderMaintenance() {
                         <div class="mb-2"><label class="form-label small">Description</label>
                             <textarea id="maintDesc" class="form-control form-control-sm" rows="2" placeholder="Details of maintenance work..."></textarea></div>
                         <div class="mb-2"><label class="form-label small">Cost (UGX)</label>
-                            <input type="number" id="maintCost" class="form-control form-control-sm" step="100" min="0" placeholder="0"></div>
+                            <input type="number" id="maintCost" class="form-control form-control-sm" step="1" min="0" placeholder="0"></div>
                         <div class="mb-2"><label class="form-label small">Scheduled Date</label>
                             <input type="date" id="maintDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}"></div>
                         <div class="mb-2"><label class="form-label small">Status</label>
