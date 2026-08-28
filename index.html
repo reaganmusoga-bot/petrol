@@ -5588,9 +5588,7 @@ async function renderStock() {
             const isRev = r.status === 'reversed' || r.reversed === true;
             const itemsSummary = (r.items || []).map(it => (it.product_type || '') + ' ' + (Number(it.quantity)||0) + 'L').join(', ') || '—';
             const totalCost = Number(r.total_cost) || ((r.items || []).reduce((sum, it) => sum + ((Number(it.quantity)||0) * (Number(it.cost_price)||0)), 0) + (Number(r.freight)||0));
-            const statusBadge = isRev
-                ? '<span class="badge bg-secondary">Reversed</span>'
-                : '<span class="badge bg-success">Active</span>';
+            const statusBadge = isRev ? '<span class="badge bg-secondary">Reversed</span>' : '<span class="badge bg-success">Active</span>';
             const rowClass = isRev ? ' style="opacity:0.65;"' : '';
             html += `<tr${rowClass}>
                 <td class="text-nowrap small">${formatDate(r.received_date || r.created_at)}</td>
@@ -7112,11 +7110,8 @@ async function renderFinancials() {
                 else if (p.source_account === 'cash_till') sourceLabel = 'Cash Till';
                 else { const acc = accounts.find(a => a.id === p.source_account); if (acc) sourceLabel = acc.bank_name || acc.name || 'Bank'; }
                 const isPre = !!p.is_prepayment;
-                const typeBadge = isRev
-                    ? '<span class="badge bg-secondary">Reversed</span>'
-                    : (isPre
-                        ? '<span class="badge bg-warning text-dark">Prepayment</span>'
-                        : '<span class="badge bg-primary">Payment</span>');
+                const typeBadge = isRev ? '<span class="badge bg-secondary">Reversed</span>'
+                    : (isPre ? '<span class="badge bg-warning text-dark">Prepayment</span>' : '<span class="badge bg-primary">Payment</span>');
                 const rowStyle = isRev ? ' style="opacity:0.65;"' : '';
                 rows += `<tr${rowStyle}>
                         <td><strong>${esc(supName)}</strong></td>
@@ -7377,7 +7372,7 @@ async function renderFinancials() {
                                     <h6 class="mb-2"><i class="bi bi-cash-stack text-primary"></i> Pay Supplier (after goods / invoice)</h6>
                                     <p class="small text-muted mb-3">Payment for goods already received or against an open invoice. Reduces what the company owes.</p>
                                     <form id="paymentForm">
-                                        <div class="mb-2"><label class="form-label small">Station <span class="text-muted fw-normal">(optional tag — any station / account allowed)</span></label>
+                                        <div class="mb-2"><label class="form-label small">Station <span class="text-muted fw-normal">(optional — any station / account allowed)</span></label>
                                             <select id="payStation" class="form-select form-select-sm">
                                                 <option value="">— Any / All stations —</option>
                                                 ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
@@ -7922,41 +7917,28 @@ async function renderFinancials() {
             };
         });
 
-        // Build expense source accounts for a given station (station-only; fail if none)
         function buildExpenseAccountOptions(stationId) {
-            let html = '<option value="">— Select account —</option>';
-            if (!stationId) {
-                return '<option value="">— Select station first —</option>';
-            }
+            if (!stationId) return '<option value="">— Select station first —</option>';
             const sid = String(stationId);
+            let html = '<option value="">— Select account —</option>';
             html += `<option value="petty_cash">💰 Petty Cash · ${esc(stationName(sid))}</option>`;
             html += `<option value="cash_till">💵 Cash Till · ${esc(stationName(sid))}</option>`;
-            let count = 2;
             (accounts || []).forEach(a => {
-                if (a.is_system) return; // system shown via aliases above
-                // Only this station's accounts (company-wide NOT allowed for expenses)
+                if (a.is_system) return;
                 if (String(a.station_id || '') !== sid) return;
                 html += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name || a.account_name || 'Account')} – ${esc(a.account_number || '')}</option>`;
-                count++;
             });
-            if (count <= 2) {
-                // still ok — petty/cash till always available as options
-            }
             return html;
         }
-
         function refreshExpenseAccounts() {
             const stEl = document.getElementById('expStation');
             const srcEl = document.getElementById('expSource');
             if (!stEl || !srcEl) return;
-            const sid = stEl.value;
-            srcEl.innerHTML = buildExpenseAccountOptions(sid);
+            srcEl.innerHTML = buildExpenseAccountOptions(stEl.value);
         }
-
         const expStationEl = document.getElementById('expStation');
         if (expStationEl) {
             expStationEl.addEventListener('change', refreshExpenseAccounts);
-            // Initial populate if station pre-selected
             refreshExpenseAccounts();
         }
 
@@ -7972,28 +7954,13 @@ async function renderFinancials() {
             const date = document.getElementById('expDate').value;
             const isRecurring = document.getElementById('expRecurring').checked;
             const autoRecord = document.getElementById('expAutoRecord').checked;
-            if (!stationId) {
-                unlockSubmit(this);
-                toast('Select the station where this expense is made', 'warning');
-                return;
-            }
-            if (!source || !desc || !amount || amount <= 0) {
-                unlockSubmit(this);
-                toast('Fill all required fields (station, account, description, amount)', 'warning');
-                return;
-            }
-            // Validate account belongs to selected station
+            if (!stationId) { unlockSubmit(this); toast('Select the station where this expense is made', 'warning'); return; }
+            if (!source || !desc || !amount || amount <= 0) { unlockSubmit(this); toast('Fill all required fields (station, account, description, amount)', 'warning'); return; }
             if (source !== 'petty_cash' && source !== 'cash_till') {
                 const acc = accounts.find(a => String(a.id) === String(source));
-                if (!acc) {
-                    unlockSubmit(this);
-                    toast('Selected account not found. Expense blocked.', 'danger');
-                    return;
-                }
+                if (!acc) { unlockSubmit(this); toast('Selected account not found. Expense blocked.', 'danger'); return; }
                 if (String(acc.station_id || '') !== String(stationId)) {
-                    unlockSubmit(this);
-                    toast('Account does not belong to the selected station. Expense blocked.', 'danger');
-                    return;
+                    unlockSubmit(this); toast('Account does not belong to the selected station. Expense blocked.', 'danger'); return;
                 }
             }
             try {
@@ -8012,27 +7979,18 @@ async function renderFinancials() {
                     auto_recorded: false,
                     created_by: state.user.id
                 });
-                // Debit station account (including system cash till / petty cash)
                 const resolved = resolveAccountRefId(source, stationId) || source;
                 if (resolved) {
                     const acc = await getDoc('bank_accounts', resolved);
-                    if (acc) {
-                        await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) - amount });
-                    } else if (source !== 'petty_cash' && source !== 'cash_till') {
-                        throw new Error('Could not debit account — account record missing');
-                    }
+                    if (acc) await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) - amount });
+                    else if (source !== 'petty_cash' && source !== 'cash_till') throw new Error('Could not debit account — account record missing');
                 }
                 if (isRecurring) {
                     const dayOfMonth = new Date().getDate();
                     await addDoc('recurring_expenses', {
-                        description: desc,
-                        amount: amount,
-                        category: category,
-                        source_account: source,
-                        station_id: String(stationId),
-                        day_of_month: dayOfMonth,
-                        active: true,
-                        auto_record: autoRecord,
+                        description: desc, amount: amount, category: category,
+                        source_account: source, station_id: String(stationId),
+                        day_of_month: dayOfMonth, active: true, auto_record: autoRecord,
                         created_by: state.user.id
                     });
                     toast('Expense recorded and recurring schedule set!', 'success');
@@ -8040,10 +7998,7 @@ async function renderFinancials() {
                     toast('Expense recorded for ' + stationName(stationId), 'success');
                 }
                 renderFinancials();
-            } catch (err) {
-                unlockSubmit(this);
-                toast('Error: ' + err.message, 'danger');
-            }
+            } catch (err) { unlockSubmit(this); toast('Error: ' + err.message, 'danger'); }
         };
 
         async function recordSupplierPay(opts) {
@@ -8052,7 +8007,6 @@ async function renderFinancials() {
                 toast('Fill all required fields', 'warning');
                 return false;
             }
-            // Any station / any account allowed for supplier payments
             const sid = stationId || state.currentStationId || null;
             const sourceLabel = isPrepayment ? 'prepayment' : 'payment';
             await addDoc('supplier_payments', {
@@ -8066,16 +8020,12 @@ async function renderFinancials() {
                 payment_date: dateVal || null,
                 created_by: state.user.id
             });
-            // Negative delta: reduces amount owed OR builds prepaid credit (negative balance)
             await updateSupplierBalance(supplierId, -amount, sourceLabel, reference || '');
-            // Debit any selected account (any station / company-wide allowed)
             {
                 const resolved = resolveAccountRefId(source, sid) || source;
                 if (resolved) {
                     const acc = await getDoc('bank_accounts', resolved);
-                    if (acc) {
-                        await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) - amount });
-                    }
+                    if (acc) await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) - amount });
                 }
             }
             return true;
@@ -8139,16 +8089,12 @@ async function renderFinancials() {
                     showLoading(true);
                     const p = await getDoc('supplier_payments', id);
                     if (!p) throw new Error('Payment not found');
-                    if (p.status === 'reversed' || p.reversed === true) {
-                        toast('Already reversed', 'warning');
-                        return;
-                    }
+                    if (p.status === 'reversed' || p.reversed === true) { toast('Already reversed', 'warning'); return; }
                     const amount = Number(p.amount) || 0;
                     const supplierId = p.supplier_id;
                     if (!supplierId || amount <= 0) throw new Error('Invalid payment data');
                     await updateDoc('supplier_payments', id, {
-                        status: 'reversed',
-                        reversed: true,
+                        status: 'reversed', reversed: true,
                         reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
                         reversed_by: state.user.id
                     });
@@ -8157,18 +8103,13 @@ async function renderFinancials() {
                     const resolved = resolveAccountRefId(source, p.station_id || state.currentStationId) || source;
                     if (resolved) {
                         const acc = await getDoc('bank_accounts', resolved);
-                        if (acc) {
-                            await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) + amount });
-                        }
+                        if (acc) await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) + amount });
                     }
                     await logAudit('reverse_supplier_payment', { payment_id: id, supplier_id: supplierId, amount: amount });
                     toast('Payment reversed. Supplier and account balances updated.', 'success');
                     renderFinancials();
-                } catch (err) {
-                    toast('Error: ' + err.message, 'danger');
-                } finally {
-                    showLoading(false);
-                }
+                } catch (err) { toast('Error: ' + err.message, 'danger'); }
+                finally { showLoading(false); }
             };
         });
 
@@ -10455,6 +10396,22 @@ async function renderPayroll() {
     const salaries = await getAll('salaries');
     const recons = await getAll('reconciliations');
     const salaryAdvances = await getAll('salary_advances') || [];
+    const bankAccounts = await getAll('bank_accounts') || [];
+    if (!state.stations || !state.stations.length) {
+        try { await loadStations(); } catch (_) {}
+    }
+    let salaryAccountOpts = '<option value="">— Select account —</option>';
+    salaryAccountOpts += '<option value="petty_cash">💰 Petty Cash (selected station)</option>';
+    salaryAccountOpts += '<option value="cash_till">💵 Cash Till (selected station)</option>';
+    [...bankAccounts].sort((a, b) => String(a.bank_name || '').localeCompare(String(b.bank_name || ''))).forEach(a => {
+        if (a.is_system) return;
+        const stLabel = (a.company_wide || !a.station_id) ? 'All stations' : stationName(a.station_id);
+        salaryAccountOpts += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name || a.account_name || 'Account')} – ${esc(a.account_number || '')} · ${esc(stLabel)}</option>`;
+    });
+    let salaryStationOpts = '<option value="">— Select station —</option>';
+    (state.stations || []).forEach(s => {
+        salaryStationOpts += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
+    });
 
     // Outstanding advances: total advanced minus already recovered on salary runs
     const advancesGiven = {};
@@ -10511,7 +10468,9 @@ async function renderPayroll() {
     const userOpts = allUsers.filter(u => u.active !== false).map(u => {
         const bal = remainingBalances[u.id] || { remainingShortage: 0, excess: 0 };
         const adv = remainingAdvances[u.id] || 0;
-        return `<option value="${u.id}" data-shortage="${bal.remainingShortage}" data-excess="${bal.excess}" data-advance="${adv}">${u.name || u.username} (${u.role})${adv > 0 ? ' · Adv' : ''}</option>`;
+        const stId = u.station_id ? String(u.station_id) : '';
+        const stLabel = stId ? (' · ' + stationName(stId)) : '';
+        return `<option value="${u.id}" data-shortage="${bal.remainingShortage}" data-excess="${bal.excess}" data-advance="${adv}" data-station="${esc(stId)}">${esc(u.name || u.username)} (${esc(u.role)})${esc(stLabel)}${adv > 0 ? ' · Adv' : ''}</option>`;
     }).join('');
 
 
@@ -10540,6 +10499,10 @@ async function renderPayroll() {
                     <form id="salaryForm">
                         <div class="mb-2"><label class="form-label small">Employee *</label>
                             <select id="salaryEmployee" class="form-select form-select-sm" required><option value="">— Select —</option>${userOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Station * <span class="text-muted fw-normal">(employee / charge station)</span></label>
+                            <select id="salaryStation" class="form-select form-select-sm" required>${salaryStationOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Pay From * <span class="text-muted fw-normal">(any station or company-wide account)</span></label>
+                            <select id="salarySource" class="form-select form-select-sm" required>${salaryAccountOpts}</select></div>
                         <div class="mb-2"><label class="form-label small">Period (Month/Year) *</label>
                             <input type="month" id="salaryPeriod" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,7)}" required></div>
                         <div class="mb-2"><label class="form-label small">Base Salary (UGX) *</label>
@@ -10581,6 +10544,10 @@ async function renderPayroll() {
                     <form id="advanceForm">
                         <div class="mb-2"><label class="form-label small">Employee *</label>
                             <select id="advEmployee" class="form-select form-select-sm" required><option value="">— Select —</option>${userOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Station *</label>
+                            <select id="advStation" class="form-select form-select-sm" required>${salaryStationOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Pay From * <span class="text-muted fw-normal">(any station account)</span></label>
+                            <select id="advSource" class="form-select form-select-sm" required>${salaryAccountOpts}</select></div>
                         <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
                             <input type="number" id="advAmount" class="form-control form-control-sm" step="1" min="1" required placeholder="e.g. 100000"></div>
                         <div class="mb-2"><label class="form-label small">Date *</label>
@@ -10617,7 +10584,7 @@ async function renderPayroll() {
             const emp = allUsers.find(u => u.id === s.employee_id);
             const empName = emp ? (emp.name || emp.username) : 'Unknown';
             html += `<tr>
-                    <td><strong>${empName}</strong></td>
+                    <td><strong>${empName}</strong>${s.station_id ? '<div class="small text-muted">' + esc(stationName(s.station_id)) + '</div>' : ''}</td>
                     <td>${s.period || '—'}</td>
                     <td>${formatMoney(s.gross_pay)}</td>
                     <td class="text-danger">${s.deducted_shortage ? formatMoney(s.deducted_shortage) : '—'}</td>
@@ -10647,6 +10614,9 @@ async function renderPayroll() {
         const shortage = parseFloat(selected.dataset.shortage) || 0;
         const excess = parseFloat(selected.dataset.excess) || 0;
         const advance = parseFloat(selected.dataset.advance) || 0;
+        const empStation = selected.dataset.station || '';
+        const stEl = document.getElementById('salaryStation');
+        if (stEl && empStation) stEl.value = empStation;
         if (shortage > 0) { shortageSection.style.display = 'block';
             document.getElementById('salaryShortage').value = shortage;
             document.getElementById('shortageLabel').textContent = formatMoney(shortage); } else { shortageSection.style.display = 'none';
@@ -10697,6 +10667,8 @@ async function renderPayroll() {
     document.getElementById('salaryForm').onsubmit = async function(e) {
         e.preventDefault();
         const employeeId = document.getElementById('salaryEmployee').value;
+        const stationId = (document.getElementById('salaryStation') && document.getElementById('salaryStation').value) || '';
+        const source = (document.getElementById('salarySource') && document.getElementById('salarySource').value) || '';
         const period = document.getElementById('salaryPeriod').value;
         const base = parseFloat(document.getElementById('salaryBase').value) || 0;
         const bonus = parseFloat(document.getElementById('salaryBonus').value) || 0;
@@ -10708,15 +10680,27 @@ async function renderPayroll() {
         const gross = base + bonus;
         const net = gross - shortage - otherDed - advanceDed;
         if (!employeeId) { toast('Select an employee', 'warning'); return; }
+        if (!stationId) { toast('Select the employee station', 'warning'); return; }
+        if (!source) { toast('Select the account to pay salary from', 'warning'); return; }
         if (!period) { toast('Select a period', 'warning'); return; }
         if (base <= 0) { toast('Enter a valid base salary', 'warning'); return; }
         if (net < 0) { toast('Net pay cannot be negative. Reduce deductions.', 'warning'); return; }
         const employee = allUsers.find(u => u.id === employeeId);
         const empName = employee ? (employee.name || employee.username) : 'Unknown';
         try {
+            const resolved = resolveAccountRefId(source, stationId) || source;
+            if (resolved) {
+                const acc = await getDoc('bank_accounts', resolved);
+                if (!acc && source !== 'petty_cash' && source !== 'cash_till') {
+                    toast('Selected account not found. Salary blocked.', 'danger'); return;
+                }
+                if (acc) await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) - net });
+            }
             const salaryRef = await addDoc('salaries', {
                 employee_id: employeeId,
                 employee_name: empName,
+                station_id: String(stationId),
+                source_account: source,
                 period: period,
                 base_salary: base,
                 bonus: bonus,
@@ -10729,7 +10713,7 @@ async function renderPayroll() {
                 paid_date: firebase.firestore.FieldValue.serverTimestamp(),
                 paid_by: state.user.id
             });
-            toast('Salary processed! Voucher generated.', 'success');
+            toast('Salary processed from account! Voucher generated.', 'success');
             const voucherData = {
                 id: salaryRef,
                 employee: empName,
@@ -10747,23 +10731,46 @@ async function renderPayroll() {
         } catch (err) { toast('Error: ' + err.message, 'danger'); }
     };
 
+    const advEmployeeEl = document.getElementById('advEmployee');
+    if (advEmployeeEl) {
+        advEmployeeEl.onchange = function() {
+            const selected = this.options[this.selectedIndex];
+            const empStation = (selected && selected.dataset.station) || '';
+            const stEl = document.getElementById('advStation');
+            if (stEl && empStation) stEl.value = empStation;
+        };
+    }
     const advanceForm = document.getElementById('advanceForm');
     if (advanceForm) {
         advanceForm.onsubmit = async function(e) {
             e.preventDefault();
             const employeeId = document.getElementById('advEmployee').value;
+            const stationId = (document.getElementById('advStation') && document.getElementById('advStation').value) || '';
+            const source = (document.getElementById('advSource') && document.getElementById('advSource').value) || '';
             const amount = parseFloat(document.getElementById('advAmount').value) || 0;
             const advDate = document.getElementById('advDate').value;
             const note = (document.getElementById('advNote').value || '').trim();
             if (!employeeId) { toast('Select an employee', 'warning'); return; }
+            if (!stationId) { toast('Select the station', 'warning'); return; }
+            if (!source) { toast('Select the account to pay advance from', 'warning'); return; }
             if (amount <= 0) { toast('Enter a valid advance amount', 'warning'); return; }
             if (!advDate) { toast('Select a date', 'warning'); return; }
             const employee = allUsers.find(u => u.id === employeeId);
             const empName = employee ? (employee.name || employee.username) : 'Unknown';
             try {
+                const resolved = resolveAccountRefId(source, stationId) || source;
+                if (resolved) {
+                    const acc = await getDoc('bank_accounts', resolved);
+                    if (!acc && source !== 'petty_cash' && source !== 'cash_till') {
+                        toast('Selected account not found. Advance blocked.', 'danger'); return;
+                    }
+                    if (acc) await updateDoc('bank_accounts', resolved, { balance: (Number(acc.balance) || 0) - amount });
+                }
                 await addDoc('salary_advances', {
                     employee_id: employeeId,
                     employee_name: empName,
+                    station_id: String(stationId),
+                    source_account: source,
                     amount: amount,
                     advance_date: advDate,
                     note: note || null,
