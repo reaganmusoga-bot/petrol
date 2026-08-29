@@ -10350,79 +10350,202 @@ registerPageRenderer('customers', renderCustomers);
 
 // ----- SUPPLIERS PAGE (new) -----
 async function renderSuppliers() {
-    const suppliers = await getAll('suppliers');
-    const supplierPayments = await getAll('supplier_payments');
-    const stock = await getAll('stock');
+    const suppliers = await getAll('suppliers') || [];
+    const supplierPayments = await getAll('supplier_payments') || [];
+    const stock = await getAll('stock') || [];
 
-    let html = `
-        <div class="card-box">
-            <h5 class="mb-3"><i class="bi bi-truck"></i> Suppliers</h5>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Phone</th>
-                            <th>Address</th>
-                            <th>Opening Balance</th>
-                            <th>Total Offloads</th>
-                            <th>Total Payments</th>
-                            <th>Actions</th>
-                            <th>Current Balance</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+    let totalPayable = 0, totalPrepaid = 0, totalOffloadValue = 0, totalPaid = 0;
+    const rowsData = suppliers.map(s => {
+        const offloads = stock.filter(o => o.supplier_id === s.id && o.status !== 'reversed' && o.reversed !== true);
+        const totalOffloads = offloads.reduce((sum, o) => sum + (Number(o.total_cost) || 0), 0);
+        const payments = supplierPayments.filter(p => p.supplier_id === s.id && p.status !== 'reversed' && p.reversed !== true);
+        const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        const balance = Number(s.current_balance || 0);
+        const prepayTotal = payments.filter(p => p.is_prepayment).reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        const prepaidCredit = balance < 0 ? Math.abs(balance) : 0;
+        if (balance > 0) totalPayable += balance;
+        if (prepaidCredit > 0) totalPrepaid += prepaidCredit;
+        totalOffloadValue += totalOffloads;
+        totalPaid += totalPayments;
+        return { s, totalOffloads, totalPayments, balance, prepayTotal, prepaidCredit };
+    }).sort((a, b) => String(a.s.name || '').localeCompare(String(b.s.name || '')));
 
-    if (suppliers.length === 0) {
-        html += `<tr><td colspan="8" class="text-center text-muted">No suppliers registered.</td></tr>`;
-    } else {
-        for (const s of suppliers) {
-            const offloads = stock.filter(o => o.supplier_id === s.id && o.status !== 'reversed' && o.reversed !== true);
-            const totalOffloads = offloads.reduce((sum, o) => sum + (o.total_cost || 0), 0);
-            const payments = supplierPayments.filter(p => p.supplier_id === s.id && p.status !== 'reversed' && p.reversed !== true);
-            const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-            const balance = Number(s.current_balance || 0);
-            const prepayTotal = payments.filter(p => p.is_prepayment).reduce((sum, p) => sum + Number(p.amount || 0), 0);
-            const prepaidCredit = balance < 0 ? Math.abs(balance) : 0;
-
-            html += `<tr>
-                        <td><strong>${esc(s.name)}</strong></td>
-                        <td>${esc(s.phone || '—')}</td>
-                        <td>${esc(s.address || '—')}</td>
-                        <td>${formatMoney(s.opening_balance || 0)}</td>
-                        <td>${formatMoney(totalOffloads)}</td>
-                        <td>${formatMoney(totalPayments)}${prepayTotal > 0 ? '<br><span class="small text-warning">of which prepay: ' + formatMoney(prepayTotal) + '</span>' : ''}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-info statement-btn" data-id="${s.id}" data-name="${esc(s.name)}" data-type="supplier"><i class="bi bi-receipt"></i></button>
-                            <button class="btn btn-sm btn-outline-danger delete-supplier-btn" data-id="${s.id}" data-balance="${balance}"><i class="bi bi-trash"></i></button>
-                        </td>
-                        <td class="${balance > 0 ? 'balance-negative' : balance < 0 ? 'balance-positive' : 'balance-zero'}">
-                            <strong>${formatMoney(balance)}</strong>
-                            ${prepaidCredit > 0 ? '<br><span class="badge bg-success">Prepaid left: ' + formatMoney(prepaidCredit) + '</span>' : ''}
-                        </td>
-                    </tr>`;
+    function supplierRowsHtml(list) {
+        if (!list.length) {
+            return '<tr><td colspan="7"><div class="intl-empty"><i class="bi bi-truck"></i>No suppliers match</div></td></tr>';
         }
+        let rows = '';
+        list.forEach(({ s, totalOffloads, totalPayments, balance, prepayTotal, prepaidCredit }, idx) => {
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            const balCls = balance > 0 ? 'amt-out' : (balance < 0 ? 'amt-in' : '');
+            const initials = String(s.name || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+            rows += `<tr style="background:${rowBg};" data-name="${esc((s.name || '').toLowerCase())}" data-phone="${esc((s.phone || '').toLowerCase())}">
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="intl-avatar" style="width:32px;height:32px;font-size:0.7rem;border-radius:10px;">${esc(initials)}</span>
+                        <div>
+                            <div class="fw-semibold text-truncate" style="max-width:160px;" title="${esc(s.name)}">${esc(s.name)}</div>
+                            <div class="small text-muted text-truncate" style="max-width:160px;">${esc(s.address || s.phone || '')}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="small text-nowrap">${esc(s.phone || '—')}</td>
+                <td class="text-end"><span class="amt">${formatMoney(s.opening_balance || 0)}</span></td>
+                <td class="text-end"><span class="amt">${formatMoney(totalOffloads)}</span></td>
+                <td class="text-end">
+                    <span class="amt amt-in">${formatMoney(totalPayments)}</span>
+                    ${prepayTotal > 0 ? `<div class="small text-warning">Prepay ${formatMoney(prepayTotal)}</div>` : ''}
+                </td>
+                <td class="text-end">
+                    <span class="amt fw-bold ${balCls}">${formatMoney(balance)}</span>
+                    ${prepaidCredit > 0 ? `<div><span class="intl-chip pay">Credit ${formatMoney(prepaidCredit)}</span></div>` : ''}
+                </td>
+                <td class="text-end text-nowrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary statement-btn py-0 px-1" data-id="${s.id}" data-name="${esc(s.name)}" data-type="supplier" title="Statement"><i class="bi bi-receipt"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-supplier-btn py-0 px-1" data-id="${s.id}" data-balance="${balance}" title="Delete"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        return rows;
     }
 
-    html += `
-                    </tbody>
-                </table>
+    const html = `
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-truck"></i> Suppliers</h4>
+                        <div class="fin-sub">Payables, prepayments &amp; delivery partners</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light" id="supExportBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </button>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(4,1fr);">
+                    <div class="fin-kpi">
+                        <div class="k-label">Suppliers</div>
+                        <div class="k-value">${suppliers.length}</div>
+                        <div class="k-hint">Registered partners</div>
+                    </div>
+                    <div class="fin-kpi warn">
+                        <div class="k-label">Amount payable</div>
+                        <div class="k-value">${formatCompactMoney(totalPayable)}</div>
+                        <div class="k-hint">You owe suppliers</div>
+                    </div>
+                    <div class="fin-kpi in">
+                        <div class="k-label">Prepaid credit</div>
+                        <div class="k-value">${formatCompactMoney(totalPrepaid)}</div>
+                        <div class="k-hint">Advances on account</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">Paid (all time)</div>
+                        <div class="k-value">${formatCompactMoney(totalPaid)}</div>
+                        <div class="k-hint">Offloads ${formatCompactMoney(totalOffloadValue)}</div>
+                    </div>
+                </div>
             </div>
-            <hr>
-            <h6>Add New Supplier</h6>
-            <form id="supplierForm" class="row g-2">
-                <div class="col-md-3"><label class="form-label small">Name *</label><input type="text" id="supName" class="form-control form-control-sm" required></div>
-                <div class="col-md-2"><label class="form-label small">Phone</label><input type="text" id="supPhone" class="form-control form-control-sm"></div>
-                <div class="col-md-3"><label class="form-label small">Address</label><input type="text" id="supAddress" class="form-control form-control-sm"></div>
-                <div class="col-md-2"><label class="form-label small">Opening Balance</label><input type="number" id="supOpening" class="form-control form-control-sm" step="1" min="0" value="0"></div>
-                <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm w-100">Add Supplier</button></div>
-            </form>
-            <div id="supplierResult" class="mt-2 small"></div>
+
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="fin-action-card">
+                        <h6><i class="bi bi-person-plus text-primary"></i> Add Supplier</h6>
+                        <form id="supplierForm" class="intl-form">
+                            <div class="form-section">
+                                <div class="form-section-title">Identity</div>
+                                <div class="form-field">
+                                    <label class="form-label" for="supName">Name *</label>
+                                    <input type="text" id="supName" class="form-control" placeholder="e.g. Vivo Energy" required>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-field">
+                                        <label class="form-label" for="supPhone">Phone</label>
+                                        <input type="text" id="supPhone" class="form-control" placeholder="Optional">
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="supOpening">Opening balance</label>
+                                        <input type="number" id="supOpening" class="form-control" step="1" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="supAddress">Address</label>
+                                    <input type="text" id="supAddress" class="form-control" placeholder="Optional">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-intl btn-intl-primary"><i class="bi bi-plus-lg"></i> Add Supplier</button>
+                        </form>
+                        <div class="fin-note mt-2"><i class="bi bi-info-circle"></i> Opening balance is what you already owed this supplier.</div>
+                        <div id="supplierResult" class="mt-2 small"></div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="fin-ledger-card">
+                        <div class="intl-section-head">
+                            <h6><i class="bi bi-building"></i> Supplier ledger</h6>
+                            <span class="meta" id="supMetaCount">${suppliers.length}</span>
+                        </div>
+                        <div class="fin-filter-bar">
+                            <input type="search" class="form-control fin-q" id="supFilterQ" placeholder="Search name or phone…">
+                        </div>
+                        <div class="table-responsive intl-table-wrap" style="max-height:480px;overflow:auto;">
+                            <table class="table table-sm mb-0 align-middle" style="min-width:720px;width:100%;">
+                                <thead style="position:sticky;top:0;z-index:2;">
+                                    <tr>
+                                        <th>Supplier</th>
+                                        <th>Phone</th>
+                                        <th class="text-end">Opening</th>
+                                        <th class="text-end">Offloads</th>
+                                        <th class="text-end">Payments</th>
+                                        <th class="text-end">Balance</th>
+                                        <th class="text-end"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supLedgerBody">${supplierRowsHtml(rowsData)}</tbody>
+                            </table>
+                        </div>
+                        <div class="fin-ledger-foot">
+                            <span>Showing <strong id="supFootCount">${suppliers.length}</strong></span>
+                            <span>Payable <strong id="supFootPayable">${formatMoney(totalPayable)}</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>`;
 
     document.getElementById('pageContent').innerHTML = html;
 
-    // ---- Add supplier ----
+    const rowsDataRef = rowsData;
+    function refreshSupTable() {
+        const q = (document.getElementById('supFilterQ') && document.getElementById('supFilterQ').value || '').toLowerCase().trim();
+        const filtered = !q ? rowsDataRef : rowsDataRef.filter(x =>
+            String(x.s.name || '').toLowerCase().includes(q) ||
+            String(x.s.phone || '').toLowerCase().includes(q) ||
+            String(x.s.address || '').toLowerCase().includes(q)
+        );
+        const body = document.getElementById('supLedgerBody');
+        if (body) body.innerHTML = supplierRowsHtml(filtered);
+        const c = document.getElementById('supFootCount');
+        const m = document.getElementById('supMetaCount');
+        if (c) c.textContent = filtered.length;
+        if (m) m.textContent = filtered.length;
+        bindSupplierActions();
+    }
+    const fq = document.getElementById('supFilterQ');
+    if (fq) fq.addEventListener('input', refreshSupTable);
+
+    const expBtn = document.getElementById('supExportBtn');
+    if (expBtn) {
+        expBtn.onclick = function() {
+            const headers = ['Name', 'Phone', 'Address', 'Opening', 'Offloads', 'Payments', 'Balance'];
+            const rows = rowsDataRef.map(({ s, totalOffloads, totalPayments, balance }) => [
+                s.name || '', s.phone || '', s.address || '',
+                Number(s.opening_balance) || 0, totalOffloads, totalPayments, balance
+            ]);
+            if (!rows.length) { toast('No suppliers to export', 'warning'); return; }
+            exportExcel(headers, rows, 'suppliers_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            toast('Suppliers exported', 'success');
+        };
+    }
+
     document.getElementById('supplierForm').onsubmit = async function(e) {
         e.preventDefault();
         const name = document.getElementById('supName').value.trim();
@@ -10442,84 +10565,71 @@ async function renderSuppliers() {
         } catch (err) { toast('Error: ' + err.message, 'danger'); }
     };
 
-    // ---- Delete supplier ----
-    document.querySelectorAll('.delete-supplier-btn').forEach(btn => {
-        btn.onclick = async function() {
-            const id = this.dataset.id;
-            const balance = parseFloat(this.dataset.balance) || 0;
-            if (balance > 0) {
-                toast('Cannot delete a supplier with outstanding balance (company owes).', 'warning');
-                return;
-            }
-            if (!confirm('Delete this supplier permanently?')) return;
-            try {
-                await deleteDoc('suppliers', id);
-                toast('Supplier deleted');
-                renderSuppliers();
-            } catch (err) { toast('Error: ' + err.message, 'danger'); }
-        };
-    });
-
-    // ---- Statement button (reuse statement modal from customers) ----
-    document.querySelectorAll('.statement-btn[data-type="supplier"]').forEach(btn => {
-        btn.onclick = async function() {
-            const id = this.dataset.id;
-            const name = this.dataset.name;
-            const modal = new bootstrap.Modal(document.getElementById('statementModal'));
-            const body = document.getElementById('statementModalBody');
-            body.innerHTML = '<div class="text-center py-3"><div class="spinner"></div></div>';
-            modal.show();
-
-            try {
-                const transList = await loadLedgerRows('supplier_transactions', 'supplier_id', id, 100);
-
-                let rows = '';
-                if (!transList.length) {
-                    rows = '<tr><td colspan="4" class="text-muted text-center">No transactions</td></tr>';
-                } else {
-                    transList.forEach(t => {
-                        const amount = t.amount || 0;
-                        const cls = amount > 0 ? 'debit' : 'credit';
-                        rows += `<tr>
-                            <td>${formatDateTime(t.timestamp)}</td>
-                            <td>${esc(t.source || '—')}</td>
-                            <td class="${cls}">${formatMoney(amount)}</td>
-                            <td>${formatMoney(t.balance_after || 0)}</td>
-                        </tr>`;
-                    });
+    function bindSupplierActions() {
+        document.querySelectorAll('.delete-supplier-btn').forEach(btn => {
+            btn.onclick = async function() {
+                const id = this.dataset.id;
+                const balance = parseFloat(this.dataset.balance) || 0;
+                if (balance > 0) {
+                    toast('Cannot delete a supplier with outstanding balance (company owes).', 'warning');
+                    return;
                 }
-
-                const supDoc = await getDoc('suppliers', id);
-                const opening = supDoc ? (supDoc.opening_balance || 0) : 0;
-                const currentBal = supDoc ? (supDoc.current_balance || 0) : 0;
-
-                body.innerHTML = `
-                    <div class="mb-3">
-                        <h6>${esc(name)}</h6>
-                        <p>Opening Balance: ${formatMoney(opening)} | Current Balance: ${formatMoney(currentBal)}</p>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-sm statement-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Source</th>
-                                    <th>Amount</th>
-                                    <th>Balance After</th>
-                                </tr>
-                            </thead>
-                            <tbody>${rows}</tbody>
-                        </table>
-                    </div>
-                `;
-            } catch (err) {
-                body.innerHTML = `<div class="alert alert-danger">Error loading statement: ${err.message}</div>`;
-            }
-        };
-    });
+                if (!confirm('Delete this supplier permanently?')) return;
+                try {
+                    await deleteDoc('suppliers', id);
+                    toast('Supplier deleted');
+                    renderSuppliers();
+                } catch (err) { toast('Error: ' + err.message, 'danger'); }
+            };
+        });
+        document.querySelectorAll('.statement-btn[data-type="supplier"]').forEach(btn => {
+            btn.onclick = async function() {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+                const modal = new bootstrap.Modal(document.getElementById('statementModal'));
+                const body = document.getElementById('statementModalBody');
+                body.innerHTML = '<div class="text-center py-3"><div class="spinner"></div></div>';
+                modal.show();
+                try {
+                    const transList = await loadLedgerRows('supplier_transactions', 'supplier_id', id, 100);
+                    let rows = '';
+                    if (!transList.length) {
+                        rows = '<tr><td colspan="4" class="text-muted text-center">No transactions</td></tr>';
+                    } else {
+                        transList.forEach(t => {
+                            const amount = t.amount || 0;
+                            const cls = amount > 0 ? 'debit' : 'credit';
+                            rows += `<tr>
+                                <td>${formatDateTime(t.timestamp)}</td>
+                                <td>${esc(t.source || '—')}</td>
+                                <td class="${cls}">${formatMoney(amount)}</td>
+                                <td>${formatMoney(t.balance_after || 0)}</td>
+                            </tr>`;
+                        });
+                    }
+                    const supDoc = await getDoc('suppliers', id);
+                    const opening = supDoc ? (supDoc.opening_balance || 0) : 0;
+                    const currentBal = supDoc ? (supDoc.current_balance || 0) : 0;
+                    body.innerHTML = `
+                        <div class="mb-3">
+                            <h6 class="fw-bold">${esc(name)}</h6>
+                            <p class="small text-muted mb-0">Opening ${formatMoney(opening)} · Current ${formatMoney(currentBal)}</p>
+                        </div>
+                        <div class="table-responsive intl-table-wrap">
+                            <table class="table table-sm mb-0 align-middle statement-table">
+                                <thead><tr><th>Date</th><th>Source</th><th>Amount</th><th>Balance after</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                            </table>
+                        </div>`;
+                } catch (err) {
+                    body.innerHTML = `<div class="alert alert-danger">Error loading statement: ${err.message}</div>`;
+                }
+            };
+        });
+    }
+    bindSupplierActions();
 }
 
-// Register the Suppliers page
 registerPageRenderer('suppliers', renderSuppliers);
 
 console.log('✅ All missing pages from Part 8 now registered.');
@@ -11888,15 +11998,25 @@ async function renderPayroll() {
     if (!state.stations || !state.stations.length) {
         try { await loadStations(); } catch (_) {}
     }
-    let salaryAccountOpts = '<option value="">— Select account —</option>';
+    let salaryAccountOpts = '<option value="" disabled selected>Select account</option>';
     salaryAccountOpts += '<option value="petty_cash">💰 Petty Cash (selected station)</option>';
     salaryAccountOpts += '<option value="cash_till">💵 Cash Till (selected station)</option>';
-    [...bankAccounts].sort((a, b) => String(a.bank_name || '').localeCompare(String(b.bank_name || ''))).forEach(a => {
-        if (a.is_system) return;
+    [...bankAccounts].sort((a, b) => String(a.bank_name || a.account_name || '').localeCompare(String(b.bank_name || b.account_name || ''))).forEach(a => {
         const stLabel = (a.company_wide || !a.station_id) ? 'All stations' : stationName(a.station_id);
-        salaryAccountOpts += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name || a.account_name || 'Account')} – ${esc(a.account_number || '')} · ${esc(stLabel)}</option>`;
+        const bal = formatMoney(Number(a.balance) || 0);
+        const isCashTill = a.system_kind === 'cash_till' || (a.is_system && /cash\s*till/i.test(String(a.account_name || '') + String(a.bank_name || '')));
+        const isPetty = a.system_kind === 'petty_cash' || (a.is_system && /petty/i.test(String(a.account_name || '') + String(a.bank_name || '')));
+        let label;
+        if (isCashTill) label = `💵 Cash Till · ${stLabel} · ${bal}`;
+        else if (isPetty) label = `💰 Petty Cash · ${stLabel} · ${bal}`;
+        else {
+            const name = a.account_name || a.bank_name || 'Account';
+            const num = a.account_number ? ` · ${a.account_number}` : '';
+            label = `🏦 ${name}${num} · ${stLabel} · ${bal}`;
+        }
+        salaryAccountOpts += `<option value="${esc(a.id)}">${esc(label)}</option>`;
     });
-    let salaryStationOpts = '<option value="">— Select station —</option>';
+    let salaryStationOpts = '<option value="" disabled selected>Select station</option>';
     (state.stations || []).forEach(s => {
         salaryStationOpts += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
     });
@@ -11984,132 +12104,334 @@ async function renderPayroll() {
 
     let advanceHistoryRows = '';
     if (salaryAdvances.length === 0) {
-        advanceHistoryRows = '<tr><td colspan="4" class="text-muted text-center">No advances yet</td></tr>';
+        advanceHistoryRows = '<tr><td colspan="4"><div class="intl-empty"><i class="bi bi-lightning-charge"></i>No advances yet</div></td></tr>';
     } else {
         const sortedAdv = [...salaryAdvances].sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
-        sortedAdv.slice(0, 20).forEach(a => {
+        sortedAdv.slice(0, 30).forEach((a, idx) => {
             const emp = allUsers.find(u => u.id === a.employee_id);
             const empName = emp ? (emp.name || emp.username) : (a.employee_name || 'Unknown');
-            advanceHistoryRows += `<tr>
-                <td><strong>${esc(empName)}</strong></td>
-                <td class="text-warning fw-bold">${formatMoney(a.amount)}</td>
-                <td class="fs-xs">${formatDate(a.advance_date || a.created_at)}</td>
-                <td class="small">${esc(a.note || '—')}</td>
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            advanceHistoryRows += `<tr style="background:${rowBg};">
+                <td><div class="fw-semibold text-truncate" style="max-width:120px;">${esc(empName)}</div></td>
+                <td class="text-end"><span class="amt amt-warn">${formatMoney(a.amount)}</span></td>
+                <td class="small text-muted text-nowrap">${formatDate(a.advance_date || a.created_at)}</td>
+                <td class="small text-truncate" style="max-width:100px;" title="${esc(a.note || '')}">${esc(a.note || '—')}</td>
             </tr>`;
         });
     }
 
-    let html = `
-        <div class="row g-4">
-            <div class="col-lg-5">
-                <div class="card-box">
-                    <h5 class="mb-3"><i class="bi bi-wallet2"></i> Pay Employee</h5>
-                    <form id="salaryForm">
-                        <div class="mb-2"><label class="form-label small">Employee *</label>
-                            <select id="salaryEmployee" class="form-select form-select-sm" required><option value="">— Select —</option>${userOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Station * <span class="text-muted fw-normal">(employee / charge station)</span></label>
-                            <select id="salaryStation" class="form-select form-select-sm" required>${salaryStationOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Pay From * <span class="text-muted fw-normal">(any station or company-wide account)</span></label>
-                            <select id="salarySource" class="form-select form-select-sm" required>${salaryAccountOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Period (Month/Year) *</label>
-                            <input type="month" id="salaryPeriod" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,7)}" required></div>
-                        <div class="mb-2"><label class="form-label small">Base Salary (UGX) *</label>
-                            <input type="number" id="salaryBase" class="form-control form-control-sm" step="1" min="0" placeholder="e.g. 500000" required></div>
-                        <div class="mb-2"><label class="form-label small">Bonus / Allowance</label>
-                            <input type="number" id="salaryBonus" class="form-control form-control-sm" step="1" min="0" placeholder="e.g. 100000" value="0"></div>
-                        <div id="shortageSection" class="mb-2" style="display:none;">
-                            <label class="form-label small">Shortage Deduction</label>
-                            <div class="input-group"><span class="input-group-text">UGX</span><input type="number" id="salaryShortage" class="form-control form-control-sm" step="1" min="0" readonly><span class="input-group-text bg-danger text-white" id="shortageLabel">0</span></div>
-                            <small class="text-muted">Accumulated shortage from reconciliations. This will be deducted from salary.</small>
-                        </div>
-                        <div id="excessSection" class="mb-2" style="display:none;">
-                            <label class="form-label small">Excess (not deducted)</label>
-                            <div class="input-group"><span class="input-group-text">UGX</span><input type="number" id="salaryExcess" class="form-control form-control-sm" step="1" min="0" readonly><span class="input-group-text bg-success text-white" id="excessLabel">0</span></div>
-                        </div>
-                        <div class="mb-2"><label class="form-label small">Other Deductions</label>
-                            <input type="number" id="salaryOtherDeductions" class="form-control form-control-sm" step="1" min="0" placeholder="e.g. 20000" value="0"></div>
-                        <div id="advanceSection" class="mb-2" style="display:none;">
-                            <label class="form-label small text-warning fw-bold">Salary Advance (to recover)</label>
-                            <div class="input-group">
-                                <span class="input-group-text">UGX</span>
-                                <input type="number" id="salaryAdvanceDeduct" class="form-control form-control-sm" step="1" min="0" value="0">
-                                <button type="button" class="btn btn-outline-warning btn-sm" id="deductFullAdvanceBtn" title="Recover full outstanding">Full</button>
-                            </div>
-                            <small class="text-muted">Outstanding advance for this employee. Deducted from this month's net pay.</small>
-                        </div>
-                        <div class="mb-2 p-2 bg-light rounded">
-                            <div class="row"><div class="col-6"><strong>Gross Pay:</strong> <span id="grossPayDisplay">0</span></div>
-                            <div class="col-6"><strong>Net Pay:</strong> <span id="netPayDisplay" class="fw-bold">0</span></div></div>
-                        </div>
-                        <button type="submit" class="btn btn-success w-100">Process Salary & Generate Voucher</button>
-                    </form>
-                    <div id="salaryResult" class="mt-2 small"></div>
-                </div>
+    const totalOutstandingShortage = Object.values(remainingBalances).reduce((s, b) => s + (Number(b.remainingShortage) || 0), 0);
+    const totalOutstandingAdvance = Object.values(remainingAdvances).reduce((s, v) => s + (Number(v) || 0), 0);
+    const now = new Date();
+    const mtdSalaries = salaries.filter(s => {
+        const d = s.created_at && s.created_at.toDate ? s.created_at.toDate() : (s.created_at ? new Date(s.created_at) : null);
+        return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const mtdPayroll = mtdSalaries.reduce((s, x) => s + (Number(x.net_pay) || 0), 0);
+    const mtdPayrollCount = mtdSalaries.length;
 
-                <div class="card-box mt-3 border border-warning">
-                    <h5 class="mb-2"><i class="bi bi-cash-coin text-warning"></i> Give Salary Advance</h5>
-                    <p class="small text-muted">Pay an employee early (before month-end) if they have financial need. The advance is recorded and <strong>automatically subtracted</strong> when salary is processed.</p>
-                    <form id="advanceForm">
-                        <div class="mb-2"><label class="form-label small">Employee *</label>
-                            <select id="advEmployee" class="form-select form-select-sm" required><option value="">— Select —</option>${userOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Station *</label>
-                            <select id="advStation" class="form-select form-select-sm" required>${salaryStationOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Pay From * <span class="text-muted fw-normal">(any station account)</span></label>
-                            <select id="advSource" class="form-select form-select-sm" required>${salaryAccountOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
-                            <input type="number" id="advAmount" class="form-control form-control-sm" step="1" min="1" required placeholder="e.g. 100000"></div>
-                        <div class="mb-2"><label class="form-label small">Date *</label>
-                            <input type="date" id="advDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}" required></div>
-                        <div class="mb-2"><label class="form-label small">Reason / Note</label>
-                            <input type="text" id="advNote" class="form-control form-control-sm" placeholder="e.g. Medical emergency"></div>
-                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-lightning-charge"></i> Record Advance Payment</button>
-                    </form>
-                    <div id="advanceResult" class="mt-2 small"></div>
-                    <hr>
-                    <h6 class="mb-2">Recent Advances</h6>
-                    <div class="table-responsive" style="max-height:200px;overflow-y:auto;">
-                        <table class="table table-sm">
-                            <thead><tr><th>Employee</th><th>Amount</th><th>Date</th><th>Note</th></tr></thead>
-                            <tbody id="advanceHistoryBody">
-                            ${advanceHistoryRows}
-                        </tbody></table>
+    function salaryHistoryRowsHtml(list) {
+        if (!list.length) {
+            return '<tr><td colspan="8"><div class="intl-empty"><i class="bi bi-wallet2"></i>No salary records match</div></td></tr>';
+        }
+        let rows = '';
+        list.forEach((s, idx) => {
+            const emp = allUsers.find(u => u.id === s.employee_id);
+            const empName = emp ? (emp.name || emp.username) : 'Unknown';
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            const st = s.status === 'paid' ? '<span class="intl-chip pay">Paid</span>' : `<span class="intl-chip">${esc(s.status || 'Posted')}</span>`;
+            rows += `<tr style="background:${rowBg};">
+                <td>
+                    <div class="fw-semibold text-truncate" style="max-width:130px;">${esc(empName)}</div>
+                    ${s.station_id ? `<div class="small text-muted">${esc(stationName(s.station_id))}</div>` : ''}
+                </td>
+                <td class="small text-nowrap">${esc(s.period || '—')}</td>
+                <td class="text-end"><span class="amt">${formatMoney(s.gross_pay)}</span></td>
+                <td class="text-end"><span class="amt amt-out">${s.deducted_shortage ? formatMoney(s.deducted_shortage) : '—'}</span></td>
+                <td class="text-end"><span class="amt amt-warn">${s.deducted_advance ? formatMoney(s.deducted_advance) : '—'}</span></td>
+                <td class="text-end"><span class="amt amt-out">${s.other_deductions ? formatMoney(s.other_deductions) : '—'}</span></td>
+                <td class="text-end"><span class="amt amt-in fw-bold">${formatMoney(s.net_pay)}</span></td>
+                <td class="text-end text-nowrap">
+                    ${st}
+                    <button type="button" class="btn btn-sm btn-outline-secondary ms-1 py-0 px-1 view-voucher-btn" data-id="${s.id}" title="Voucher"><i class="bi bi-printer"></i></button>
+                    ${isAdmin(state.user.role) ? `<button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-salary-btn" data-id="${s.id}" title="Delete"><i class="bi bi-trash"></i></button>` : ''}
+                </td>
+            </tr>`;
+        });
+        return rows;
+    }
+
+    const sortedSalaries = [...salaries].sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
+
+    let html = `
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-people"></i> Payroll</h4>
+                        <div class="fin-sub">Salaries, advances, shortage recovery</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light" id="payrollExportBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </button>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(4,1fr);">
+                    <div class="fin-kpi in">
+                        <div class="k-label">Net paid (MTD)</div>
+                        <div class="k-value">${formatCompactMoney(mtdPayroll)}</div>
+                        <div class="k-hint">${mtdPayrollCount} payment${mtdPayrollCount === 1 ? '' : 's'}</div>
+                    </div>
+                    <div class="fin-kpi out">
+                        <div class="k-label">Open shortages</div>
+                        <div class="k-value">${formatCompactMoney(totalOutstandingShortage)}</div>
+                        <div class="k-hint">Still to recover</div>
+                    </div>
+                    <div class="fin-kpi warn">
+                        <div class="k-label">Open advances</div>
+                        <div class="k-value">${formatCompactMoney(totalOutstandingAdvance)}</div>
+                        <div class="k-hint">To deduct from salary</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">Salary runs</div>
+                        <div class="k-value">${salaries.length}</div>
+                        <div class="k-hint">All time</div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-7">
-                <div class="card-box">
-                    <h5 class="mb-3"><i class="bi bi-clock-history"></i> Salary History</h5>
-                    <div class="table-responsive" style="max-height:400px; overflow-y:auto;">
-                        <table class="table table-sm table-hover">
-                            <thead><tr><th>Employee</th><th>Period</th><th>Gross</th><th>Shortage</th><th>Advance</th><th>Other</th><th>Net Pay</th><th>Status</th><th>Actions</th></tr></thead>
-                            <tbody>`;
 
-    if (salaries.length === 0) {
-        html += '<tr><td colspan="9" class="text-muted text-center">No salary records yet</td></tr>';
-    } else {
-        salaries.sort((a, b) => (b.created_at && b.created_at.seconds || 0) - (a.created_at && a.created_at.seconds || 0));
-        salaries.slice(0, 30).forEach(s => {
-            const emp = allUsers.find(u => u.id === s.employee_id);
-            const empName = emp ? (emp.name || emp.username) : 'Unknown';
-            html += `<tr>
-                    <td><strong>${empName}</strong>${s.station_id ? '<div class="small text-muted">' + esc(stationName(s.station_id)) + '</div>' : ''}</td>
-                    <td>${s.period || '—'}</td>
-                    <td>${formatMoney(s.gross_pay)}</td>
-                    <td class="text-danger">${s.deducted_shortage ? formatMoney(s.deducted_shortage) : '—'}</td>
-                    <td class="text-warning">${s.deducted_advance ? formatMoney(s.deducted_advance) : '—'}</td>
-                    <td class="text-danger">${s.other_deductions ? formatMoney(s.other_deductions) : '—'}</td>
-                    <td><strong>${formatMoney(s.net_pay)}</strong></td>
-                    <td><span class="badge ${s.status === 'paid' ? 'bg-success' : 'bg-warning'}">${s.status || 'paid'}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary view-voucher-btn" data-id="${s.id}"><i class="bi bi-receipt"></i></button>
-                        ${isAdmin(state.user.role) ? `<button class="btn btn-sm btn-outline-danger delete-salary-btn" data-id="${s.id}"><i class="bi bi-trash"></i></button>` : ''}
-                    </td>
-                </tr>`;
-        });
-    }
+            <div class="row g-3">
+                <div class="col-lg-5">
+                    <div class="fin-action-card mb-3">
+                        <h6><i class="bi bi-wallet2 text-success"></i> Pay Employee</h6>
+                        <form id="salaryForm" class="intl-form">
+                            <div class="form-section">
+                                <div class="form-section-title">Employee</div>
+                                <div class="form-field">
+                                    <label class="form-label" for="salaryEmployee">Employee *</label>
+                                    <select id="salaryEmployee" class="form-select" required><option value="" disabled selected>Select employee</option>${userOpts}</select>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-field">
+                                        <label class="form-label" for="salaryStation">Station *</label>
+                                        <select id="salaryStation" class="form-select" required>${salaryStationOpts}</select>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="salaryPeriod">Period *</label>
+                                        <input type="month" id="salaryPeriod" class="form-control" value="${new Date().toISOString().slice(0,7)}" required>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="salarySource">Pay from *</label>
+                                    <select id="salarySource" class="form-select" required>${salaryAccountOpts}</select>
+                                    <div class="fin-bal-hint empty" id="salarySourceBal"></div>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <div class="form-section-title">Earnings</div>
+                                <div class="form-row-2">
+                                    <div class="form-field">
+                                        <label class="form-label" for="salaryBase">Base salary *</label>
+                                        <input type="number" id="salaryBase" class="form-control" step="1" min="0" placeholder="e.g. 500000" required>
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="salaryBonus">Bonus / allowance</label>
+                                        <input type="number" id="salaryBonus" class="form-control" step="1" min="0" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <div class="form-section-title">Deductions</div>
+                                <div id="shortageSection" class="form-field" style="display:none;">
+                                    <label class="form-label">Shortage deduction</label>
+                                    <div class="input-group"><span class="input-group-text">UGX</span><input type="number" id="salaryShortage" class="form-control" step="1" min="0" readonly><span class="input-group-text bg-danger text-white" id="shortageLabel">0</span></div>
+                                    <div class="form-hint">From reconciliations — recovered via Shortage Recovery if already paid</div>
+                                </div>
+                                <div id="excessSection" class="form-field" style="display:none;">
+                                    <label class="form-label">Excess (overage)</label>
+                                    <div class="input-group"><span class="input-group-text">UGX</span><input type="number" id="salaryExcess" class="form-control" step="1" min="0" readonly><span class="input-group-text bg-success text-white" id="excessLabel">0</span></div>
+                                </div>
+                                <div id="advanceSection" class="form-field" style="display:none;">
+                                    <label class="form-label">Recover advance</label>
+                                    <div class="input-group">
+                                        <input type="number" id="salaryAdvanceDeduct" class="form-control" step="1" min="0" value="0">
+                                        <button type="button" class="btn btn-outline-warning" id="deductFullAdvanceBtn" title="Deduct full">Full</button>
+                                    </div>
+                                    <div class="form-hint">Outstanding advance for this employee</div>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="salaryOther">Other deductions</label>
+                                    <input type="number" id="salaryOther" class="form-control" step="1" min="0" value="0">
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="salaryNote">Note</label>
+                                    <input type="text" id="salaryNote" class="form-control" placeholder="Optional">
+                                </div>
+                            </div>
+                            <div class="fin-note mb-3"><strong>Net pay:</strong> <span id="salaryNetPreview" class="fw-bold text-success">—</span></div>
+                            <button type="submit" class="btn btn-intl btn-intl-success"><i class="bi bi-check2"></i> Post Salary</button>
+                        </form>
+                    </div>
 
-    html += `</tbody></table></div></div></div></div>`;
+                    <div class="fin-action-card">
+                        <h6><i class="bi bi-lightning-charge text-warning"></i> Salary Advance</h6>
+                        <form id="advanceForm" class="intl-form">
+                            <div class="form-section">
+                                <div class="form-section-title">Advance</div>
+                                <div class="form-field">
+                                    <label class="form-label" for="advEmployee">Employee *</label>
+                                    <select id="advEmployee" class="form-select" required><option value="" disabled selected>Select employee</option>${userOpts}</select>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="advSource">Pay from *</label>
+                                    <select id="advSource" class="form-select" required>${salaryAccountOpts}</select>
+                                    <div class="fin-bal-hint empty" id="advSourceBal"></div>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-field">
+                                        <label class="form-label" for="advAmount">Amount *</label>
+                                        <input type="number" id="advAmount" class="form-control" step="1" min="1" required placeholder="e.g. 100000">
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="advDate">Date *</label>
+                                        <input type="date" id="advDate" class="form-control" value="${new Date().toISOString().slice(0,10)}" required>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="advNote">Reason</label>
+                                    <input type="text" id="advNote" class="form-control" placeholder="e.g. Medical emergency">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-intl btn-intl-warning"><i class="bi bi-lightning-charge"></i> Record Advance</button>
+                        </form>
+                        <div id="advanceResult" class="mt-2 small"></div>
+                        <div class="intl-section-head mt-3">
+                            <h6 class="mb-0" style="font-size:0.9rem;">Recent advances</h6>
+                        </div>
+                        <div class="table-responsive intl-table-wrap" style="max-height:200px;overflow:auto;">
+                            <table class="table table-sm mb-0 align-middle">
+                                <thead style="position:sticky;top:0;z-index:2;"><tr><th>Employee</th><th class="text-end">Amount</th><th>Date</th><th>Note</th></tr></thead>
+                                <tbody id="advanceHistoryBody">${advanceHistoryRows}</tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="fin-ledger-card">
+                        <div class="intl-section-head">
+                            <h6><i class="bi bi-clock-history"></i> Salary history</h6>
+                            <span class="meta" id="salMetaCount">${salaries.length}</span>
+                        </div>
+                        <div class="fin-filter-bar">
+                            <input type="search" class="form-control fin-q" id="salFilterQ" placeholder="Search employee or period…">
+                        </div>
+                        <div class="table-responsive intl-table-wrap" style="max-height:560px;overflow:auto;">
+                            <table class="table table-sm mb-0 align-middle" style="min-width:680px;width:100%;">
+                                <thead style="position:sticky;top:0;z-index:2;">
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Period</th>
+                                        <th class="text-end">Gross</th>
+                                        <th class="text-end">Shortage</th>
+                                        <th class="text-end">Advance</th>
+                                        <th class="text-end">Other</th>
+                                        <th class="text-end">Net</th>
+                                        <th class="text-end"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salLedgerBody">${salaryHistoryRowsHtml(sortedSalaries)}</tbody>
+                            </table>
+                        </div>
+                        <div class="fin-ledger-foot">
+                            <span>Showing <strong id="salFootCount">${sortedSalaries.length}</strong></span>
+                            <span>Net total <strong id="salFootTotal">${formatMoney(sortedSalaries.reduce((s,x)=>s+(Number(x.net_pay)||0),0))}</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
     document.getElementById('pageContent').innerHTML = html;
+
+    // Filter salary history
+    (function() {
+        const input = document.getElementById('salFilterQ');
+        if (!input) return;
+        input.addEventListener('input', function() {
+            const q = (this.value || '').toLowerCase().trim();
+            const filtered = !q ? sortedSalaries : sortedSalaries.filter(s => {
+                const emp = allUsers.find(u => u.id === s.employee_id);
+                const name = emp ? (emp.name || emp.username || '') : '';
+                return name.toLowerCase().includes(q) || String(s.period || '').toLowerCase().includes(q);
+            });
+            const body = document.getElementById('salLedgerBody');
+            if (body) body.innerHTML = salaryHistoryRowsHtml(filtered);
+            const c = document.getElementById('salFootCount');
+            const t = document.getElementById('salFootTotal');
+            const m = document.getElementById('salMetaCount');
+            if (c) c.textContent = filtered.length;
+            if (t) t.textContent = formatMoney(filtered.reduce((s,x)=>s+(Number(x.net_pay)||0),0));
+            if (m) m.textContent = filtered.length;
+            // Re-bind action buttons after filter
+            if (typeof bindSalaryRowActions === 'function') bindSalaryRowActions();
+        });
+    })();
+
+    // Balance hints
+    (function() {
+        function hint(selectId, hintId) {
+            const sel = document.getElementById(selectId);
+            const h = document.getElementById(hintId);
+            if (!sel || !h) return;
+            const run = () => {
+                const val = sel.value;
+                if (!val) { h.textContent = ''; h.className = 'fin-bal-hint empty'; return; }
+                let bal = null;
+                if (val === 'petty_cash' || val === 'cash_till') {
+                    try {
+                        const st = (document.getElementById('salaryStation') || {}).value || state.currentStationId;
+                        const id = resolveAccountRefId(val, st);
+                        const acc = bankAccounts.find(a => String(a.id) === String(id));
+                        bal = acc ? Number(acc.balance) || 0 : 0;
+                    } catch (_) { bal = 0; }
+                } else {
+                    const acc = bankAccounts.find(a => String(a.id) === String(val));
+                    bal = acc ? Number(acc.balance) || 0 : null;
+                }
+                if (bal == null) { h.textContent = ''; return; }
+                h.textContent = 'Balance: ' + formatMoney(bal);
+                h.className = 'fin-bal-hint' + (bal <= 0 ? ' warn' : '');
+            };
+            sel.addEventListener('change', run);
+            run();
+        }
+        hint('salarySource', 'salarySourceBal');
+        hint('advSource', 'advSourceBal');
+    })();
+
+    const payExp = document.getElementById('payrollExportBtn');
+    if (payExp) {
+        payExp.onclick = function() {
+            const headers = ['Employee', 'Period', 'Station', 'Gross', 'Shortage', 'Advance', 'Other', 'Net', 'Status'];
+            const rows = sortedSalaries.map(s => {
+                const emp = allUsers.find(u => u.id === s.employee_id);
+                return [
+                    emp ? (emp.name || emp.username) : 'Unknown',
+                    s.period || '',
+                    s.station_id ? stationName(s.station_id) : '',
+                    Number(s.gross_pay) || 0,
+                    Number(s.deducted_shortage) || 0,
+                    Number(s.deducted_advance) || 0,
+                    Number(s.other_deductions) || 0,
+                    Number(s.net_pay) || 0,
+                    s.status || 'Posted'
+                ];
+            });
+            if (!rows.length) { toast('No payroll records', 'warning'); return; }
+            exportExcel(headers, rows, 'payroll_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            toast('Payroll exported', 'success');
+        };
+    }
 
     // ---- Form handlers ----
     const salaryEmployee = document.getElementById('salaryEmployee');
@@ -12157,17 +12479,23 @@ async function renderPayroll() {
         const base = parseFloat(document.getElementById('salaryBase').value) || 0;
         const bonus = parseFloat(document.getElementById('salaryBonus').value) || 0;
         const shortage = parseFloat(document.getElementById('salaryShortage').value) || 0;
-        const otherDed = parseFloat(document.getElementById('salaryOtherDeductions').value) || 0;
+        const otherEl = document.getElementById('salaryOtherDeductions');
+        const otherDed = parseFloat(otherEl && otherEl.value) || 0;
         const advanceDed = parseFloat(document.getElementById('salaryAdvanceDeduct')?.value) || 0;
         const gross = base + bonus;
-        const net = gross - shortage - otherDed - advanceDed;
-        document.getElementById('grossPayDisplay').textContent = formatMoney(gross);
-        document.getElementById('netPayDisplay').textContent = formatMoney(Math.max(0, net));
+        const net = Math.max(0, gross - shortage - otherDed - advanceDed);
+        const prev = document.getElementById('salaryNetPreview');
+        if (prev) prev.textContent = formatMoney(net) + (gross ? '  (gross ' + formatMoney(gross) + ')' : '');
+        const g = document.getElementById('grossPayDisplay');
+        const n = document.getElementById('netPayDisplay');
+        if (g) g.textContent = formatMoney(gross);
+        if (n) n.textContent = formatMoney(net);
         return { gross, net, shortage, otherDed, advanceDed };
     }
     document.getElementById('salaryBase').oninput = calculateNet;
     document.getElementById('salaryBonus').oninput = calculateNet;
-    document.getElementById('salaryOtherDeductions').oninput = calculateNet;
+    const otherDedEl = document.getElementById('salaryOtherDeductions');
+    if (otherDedEl) otherDedEl.oninput = calculateNet;
     const advDedInput = document.getElementById('salaryAdvanceDeduct');
     if (advDedInput) advDedInput.oninput = calculateNet;
     setTimeout(calculateNet, 100);
@@ -12296,37 +12624,43 @@ async function renderPayroll() {
         };
     }
 
-    document.querySelectorAll('.delete-salary-btn').forEach(btn => {
-        btn.onclick = async function() {
-            const id = this.dataset.id;
-            if (!confirm('Delete this salary record?')) return;
-            try { await deleteDoc('salaries', id);
-                toast('Salary record deleted');
-                renderPayroll(); } catch (err) { toast('Error: ' + err.message, 'danger'); }
-        };
-    });
-
-    document.querySelectorAll('.view-voucher-btn').forEach(btn => {
-        btn.onclick = async function() {
-            const id = this.dataset.id;
-            const doc = await getDoc('salaries', id);
-            if (!doc) { toast('Salary record not found', 'danger'); return; }
-            const company = await getCompany(state.user.companyId);
-            const voucherData = {
-                id: id,
-                employee: doc.employee_name || 'Unknown',
-                period: doc.period || '—',
-                gross: doc.gross_pay || 0,
-                shortage: doc.deducted_shortage || 0,
-                advance: doc.deducted_advance || 0,
-                otherDeductions: doc.other_deductions || 0,
-                net: doc.net_pay || 0,
-                date: doc.paid_date ? formatDate(doc.paid_date) : new Date().toLocaleDateString('en-GB'),
-                company: company
+    function bindSalaryRowActions() {
+        document.querySelectorAll('.delete-salary-btn').forEach(btn => {
+            if (btn._bound) return;
+            btn._bound = true;
+            btn.onclick = async function() {
+                const id = this.dataset.id;
+                if (!confirm('Delete this salary record?')) return;
+                try { await deleteDoc('salaries', id);
+                    toast('Salary record deleted');
+                    renderPayroll(); } catch (err) { toast('Error: ' + err.message, 'danger'); }
             };
-            showVoucher(voucherData);
-        };
-    });
+        });
+        document.querySelectorAll('.view-voucher-btn').forEach(btn => {
+            if (btn._bound) return;
+            btn._bound = true;
+            btn.onclick = async function() {
+                const id = this.dataset.id;
+                const doc = await getDoc('salaries', id);
+                if (!doc) { toast('Salary record not found', 'danger'); return; }
+                const company = await getCompany(state.user.companyId);
+                const voucherData = {
+                    id: id,
+                    employee: doc.employee_name || 'Unknown',
+                    period: doc.period || '—',
+                    gross: doc.gross_pay || 0,
+                    shortage: doc.deducted_shortage || 0,
+                    advance: doc.deducted_advance || 0,
+                    otherDeductions: doc.other_deductions || 0,
+                    net: doc.net_pay || 0,
+                    date: doc.paid_date ? formatDate(doc.paid_date) : new Date().toLocaleDateString('en-GB'),
+                    company: company
+                };
+                showVoucher(voucherData);
+            };
+        });
+    }
+    bindSalaryRowActions();
 }
 
 // ---- Voucher modal (shared) ----
