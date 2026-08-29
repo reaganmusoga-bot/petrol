@@ -931,6 +931,35 @@
         [data-theme="dark"] .intl-form .form-check { background: #1a1a1a; border-color: #333; }
         [data-theme="dark"] .intl-form .form-label { color: #cbd5e1 !important; }
 
+        .fin-filter-bar {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            margin-bottom: 10px; padding: 8px 10px;
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+        }
+        .fin-filter-bar .form-control, .fin-filter-bar .form-select {
+            min-height: 34px !important; height: 34px !important;
+            font-size: 0.8rem !important; padding: 4px 10px !important;
+            border-radius: 8px !important; border: 1px solid #e2e8f0 !important;
+            background: #fff !important; max-width: 100%;
+        }
+        .fin-filter-bar .fin-q { flex: 1 1 140px; min-width: 120px; }
+        .fin-filter-bar .fin-d { flex: 0 0 130px; width: 130px; }
+        .fin-ledger-foot {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            gap: 8px; padding: 10px 4px 2px; font-size: 0.8rem; color: #64748b;
+            border-top: 1px solid #f1f5f9; margin-top: 8px;
+        }
+        .fin-ledger-foot strong { color: #0f172a; font-variant-numeric: tabular-nums; }
+        .fin-bal-hint {
+            font-size: 0.75rem; font-weight: 600; color: #059669;
+            margin-top: 4px; min-height: 1.1em;
+        }
+        .fin-bal-hint.warn { color: #d97706; }
+        .fin-bal-hint.empty { color: #94a3b8; font-weight: 500; }
+        [data-theme="dark"] .fin-filter-bar { background: #1a1a1a; border-color: #333; }
+        [data-theme="dark"] .fin-ledger-foot strong { color: #e0e0e0; }
+
+
         .fin-ledger-card {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 14px; padding: 16px 16px 12px; box-shadow: var(--shadow);
@@ -7629,7 +7658,7 @@ async function renderFinancials() {
             }
             return (a.bank_name || '').localeCompare(b.bank_name || '');
         });
-        let accountOptions = '<option value="">Select Account</option><option value="petty_cash">💰 Petty Cash (this station)</option>';
+        let accountOptions = '<option value="">Select account</option><option value="petty_cash">💰 Petty Cash (this station)</option>';
         sortedAccounts.forEach(a => {
             if (a.is_system && a.system_kind === 'petty_cash') return; // use alias
             const st = (a.company_wide || !a.station_id) ? ' · All stations' : (' · ' + stationName(a.station_id));
@@ -7644,12 +7673,12 @@ async function renderFinancials() {
             depositSourceOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)}${esc(st)}</option>`;
         });
 
-        let supplierOptions = '<option value="">— Select Supplier —</option>';
+        let supplierOptions = '<option value="">Select supplier</option>';
         suppliers.forEach(s => {
             supplierOptions += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
         });
 
-        let customerOptions = '<option value="">— Select Customer —</option>';
+        let customerOptions = '<option value="">Select customer</option>';
         customers.forEach(c => {
             customerOptions += `<option value="${esc(c.id)}">${esc(c.name)}</option>`;
         });
@@ -7666,7 +7695,7 @@ async function renderFinancials() {
         const today = new Date().toISOString().slice(0, 10);
 
         function stationSelectHtml(selectedId, extraClass) {
-            let opts = `<option value="">— Station —</option>`;
+            let opts = `<option value="">Select station</option>`;
             (state.stations || []).forEach(s => {
                 const sel = String(s.id) === String(selectedId || '') ? ' selected' : '';
                 opts += `<option value="${esc(s.id)}"${sel}>${esc(s.name)}</option>`;
@@ -7815,20 +7844,77 @@ async function renderFinancials() {
             return html;
         }
 
-        function expenseRows() {
-            if (expenses.length === 0) {
-                return '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-receipt"></i>No expenses recorded yet</div></td></tr>';
+        const ledgerFilter = {
+            exp: { q: '', from: '', to: '' },
+            dep: { q: '', from: '', to: '' },
+            pay: { q: '', from: '', to: '' }
+        };
+
+        function finParseDate(x) {
+            const candidates = [x && x.expense_date, x && x.payment_date, x && x.date, x && x.sale_date, x && x.created_at, x && x.timestamp];
+            for (const c of candidates) {
+                if (c == null || c === '') continue;
+                let dt = null;
+                if (typeof c.toDate === 'function') dt = c.toDate();
+                else if (c.seconds != null) dt = new Date(Number(c.seconds) * 1000);
+                else if (typeof c === 'string' && /^\d{4}-\d{2}-\d{2}/.test(c)) {
+                    const p = c.slice(0, 10).split('-').map(Number);
+                    dt = new Date(p[0], p[1] - 1, p[2], 12, 0, 0, 0);
+                } else dt = new Date(c);
+                if (dt && !isNaN(dt.getTime())) return dt;
             }
-            const sorted = [...expenses].sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
+            return null;
+        }
+        function finMatchFilter(item, f, textBlob) {
+            if (f.from) {
+                const dt = finParseDate(item);
+                if (!dt || dt < new Date(f.from + 'T00:00:00')) return false;
+            }
+            if (f.to) {
+                const dt = finParseDate(item);
+                if (!dt || dt > new Date(f.to + 'T23:59:59')) return false;
+            }
+            if (f.q) {
+                const q = f.q.toLowerCase().trim();
+                if (q && !(textBlob || '').toLowerCase().includes(q)) return false;
+            }
+            return true;
+        }
+        function resolveAccountLabel(source) {
+            if (source === 'petty_cash') return 'Petty Cash';
+            if (source === 'cash_till') return 'Cash Till';
+            const acc = accounts.find(a => String(a.id) === String(source));
+            if (acc) return acc.account_name || acc.bank_name || 'Account';
+            return source ? String(source) : 'Unknown';
+        }
+        function resolveAccountBalance(source, stationId) {
+            if (!source) return null;
+            if (source === 'petty_cash' || source === 'cash_till') {
+                try {
+                    const id = resolveAccountRefId(source, stationId || state.currentStationId);
+                    const acc = accounts.find(a => String(a.id) === String(id)) || accounts.find(a => a.system_kind === source && (!stationId || String(a.station_id) === String(stationId)));
+                    return acc ? Number(acc.balance) || 0 : 0;
+                } catch (_) { return 0; }
+            }
+            const acc = accounts.find(a => String(a.id) === String(source));
+            return acc ? Number(acc.balance) || 0 : null;
+        }
+
+        function filteredExpenses() {
+            return [...expenses].filter(e => {
+                if (e.status === 'reversed' || e.reversed === true) return true; // still show
+                const associate = (e.person_name || '') + ' ' + (e.description || '') + ' ' + resolveAccountLabel(e.source_account) + ' ' + (e.station_id ? stationName(e.station_id) : '') + ' ' + (e.category || '');
+                return finMatchFilter(e, ledgerFilter.exp, associate);
+            }).sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
+        }
+        function expenseRows() {
+            const list = filteredExpenses();
+            if (list.length === 0) {
+                return '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-receipt"></i>No expenses match your filters</div></td></tr>';
+            }
             let rows = '';
-            sorted.forEach((e, idx) => {
-                let sourceLabel = 'Unknown';
-                if (e.source_account === 'petty_cash' || e.source_account === 'cash_till') {
-                    sourceLabel = e.source_account === 'petty_cash' ? 'Petty Cash' : 'Cash Till';
-                } else {
-                    const acc = accounts.find(a => a.id === e.source_account);
-                    if (acc) sourceLabel = acc.account_name || acc.bank_name || 'Account';
-                }
+            list.forEach((e, idx) => {
+                const sourceLabel = resolveAccountLabel(e.source_account);
                 let associate = (e.person_name || '').trim();
                 if (!associate && e.person_id) {
                     const u = (state.allUsers || allUsers || []).find(x => String(x.id) === String(e.person_id));
@@ -7858,33 +7944,44 @@ async function renderFinancials() {
             });
             return rows;
         }
+        function expenseLedgerStats() {
+            const list = filteredExpenses();
+            const total = list.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+            return { count: list.length, total };
+        }
 
+        function filteredDeposits() {
+            return [...bankings].filter(b => {
+                let depositor = (b.depositor || b.cashier_name || b.cashier || b.created_by_name || '').trim();
+                const acc = accounts.find(a => a.id === b.bank_account_id);
+                const acctLabel = acc ? ((acc.account_name || acc.bank_name || '') + ' ' + (acc.account_number || '')) : '';
+                const blob = depositor + ' ' + acctLabel + ' ' + (b.description || '') + ' ' + (b.status || '');
+                return finMatchFilter(b, ledgerFilter.dep, blob);
+            }).sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
+        }
         function transferRows() {
-            if (bankings.length === 0) {
-                return '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-arrow-left-right"></i>No deposits recorded yet</div></td></tr>';
+            const list = filteredDeposits();
+            if (list.length === 0) {
+                return '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-arrow-left-right"></i>No deposits match your filters</div></td></tr>';
             }
-            const sorted = [...bankings].sort((a, b) =>
-                tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date)
-            );
             let rows = '';
-            sorted.forEach((b, idx) => {
+            list.forEach((b, idx) => {
                 const acc = accounts.find(a => a.id === b.bank_account_id);
                 const acctLabel = acc
                     ? ((acc.account_name || acc.bank_name || 'Account') + (acc.account_number ? ' · ' + acc.account_number : ''))
                     : '—';
                 let depositor = (b.depositor || b.cashier_name || b.cashier || b.created_by_name || '').trim();
                 if (!depositor && b.source_type === 'sale') depositor = b.cashier_name || 'Cashier';
-                if (!depositor && (b.description || '').toLowerCase().includes('sale')) {
-                    depositor = b.cashier_name || b.cashier || 'Cashier';
-                }
                 if (!depositor) depositor = '—';
                 const isReversed = b.status === 'reversed' || b.reversed === true || b.status === 'reversal';
+                const revWhen = isReversed ? formatDate(b.reversed_at || b.updated_at || b.created_at) : '';
+                const revBy = isReversed ? (b.reversed_by_name || b.reversed_by || '') : '';
                 const statusBadge = isReversed
-                    ? '<span class="intl-chip" style="background:#e2e8f0;color:#64748b;">Reversed</span>'
+                    ? `<span class="intl-chip" style="background:#e2e8f0;color:#64748b;" title="${esc((revBy ? revBy + ' · ' : '') + revWhen)}">Reversed${revWhen ? ' · ' + esc(revWhen) : ''}</span>`
                     : '<span class="intl-chip pay">Posted</span>';
                 const rowBg = isReversed ? '#f1f5f9' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
                 const initials = String(depositor).trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || '—';
-                rows += `<tr style="background:${rowBg};${isReversed ? 'opacity:0.7;' : ''}">
+                rows += `<tr style="background:${rowBg};${isReversed ? 'opacity:0.75;' : ''}">
                         <td>
                             <div class="d-flex align-items-center gap-2">
                                 <span class="intl-avatar" style="width:28px;height:28px;font-size:0.65rem;border-radius:8px;">${esc(initials)}</span>
@@ -7899,34 +7996,38 @@ async function renderFinancials() {
             });
             return rows;
         }
+        function depositLedgerStats() {
+            const list = filteredDeposits().filter(b => !(b.status === 'reversed' || b.reversed === true || b.status === 'reversal'));
+            const total = list.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+            return { count: filteredDeposits().length, total, activeCount: list.length };
+        }
 
+        function filteredPayments() {
+            return [...(supplierPayments || [])].filter(p => {
+                const sup = suppliers.find(s => String(s.id) === String(p.supplier_id));
+                const supName = sup ? sup.name : (p.supplier_name || '');
+                const blob = supName + ' ' + (p.reference || '') + ' ' + (p.note || '') + ' ' + resolveAccountLabel(p.source_account);
+                return finMatchFilter(p, ledgerFilter.pay, blob);
+            }).sort((a, b) => tsMillis(b.created_at || b.payment_date) - tsMillis(a.created_at || a.payment_date));
+        }
         function paymentRows() {
-            if (!supplierPayments || supplierPayments.length === 0) {
-                return '<tr><td colspan="7"><div class="intl-empty"><i class="bi bi-cash-stack"></i>No supplier payments yet</div></td></tr>';
+            const list = filteredPayments();
+            if (list.length === 0) {
+                return '<tr><td colspan="7"><div class="intl-empty"><i class="bi bi-cash-stack"></i>No payments match your filters</div></td></tr>';
             }
-            const sorted = [...supplierPayments].sort((a, b) =>
-                tsMillis(b.created_at || b.payment_date) - tsMillis(a.created_at || a.payment_date)
-            );
             let rows = '';
-            sorted.forEach((p, idx) => {
+            list.forEach((p, idx) => {
                 const sup = suppliers.find(s => String(s.id) === String(p.supplier_id));
                 const supName = sup ? sup.name : (p.supplier_name || 'Unknown');
                 const isRev = p.status === 'reversed' || p.reversed === true;
                 const isPre = !!p.is_prepayment;
+                const revWhen = isRev ? formatDate(p.reversed_at || p.updated_at || p.created_at) : '';
                 const typeBadge = isRev
-                    ? '<span class="intl-chip" style="background:#e2e8f0;color:#64748b;">Reversed</span>'
-                    : (isPre
-                        ? '<span class="intl-chip forgive">Prepay</span>'
-                        : '<span class="intl-chip pay">Payment</span>');
-                let sourceLabel = '—';
-                if (p.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
-                else if (p.source_account === 'cash_till') sourceLabel = 'Cash Till';
-                else {
-                    const acc = accounts.find(a => String(a.id) === String(p.source_account));
-                    if (acc) sourceLabel = acc.account_name || acc.bank_name || 'Account';
-                }
+                    ? `<span class="intl-chip" style="background:#e2e8f0;color:#64748b;" title="${esc(revWhen)}">Reversed${revWhen ? ' · ' + esc(revWhen) : ''}</span>`
+                    : (isPre ? '<span class="intl-chip forgive">Prepay</span>' : '<span class="intl-chip pay">Payment</span>');
+                const sourceLabel = resolveAccountLabel(p.source_account);
                 const rowBg = isRev ? '#f1f5f9' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
-                rows += `<tr style="background:${rowBg};${isRev ? 'opacity:0.7;' : ''}">
+                rows += `<tr style="background:${rowBg};${isRev ? 'opacity:0.75;' : ''}">
                         <td><div class="fw-semibold text-truncate" style="max-width:140px;" title="${esc(supName)}">${esc(supName)}</div></td>
                         <td>${typeBadge}</td>
                         <td class="small text-muted text-truncate" style="max-width:110px;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</td>
@@ -7939,6 +8040,11 @@ async function renderFinancials() {
                     </tr>`;
             });
             return rows;
+        }
+        function paymentLedgerStats() {
+            const list = filteredPayments().filter(p => !(p.status === 'reversed' || p.reversed === true));
+            const total = list.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+            return { count: filteredPayments().length, total, activeCount: list.length };
         }
 
         function creditLimitRows() {
@@ -8053,7 +8159,12 @@ async function renderFinancials() {
                             <h4><i class="bi bi-wallet2"></i> Financials</h4>
                             <div class="fin-sub">Liquidity, expenses, transfers & payables · live balances</div>
                         </div>
-                        <span class="fin-period-chip"><i class="bi bi-calendar3"></i> This month · ${finMonthLabel}</span>
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="fin-period-chip"><i class="bi bi-calendar3"></i> This month · ${finMonthLabel}</span>
+                            <button type="button" class="btn btn-sm btn-light" id="finPrintStatementBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
+                                <i class="bi bi-printer"></i> Print statement
+                            </button>
+                        </div>
                     </div>
                     <div class="fin-kpi-row">
                         <div class="fin-kpi">
@@ -8184,14 +8295,14 @@ async function renderFinancials() {
                                             <div class="form-field">
                                                 <label class="form-label" for="expStation">Station *</label>
                                                 <select id="expStation" class="form-select" required>
-                                                    <option value="">— Select station —</option>
+                                                    <option value="" disabled selected>Select station</option>
                                                     ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
                                                 </select>
                                             </div>
                                             <div class="form-field">
                                                 <label class="form-label" for="expSource">Source account *</label>
                                                 <select id="expSource" class="form-select" required>
-                                                    <option value="">— Select station first —</option>
+                                                    <option value="" disabled selected>Select station first</option>
                                                 </select>
                                                 <div class="form-hint">Only accounts for the selected station</div>
                                             </div>
@@ -8201,12 +8312,12 @@ async function renderFinancials() {
                                             <div class="form-field">
                                                 <label class="form-label" for="expPerson">Associate</label>
                                                 <select id="expPerson" class="form-select">
-                                                    <option value="">— Select person —</option>${userOpts}
+                                                    <option value="">Select person</option>${userOpts}
                                                 </select>
                                             </div>
                                             <div class="form-field">
                                                 <label class="form-label" for="expDesc">Description *</label>
-                                                <input id="expDesc" class="form-control" placeholder="What was paid for" required>
+                                                <input id="expDesc" class="form-control" placeholder="e.g. Generator fuel" required>
                                             </div>
                                             <div class="form-row-2">
                                                 <div class="form-field">
@@ -8244,7 +8355,7 @@ async function renderFinancials() {
                                     <div class="intl-section-head">
                                         <h6><i class="bi bi-receipt text-danger"></i> Expenses</h6>
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
-                                            <span class="meta">${expenses.length} record${expenses.length === 1 ? '' : 's'}</span>
+                                            <span class="meta" id="expMetaCount">${expenses.length}</span>
                                             <button type="button" class="btn btn-sm btn-outline-success" id="exportExpensesExcelBtn" title="Download Excel">
                                                 <i class="bi bi-file-earmark-excel"></i> Excel
                                             </button>
@@ -8253,7 +8364,12 @@ async function renderFinancials() {
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;-webkit-overflow-scrolling:touch;">
+                                    <div class="fin-filter-bar">
+                                        <input type="search" class="form-control fin-q" id="expFilterQ" placeholder="Search description, associate, source…">
+                                        <input type="date" class="form-control fin-d" id="expFilterFrom" title="From">
+                                        <input type="date" class="form-control fin-d" id="expFilterTo" title="To">
+                                    </div>
+                                    <div class="table-responsive intl-table-wrap" style="max-height:380px;overflow:auto;-webkit-overflow-scrolling:touch;">
                                         <table class="table table-sm mb-0 align-middle" style="table-layout:fixed;width:100%;min-width:560px;">
                                             <thead style="position:sticky;top:0;z-index:2;">
                                                 <tr>
@@ -8264,8 +8380,12 @@ async function renderFinancials() {
                                                     <th style="width:16%;">Date</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>${expenseRows()}</tbody>
+                                            <tbody id="expLedgerBody">${expenseRows()}</tbody>
                                         </table>
+                                    </div>
+                                    <div class="fin-ledger-foot" id="expLedgerFoot">
+                                        <span>Showing <strong id="expFootCount">0</strong></span>
+                                        <span>Total <strong id="expFootTotal">—</strong></span>
                                     </div>
                                 </div>
                             </div>
@@ -8284,20 +8404,22 @@ async function renderFinancials() {
                                             <div class="form-field">
                                                 <label class="form-label" for="bfSource">From account *</label>
                                                 <select id="bfSource" class="form-select" required>${depositSourceOptions}</select>
+                                                <div class="fin-bal-hint empty" id="bfSourceBal"></div>
                                             </div>
                                             <div class="form-field">
                                                 <label class="form-label" for="bfAccount">To account *</label>
                                                 <select id="bfAccount" class="form-select" required>
-                                                    <option value="">Select bank account</option>
+                                                    <option value="" disabled selected>Select bank account</option>
                                                     ${accounts.map(a => `<option value="${a.id}">${esc(a.bank_name)} – ${esc(a.account_number)}</option>`).join('')}
                                                 </select>
+                                                <div class="fin-bal-hint empty" id="bfAccountBal"></div>
                                             </div>
                                         </div>
                                         <div class="form-section">
                                             <div class="form-section-title">Deposit</div>
                                             <div class="form-field">
                                                 <label class="form-label" for="bfDepositor">Depositor *</label>
-                                                <input id="bfDepositor" class="form-control" placeholder="Who is depositing" required>
+                                                <input id="bfDepositor" class="form-control" placeholder="e.g. John Mukasa" required>
                                             </div>
                                             <div class="form-row-2">
                                                 <div class="form-field">
@@ -8322,9 +8444,14 @@ async function renderFinancials() {
                                 <div class="fin-ledger-card">
                                     <div class="intl-section-head">
                                         <h6><i class="bi bi-arrow-left-right text-success"></i> Deposit History</h6>
-                                        <span class="meta">${bankings.length}</span>
+                                        <span class="meta" id="depMetaCount">${bankings.length}</span>
                                     </div>
-                                    <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;">
+                                    <div class="fin-filter-bar">
+                                        <input type="search" class="form-control fin-q" id="depFilterQ" placeholder="Search depositor, account…">
+                                        <input type="date" class="form-control fin-d" id="depFilterFrom" title="From">
+                                        <input type="date" class="form-control fin-d" id="depFilterTo" title="To">
+                                    </div>
+                                    <div class="table-responsive intl-table-wrap" style="max-height:380px;overflow:auto;">
                                         <table class="table table-sm mb-0 align-middle" style="min-width:520px;width:100%;">
                                             <thead style="position:sticky;top:0;z-index:2;">
                                                 <tr>
@@ -8335,8 +8462,12 @@ async function renderFinancials() {
                                                     <th>Status</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>${transferRows()}</tbody>
+                                            <tbody id="depLedgerBody">${transferRows()}</tbody>
                                         </table>
+                                    </div>
+                                    <div class="fin-ledger-foot">
+                                        <span>Showing <strong id="depFootCount">0</strong></span>
+                                        <span>Posted total <strong id="depFootTotal">—</strong></span>
                                     </div>
                                 </div>
                             </div>
@@ -8360,13 +8491,14 @@ async function renderFinancials() {
                                             <div class="form-field">
                                                 <label class="form-label" for="payStation">Station</label>
                                                 <select id="payStation" class="form-select">
-                                                    <option value="">— Optional —</option>
+                                                    <option value="">Optional</option>
                                                     ${(state.stations || []).map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')}
                                                 </select>
                                             </div>
                                             <div class="form-field">
                                                 <label class="form-label" for="paySource">Pay from *</label>
                                                 <select id="paySource" class="form-select" required>${accountOptions}</select>
+                                                <div class="fin-bal-hint empty" id="paySourceBal"></div>
                                             </div>
                                         </div>
                                         <div class="form-section">
@@ -8383,7 +8515,7 @@ async function renderFinancials() {
                                             </div>
                                             <div class="form-field">
                                                 <label class="form-label" for="payReference">Reference</label>
-                                                <input id="payReference" class="form-control" placeholder="Invoice or receipt no.">
+                                                <input id="payReference" class="form-control" placeholder="e.g. INV-1042">
                                             </div>
                                             <div class="form-field">
                                                 <label class="form-label" for="payNote">Note</label>
@@ -8408,13 +8540,14 @@ async function renderFinancials() {
                                             <div class="form-field">
                                                 <label class="form-label" for="prepayStation">Station</label>
                                                 <select id="prepayStation" class="form-select">
-                                                    <option value="">— Optional —</option>
+                                                    <option value="">Optional</option>
                                                     ${(state.stations || []).map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')}
                                                 </select>
                                             </div>
                                             <div class="form-field">
                                                 <label class="form-label" for="prepaySource">Pay from *</label>
                                                 <select id="prepaySource" class="form-select" required>${accountOptions}</select>
+                                                <div class="fin-bal-hint empty" id="prepaySourceBal"></div>
                                             </div>
                                         </div>
                                         <div class="form-section">
@@ -8446,9 +8579,14 @@ async function renderFinancials() {
                         <div class="fin-ledger-card">
                             <div class="intl-section-head">
                                 <h6><i class="bi bi-clock-history"></i> Payment History</h6>
-                                <span class="meta">${supplierPayments.length}</span>
+                                <span class="meta" id="payMetaCount">${supplierPayments.length}</span>
                             </div>
-                            <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;">
+                            <div class="fin-filter-bar">
+                                <input type="search" class="form-control fin-q" id="payFilterQ" placeholder="Search supplier, reference…">
+                                <input type="date" class="form-control fin-d" id="payFilterFrom" title="From">
+                                <input type="date" class="form-control fin-d" id="payFilterTo" title="To">
+                            </div>
+                            <div class="table-responsive intl-table-wrap" style="max-height:380px;overflow:auto;">
                                 <table class="table table-sm mb-0 align-middle" style="min-width:640px;width:100%;">
                                     <thead style="position:sticky;top:0;z-index:2;">
                                         <tr>
@@ -8461,8 +8599,12 @@ async function renderFinancials() {
                                             <th class="text-end"></th>
                                         </tr>
                                     </thead>
-                                    <tbody>${paymentRows()}</tbody>
+                                    <tbody id="payLedgerBody">${paymentRows()}</tbody>
                                 </table>
+                            </div>
+                            <div class="fin-ledger-foot">
+                                <span>Showing <strong id="payFootCount">0</strong></span>
+                                <span>Active total <strong id="payFootTotal">—</strong></span>
                             </div>
                         </div>
                     </div>
@@ -8552,6 +8694,7 @@ async function renderFinancials() {
                                             <div class="form-field">
                                                 <label class="form-label" for="recSource">Source account *</label>
                                                 <select id="recSource" class="form-select" required>${accountOptions}</select>
+                                                <div class="fin-bal-hint empty" id="recSourceBal"></div>
                                             </div>
                                         </div>
                                         <div class="form-section">
@@ -8595,6 +8738,183 @@ async function renderFinancials() {
             </div>`;
 
         document.getElementById('pageContent').innerHTML = html;
+
+        // ---- Ledger filters, totals, balance hints, statement ----
+        function refreshExpLedger() {
+            const body = document.getElementById('expLedgerBody');
+            if (body) body.innerHTML = expenseRows();
+            const st = expenseLedgerStats();
+            const c = document.getElementById('expFootCount');
+            const t = document.getElementById('expFootTotal');
+            const m = document.getElementById('expMetaCount');
+            if (c) c.textContent = st.count;
+            if (t) t.textContent = formatMoney(st.total);
+            if (m) m.textContent = st.count;
+        }
+        function refreshDepLedger() {
+            const body = document.getElementById('depLedgerBody');
+            if (body) body.innerHTML = transferRows();
+            const st = depositLedgerStats();
+            const c = document.getElementById('depFootCount');
+            const t = document.getElementById('depFootTotal');
+            const m = document.getElementById('depMetaCount');
+            if (c) c.textContent = st.count;
+            if (t) t.textContent = formatMoney(st.total);
+            if (m) m.textContent = st.count;
+        }
+        function refreshPayLedger() {
+            const body = document.getElementById('payLedgerBody');
+            if (body) body.innerHTML = paymentRows();
+            const st = paymentLedgerStats();
+            const c = document.getElementById('payFootCount');
+            const t = document.getElementById('payFootTotal');
+            const m = document.getElementById('payMetaCount');
+            if (c) c.textContent = st.count;
+            if (t) t.textContent = formatMoney(st.total);
+            if (m) m.textContent = st.count;
+        }
+        function bindLedgerFilters() {
+            const map = [
+                ['expFilterQ', 'exp', 'q', refreshExpLedger],
+                ['expFilterFrom', 'exp', 'from', refreshExpLedger],
+                ['expFilterTo', 'exp', 'to', refreshExpLedger],
+                ['depFilterQ', 'dep', 'q', refreshDepLedger],
+                ['depFilterFrom', 'dep', 'from', refreshDepLedger],
+                ['depFilterTo', 'dep', 'to', refreshDepLedger],
+                ['payFilterQ', 'pay', 'q', refreshPayLedger],
+                ['payFilterFrom', 'pay', 'from', refreshPayLedger],
+                ['payFilterTo', 'pay', 'to', refreshPayLedger]
+            ];
+            map.forEach(([id, bucket, key, fn]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', function() {
+                    ledgerFilter[bucket][key] = this.value || '';
+                    fn();
+                });
+                el.addEventListener('change', function() {
+                    ledgerFilter[bucket][key] = this.value || '';
+                    fn();
+                });
+            });
+            refreshExpLedger();
+            refreshDepLedger();
+            refreshPayLedger();
+        }
+        function bindAccountBalanceHints() {
+            function updateHint(selectId, hintId, stationSelectId) {
+                const sel = document.getElementById(selectId);
+                const hint = document.getElementById(hintId);
+                if (!sel || !hint) return;
+                const run = () => {
+                    const val = sel.value;
+                    if (!val) {
+                        hint.textContent = '';
+                        hint.className = 'fin-bal-hint empty';
+                        return;
+                    }
+                    const stEl = stationSelectId ? document.getElementById(stationSelectId) : null;
+                    const sid = stEl ? stEl.value : state.currentStationId;
+                    const bal = resolveAccountBalance(val, sid);
+                    if (bal == null) {
+                        hint.textContent = '';
+                        hint.className = 'fin-bal-hint empty';
+                        return;
+                    }
+                    hint.textContent = 'Balance: ' + formatMoney(bal);
+                    hint.className = 'fin-bal-hint' + (bal <= 0 ? ' warn' : '');
+                };
+                sel.addEventListener('change', run);
+                if (stationSelectId) {
+                    const stEl = document.getElementById(stationSelectId);
+                    if (stEl) stEl.addEventListener('change', run);
+                }
+                run();
+            }
+            updateHint('expSource', 'expSourceBal', 'expStation');
+            updateHint('bfSource', 'bfSourceBal', null);
+            updateHint('bfAccount', 'bfAccountBal', null);
+            updateHint('paySource', 'paySourceBal', 'payStation');
+            updateHint('prepaySource', 'prepaySourceBal', 'prepayStation');
+            updateHint('recSource', 'recSourceBal', null);
+            // After expense station refreshes account list, re-run hint
+            const expSt = document.getElementById('expStation');
+            if (expSt) {
+                expSt.addEventListener('change', function() {
+                    setTimeout(() => {
+                        const h = document.getElementById('expSourceBal');
+                        const s = document.getElementById('expSource');
+                        if (h && s) s.dispatchEvent(new Event('change'));
+                    }, 50);
+                });
+            }
+        }
+        function bindPrintStatement() {
+            const btn = document.getElementById('finPrintStatementBtn');
+            if (!btn) return;
+            btn.onclick = function() {
+                const co = state.companyCache || {};
+                const monthName = finMonthLabel;
+                const stFilter = state.currentStationId;
+                const expList = expenses.filter(e => {
+                    if (e.status === 'reversed' || e.reversed === true) return false;
+                    if (stFilter && String(e.station_id) !== String(stFilter)) return false;
+                    return inFinMonth(e);
+                });
+                const depList = bankings.filter(b => {
+                    if (b.status === 'reversed' || b.reversed === true || b.status === 'reversal') return false;
+                    return inFinMonth(b);
+                });
+                const expTotal = expList.reduce((s, e) => s + (Number(e.amount) || 0), 0);
+                const depTotal = depList.reduce((s, b) => s + (Number(b.amount) || 0), 0);
+                let acctRows = '';
+                accounts.forEach(a => {
+                    if (stFilter && a.station_id && String(a.station_id) !== String(stFilter) && !a.company_wide) return;
+                    acctRows += `<tr><td>${esc(a.account_name || a.bank_name || '')}</td><td>${esc(a.account_number || '')}</td><td>${esc(a.station_id ? stationName(a.station_id) : 'All')}</td><td style="text-align:right">${formatMoney(a.balance)}</td></tr>`;
+                });
+                let expRowsHtml = '';
+                expList.slice(0, 80).forEach(e => {
+                    expRowsHtml += `<tr><td>${formatDate(e.expense_date || e.created_at)}</td><td>${esc(e.description || '')}</td><td>${esc(e.person_name || '')}</td><td style="text-align:right">${formatMoney(e.amount)}</td></tr>`;
+                });
+                const win = window.open('', '_blank', 'width=900,height=700');
+                if (!win) { toast('Please allow popups', 'warning'); return; }
+                win.document.write(`<!DOCTYPE html><html><head><title>Financial Statement — ${monthName}</title>
+                <style>
+                  body{font-family:Segoe UI,Arial,sans-serif;padding:28px;color:#0f172a;font-size:13px}
+                  h1{font-size:20px;margin:0 0 4px} h2{font-size:15px;margin:22px 0 8px;color:#1e3a5f}
+                  .muted{color:#64748b;font-size:12px} table{width:100%;border-collapse:collapse;margin-top:8px}
+                  th,td{padding:6px 8px;border-bottom:1px solid #e2e8f0;text-align:left}
+                  th{background:#f1f5f9;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+                  .kpi{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0}
+                  .kpi div{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;min-width:140px}
+                  .kpi strong{display:block;font-size:16px;margin-top:2px}
+                  @media print{.no-print{display:none}}
+                </style></head><body>
+                <h1>${esc(co.name || 'PetroManager')} — Financial Statement</h1>
+                <div class="muted">${monthName}${stFilter ? ' · ' + esc(stationName(stFilter)) : ' · All stations'} · Generated ${new Date().toLocaleString('en-GB')}</div>
+                <div class="kpi">
+                  <div>Liquidity<strong>${formatMoney(totalLiquidity)}</strong></div>
+                  <div>Deposits (MTD)<strong>${formatMoney(depTotal)}</strong></div>
+                  <div>Expenses (MTD)<strong>${formatMoney(expTotal)}</strong></div>
+                  <div>Payables<strong>${formatMoney(supplierPayables)}</strong></div>
+                </div>
+                <h2>Account balances</h2>
+                <table><thead><tr><th>Account</th><th>Number</th><th>Station</th><th style="text-align:right">Balance</th></tr></thead><tbody>${acctRows || '<tr><td colspan="4">No accounts</td></tr>'}</tbody></table>
+                <h2>Expenses this month</h2>
+                <table><thead><tr><th>Date</th><th>Description</th><th>Associate</th><th style="text-align:right">Amount</th></tr></thead><tbody>${expRowsHtml || '<tr><td colspan="4">None</td></tr>'}</tbody></table>
+                <p class="muted" style="margin-top:24px">PetroManager Pro · Confidential</p>
+                <div class="no-print" style="margin-top:16px;text-align:center">
+                  <button onclick="window.print()" style="padding:10px 24px;background:#0f172a;color:#fff;border:none;border-radius:8px;cursor:pointer">Print / Save PDF</button>
+                </div>
+                <script>setTimeout(function(){window.print()},600)<\/script>
+                </body></html>`);
+                win.document.close();
+            };
+        }
+        bindLedgerFilters();
+        bindAccountBalanceHints();
+        bindPrintStatement();
+
 
         // ---- Tab switching ----
         const tabs = document.querySelectorAll('#financeTabs .nav-link');
@@ -9007,9 +9327,9 @@ async function renderFinancials() {
         });
 
         function buildExpenseAccountOptions(stationId) {
-            if (!stationId) return '<option value="">— Select station first —</option>';
+            if (!stationId) return '<option value="">Select station first</option>';
             const sid = String(stationId);
-            let html = '<option value="">— Select account —</option>';
+            let html = '<option value="">Select account</option>';
             html += `<option value="petty_cash">💰 Petty Cash · ${esc(stationName(sid))}</option>`;
             html += `<option value="cash_till">💵 Cash Till · ${esc(stationName(sid))}</option>`;
             (accounts || []).forEach(a => {
@@ -9033,7 +9353,7 @@ async function renderFinancials() {
 
 
         function buildExpenseExportRows() {
-            const sorted = [...expenses].sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
+            const sorted = filteredExpenses();
             return sorted.map(e => {
                 let sourceLabel = 'Unknown';
                 if (e.source_account === 'petty_cash' || e.source_account === 'cash_till') {
@@ -9216,10 +9536,14 @@ async function renderFinancials() {
         }
 
         
-        // ---- Reverse supplier payment / prepayment ----
-        document.querySelectorAll('.reverse-supplier-pay-btn').forEach(btn => {
-            btn.onclick = async function() {
-                const id = this.dataset.id;
+        // ---- Reverse supplier payment / prepayment (event delegation — survives filter re-render) ----
+        const payLedgerBodyEl = document.getElementById('payLedgerBody');
+        if (payLedgerBodyEl && !payLedgerBodyEl._reverseBound) {
+            payLedgerBodyEl._reverseBound = true;
+            payLedgerBodyEl.addEventListener('click', async function(ev) {
+                const btn = ev.target.closest('.reverse-supplier-pay-btn');
+                if (!btn) return;
+                const id = btn.dataset.id;
                 if (!confirm('Reverse this supplier payment?\n\n• Supplier balance will be restored\n• Bank / cash account will be credited\n• Payment stays in history as Reversed')) return;
                 try {
                     showLoading(true);
@@ -9246,8 +9570,8 @@ async function renderFinancials() {
                     renderFinancials();
                 } catch (err) { toast('Error: ' + err.message, 'danger'); }
                 finally { showLoading(false); }
-            };
-        });
+            });
+        }
 
         document.getElementById('creditForm').onsubmit = async function(e) {
             e.preventDefault();
