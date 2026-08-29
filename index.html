@@ -5545,7 +5545,15 @@ async function renderShortageRecovery() {
                 <div class="card-box mb-3">
                     <div class="intl-section-head">
                         <h5><i class="bi bi-people-fill" style="color:#dc2626;"></i> Outstanding Shortages</h5>
-                        <span class="meta">${outstandingList.length} cashier${outstandingList.length === 1 ? '' : 's'}</span>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="meta">${outstandingList.length} cashier${outstandingList.length === 1 ? '' : 's'}</span>
+                            <button type="button" class="btn btn-sm btn-outline-success" id="exportShortageExcelBtn" title="Download Excel">
+                                <i class="bi bi-file-earmark-excel"></i> Excel
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="exportShortageCsvBtn" title="Download CSV">
+                                <i class="bi bi-download"></i> CSV
+                            </button>
+                        </div>
                     </div>
                     <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;-webkit-overflow-scrolling:touch;">
                         <table class="table table-sm mb-0 align-middle" style="min-width:520px;width:100%;">
@@ -5588,6 +5596,34 @@ async function renderShortageRecovery() {
         </div>
     `;
     document.getElementById('pageContent').innerHTML = html;
+
+    // Export outstanding shortages
+    (function bindShortageExport() {
+        const headers = ['Cashier', 'Station', 'Paid', 'Forgiven', 'Total'];
+        const rows = outstandingList.map(({ u }) => {
+            const total = shortageByCashier[u.id] || 0;
+            const paid = paidRecovered[u.id] || 0;
+            const forg = forgivenAmt[u.id] || 0;
+            const stLabel = u.station_id ? stationName(u.station_id) : '—';
+            return [u.name || u.username || '', stLabel, paid, forg, total];
+        });
+        const excelBtn = document.getElementById('exportShortageExcelBtn');
+        if (excelBtn) {
+            excelBtn.onclick = function() {
+                if (!rows.length) { toast('No outstanding shortages to export', 'warning'); return; }
+                exportExcel(headers, rows, 'outstanding_shortages_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+                toast('Outstanding shortages exported to Excel', 'success');
+            };
+        }
+        const csvBtn = document.getElementById('exportShortageCsvBtn');
+        if (csvBtn) {
+            csvBtn.onclick = function() {
+                if (!rows.length) { toast('No outstanding shortages to export', 'warning'); return; }
+                exportCSV(headers, rows, 'outstanding_shortages_' + new Date().toISOString().slice(0, 10) + '.csv');
+                toast('Outstanding shortages exported to CSV', 'success');
+            };
+        }
+    })();
 
     function updateRemainingHint(selectId, hintId, amountId) {
         const sel = document.getElementById(selectId);
@@ -7622,16 +7658,8 @@ async function renderFinancials() {
 
         function expenseRows() {
             if (expenses.length === 0) {
-                return '<tr><td colspan="6"><div class="intl-empty"><i class="bi bi-receipt"></i>No expenses recorded yet</div></td></tr>';
+                return '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-receipt"></i>No expenses recorded yet</div></td></tr>';
             }
-            const catMeta = {
-                operations: { label: 'Operations', cls: 'operations' },
-                utilities: { label: 'Utilities', cls: 'utilities' },
-                maintenance: { label: 'Maintenance', cls: 'maintenance' },
-                petty_cash: { label: 'Petty Cash', cls: 'petty_cash' },
-                vendor_payment: { label: 'Vendor', cls: 'vendor_payment' },
-                other: { label: 'Other', cls: 'other' }
-            };
             const sorted = [...expenses].sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
             let rows = '';
             sorted.forEach((e, idx) => {
@@ -7642,27 +7670,31 @@ async function renderFinancials() {
                     const acc = accounts.find(a => a.id === e.source_account);
                     if (acc) sourceLabel = acc.account_name || acc.bank_name || 'Account';
                 }
-                const person = e.person_name || (e.person_id ? (state.allUsers.find(u => u.id === e.person_id) || {}).name : '') || '';
-                const catKey = (e.category || 'other').toString();
-                const meta = catMeta[catKey] || { label: catKey.replace(/_/g, ' '), cls: 'default' };
+                let associate = (e.person_name || '').trim();
+                if (!associate && e.person_id) {
+                    const u = (state.allUsers || allUsers || []).find(x => String(x.id) === String(e.person_id));
+                    if (u) associate = u.name || u.username || '';
+                }
+                if (!associate) associate = '—';
                 const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
                 const stName = e.station_id ? stationName(e.station_id) : '';
                 const desc = e.description || '—';
                 rows += `<tr style="background:${rowBg};">
-                        <td style="width:16%;">
-                            <div class="fw-semibold text-truncate" style="max-width:110px;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</div>
-                            ${stName ? `<div class="small text-muted text-truncate" style="max-width:110px;" title="${esc(stName)}">${esc(stName)}</div>` : ''}
+                        <td style="width:18%;">
+                            <div class="fw-semibold text-truncate" style="max-width:120px;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</div>
+                            ${stName ? `<div class="small text-muted text-truncate" style="max-width:120px;" title="${esc(stName)}">${esc(stName)}</div>` : ''}
                         </td>
-                        <td style="width:22%;">
-                            <div class="text-truncate" style="max-width:140px;font-size:0.8rem;" title="${esc(desc)}">${esc(desc)}</div>
-                            ${person ? `<div class="small text-muted text-truncate" style="max-width:140px;"><i class="bi bi-person"></i> ${esc(person)}</div>` : ''}
+                        <td style="width:28%;">
+                            <div class="text-truncate" style="max-width:180px;font-size:0.8rem;" title="${esc(desc)}">${esc(desc)}</div>
                         </td>
-                        <td style="width:14%;"><span class="intl-cat ${meta.cls}">${esc(meta.label)}</span></td>
+                        <td style="width:20%;">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="intl-avatar" style="width:28px;height:28px;font-size:0.65rem;border-radius:8px;">${esc(String(associate).trim().split(/\s+/).map(p => p[0]).slice(0,2).join('').toUpperCase() || '—')}</span>
+                                <span class="fw-semibold text-truncate" style="max-width:120px;" title="${esc(associate)}">${esc(associate)}</span>
+                            </div>
+                        </td>
                         <td class="text-end text-nowrap" style="width:18%;"><span class="amt amt-out">${formatMoney(e.amount)}</span></td>
-                        <td class="text-nowrap small text-muted" style="width:12%;">${formatDate(e.expense_date || e.date || e.created_at)}</td>
-                        <td class="text-end" style="width:8%;">
-                            ${e.is_recurring || e.recurring ? '<span class="intl-chip forgive" title="Recurring"><i class="bi bi-arrow-repeat"></i></span>' : ''}
-                        </td>
+                        <td class="text-nowrap small text-muted" style="width:16%;">${formatDate(e.expense_date || e.date || e.created_at)}</td>
                     </tr>`;
             });
             return rows;
@@ -7926,12 +7958,11 @@ async function renderFinancials() {
                                         <table class="table table-sm mb-0 align-middle" style="table-layout:fixed;width:100%;min-width:560px;">
                                             <thead style="position:sticky;top:0;z-index:2;">
                                                 <tr>
-                                                    <th style="width:16%;">Source</th>
-                                                    <th style="width:22%;">Description</th>
-                                                    <th style="width:14%;">Category</th>
+                                                    <th style="width:18%;">Source</th>
+                                                    <th style="width:28%;">Description</th>
+                                                    <th style="width:20%;">Associate</th>
                                                     <th class="text-end" style="width:18%;">Amount</th>
-                                                    <th style="width:12%;">Date</th>
-                                                    <th style="width:8%;"></th>
+                                                    <th style="width:16%;">Date</th>
                                                 </tr>
                                             </thead>
                                             <tbody>${expenseRows()}</tbody>
@@ -8567,10 +8598,6 @@ async function renderFinancials() {
 
 
         function buildExpenseExportRows() {
-            const catLabels = {
-                operations: 'Operations', utilities: 'Utilities', maintenance: 'Maintenance',
-                petty_cash: 'Petty Cash', vendor_payment: 'Vendor Payment', other: 'Other'
-            };
             const sorted = [...expenses].sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
             return sorted.map(e => {
                 let sourceLabel = 'Unknown';
@@ -8580,22 +8607,23 @@ async function renderFinancials() {
                     const acc = accounts.find(a => a.id === e.source_account);
                     if (acc) sourceLabel = acc.account_name || acc.bank_name || 'Account';
                 }
-                const person = e.person_name || '';
-                const cat = catLabels[e.category] || (e.category || 'Other');
+                let associate = (e.person_name || '').trim();
+                if (!associate && e.person_id) {
+                    const u = (state.allUsers || allUsers || []).find(x => String(x.id) === String(e.person_id));
+                    if (u) associate = u.name || u.username || '';
+                }
                 const st = e.station_id ? stationName(e.station_id) : '';
                 return [
                     formatDate(e.expense_date || e.date || e.created_at),
                     st,
                     sourceLabel,
                     e.description || '',
-                    person,
-                    cat,
-                    Number(e.amount) || 0,
-                    (e.is_recurring || e.recurring) ? 'Yes' : 'No'
+                    associate || '—',
+                    Number(e.amount) || 0
                 ];
             });
         }
-        const expExportHeaders = ['Date', 'Station', 'Source', 'Description', 'Person', 'Category', 'Amount', 'Recurring'];
+        const expExportHeaders = ['Date', 'Station', 'Source', 'Description', 'Associate', 'Amount'];
         const expExcelBtn = document.getElementById('exportExpensesExcelBtn');
         if (expExcelBtn) {
             expExcelBtn.onclick = function() {
