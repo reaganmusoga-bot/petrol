@@ -1229,6 +1229,55 @@
         </div>
     </div>
 
+
+    <!-- Customer payment -->
+    <div class="modal fade" id="customerPaymentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#0b1a33;color:#fff;">
+                    <h5 class="modal-title"><i class="bi bi-cash-coin"></i> Receive payment</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="payCustomerId">
+                    <input type="hidden" id="payCustomerStation">
+                    <div class="mb-3">
+                        <div class="small text-muted text-uppercase" style="font-size:0.68rem;letter-spacing:0.04em;font-weight:700;">Customer</div>
+                        <div class="fw-bold" id="payCustomerName">—</div>
+                        <div class="small">Balance: <strong id="payCustomerBalance">0</strong></div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="payAmount">Amount *</label>
+                        <input type="number" id="payAmount" class="form-control" step="1" min="1" placeholder="Amount received">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="payMethod">Method</label>
+                        <select id="payMethod" class="form-select">
+                            <option value="cash">Cash</option>
+                            <option value="mobile_money">Mobile money</option>
+                            <option value="bank">Bank transfer</option>
+                            <option value="cheque">Cheque</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="payDate">Date</label>
+                        <input type="date" id="payDate" class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="payNote">Note</label>
+                        <input type="text" id="payNote" class="form-control" placeholder="Optional">
+                    </div>
+                    <div id="paymentResult" class="small mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="savePaymentBtn"><i class="bi bi-check2"></i> Save payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:9999;"></div>
 
     <!-- Bootstrap JS -->
@@ -10553,14 +10602,6 @@ async function renderCustomers() {
         };
     });
 
-    // ---- Search ----
-    document.getElementById('custSearch').oninput = function() {
-        const query = this.value.toLowerCase();
-        document.querySelectorAll('#pageContent tbody tr').forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
-        });
-    };
-
     // ============================================================
     // RECEIVE PAYMENT (strengthened – automatically adds to revenue)
     // ============================================================
@@ -10589,7 +10630,8 @@ async function renderCustomers() {
     });
 
     // Save payment
-    document.getElementById('savePaymentBtn').onclick = async function() {
+    const savePaymentBtn = document.getElementById('savePaymentBtn');
+    if (savePaymentBtn) savePaymentBtn.onclick = async function() {
         const customerId = document.getElementById('payCustomerId').value;
         const amount = parseFloat(document.getElementById('payAmount').value);
         const method = document.getElementById('payMethod').value;
@@ -10729,7 +10771,8 @@ async function renderCustomers() {
     };
 
     // Reset modal on close
-    document.getElementById('customerPaymentModal').addEventListener('hidden.bs.modal', function() {
+    const customerPaymentModalEl = document.getElementById('customerPaymentModal');
+    if (customerPaymentModalEl) customerPaymentModalEl.addEventListener('hidden.bs.modal', function() {
         document.getElementById('paymentResult').innerHTML = '';
         document.getElementById('payAmount').value = '';
     });
