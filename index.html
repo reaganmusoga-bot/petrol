@@ -783,6 +783,88 @@
         [data-theme="dark"] .intl-table-wrap tbody td { color: #e0e0e0; border-bottom-color: #333; }
         [data-theme="dark"] .intl-table-wrap tbody tr:hover td { background: #2a2a2a !important; }
         [data-theme="dark"] .intl-empty { color: #888; }
+
+        /* ===== Financials — international workspace ===== */
+        .fin-workspace { display: flex; flex-direction: column; gap: 16px; }
+        .fin-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 55%, #1a4a7a 100%);
+            border-radius: 16px; padding: 20px 22px 18px; color: #f8fafc;
+            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.18);
+        }
+        .fin-header .fin-title-row {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 16px;
+        }
+        .fin-header h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; font-size: 1.25rem; color: #fff; }
+        .fin-header .fin-sub { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
+        .fin-period-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);
+            padding: 6px 12px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; color: #e2e8f0;
+        }
+        .fin-kpi-row {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;
+        }
+        @media (max-width: 992px) { .fin-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 576px) { .fin-kpi-row { grid-template-columns: 1fr; } }
+        .fin-kpi {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px; padding: 12px 14px; min-width: 0;
+        }
+        .fin-kpi .k-label {
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em;
+            color: #94a3b8; font-weight: 600; margin-bottom: 4px;
+        }
+        .fin-kpi .k-value {
+            font-size: 1.15rem; font-weight: 800; color: #fff; line-height: 1.2;
+            font-variant-numeric: tabular-nums; word-break: break-word;
+        }
+        .fin-kpi .k-hint { font-size: 0.7rem; color: #64748b; margin-top: 3px; }
+        .fin-kpi.in .k-value { color: #86efac; }
+        .fin-kpi.out .k-value { color: #fca5a5; }
+        .fin-kpi.warn .k-value { color: #fcd34d; }
+
+        .fin-pills {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 6px; box-shadow: var(--shadow);
+        }
+        .fin-pills .nav-item { margin: 0; }
+        .fin-pills .nav-link {
+            border: none !important; border-radius: 10px !important;
+            padding: 8px 14px !important; font-size: 0.82rem; font-weight: 600;
+            color: #64748b !important; background: transparent !important;
+            display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .fin-pills .nav-link:hover { color: #0f172a !important; background: #f1f5f9 !important; }
+        .fin-pills .nav-link.active {
+            background: #0f172a !important; color: #fff !important;
+            box-shadow: 0 2px 8px rgba(15,23,42,0.2);
+        }
+        .fin-pills .nav-link i { font-size: 0.95rem; }
+        [data-theme="dark"] .fin-pills .nav-link:hover { background: #2a2a2a !important; color: #e0e0e0 !important; }
+        [data-theme="dark"] .fin-pills .nav-link.active { background: #3b82f6 !important; }
+
+        .fin-action-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 18px 18px 16px; box-shadow: var(--shadow);
+            height: 100%;
+        }
+        .fin-action-card h6 {
+            font-weight: 700; margin-bottom: 14px; letter-spacing: -0.01em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .fin-ledger-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 16px 16px 12px; box-shadow: var(--shadow);
+            height: 100%;
+        }
+        .fin-note {
+            font-size: 0.75rem; color: #64748b; margin-top: 10px;
+            padding: 8px 10px; background: #f8fafc; border-radius: 8px; border: 1px dashed #e2e8f0;
+        }
+        [data-theme="dark"] .fin-note { background: #1a1a1a; border-color: #333; color: #999; }
+
     </style>
 </head>
 <body>
@@ -7702,70 +7784,80 @@ async function renderFinancials() {
 
         function transferRows() {
             if (bankings.length === 0) {
-                return '<tr><td colspan="5" class="text-muted text-center py-4">No deposits recorded yet</td></tr>';
+                return '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-arrow-left-right"></i>No deposits recorded yet</div></td></tr>';
             }
             const sorted = [...bankings].sort((a, b) =>
                 tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date)
             );
             let rows = '';
-            sorted.slice(0, 30).forEach((b, idx) => {
+            sorted.forEach((b, idx) => {
                 const acc = accounts.find(a => a.id === b.bank_account_id);
                 const acctLabel = acc
                     ? ((acc.account_name || acc.bank_name || 'Account') + (acc.account_number ? ' · ' + acc.account_number : ''))
                     : '—';
-                // Depositor: explicit name, else cashier, else description for sales, else source
                 let depositor = (b.depositor || b.cashier_name || b.cashier || b.created_by_name || '').trim();
                 if (!depositor && b.source_type === 'sale') depositor = b.cashier_name || 'Cashier';
                 if (!depositor && (b.description || '').toLowerCase().includes('sale')) {
                     depositor = b.cashier_name || b.cashier || 'Cashier';
                 }
                 if (!depositor) depositor = '—';
-                const isReversed = b.status === 'reversed' || b.reversed === true;
+                const isReversed = b.status === 'reversed' || b.reversed === true || b.status === 'reversal';
                 const statusBadge = isReversed
-                    ? '<span class="badge rounded-pill" style="background:#e2e8f0;color:#64748b;">Reversed</span>'
-                    : '<span class="badge rounded-pill" style="background:#d1fae5;color:#065f46;">Posted</span>';
+                    ? '<span class="intl-chip" style="background:#e2e8f0;color:#64748b;">Reversed</span>'
+                    : '<span class="intl-chip pay">Posted</span>';
                 const rowBg = isReversed ? '#f1f5f9' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
-                rows += `<tr style="background:${rowBg};border-bottom:1px solid #f1f5f9;${isReversed ? 'opacity:0.75;' : ''}">
-                        <td class="py-2 ps-3">
-                            <div class="fw-semibold text-truncate" style="max-width:160px;font-size:0.85rem;" title="${esc(depositor)}">${esc(depositor)}</div>
+                const initials = String(depositor).trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase() || '—';
+                rows += `<tr style="background:${rowBg};${isReversed ? 'opacity:0.7;' : ''}">
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="intl-avatar" style="width:28px;height:28px;font-size:0.65rem;border-radius:8px;">${esc(initials)}</span>
+                                <div class="fw-semibold text-truncate" style="max-width:130px;" title="${esc(depositor)}">${esc(depositor)}</div>
+                            </div>
                         </td>
-                        <td class="py-2">
-                            <div class="text-truncate" style="max-width:200px;font-size:0.85rem;" title="${esc(acctLabel)}">${esc(acctLabel)}</div>
-                        </td>
-                        <td class="py-2 text-end fw-bold text-nowrap" style="color:#059669;font-variant-numeric:tabular-nums;min-width:7.5rem;">${formatMoney(b.amount)}</td>
-                        <td class="py-2 text-nowrap small text-muted">${formatDate(b.date || b.created_at)}</td>
-                        <td class="py-2 pe-3">${statusBadge}</td>
+                        <td><div class="text-truncate" style="max-width:160px;" title="${esc(acctLabel)}">${esc(acctLabel)}</div></td>
+                        <td class="text-end"><span class="amt ${isReversed ? '' : 'amt-in'}">${formatMoney(b.amount)}</span></td>
+                        <td class="small text-muted text-nowrap">${formatDate(b.date || b.created_at)}</td>
+                        <td>${statusBadge}</td>
                     </tr>`;
             });
             return rows;
         }
 
         function paymentRows() {
-            if (supplierPayments.length === 0) return '<tr><td colspan="8" class="text-muted text-center">No supplier payments or prepayments</td></tr>';
+            if (!supplierPayments || supplierPayments.length === 0) {
+                return '<tr><td colspan="7"><div class="intl-empty"><i class="bi bi-cash-stack"></i>No supplier payments yet</div></td></tr>';
+            }
+            const sorted = [...supplierPayments].sort((a, b) =>
+                tsMillis(b.created_at || b.payment_date) - tsMillis(a.created_at || a.payment_date)
+            );
             let rows = '';
-            const sorted = [...supplierPayments].sort((a, b) => tsMillis(b.payment_date || b.created_at) - tsMillis(a.payment_date || a.created_at));
-            sorted.slice(0, 40).forEach(p => {
+            sorted.forEach((p, idx) => {
+                const sup = suppliers.find(s => String(s.id) === String(p.supplier_id));
+                const supName = sup ? sup.name : (p.supplier_name || 'Unknown');
                 const isRev = p.status === 'reversed' || p.reversed === true;
-                const sup = suppliers.find(s => s.id === p.supplier_id);
-                const supName = sup ? sup.name : 'Unknown';
-                let sourceLabel = 'Unknown';
+                const isPre = !!p.is_prepayment;
+                const typeBadge = isRev
+                    ? '<span class="intl-chip" style="background:#e2e8f0;color:#64748b;">Reversed</span>'
+                    : (isPre
+                        ? '<span class="intl-chip forgive">Prepay</span>'
+                        : '<span class="intl-chip pay">Payment</span>');
+                let sourceLabel = '—';
                 if (p.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
                 else if (p.source_account === 'cash_till') sourceLabel = 'Cash Till';
-                else { const acc = accounts.find(a => a.id === p.source_account); if (acc) sourceLabel = acc.bank_name || acc.name || 'Bank'; }
-                const isPre = !!p.is_prepayment;
-                const typeBadge = isRev ? '<span class="badge bg-secondary">Reversed</span>'
-                    : (isPre ? '<span class="badge bg-warning text-dark">Prepayment</span>' : '<span class="badge bg-primary">Payment</span>');
-                const rowStyle = isRev ? ' style="opacity:0.65;"' : '';
-                rows += `<tr${rowStyle}>
-                        <td><strong>${esc(supName)}</strong></td>
+                else {
+                    const acc = accounts.find(a => String(a.id) === String(p.source_account));
+                    if (acc) sourceLabel = acc.account_name || acc.bank_name || 'Account';
+                }
+                const rowBg = isRev ? '#f1f5f9' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc');
+                rows += `<tr style="background:${rowBg};${isRev ? 'opacity:0.7;' : ''}">
+                        <td><div class="fw-semibold text-truncate" style="max-width:140px;" title="${esc(supName)}">${esc(supName)}</div></td>
                         <td>${typeBadge}</td>
-                        <td>${esc(sourceLabel)}</td>
-                        <td class="fw-bold">${formatMoney(p.amount)}</td>
-                        <td>${esc(p.reference || '—')}</td>
-                        <td class="fs-xs">${formatDate(p.payment_date || p.created_at)}</td>
-                        <td class="small text-muted">${esc(p.note || '—')}</td>
+                        <td class="small text-muted text-truncate" style="max-width:110px;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</td>
+                        <td class="text-end"><span class="amt amt-out">${formatMoney(p.amount)}</span></td>
+                        <td class="small text-truncate" style="max-width:100px;" title="${esc(p.reference || '')}">${esc(p.reference || '—')}</td>
+                        <td class="small text-muted text-nowrap">${formatDate(p.payment_date || p.created_at)}</td>
                         <td class="text-end text-nowrap">
-                            ${isRev ? '<span class="text-muted small">—</span>' : `<button type="button" class="btn btn-sm btn-outline-warning reverse-supplier-pay-btn" data-id="${p.id}" title="Reverse payment"><i class="bi bi-arrow-counterclockwise"></i></button>`}
+                            ${isRev ? '<span class="text-muted small">—</span>' : `<button type="button" class="btn btn-sm btn-outline-warning reverse-supplier-pay-btn py-0 px-1" data-id="${p.id}" title="Reverse"><i class="bi bi-arrow-counterclockwise"></i></button>`}
                         </td>
                     </tr>`;
             });
@@ -7773,9 +7865,11 @@ async function renderFinancials() {
         }
 
         function creditLimitRows() {
-            if (creditLimits.length === 0) return '<tr><td colspan="5" class="text-muted text-center">No credit limits set</td></tr>';
+            if (creditLimits.length === 0) {
+                return '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-shield-check"></i>No credit limits set</div></td></tr>';
+            }
             let rows = '';
-            creditLimits.forEach(cl => {
+            creditLimits.forEach((cl, idx) => {
                 const isSupplier = !!cl.supplier_id;
                 let name = 'Unknown';
                 let totalUsed = 0;
@@ -7788,79 +7882,159 @@ async function renderFinancials() {
                     if (cust) name = cust.name;
                     totalUsed = Math.max(0, Number(cust && cust.current_balance || 0));
                 }
-                const remaining = Number(cl.limit || 0) - totalUsed;
-                const statusClass = remaining < 0 ? 'credit-limit-exceeded' : 'credit-limit-ok';
-                rows += `<tr>
-                        <td><strong>${esc(name)}</strong></td>
-                        <td>${isSupplier ? 'Supplier' : 'Customer'}</td>
-                        <td>${formatMoney(cl.limit)}</td>
-                        <td>${formatMoney(totalUsed)}</td>
-                        <td class="${statusClass}">${formatMoney(remaining)}</td>
-                    </tr>`;
-            });
-            return rows;
-        }
-
-        function recurringRows() {
-            if (recurringExpenses.length === 0) return '<tr><td colspan="7" class="text-muted text-center">No recurring expenses scheduled</td></tr>';
-            let rows = '';
-            recurringExpenses.forEach(re => {
-                rows += `<tr>
-                        <td>${esc(re.description)}</td>
-                        <td>${formatMoney(re.amount)}</td>
-                        <td><span class="badge bg-secondary">${esc(re.category || 'other')}</span></td>
-                        <td>${re.day_of_month || '1'}</td>
-                        <td><span class="badge ${re.active !== false ? 'bg-success' : 'bg-secondary'}">${re.active !== false ? 'Active' : 'Paused'}</span></td>
-                        <td>${re.auto_record ? '<span class="badge bg-info">Auto</span>' : 'Manual'}</td>
+                const limit = Number(cl.limit) || 0;
+                const remaining = limit - totalUsed;
+                const pct = limit > 0 ? Math.min(100, Math.max(0, (totalUsed / limit) * 100)) : 0;
+                const over = remaining < 0;
+                const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                const typeChip = isSupplier
+                    ? '<span class="intl-chip forgive">Supplier</span>'
+                    : '<span class="intl-chip pay">Customer</span>';
+                rows += `<tr style="background:${rowBg};">
+                        <td><div class="fw-semibold text-truncate" style="max-width:160px;" title="${esc(name)}">${esc(name)}</div></td>
+                        <td>${typeChip}</td>
+                        <td class="text-end"><span class="amt">${formatMoney(limit)}</span></td>
+                        <td class="text-end"><span class="amt amt-warn">${formatMoney(totalUsed)}</span></td>
                         <td>
-                            <button class="btn btn-sm btn-outline-warning toggle-recurring-btn" data-id="${re.id}" data-active="${re.active !== false ? 'true' : 'false'}"><i class="bi bi-pause"></i></button>
-                            <button class="btn btn-sm btn-outline-info toggle-auto-btn" data-id="${re.id}" data-auto="${re.auto_record ? 'true' : 'false'}"><i class="bi bi-clock"></i></button>
-                            <button class="btn btn-sm btn-outline-danger delete-recurring-btn" data-id="${re.id}"><i class="bi bi-trash"></i></button>
+                            <div class="fw-bold amt ${over ? 'amt-out' : 'amt-in'}">${formatMoney(remaining)}</div>
+                            <div class="intl-progress" title="${pct.toFixed(0)}% used"><span style="width:${pct.toFixed(1)}%;background:${over ? 'linear-gradient(90deg,#dc2626,#f87171)' : 'linear-gradient(90deg,#f59e0b,#22c55e)'};"></span></div>
                         </td>
                     </tr>`;
             });
             return rows;
         }
 
+        function recurringRows() {
+            if (recurringExpenses.length === 0) {
+                return '<tr><td colspan="6"><div class="intl-empty"><i class="bi bi-arrow-repeat"></i>No recurring expenses scheduled</div></td></tr>';
+            }
+            let rows = '';
+            recurringExpenses.forEach((re, idx) => {
+                const active = re.active !== false;
+                const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                const statusChip = active
+                    ? '<span class="intl-chip pay">Active</span>'
+                    : '<span class="intl-chip" style="background:#e2e8f0;color:#64748b;">Paused</span>';
+                const autoChip = re.auto_record
+                    ? '<span class="intl-chip forgive">Auto</span>'
+                    : '<span class="small text-muted">Manual</span>';
+                rows += `<tr style="background:${rowBg};">
+                        <td><div class="fw-semibold text-truncate" style="max-width:160px;" title="${esc(re.description || '')}">${esc(re.description || '—')}</div></td>
+                        <td class="text-end"><span class="amt amt-out">${formatMoney(re.amount)}</span></td>
+                        <td class="text-center"><span class="fw-semibold">Day ${re.day_of_month || 1}</span></td>
+                        <td>${statusChip}</td>
+                        <td>${autoChip}</td>
+                        <td class="text-end text-nowrap">
+                            <button class="btn btn-sm btn-outline-warning toggle-recurring-btn py-0 px-1" data-id="${re.id}" data-active="${active ? 'true' : 'false'}" title="Pause/Resume"><i class="bi bi-pause"></i></button>
+                            <button class="btn btn-sm btn-outline-info toggle-auto-btn py-0 px-1" data-id="${re.id}" data-auto="${re.auto_record ? 'true' : 'false'}" title="Toggle auto"><i class="bi bi-clock"></i></button>
+                            <button class="btn btn-sm btn-outline-danger delete-recurring-btn py-0 px-1" data-id="${re.id}" title="Delete"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>`;
+            });
+            return rows;
+        }
+
+        // MTD finance metrics (local calendar month — auto-resets next month)
+        const _finNow = new Date();
+        const finMonthStart = new Date(_finNow.getFullYear(), _finNow.getMonth(), 1, 0, 0, 0, 0);
+        const finMonthLabel = _finNow.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        function finRecordDate(x) {
+            const candidates = [x.expense_date, x.payment_date, x.date, x.sale_date, x.created_at, x.timestamp];
+            for (const c of candidates) {
+                if (c == null || c === '') continue;
+                let dt = null;
+                if (typeof c.toDate === 'function') dt = c.toDate();
+                else if (c.seconds != null) dt = new Date(Number(c.seconds) * 1000);
+                else if (typeof c === 'string' && /^\d{4}-\d{2}-\d{2}/.test(c)) {
+                    const p = c.slice(0, 10).split('-').map(Number);
+                    dt = new Date(p[0], p[1] - 1, p[2], 12, 0, 0, 0);
+                } else dt = new Date(c);
+                if (dt && !isNaN(dt.getTime())) return dt;
+            }
+            return null;
+        }
+        function inFinMonth(x) {
+            const dt = finRecordDate(x);
+            return dt && dt >= finMonthStart && dt <= _finNow;
+        }
+        const totalLiquidity = accounts.reduce((s, a) => s + (Number(a.balance) || 0), 0);
+        const cashTillTotal = accounts.filter(a => a.system_kind === 'cash_till' || /cash\s*till/i.test(String(a.account_name || '') + String(a.bank_name || '')))
+            .reduce((s, a) => s + (Number(a.balance) || 0), 0);
+        const mtdExpenses = expenses.filter(e => e.status !== 'reversed' && e.reversed !== true && inFinMonth(e))
+            .reduce((s, e) => s + (Number(e.amount) || 0), 0);
+        const mtdDeposits = bankings.filter(b => {
+            if (b.status === 'reversed' || b.reversed === true || b.status === 'reversal') return false;
+            return inFinMonth(b);
+        }).reduce((s, b) => s + (Number(b.amount) || 0), 0);
+        const supplierPayables = suppliers.reduce((s, sup) => s + Math.max(0, Number(sup.current_balance) || 0), 0);
+
         let html = `
-            <div class="card-box">
-                <h5 class="mb-3"><i class="bi bi-wallet2"></i> Financial Dashboard</h5>
-                <div class="row g-2 g-md-3 mb-3 financial-summary kpi-compact">
-                    <div class="col-6 col-md-3"><div class="stat-item" title="Sum of all bank account balances"><div class="icon" style="background:#198754;"><i class="bi bi-bank"></i></div>
-                        <div><div class="num">${formatCompactMoney(accounts.reduce((s, a) => s + Number(a.balance || 0), 0))}</div><div class="lbl">Bank Balance</div></div></div></div>
-                    <div class="col-6 col-md-3"><div class="stat-item" title="Deposits this month"><div class="icon" style="background:#0d6efd;"><i class="bi bi-arrow-up-circle"></i></div>
-                        <div><div class="num">${formatCompactMoney(bankings.filter(b => {
-                            if (b.status === 'reversed' || b.reversed === true || b.status === 'reversal') return false;
-                            const d = b.created_at?.toDate ? b.created_at.toDate() : new Date(b.created_at);
-                            const now = new Date();
-                            return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                        }).reduce((s, b) => s + Number(b.amount || 0), 0))}</div><div class="lbl">Cash In (Month)</div></div></div></div>
-                    <div class="col-6 col-md-3"><div class="stat-item" title="Expenses this month"><div class="icon" style="background:#dc3545;"><i class="bi bi-arrow-down-circle"></i></div>
-                        <div><div class="num">${formatCompactMoney(expenses.filter(e => {
-                            const d = e.created_at?.toDate ? e.created_at.toDate() : new Date(e.created_at);
-                            const now = new Date();
-                            return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-                        }).reduce((s, e) => s + Number(e.amount || 0), 0))}</div><div class="lbl">Cash Out (Month)</div></div></div></div>
-                    <div class="col-6 col-md-3"><div class="stat-item"><div class="icon" style="background:#6f42c1;"><i class="bi bi-receipt"></i></div>
-                        <div><div class="num">${accounts.length}</div><div class="lbl">Bank Accounts</div></div></div></div>
+            <div class="fin-workspace">
+                <div class="fin-header">
+                    <div class="fin-title-row">
+                        <div>
+                            <h4><i class="bi bi-wallet2"></i> Financials</h4>
+                            <div class="fin-sub">Liquidity, expenses, transfers & payables · live balances</div>
+                        </div>
+                        <span class="fin-period-chip"><i class="bi bi-calendar3"></i> This month · ${finMonthLabel}</span>
+                    </div>
+                    <div class="fin-kpi-row">
+                        <div class="fin-kpi">
+                            <div class="k-label">Total liquidity</div>
+                            <div class="k-value">${formatCompactMoney(totalLiquidity)}</div>
+                            <div class="k-hint">${accounts.length} account${accounts.length === 1 ? '' : 's'}</div>
+                        </div>
+                        <div class="fin-kpi">
+                            <div class="k-label">Cash tills</div>
+                            <div class="k-value">${formatCompactMoney(cashTillTotal)}</div>
+                            <div class="k-hint">Station cash on hand</div>
+                        </div>
+                        <div class="fin-kpi in">
+                            <div class="k-label">Deposits (MTD)</div>
+                            <div class="k-value">${formatCompactMoney(mtdDeposits)}</div>
+                            <div class="k-hint">Cash & bank in</div>
+                        </div>
+                        <div class="fin-kpi out">
+                            <div class="k-label">Expenses (MTD)</div>
+                            <div class="k-value">${formatCompactMoney(mtdExpenses)}</div>
+                            <div class="k-hint">Operating outflows</div>
+                        </div>
+                        <div class="fin-kpi warn">
+                            <div class="k-label">Supplier payables</div>
+                            <div class="k-value">${formatCompactMoney(supplierPayables)}</div>
+                            <div class="k-hint">Open balances</div>
+                        </div>
+                    </div>
                 </div>
 
-                <ul class="nav nav-tabs financial-tabs" id="financeTabs" role="tablist">
-                    <li class="nav-item"><button class="nav-link active" id="accounts-tab" data-bs-toggle="tab" data-bs-target="#accounts" type="button" role="tab"><i class="bi bi-bank"></i> Accounts</button></li>
-                    <li class="nav-item"><button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab"><i class="bi bi-cart"></i> Expenses</button></li>
-                    <li class="nav-item"><button class="nav-link" id="transfers-tab" data-bs-toggle="tab" data-bs-target="#transfers" type="button" role="tab"><i class="bi bi-arrow-left-right"></i> Transfers</button></li>
-                    <li class="nav-item"><button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab"><i class="bi bi-cash"></i> Supplier Payments</button></li>
-                    <li class="nav-item"><button class="nav-link" id="credit-tab" data-bs-toggle="tab" data-bs-target="#credit" type="button" role="tab"><i class="bi bi-credit-card"></i> Credit Limits</button></li>
-                    <li class="nav-item"><button class="nav-link" id="recurring-tab" data-bs-toggle="tab" data-bs-target="#recurring" type="button" role="tab"><i class="bi bi-arrow-repeat"></i> Recurring</button></li>
+                <ul class="nav fin-pills" id="financeTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="accounts-tab" data-bs-toggle="tab" data-bs-target="#accounts" type="button" role="tab"><i class="bi bi-bank2"></i> Accounts</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab"><i class="bi bi-receipt"></i> Expenses</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="transfers-tab" data-bs-toggle="tab" data-bs-target="#transfers" type="button" role="tab"><i class="bi bi-arrow-left-right"></i> Transfers</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab"><i class="bi bi-cash-stack"></i> Payments</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="credit-tab" data-bs-toggle="tab" data-bs-target="#credit" type="button" role="tab"><i class="bi bi-shield-check"></i> Credit</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="recurring-tab" data-bs-toggle="tab" data-bs-target="#recurring" type="button" role="tab"><i class="bi bi-arrow-repeat"></i> Recurring</button>
+                    </li>
                 </ul>
 
-                <div class="tab-content pt-3" id="financeTabsContent">
+                <div class="tab-content" id="financeTabsContent">
                     <!-- Accounts -->
                     <div class="tab-pane fade show active" id="accounts" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-lg-4">
-                                <div class="card-box border border-primary h-100">
-                                    <h6 class="mb-3"><i class="bi bi-bank2"></i> Add Bank Account</h6>
+                                <div class="fin-action-card border border-primary">
+                                    <h6><i class="bi bi-bank2 text-primary"></i> Add Bank Account</h6>
                                     <form id="baForm">
                                         <div class="mb-2">
                                             <label class="form-label small fw-semibold"><i class="bi bi-geo-alt-fill text-primary"></i> Station *</label>
@@ -7885,7 +8059,7 @@ async function renderFinancials() {
                                 </div>
                             </div>
                             <div class="col-lg-8">
-                                <div class="card-box">
+                                <div class="fin-ledger-card">
                                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                                         <h6 class="mb-0"><i class="bi bi-list-ul"></i> Accounts by Station</h6>
                                         <select id="acctStationFilter" class="form-select form-select-sm" style="max-width:180px;">
@@ -7903,8 +8077,8 @@ async function renderFinancials() {
                     <div class="tab-pane fade" id="expenses" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-lg-5">
-                                <div class="card-box">
-                                    <h6 class="mb-3">Record Expense</h6>
+                                <div class="fin-action-card">
+                                    <h6><i class="bi bi-receipt text-danger"></i> Record Expense</h6>
                                     <form id="expForm">
                                         <div class="mb-2"><label class="form-label small">Station * <span class="text-muted fw-normal">(where expense is made)</span></label>
                                             <select id="expStation" class="form-select form-select-sm" required>
@@ -7941,7 +8115,7 @@ async function renderFinancials() {
                                 </div>
                             </div>
                             <div class="col-lg-7">
-                                <div class="card-box">
+                                <div class="fin-ledger-card">
                                     <div class="intl-section-head">
                                         <h6><i class="bi bi-receipt text-danger"></i> Expenses</h6>
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -7977,8 +8151,8 @@ async function renderFinancials() {
                     <div class="tab-pane fade" id="transfers" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-lg-5">
-                                <div class="card-box">
-                                    <h6 class="mb-3"><i class="bi bi-bank"></i> Record Deposit</h6>
+                                <div class="fin-action-card">
+                                    <h6><i class="bi bi-bank text-success"></i> Record Deposit</h6>
                                     <form id="bankForm">
                                         <div class="mb-2"><label class="form-label small">From Account</label>
                                             <select id="bfSource" class="form-select form-select-sm" required>${depositSourceOptions}</select></div>
@@ -7997,17 +8171,20 @@ async function renderFinancials() {
                                 </div>
                             </div>
                             <div class="col-lg-7">
-                                <div class="card-box">
-                                                                        <h6 class="mb-3"><i class="bi bi-arrow-left-right"></i> Deposit History</h6>
-                                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;max-height:360px;">
-                                        <table class="table table-sm mb-0 align-middle" style="font-size:0.85rem;">
-                                            <thead style="position:sticky;top:0;z-index:1;">
-                                                <tr style="background:linear-gradient(135deg,#0b1a33,#1a3a6a);color:#fff;">
-                                                    <th class="py-2 ps-3" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Depositor</th>
-                                                    <th class="py-2" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Account Deposited</th>
-                                                    <th class="py-2 text-end" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Amount</th>
-                                                    <th class="py-2" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Date</th>
-                                                    <th class="py-2 pe-3" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;">Status</th>
+                                <div class="fin-ledger-card">
+                                    <div class="intl-section-head">
+                                        <h6><i class="bi bi-arrow-left-right text-success"></i> Deposit History</h6>
+                                        <span class="meta">${bankings.length}</span>
+                                    </div>
+                                    <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;">
+                                        <table class="table table-sm mb-0 align-middle" style="min-width:520px;width:100%;">
+                                            <thead style="position:sticky;top:0;z-index:2;">
+                                                <tr>
+                                                    <th>Depositor</th>
+                                                    <th>To account</th>
+                                                    <th class="text-end">Amount</th>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
                                                 </tr>
                                             </thead>
                                             <tbody>${transferRows()}</tbody>
@@ -8076,11 +8253,24 @@ async function renderFinancials() {
                                 </div>
                             </div>
                         </div>
-                        <div class="card-box">
-                            <h6 class="mb-3"><i class="bi bi-clock-history"></i> Payment &amp; Prepayment History</h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm table-hover">
-                                    <thead><tr><th>Supplier</th><th>Type</th><th>From Account</th><th>Amount</th><th>Reference</th><th>Date</th><th>Note</th><th class="text-end">Actions</th></tr></thead>
+                        <div class="fin-ledger-card">
+                            <div class="intl-section-head">
+                                <h6><i class="bi bi-clock-history"></i> Payment History</h6>
+                                <span class="meta">${supplierPayments.length}</span>
+                            </div>
+                            <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;">
+                                <table class="table table-sm mb-0 align-middle" style="min-width:640px;width:100%;">
+                                    <thead style="position:sticky;top:0;z-index:2;">
+                                        <tr>
+                                            <th>Supplier</th>
+                                            <th>Type</th>
+                                            <th>From</th>
+                                            <th class="text-end">Amount</th>
+                                            <th>Reference</th>
+                                            <th>Date</th>
+                                            <th class="text-end"></th>
+                                        </tr>
+                                    </thead>
                                     <tbody>${paymentRows()}</tbody>
                                 </table>
                             </div>
@@ -8105,10 +8295,21 @@ async function renderFinancials() {
                             </div>
                             <div class="col-lg-7">
                                 <div class="card-box">
-                                    <h6 class="mb-3">Credit Limits</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead><tr><th>Supplier/Customer</th><th>Type</th><th>Limit</th><th>Used</th><th>Remaining</th></tr></thead>
+                                    <div class="intl-section-head">
+                                        <h6 class="mb-0"><i class="bi bi-shield-check text-warning"></i> Credit Limits</h6>
+                                        <span class="meta">${creditLimits.length}</span>
+                                    </div>
+                                    <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;">
+                                        <table class="table table-sm mb-0 align-middle">
+                                            <thead style="position:sticky;top:0;z-index:2;">
+                                                <tr>
+                                                    <th>Name</th>
+                                                    <th>Type</th>
+                                                    <th class="text-end">Limit</th>
+                                                    <th class="text-end">Used</th>
+                                                    <th>Remaining</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>${creditLimitRows()}</tbody>
                                         </table>
                                     </div>
@@ -8145,10 +8346,22 @@ async function renderFinancials() {
                             </div>
                             <div class="col-lg-7">
                                 <div class="card-box">
-                                    <h6 class="mb-3">Scheduled Recurring Expenses</h6>
-                                    <div class="table-responsive">
-                                        <table class="table table-sm">
-                                            <thead><tr><th>Description</th><th>Amount</th><th>Category</th><th>Day</th><th>Status</th><th>Auto</th><th>Actions</th></tr></thead>
+                                    <div class="intl-section-head">
+                                        <h6 class="mb-0"><i class="bi bi-arrow-repeat text-success"></i> Scheduled Recurring</h6>
+                                        <span class="meta">${recurringExpenses.length}</span>
+                                    </div>
+                                    <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;">
+                                        <table class="table table-sm mb-0 align-middle">
+                                            <thead style="position:sticky;top:0;z-index:2;">
+                                                <tr>
+                                                    <th>Description</th>
+                                                    <th class="text-end">Amount</th>
+                                                    <th class="text-center">Schedule</th>
+                                                    <th>Status</th>
+                                                    <th>Mode</th>
+                                                    <th class="text-end">Actions</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>${recurringRows()}</tbody>
                                         </table>
                                     </div>
