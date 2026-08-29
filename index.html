@@ -959,6 +959,59 @@
         [data-theme="dark"] .fin-filter-bar { background: #1a1a1a; border-color: #333; }
         [data-theme="dark"] .fin-ledger-foot strong { color: #e0e0e0; }
 
+        /* ===== Inventory international ===== */
+        .inv-product-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 0.78rem;
+            background: #f1f5f9; color: #0f172a;
+        }
+        .inv-product-chip.petrol, .inv-product-chip[data-p="petrol"] { background: #dcfce7; color: #166534; }
+        .inv-product-chip.diesel, .inv-product-chip[data-p="diesel"] { background: #e0e7ff; color: #3730a3; }
+        .inv-product-chip.kerosene, .inv-product-chip.paraffin,
+        .inv-product-chip[data-p="kerosene"], .inv-product-chip[data-p="paraffin"] { background: #fef3c7; color: #92400e; }
+        .inv-product-chip.gas, .inv-product-chip[data-p="gas"] { background: #fce7f3; color: #9d174d; }
+        .inv-qty-cell { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 1rem; color: #0f172a; }
+        .inv-qty-cell.low { color: #dc2626; }
+        .inv-margin-pos { color: #059669; font-weight: 700; font-size: 0.8rem; }
+        .inv-margin-neg { color: #dc2626; font-weight: 700; font-size: 0.8rem; }
+        .tank-card {
+            background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 18px 14px 14px; text-align: center;
+            box-shadow: var(--shadow); transition: transform 0.15s, box-shadow 0.15s;
+            height: 100%;
+        }
+        .tank-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(15,23,42,0.12); }
+        .tank-visual {
+            width: 72px; height: 110px; margin: 0 auto 12px; position: relative;
+            border-radius: 12px 12px 8px 8px; border: 3px solid #cbd5e1;
+            background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+            overflow: hidden;
+        }
+        .tank-visual .tank-fill {
+            position: absolute; left: 0; right: 0; bottom: 0;
+            transition: height 0.6s cubic-bezier(.2,.8,.2,1);
+            border-radius: 0 0 5px 5px;
+        }
+        .tank-visual .tank-fill.ok { background: linear-gradient(180deg, #34d399, #059669); }
+        .tank-visual .tank-fill.warn { background: linear-gradient(180deg, #fbbf24, #d97706); }
+        .tank-visual .tank-fill.crit { background: linear-gradient(180deg, #f87171, #dc2626); }
+        .tank-visual::after {
+            content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+            width: 28px; height: 6px; background: #94a3b8; border-radius: 3px;
+        }
+        .tank-pct {
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 800; color: #0f172a; text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+            z-index: 1;
+        }
+        .inv-add-bar {
+            background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px;
+            padding: 12px; margin-top: 12px;
+        }
+        [data-theme="dark"] .tank-visual { background: #1a1a1a; border-color: #444; }
+        [data-theme="dark"] .inv-add-bar { background: #1a1a1a; border-color: #444; }
+
+
 
         .fin-ledger-card {
             background: var(--card-bg); border: 1px solid var(--border-color);
@@ -4845,7 +4898,7 @@ async function renderBalancing() {
             <p class="text-muted small"><strong>Math:</strong> <span class="text-primary">End Reading − Start Reading = Quantity Sold</span> (meters increase as fuel is dispensed).</p>
             <form id="balancingFilter" class="row g-2 mb-3">
                 <div class="col-md-3"><label class="form-label small">Station</label>
-                    <select id="balStation" class="form-select form-select-sm" required><option value="">— Select Station —</option>${stationOptions}</select></div>
+                    <select id="balStation" class="form-select form-select-sm" required><option value="">Select station</option>${stationOptions}</select></div>
                 <div class="col-md-3"><label class="form-label small">Cashier</label>
                     <select id="balCashier" class="form-select form-select-sm" required><option value="">— Select Cashier —</option>${cashierOptions}</select></div>
                 <div class="col-md-2"><label class="form-label small">From</label>
@@ -6008,39 +6061,97 @@ async function renderInventory() {
         stationOpts += `<option value="${s.id}" ${sel}>${s.name}</option>`;
     });
 
-    let html = '<div class="card-box">' +
-        '<div class="d-flex justify-content-between align-items-center mb-3">' +
-        '<h5 class="mb-0"><i class="bi bi-box-seam"></i> Inventory</h5>' +
-        '<span class="badge bg-secondary">' + inv.length + ' items</span>' +
-        '</div>';
+    const totalLitres = inv.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+    const stockValue = inv.reduce((s, i) => s + (Number(i.quantity) || 0) * (Number(i.cost_price) || 0), 0);
+    const lowItems = inv.filter(i => (Number(i.quantity) || 0) > 0 && (Number(i.quantity) || 0) < 500).length;
+    const zeroItems = inv.filter(i => (Number(i.quantity) || 0) <= 0).length;
 
-    html += '<div class="table-responsive"><table class="table table-sm table-hover inv-table" id="inventoryTable">' +
-        '<thead><tr><th>Station</th><th>Product</th><th>Quantity (L)</th><th>Cost/L</th><th>Sell/L</th>' +
-        (canEdit ? '<th style="min-width:140px;">Actions</th>' : '') +
-        '</tr></thead><tbody id="invTableBody">';
+    let html = `
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-box-seam"></i> Inventory Overview</h4>
+                        <div class="fin-sub">Live stock, cost &amp; selling positions by station</div>
+                    </div>
+                    <span class="fin-period-chip"><i class="bi bi-geo-alt"></i> ${state.currentStationId ? esc(stationName(state.currentStationId)) : 'All stations'}</span>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(4,1fr);">
+                    <div class="fin-kpi">
+                        <div class="k-label">Total stock</div>
+                        <div class="k-value">${totalLitres.toFixed(0)} <span style="font-size:0.7em;font-weight:600;opacity:.8">L</span></div>
+                        <div class="k-hint">${inv.length} product line${inv.length===1?'':'s'}</div>
+                    </div>
+                    <div class="fin-kpi in">
+                        <div class="k-label">Stock value (cost)</div>
+                        <div class="k-value">${formatCompactMoney(stockValue)}</div>
+                        <div class="k-hint">At cost price</div>
+                    </div>
+                    <div class="fin-kpi ${lowItems ? 'warn' : ''}">
+                        <div class="k-label">Low stock</div>
+                        <div class="k-value">${lowItems}</div>
+                        <div class="k-hint">&lt; 500 L</div>
+                    </div>
+                    <div class="fin-kpi ${zeroItems ? 'out' : ''}">
+                        <div class="k-label">Empty lines</div>
+                        <div class="k-value">${zeroItems}</div>
+                        <div class="k-hint">Zero quantity</div>
+                    </div>
+                </div>
+            </div>
+            <div class="fin-ledger-card">
+                <div class="intl-section-head">
+                    <h6><i class="bi bi-layers"></i> Stock positions</h6>
+                    <span class="meta">${inv.length}</span>
+                </div>
+                <div class="fin-filter-bar">
+                    <input type="search" class="form-control fin-q" id="invFilterQ" placeholder="Search product or station…">
+                </div>
+                <div class="table-responsive intl-table-wrap" style="max-height:520px;overflow:auto;">
+                    <table class="table table-sm mb-0 align-middle inv-table" id="inventoryTable" style="min-width:640px;width:100%;">
+                        <thead style="position:sticky;top:0;z-index:2;">
+                            <tr>
+                                <th>Station</th>
+                                <th>Product</th>
+                                <th class="text-end">Quantity</th>
+                                <th class="text-end">Cost / L</th>
+                                <th class="text-end">Sell / L</th>
+                                <th class="text-end">Margin</th>
+                                ${canEdit ? '<th class="text-end">Actions</th>' : ''}
+                            </tr>
+                        </thead>
+                        <tbody id="invTableBody">`;
 
     if (inv.length === 0) {
-        html += '<tr id="emptyRow"><td colspan="' + (canEdit ? '6' : '5') +
-            '" class="text-muted text-center">No inventory items. Add your first item using the row below.</td></tr>';
+        html += '<tr id="emptyRow"><td colspan="' + (canEdit ? '7' : '6') +
+            '"><div class="intl-empty"><i class="bi bi-box-seam"></i>No inventory yet — add a product below</div></td></tr>';
     } else {
-        inv.forEach(i => {
+        inv.forEach((i, idx) => {
             const docId = i.id;
-            html += '<tr id="row_' + docId + '" data-id="' + docId + '">' +
-                '<td class="station-display">' + stationName(i.station_id) + '</td>' +
-                '<td class="product-display"><span class="product-badge custom">' + i.product_type +
-                '</span></td>' +
-                '<td class="qty-display"><strong>' + (i.quantity || 0).toFixed(2) + '</strong></td>' +
-                '<td class="cost-display">' + formatMoney(i.cost_price || 0) + '</td>' +
-                '<td class="sell-display">' + formatMoney(i.selling_price || 0) + '</td>';
+            const qty = Number(i.quantity) || 0;
+            const cost = Number(i.cost_price) || 0;
+            const sell = Number(i.selling_price) || 0;
+            const margin = sell - cost;
+            const marginPct = cost > 0 ? ((margin / cost) * 100) : 0;
+            const pKey = String(i.product_type || '').toLowerCase().replace(/\s+/g, '');
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            html += '<tr id="row_' + docId + '" data-id="' + docId + '" data-search="' + esc((stationName(i.station_id) + ' ' + (i.product_type || '')).toLowerCase()) + '" style="background:' + rowBg + '">' +
+                '<td class="station-display small text-muted">' + esc(stationName(i.station_id)) + '</td>' +
+                '<td class="product-display"><span class="inv-product-chip ' + esc(pKey) + '">' + esc(i.product_type) + '</span></td>' +
+                '<td class="qty-display text-end"><span class="inv-qty-cell' + (qty < 500 ? ' low' : '') + '">' + qty.toFixed(2) + ' L</span></td>' +
+                '<td class="cost-display text-end"><span class="amt">' + formatMoney(cost) + '</span></td>' +
+                '<td class="sell-display text-end"><span class="amt">' + formatMoney(sell) + '</span></td>' +
+                '<td class="text-end"><span class="' + (margin >= 0 ? 'inv-margin-pos' : 'inv-margin-neg') + '">' +
+                (margin >= 0 ? '+' : '') + formatMoney(margin) + ' <span class="small">(' + marginPct.toFixed(0) + '%)</span></span></td>';
             if (canEdit) {
-                html += '<td>' +
-                    '<button class="btn btn-sm btn-outline-primary edit-inv-row-btn me-1" data-id="' +
-                    docId + '"><i class="bi bi-pencil"></i></button>' +
-                    '<button class="btn btn-sm btn-outline-info history-btn me-1" data-id="' + docId +
-                    '" data-product="' + i.product_type + '" data-station="' + i.station_id +
-                    '"><i class="bi bi-clock-history"></i></button>' +
-                    (isTop ? '<button class="btn btn-sm btn-outline-danger delete-inv-btn" data-id="' + docId +
-                        '"><i class="bi bi-trash"></i></button>' : '') +
+                html += '<td class="text-end text-nowrap">' +
+                    '<button class="btn btn-sm btn-outline-primary edit-inv-row-btn py-0 px-1 me-1" data-id="' +
+                    docId + '" title="Edit"><i class="bi bi-pencil"></i></button>' +
+                    '<button class="btn btn-sm btn-outline-info history-btn py-0 px-1 me-1" data-id="' + docId +
+                    '" data-product="' + esc(i.product_type) + '" data-station="' + i.station_id +
+                    '" title="History"><i class="bi bi-clock-history"></i></button>' +
+                    (isTop ? '<button class="btn btn-sm btn-outline-danger delete-inv-btn py-0 px-1" data-id="' + docId +
+                        '" title="Delete"><i class="bi bi-trash"></i></button>' : '') +
                     '</td>';
             }
             html += '</tr>';
@@ -6052,22 +6163,42 @@ async function renderInventory() {
             allProducts.map(p => `<option value="${p}">${p}</option>`).join('') :
             '<option value="">No products yet</option>';
 
-        html += '<tr class="inv-add-row" id="addRow">' +
+        html += '<tr class="inv-add-row" id="addRow" style="background:#f0fdf4;">' +
             '<td><select id="invAddStation" class="form-select form-select-sm">' + stationOpts +
             '</select></td>' +
-            '<td><input type="text" id="invAddProduct" class="form-control form-control-sm" placeholder="New product name" list="productList"></td>' +
-            '<td><input type="number" id="invAddQty" class="form-control form-control-sm" step="0.01" min="0" placeholder="0"></td>' +
-            '<td><input type="number" id="invAddCost" class="form-control form-control-sm" step="10" min="0" placeholder="Cost"></td>' +
-            '<td><input type="number" id="invAddSell" class="form-control form-control-sm" step="10" min="0" placeholder="Sell"></td>' +
-            '<td><button type="button" class="btn btn-sm btn-success w-100" id="invAddBtn"><i class="bi bi-plus"></i> Add</button></td>' +
+            '<td><input type="text" id="invAddProduct" class="form-control form-control-sm" placeholder="Product name" list="productList"></td>' +
+            '<td><input type="number" id="invAddQty" class="form-control form-control-sm text-end" step="0.01" min="0" placeholder="0"></td>' +
+            '<td><input type="number" id="invAddCost" class="form-control form-control-sm text-end" step="10" min="0" placeholder="Cost"></td>' +
+            '<td><input type="number" id="invAddSell" class="form-control form-control-sm text-end" step="10" min="0" placeholder="Sell"></td>' +
+            '<td class="text-muted small text-center">—</td>' +
+            '<td><button type="button" class="btn btn-sm btn-success w-100" id="invAddBtn"><i class="bi bi-plus-lg"></i> Add</button></td>' +
             '</tr>';
 
         html += `<datalist id="productList">${allProducts.map(p => `<option value="${p}">`).join('')}</datalist>`;
     }
 
-    html += '</tbody></table></div></div>';
+    html += `</tbody></table></div>
+                <div class="fin-ledger-foot"><span>Showing <strong id="invFootCount">${inv.length}</strong> lines</span>
+                <span>Total stock <strong>${totalLitres.toFixed(0)} L</strong></span></div>
+            </div>
+        </div>`;
 
     document.getElementById('pageContent').innerHTML = html;
+
+    const invFQ = document.getElementById('invFilterQ');
+    if (invFQ) {
+        invFQ.addEventListener('input', function() {
+            const q = (this.value || '').toLowerCase().trim();
+            let n = 0;
+            document.querySelectorAll('#invTableBody tr[data-search]').forEach(tr => {
+                const show = !q || (tr.dataset.search || '').includes(q);
+                tr.style.display = show ? '' : 'none';
+                if (show) n++;
+            });
+            const c = document.getElementById('invFootCount');
+            if (c) c.textContent = n;
+        });
+    }
 
     // ---- Add ----
     const addBtn = document.getElementById('invAddBtn');
@@ -6292,7 +6423,7 @@ async function renderStock() {
         '<option value="Petrol">Petrol</option><option value="Diesel">Diesel</option><option value="Gas">Gas</option><option value="Paraffin">Paraffin</option>';
 
     const suppliers = await getAll('suppliers');
-    let supplierOpts = '<option value="">— Select Supplier —</option>';
+    let supplierOpts = '<option value="">Select supplier</option>';
     suppliers.forEach(s => {
         supplierOpts += `<option value="${s.id}" data-address="${s.address || ''}">${s.name}</option>`;
     });
@@ -6303,12 +6434,55 @@ async function renderStock() {
         stationOptions += '<option value="' + s.id + '"' + selected + '>' + s.name + '</option>';
     });
 
+    const activeStock = stock.filter(s => s.status !== 'reversed' && s.reversed !== true);
+    const mtdStock = activeStock.filter(s => {
+        const d = s.received_date || s.created_at;
+        let dt = null;
+        if (d && d.toDate) dt = d.toDate();
+        else if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) dt = new Date(d.slice(0,10));
+        else if (d) dt = new Date(d);
+        const now = new Date();
+        return dt && dt.getMonth() === now.getMonth() && dt.getFullYear() === now.getFullYear();
+    });
+    const mtdLitres = mtdStock.reduce((sum, s) => {
+        const items = s.items || [];
+        return sum + items.reduce((a, it) => a + (Number(it.quantity) || 0), 0);
+    }, 0);
+    const mtdValue = mtdStock.reduce((sum, s) => sum + (Number(s.total_cost) || 0), 0);
+
     let html = `
-        <div class="row g-4">
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-truck"></i> Offloading</h4>
+                        <div class="fin-sub">Receive fuel deliveries &amp; update tank stock</div>
+                    </div>
+                    <span class="fin-period-chip"><i class="bi bi-calendar3"></i> This month</span>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="fin-kpi in">
+                        <div class="k-label">Received (MTD)</div>
+                        <div class="k-value">${mtdLitres.toFixed(0)} <span style="font-size:0.65em;opacity:.85">L</span></div>
+                        <div class="k-hint">${mtdStock.length} delivery${mtdStock.length===1?'':'ies'}</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">Value (MTD)</div>
+                        <div class="k-value">${formatCompactMoney(mtdValue)}</div>
+                        <div class="k-hint">At delivery cost</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">All deliveries</div>
+                        <div class="k-value">${stock.length}</div>
+                        <div class="k-hint">Including reversed</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3">
             <div class="col-lg-7">
-                <div class="card-box">
-                    <h5 class="mb-3"><i class="bi bi-truck"></i> Receive Fuel / Offloading</h5>
-                    <form id="stockForm">
+                <div class="fin-action-card">
+                    <h6><i class="bi bi-truck text-info"></i> Receive fuel</h6>
+                    <form id="stockForm" class="intl-form">
                         <div class="row g-2 mb-3">
                             <div class="col-md-4">
                                 <label class="form-label small">Station *</label>
@@ -6903,14 +7077,25 @@ async function renderAdjustments() {
     stationOptions += `<option value="${s.id}"${selected}>${s.name}</option>`;
   });
 
-  let html = `<div class="row g-4">`;
+  const adjCount = adj.length;
+  let html = `<div class="fin-workspace">
+        <div class="fin-header">
+            <div class="fin-title-row">
+                <div>
+                    <h4><i class="bi bi-sliders"></i> Stock Adjustments</h4>
+                    <div class="fin-sub">Correct quantities, cost &amp; selling prices with full audit trail</div>
+                </div>
+                <span class="fin-period-chip"><i class="bi bi-journal-text"></i> ${adjCount} record${adjCount===1?'':'s'}</span>
+            </div>
+        </div>
+        <div class="row g-3">`;
 
   if (canAdjust) {
     html += `
         <div class="col-lg-5">
-            <div class="card-box">
-                <h5 class="mb-3"><i class="bi bi-sliders"></i> Adjustment</h5>
-                <form id="adjForm" novalidate>
+            <div class="fin-action-card">
+                <h6><i class="bi bi-sliders text-warning"></i> Stock adjustment</h6>
+                <form id="adjForm" class="intl-form" novalidate>
                     <div class="mb-2">
                         <label class="form-label small">Adjustment Type *</label>
                         <select id="adjType" class="form-select form-select-sm">
@@ -7451,70 +7636,84 @@ async function renderFuelPrices() {
             return (a.product_type || '').localeCompare(b.product_type || '');
         });
 
+    const avgMargin = filtered.length
+        ? filtered.reduce((s, i) => s + ((Number(i.selling_price) || 0) - (Number(i.cost_price) || 0)), 0) / filtered.length
+        : 0;
+
     let html = `
-        <div class="card-box">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0"><i class="bi bi-tags"></i> Item Prices</h5>
-                <span class="badge bg-secondary">${filtered.length} items</span>
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-tags"></i> Fuel Prices</h4>
+                        <div class="fin-sub">Cost &amp; pump prices — selling price drives sales</div>
+                    </div>
+                    <span class="fin-period-chip"><i class="bi bi-graph-up-arrow"></i> Avg margin ${formatMoney(avgMargin)} / L</span>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="fin-kpi">
+                        <div class="k-label">Products priced</div>
+                        <div class="k-value">${filtered.length}</div>
+                        <div class="k-hint">Station lines</div>
+                    </div>
+                    <div class="fin-kpi in">
+                        <div class="k-label">Avg sell / L</div>
+                        <div class="k-value">${formatCompactMoney(filtered.length ? filtered.reduce((s,i)=>s+(Number(i.selling_price)||0),0)/filtered.length : 0)}</div>
+                        <div class="k-hint">Across products</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">Avg cost / L</div>
+                        <div class="k-value">${formatCompactMoney(filtered.length ? filtered.reduce((s,i)=>s+(Number(i.cost_price)||0),0)/filtered.length : 0)}</div>
+                        <div class="k-hint">Landed cost</div>
+                    </div>
+                </div>
             </div>
-            <p class="text-muted small mb-3">
-                Update Cost Price and Selling Price for each product. Selling Price is used when making sales.
-            </p>
-            <div class="table-responsive">
-                <table class="table table-sm table-hover">
-                    <thead>
-                        <tr>
-                            <th>Station</th>
-                            <th>Product</th>
-                            <th class="text-end">Current Qty (L)</th>
-                            <th class="text-end">Cost Price (UGX/L)</th>
-                            <th class="text-end">Selling Price (UGX/L)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+            <div class="fin-ledger-card">
+                <div class="intl-section-head">
+                    <h6><i class="bi bi-currency-exchange"></i> Price board</h6>
+                    <span class="meta">${filtered.length}</span>
+                </div>
+                <div class="table-responsive intl-table-wrap" style="max-height:560px;overflow:auto;">
+                    <table class="table table-sm mb-0 align-middle" style="min-width:720px;width:100%;">
+                        <thead style="position:sticky;top:0;z-index:2;">
+                            <tr>
+                                <th>Station</th>
+                                <th>Product</th>
+                                <th class="text-end">Stock (L)</th>
+                                <th class="text-end">Cost / L</th>
+                                <th class="text-end">Sell / L</th>
+                                <th class="text-end">Margin</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
 
     if (filtered.length === 0) {
-        html += `
-            <tr>
-                <td colspan="6" class="text-center text-muted py-4">
-                    No products found in inventory.<br>
-                    Please go to <strong>Inventory → Overview</strong> and add products first.
-                </td>
-            </tr>`;
+        html += `<tr><td colspan="7"><div class="intl-empty"><i class="bi bi-tags"></i>No products yet — add them in Inventory Overview</div></td></tr>`;
     } else {
-        filtered.forEach(item => {
+        filtered.forEach((item, idx) => {
             const qty = Number(item.quantity) || 0;
             const cost = Number(item.cost_price) || 0;
             const sell = Number(item.selling_price) || 0;
-
+            const margin = sell - cost;
+            const pct = cost > 0 ? (margin / cost * 100) : 0;
+            const pKey = String(item.product_type || '').toLowerCase().replace(/\s+/g, '');
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
             html += `
-                <tr>
-                    <td>${stationName(item.station_id)}</td>
-                    <td>
-                        <span class="product-badge ${(item.product_type || '').toLowerCase()}">
-                            ${esc(item.product_type || '—')}
-                        </span>
+                <tr data-id="${item.id}" style="background:${rowBg};">
+                    <td class="small text-muted">${esc(stationName(item.station_id))}</td>
+                    <td><span class="inv-product-chip ${esc(pKey)}">${esc(item.product_type || '—')}</span></td>
+                    <td class="text-end"><span class="inv-qty-cell${qty < 500 ? ' low' : ''}">${qty.toFixed(0)}</span></td>
+                    <td class="text-end" style="min-width:110px;">
+                        <input type="number" class="form-control form-control-sm text-end price-cost" value="${cost}" step="10" min="0" style="min-height:36px;border-radius:8px;">
                     </td>
-                    <td class="text-end">${qty.toFixed(2)}</td>
+                    <td class="text-end" style="min-width:110px;">
+                        <input type="number" class="form-control form-control-sm text-end price-sell" value="${sell}" step="10" min="0" style="min-height:36px;border-radius:8px;">
+                    </td>
+                    <td class="text-end"><span class="${margin >= 0 ? 'inv-margin-pos' : 'inv-margin-neg'}">${margin >= 0 ? '+' : ''}${formatMoney(margin)} <span class="small">(${pct.toFixed(0)}%)</span></span></td>
                     <td class="text-end">
-                        <input type="number" class="form-control form-control-sm text-end price-cost" 
-                               value="${cost}" step="10" min="0" 
-                               data-id="${item.id}" data-station="${item.station_id}" data-product="${esc(item.product_type)}"
-                               style="width:110px; display:inline-block;">
-                    </td>
-                    <td class="text-end">
-                        <input type="number" class="form-control form-control-sm text-end price-sell" 
-                               value="${sell}" step="10" min="0" 
-                               data-id="${item.id}" data-station="${item.station_id}" data-product="${esc(item.product_type)}"
-                               style="width:110px; display:inline-block;">
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-success save-price-btn"
-                                data-id="${item.id}"
-                                data-station="${item.station_id}"
-                                data-product="${esc(item.product_type)}">
-                            <i class="bi bi-check-lg"></i> Save
+                        <button type="button" class="btn btn-sm btn-primary save-price-btn py-1 px-2" data-id="${item.id}" data-product="${esc(item.product_type || '')}">
+                            <i class="bi bi-check2"></i> Save
                         </button>
                     </td>
                 </tr>`;
@@ -7522,8 +7721,10 @@ async function renderFuelPrices() {
     }
 
     html += `
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="fin-note mt-2"><i class="bi bi-info-circle"></i> Selling price is what cashiers use at the pump. Margin updates after you save.</div>
             </div>
         </div>`;
 
@@ -7575,46 +7776,71 @@ async function renderTankLevels() {
         byStation[sid].push(item);
     });
 
+    const totalL = filtered.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
+    const lowN = filtered.filter(i => (Number(i.quantity) || 0) < 500).length;
+
     let html = `
-        <div class="card-box">
-            <h5 class="mb-3"><i class="bi bi-droplet-half"></i> Tank / Stock Levels</h5>
-            <p class="text-muted small mb-4">Visual overview of current stock levels across stations.</p>
-        `;
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-droplet-half"></i> Tank Levels</h4>
+                        <div class="fin-sub">Visual fuel on hand — watch the gauges</div>
+                    </div>
+                    <span class="fin-period-chip"><i class="bi bi-moisture"></i> ${totalL.toFixed(0)} L total</span>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="fin-kpi in">
+                        <div class="k-label">Total volume</div>
+                        <div class="k-value">${totalL.toFixed(0)} <span style="font-size:0.65em;opacity:.85">L</span></div>
+                        <div class="k-hint">${filtered.length} tanks / lines</div>
+                    </div>
+                    <div class="fin-kpi ${lowN ? 'warn' : ''}">
+                        <div class="k-label">Below 500 L</div>
+                        <div class="k-value">${lowN}</div>
+                        <div class="k-hint">Needs attention</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">Stations</div>
+                        <div class="k-value">${Object.keys(byStation).length}</div>
+                        <div class="k-hint">With stock data</div>
+                    </div>
+                </div>
+            </div>`;
 
     if (Object.keys(byStation).length === 0) {
-        html += `
-            <div class="empty-state">
-                <i class="bi bi-inbox"></i>
-                <p>No inventory found.<br>Add products in <strong>Inventory → Overview</strong> first.</p>
-            </div>`;
+        html += `<div class="fin-ledger-card"><div class="intl-empty"><i class="bi bi-droplet"></i>No inventory found. Add products in Overview first.</div></div>`;
     } else {
         Object.keys(byStation).forEach(stationId => {
             const items = byStation[stationId];
+            const stTotal = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0);
             html += `
-                <div class="mb-4">
-                    <h6 class="mb-3"><i class="bi bi-geo-alt"></i> ${stationName(stationId)}</h6>
+                <div class="fin-ledger-card mb-3">
+                    <div class="intl-section-head">
+                        <h6><i class="bi bi-geo-alt-fill text-primary"></i> ${esc(stationName(stationId))}</h6>
+                        <span class="meta">${stTotal.toFixed(0)} L</span>
+                    </div>
                     <div class="row g-3">`;
 
             items.forEach(item => {
                 const qty = Number(item.quantity) || 0;
-                const maxCapacity = 10000;
+                const maxCapacity = Math.max(10000, qty * 1.2, 1000);
                 let percent = Math.min(100, (qty / maxCapacity) * 100);
-                let fillClass = 'success';
-                if (percent < 20) fillClass = 'danger';
-                else if (percent < 40) fillClass = 'warning';
+                let fillClass = 'ok';
+                if (percent < 20 || qty < 500) fillClass = 'crit';
+                else if (percent < 40 || qty < 1500) fillClass = 'warn';
+                const pKey = String(item.product_type || '').toLowerCase().replace(/\s+/g, '');
 
                 html += `
                     <div class="col-6 col-md-4 col-lg-3">
-                        <div class="card-box text-center p-3">
-                            <div class="tank-level mx-auto mb-2">
-                                <div class="fill ${fillClass}" style="height: ${percent}%;"></div>
+                        <div class="tank-card">
+                            <div class="tank-visual">
+                                <div class="tank-fill ${fillClass}" style="height:${percent.toFixed(1)}%;"></div>
+                                <div class="tank-pct">${percent.toFixed(0)}%</div>
                             </div>
-                            <div class="fw-semibold">${esc(item.product_type)}</div>
-                            <div class="fs-5 fw-bold">${qty.toFixed(0)} L</div>
-                            <div class="tank-label text-muted">${percent.toFixed(0)}% full</div>
-                            <div class="small mt-1">
-                                Sell: ${formatMoney(item.selling_price || 0)}
-                            </div>
+                            <div class="inv-product-chip ${esc(pKey)} mb-1">${esc(item.product_type)}</div>
+                            <div class="fs-5 fw-bold" style="font-variant-numeric:tabular-nums;">${qty.toFixed(0)} <span class="fs-6 text-muted fw-semibold">L</span></div>
+                            <div class="small text-muted mt-1">Sell ${formatMoney(item.selling_price || 0)} / L</div>
                         </div>
                     </div>`;
             });
@@ -7627,7 +7853,7 @@ async function renderTankLevels() {
     document.getElementById('pageContent').innerHTML = html;
 }
 
-// ----- FINANCIALS (full tabs) -----
+
 async function renderFinancials() {
     try {
         try { await ensureSystemCashAccounts(); } catch (_) {}
@@ -10681,7 +10907,7 @@ async function renderReports() {
     customers.forEach(c => {
         customerOpts += `<option value="${c.id}">${c.name}</option>`;
     });
-    let supplierOpts = '<option value="">— Select Supplier —</option>';
+    let supplierOpts = '<option value="">Select supplier</option>';
     suppliers.forEach(s => {
         supplierOpts += `<option value="${s.id}">${s.name}</option>`;
     });
