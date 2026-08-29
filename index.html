@@ -4991,24 +4991,45 @@ async function renderBalancing() {
             </div>
             <div id="dayCloseStatus" class="small mt-2 text-muted"></div>
         </div>
-        <div class="card-box">
-            <h5 class="mb-3"><i class="bi bi-scales"></i> Cashier Balancing</h5>
-            <p class="text-muted small">Select a station and cashier. The system will show the <strong>most recent unreconciled</strong> closed shift.</p>
-            <p class="text-muted small"><strong>Math:</strong> <span class="text-primary">End Reading − Start Reading = Quantity Sold</span> (meters increase as fuel is dispensed).</p>
-            <form id="balancingFilter" class="row g-2 mb-3">
-                <div class="col-md-3"><label class="form-label">Station</label>
-                    <select id="balStation" class="form-select" required><option value="">Select station</option>${stationOptions}</select></div>
-                <div class="col-md-3"><label class="form-label">Cashier</label>
-                    <select id="balCashier" class="form-select" required><option value="">— Select Cashier —</option>${cashierOptions}</select></div>
-                <div class="col-md-2"><label class="form-label">From</label>
-                    <input type="date" id="balFrom" class="form-control" value="${startDate.toISOString().slice(0,10)}"></div>
-                <div class="col-md-2"><label class="form-label">To</label>
-                    <input type="date" id="balTo" class="form-control" value="${endDate.toISOString().slice(0,10)}"></div>
-                <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Load Shift</button></div>
-            </form>
-            <div id="balancingResult" class="balancing-result">
-                <div class="text-center text-muted py-4">Select filters and click <strong>Load Shift</strong>.</div>
+        <div class="fin-ledger-card">
+            <div class="intl-section-head">
+                <h6><i class="bi bi-scales text-warning"></i> Cashier balancing</h6>
             </div>
+            <div class="fin-note mb-3">
+                Loads the <strong>most recent unreconciled</strong> closed shift.
+                Math: <strong>End − Start = Qty sold</strong> (meters rise as fuel is dispensed).
+            </div>
+            <form id="balancingFilter" class="intl-form">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label" for="balStation">Station *</label>
+                        <select id="balStation" class="form-select" required>
+                            <option value="" disabled selected>Select station</option>${stationOptions}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="balCashier">Cashier *</label>
+                        <select id="balCashier" class="form-select" required>
+                            <option value="" disabled selected>Select cashier</option>${cashierOptions}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="balFrom">From</label>
+                        <input type="date" id="balFrom" class="form-control" value="${startDate.toISOString().slice(0,10)}">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label" for="balTo">To</label>
+                        <input type="date" id="balTo" class="form-control" value="${endDate.toISOString().slice(0,10)}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-intl btn-intl-primary w-100"><i class="bi bi-search"></i> Load</button>
+                    </div>
+                </div>
+            </form>
+            <div id="balancingResult" class="balancing-result mt-3">
+                <div class="intl-empty"><i class="bi bi-balance-scale"></i>Select station &amp; cashier, then load a shift</div>
+            </div>
+        </div>
         </div>`;
 
     document.getElementById('pageContent').innerHTML = html;
@@ -5728,7 +5749,7 @@ async function renderShortageRecovery() {
         u.active !== false && (remaining[u.id] > 0 || cashierIds.has(u.id))
     );
 
-    let cashierOpts = '<option value="">Select cashier</option>';
+    let cashierOpts = '<option value="" disabled selected>Select cashier</option>';
     cashiersWithShortage.forEach(u => {
         const rem = remaining[u.id] || 0;
         const label = rem > 0
@@ -5746,7 +5767,7 @@ async function renderShortageRecovery() {
         stationOpts += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
     });
 
-    let accountOpts = '<option value="">— Select account —</option>';
+    let accountOpts = '<option value="">Select account</option>';
     accountOpts += '<option value="cash_till">💵 Cash Till (selected station)</option>';
     accountOpts += '<option value="petty_cash">💰 Petty Cash (selected station)</option>';
     [...bankAccounts].sort((a, b) => String(a.bank_name || '').localeCompare(String(b.bank_name || ''))).forEach(a => {
@@ -5817,6 +5838,15 @@ async function renderShortageRecovery() {
     }
 
     const html = `
+        <div class="fin-workspace">
+        <div class="fin-header">
+            <div class="fin-title-row">
+                <div>
+                    <h4><i class="bi bi-shield-exclamation"></i> Shortage Recovery</h4>
+                    <div class="fin-sub">Collect payments · forgive with explanation</div>
+                </div>
+            </div>
+        </div>
         <div class="stat-grid kpi-compact mb-3">
             <div class="stat-item">
                 <div class="icon" style="background:#dc3545;"><i class="bi bi-exclamation-triangle"></i></div>
@@ -10073,155 +10103,148 @@ async function renderCustomers() {
     const stationOpts = state.stations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
     // ---- Build HTML ----
+    const totalReceivable = customers.reduce((s, c) => s + Math.max(0, Number(c.current_balance != null ? c.current_balance : c.opening_balance) || 0), 0);
+    const withBalance = customers.filter(c => (Number(c.current_balance != null ? c.current_balance : c.opening_balance) || 0) > 0).length;
+
     let html = `
-        <div class="row g-4">
-            <div class="col-lg-4">
-                <div class="card-box">
-                    <h5 class="mb-3"><i class="bi bi-person-plus"></i> Add Customer</h5>
-                    <form id="customerForm">
-                        <div class="mb-2"><label class="form-label small">Customer Name *</label>
-                            <input type="text" id="custName" class="form-control form-control-sm" required></div>
-                        <div class="mb-2"><label class="form-label small">Phone Number</label>
-                            <input type="text" id="custPhone" class="form-control form-control-sm" placeholder="e.g. 0772 123 456"></div>
-                        <div class="mb-2"><label class="form-label small">Email</label>
-                            <input type="email" id="custEmail" class="form-control form-control-sm" placeholder="customer@email.com"></div>
-                        <div class="mb-2"><label class="form-label small">Address</label>
-                            <input type="text" id="custAddress" class="form-control form-control-sm" placeholder="Location"></div>
-                        <div class="mb-2"><label class="form-label small">Opening Balance (UGX) – Amount they owe the company</label>
-                            <input type="number" id="custOpeningBal" class="form-control form-control-sm" step="1" min="0" value="0"></div>
-                        <div class="mb-2"><label class="form-label small">Station</label>
-                            <select id="custStation" class="form-select form-select-sm">
-                                <option value="">All Stations</option>
-                                ${stationOpts}
-                            </select></div>
-                        <button type="submit" class="btn btn-primary w-100">Add Customer</button>
-                    </form>
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-people"></i> Customers</h4>
+                        <div class="fin-sub">Credit accounts · statements · payments</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light" id="custExportBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </button>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="fin-kpi">
+                        <div class="k-label">Customers</div>
+                        <div class="k-value">${customers.length}</div>
+                        <div class="k-hint">Registered</div>
+                    </div>
+                    <div class="fin-kpi warn">
+                        <div class="k-label">Receivable</div>
+                        <div class="k-value">${formatCompactMoney(totalReceivable)}</div>
+                        <div class="k-hint">They owe you</div>
+                    </div>
+                    <div class="fin-kpi out">
+                        <div class="k-label">With balance</div>
+                        <div class="k-value">${withBalance}</div>
+                        <div class="k-hint">Open accounts</div>
+                    </div>
                 </div>
             </div>
-            <div class="col-lg-8">
-                <div class="card-box">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="bi bi-people"></i> Customers</h5>
-                        <span class="badge bg-secondary">${customers.length}</span>
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="fin-action-card">
+                        <h6><i class="bi bi-person-plus text-primary"></i> Add customer</h6>
+                        <form id="customerForm" class="intl-form">
+                            <div class="form-section">
+                                <div class="form-section-title">Identity</div>
+                                <div class="form-field">
+                                    <label class="form-label" for="custName">Name *</label>
+                                    <input type="text" id="custName" class="form-control" required placeholder="Customer name">
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-field">
+                                        <label class="form-label" for="custPhone">Phone</label>
+                                        <input type="text" id="custPhone" class="form-control" placeholder="e.g. 0772 123 456">
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="custEmail">Email</label>
+                                        <input type="email" id="custEmail" class="form-control" placeholder="Optional">
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="custAddress">Address</label>
+                                    <input type="text" id="custAddress" class="form-control" placeholder="Optional">
+                                </div>
+                            </div>
+                            <div class="form-section">
+                                <div class="form-section-title">Account</div>
+                                <div class="form-field">
+                                    <label class="form-label" for="custStation">Station</label>
+                                    <select id="custStation" class="form-select">
+                                        <option value="">All stations</option>
+                                        ${stationOpts}
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="custOpeningBal">Opening balance</label>
+                                    <input type="number" id="custOpeningBal" class="form-control" step="1" min="0" value="0">
+                                    <div class="form-hint">Amount they already owe the company</div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-intl btn-intl-primary"><i class="bi bi-plus-lg"></i> Add customer</button>
+                        </form>
                     </div>
-                    <div class="mb-3">
-                        <input type="text" id="custSearch" class="form-control form-control-sm" placeholder="Search customers...">
-                    </div>
-                    <div class="table-responsive" style="max-height:500px; overflow-y:auto;">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Phone</th>
-                                    <th>Station</th>
-                                    <th>Visits</th>
-                                    <th>Total Spent</th>
-                                    <th>Balance</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
-
-    // Aggregate visits & total spent from sales (match header columns)
-    const salesByCustomer = {};
-    (sales || []).forEach(s => {
-        if (s.status === 'reversed') return;
-        const key = s.customer_id
-            ? String(s.customer_id)
-            : (s.customer_name ? ('name:' + String(s.customer_name).toLowerCase().trim()) : null);
-        if (!key) return;
-        if (!salesByCustomer[key]) salesByCustomer[key] = { visits: 0, spent: 0 };
-        salesByCustomer[key].visits += 1;
-        salesByCustomer[key].spent += Number(s.amount) || 0;
-    });
+                </div>
+                <div class="col-lg-8">
+                    <div class="fin-ledger-card">
+                        <div class="intl-section-head">
+                            <h6><i class="bi bi-person-lines-fill"></i> Customer ledger</h6>
+                            <span class="meta" id="custMetaCount">${customers.length}</span>
+                        </div>
+                        <div class="fin-filter-bar">
+                            <input type="search" class="form-control fin-q" id="custSearch" placeholder="Search name or phone…">
+                        </div>
+                        <div class="table-responsive intl-table-wrap" style="max-height:520px;overflow:auto;">
+                            <table class="table table-sm mb-0 align-middle" style="min-width:640px;width:100%;">
+                                <thead style="position:sticky;top:0;z-index:2;">
+                                    <tr>
+                                        <th>Customer</th>
+                                        <th>Phone</th>
+                                        <th>Station</th>
+                                        <th class="text-end">Balance</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="custLedgerBody">`;
 
     if (customers.length === 0) {
-        html += '<tr><td colspan="7" class="text-center text-muted">No customers yet</td></tr>';
+        html += '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-people"></i>No customers yet</div></td></tr>';
     } else {
-        customers.forEach(c => {
+        customers.forEach((c, idx) => {
             const balance = Number(c.current_balance != null ? c.current_balance : (c.opening_balance || 0));
-            const station = c.station_id ? stationName(c.station_id) : 'All Stations';
+            const station = c.station_id ? stationName(c.station_id) : 'All stations';
             const canDelete = balance <= 0;
-            const balClass = balance > 0 ? 'balance-negative' : (balance < 0 ? 'balance-positive' : 'balance-zero');
-            const byId = salesByCustomer[String(c.id)] || { visits: 0, spent: 0 };
-            const byName = salesByCustomer['name:' + String(c.name || '').toLowerCase().trim()] || { visits: 0, spent: 0 };
-            const visits = byId.visits || byName.visits || 0;
-            const totalSpent = byId.spent || byName.spent || 0;
-
-            // Column order MUST match headers: Name | Phone | Station | Visits | Total Spent | Balance | Actions
-            html += '<tr>' +
-                '<td><strong>' + esc(c.name) + '</strong></td>' +
-                '<td>' + esc(c.phone || '—') + '</td>' +
-                '<td>' + esc(station) + '</td>' +
-                '<td>' + visits + '</td>' +
-                '<td>' + formatMoney(totalSpent) + '</td>' +
-                '<td class="' + balClass + '">' + formatMoney(balance) + '</td>' +
-                '<td class="text-nowrap">' +
-                    '<button class="btn btn-sm btn-outline-primary edit-cust-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" data-phone="' + esc(c.phone || '') + '" data-email="' + esc(c.email || '') + '" data-address="' + esc(c.address || '') + '" data-station="' + (c.station_id || '') + '" data-opening="' + (c.opening_balance || 0) + '" title="Edit"><i class="bi bi-pencil"></i></button> ' +
-                    '<button class="btn btn-sm btn-outline-secondary purchase-history-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" title="Purchase History"><i class="bi bi-bag-check"></i> History</button> ' +
-                    '<button class="btn btn-sm btn-outline-info statement-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" title="Account Statement"><i class="bi bi-receipt"></i></button> ' +
-                    '<button class="btn btn-sm btn-success receive-payment-btn" data-id="' + c.id + '" data-name="' + esc(c.name) + '" data-balance="' + balance + '" data-station="' + (c.station_id || '') + '" title="Receive Payment"><i class="bi bi-cash"></i> Pay</button> ' +
-                    (canDelete
-                        ? '<button class="btn btn-sm btn-outline-danger delete-cust-btn" data-id="' + c.id + '" title="Delete"><i class="bi bi-trash"></i></button>'
-                        : '<button class="btn btn-sm btn-outline-secondary" disabled title="Customer has balance"><i class="bi bi-lock"></i></button>') +
-                '</td>' +
-            '</tr>';
+            const balCls = balance > 0 ? 'amt-out' : (balance < 0 ? 'amt-in' : '');
+            const initials = String(c.name || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            const search = (String(c.name || '') + ' ' + String(c.phone || '')).toLowerCase();
+            html += `<tr style="background:${rowBg};" data-search="${esc(search)}">
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="intl-avatar" style="width:32px;height:32px;font-size:0.7rem;border-radius:10px;">${esc(initials)}</span>
+                        <div class="fw-semibold text-truncate" style="max-width:140px;" title="${esc(c.name)}">${esc(c.name)}</div>
+                    </div>
+                </td>
+                <td class="small text-nowrap">${esc(c.phone || '—')}</td>
+                <td class="small text-muted">${esc(station)}</td>
+                <td class="text-end"><span class="amt fw-bold ${balCls}">${formatMoney(balance)}</span></td>
+                <td class="text-end text-nowrap">
+                    <button class="btn btn-sm btn-outline-primary edit-cust-btn py-0 px-1" data-id="${c.id}" data-name="${esc(c.name)}" data-phone="${esc(c.phone || '')}" data-email="${esc(c.email || '')}" data-address="${esc(c.address || '')}" data-station="${c.station_id || ''}" data-opening="${c.opening_balance || 0}" title="Edit"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-secondary purchase-history-btn py-0 px-1" data-id="${c.id}" data-name="${esc(c.name)}" title="History"><i class="bi bi-bag-check"></i></button>
+                    <button class="btn btn-sm btn-outline-info statement-btn py-0 px-1" data-id="${c.id}" data-name="${esc(c.name)}" title="Statement"><i class="bi bi-receipt"></i></button>
+                    <button class="btn btn-sm btn-success receive-payment-btn py-0 px-1" data-id="${c.id}" data-name="${esc(c.name)}" data-balance="${balance}" data-station="${c.station_id || ''}" title="Receive payment"><i class="bi bi-cash"></i></button>
+                    ${canDelete
+                        ? `<button class="btn btn-sm btn-outline-danger delete-cust-btn py-0 px-1" data-id="${c.id}" title="Delete"><i class="bi bi-trash"></i></button>`
+                        : `<button class="btn btn-sm btn-outline-secondary py-0 px-1" disabled title="Has balance"><i class="bi bi-lock"></i></button>`}
+                </td>
+            </tr>`;
         });
     }
 
     html += `
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // ---- Payment Modal ----
-    html += `
-        <div class="modal fade" id="customerPaymentModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header bg-success text-white">
-                        <h5 class="modal-title"><i class="bi bi-cash"></i> Receive Payment</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <p><strong>Customer:</strong> <span id="payCustomerName"></span></p>
-                        <p><strong>Current Balance:</strong> <span id="payCustomerBalance"></span></p>
-                        <form id="paymentReceiveForm">
-                            <div class="mb-3">
-                                <label class="form-label">Amount (UGX) *</label>
-                                <input type="number" id="payAmount" class="form-control" step="0.01" min="0" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Payment Method</label>
-                                <select id="payMethod" class="form-select">
-                                    <option value="cash">Cash</option>
-                                    <option value="mobile">Mobile Money</option>
-                                    <option value="bank_transfer">Bank Transfer</option>
-                                    <option value="cheque">Cheque</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Date</label>
-                                <input type="date" id="payDate" class="form-control" value="${new Date().toISOString().slice(0,10)}">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Reference / Note</label>
-                                <input type="text" id="payNote" class="form-control" placeholder="Optional note">
-                            </div>
-                            <input type="hidden" id="payCustomerId">
-                            <input type="hidden" id="payCustomerStation">
-                        </form>
-                        <div id="paymentResult" class="mt-2 small"></div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-success" id="savePaymentBtn">
-                            <i class="bi bi-check-circle"></i> Record Payment
-                        </button>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="fin-ledger-foot">
+                            <span>Showing <strong id="custFootCount">${customers.length}</strong></span>
+                            <span>Receivable <strong>${formatMoney(totalReceivable)}</strong></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -10230,9 +10253,41 @@ async function renderCustomers() {
 
     document.getElementById('pageContent').innerHTML = html;
 
-    // ============================================================
-    // EVENT HANDLERS
-    // ============================================================
+    // Search + Excel
+    const custSearch = document.getElementById('custSearch');
+    if (custSearch) {
+        custSearch.addEventListener('input', function() {
+            const q = (this.value || '').toLowerCase().trim();
+            let n = 0;
+            document.querySelectorAll('#custLedgerBody tr[data-search]').forEach(tr => {
+                const show = !q || (tr.dataset.search || '').includes(q);
+                tr.style.display = show ? '' : 'none';
+                if (show) n++;
+            });
+            const c = document.getElementById('custFootCount');
+            const m = document.getElementById('custMetaCount');
+            if (c) c.textContent = n;
+            if (m) m.textContent = n;
+        });
+    }
+    const custExp = document.getElementById('custExportBtn');
+    if (custExp) {
+        custExp.onclick = function() {
+            const headers = ['Name', 'Phone', 'Email', 'Address', 'Station', 'Opening', 'Balance'];
+            const rows = customers.map(c => [
+                c.name || '',
+                c.phone || '',
+                c.email || '',
+                c.address || '',
+                c.station_id ? stationName(c.station_id) : 'All stations',
+                Number(c.opening_balance) || 0,
+                Number(c.current_balance != null ? c.current_balance : c.opening_balance) || 0
+            ]);
+            if (!rows.length) { toast('No customers to export', 'warning'); return; }
+            exportExcel(headers, rows, 'customers_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+            toast('Customers exported', 'success');
+        };
+    }
 
     // ---- Add customer ----
     document.getElementById('customerForm').onsubmit = async function(e) {
@@ -11049,52 +11104,67 @@ async function renderReports() {
 
     // ---- Build HTML ----
     let html = `
-        <div class="card-box mb-3 report-filter">
-            <div class="row g-2 align-items-end">
-                <div class="col-md-2">
-                    <label class="form-label">Report Type</label>
-                    <select id="rptType" class="form-select form-select-sm">${reportOpts}</select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Station</label>
-                    <select id="rptStation" class="form-select form-select-sm">${stationOpts}</select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">From</label>
-                    <input type="date" id="rptFrom" class="form-control form-control-sm" value="${toISO(thirtyDaysAgo)}">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">To</label>
-                    <input type="date" id="rptTo" class="form-control form-control-sm" value="${toISO(today)}">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Product (optional)</label>
-                    <select id="rptProduct" class="form-select form-select-sm">
-                        <option value="">All Products</option>
-                        ${productOpts}
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex gap-1">
-                    <button class="btn btn-primary btn-sm flex-grow-1" id="rptGenerate"><i class="bi bi-search"></i> Generate</button>
-                    <button class="btn btn-outline-secondary btn-sm" id="rptReset"><i class="bi bi-arrow-counterclockwise"></i></button>
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-bar-chart-line"></i> Reports</h4>
+                        <div class="fin-sub">Financial, sales, inventory &amp; statements — export ready</div>
+                    </div>
+                    <span class="fin-period-chip"><i class="bi bi-funnel"></i> ${reportTypes.length} report types</span>
                 </div>
             </div>
-            <div class="row g-2 mt-2" id="entitySelector" style="display:none;">
-                <div class="col-md-4">
-                    <label class="form-label">Select Customer / Supplier</label>
-                    <select id="rptEntity" class="form-select form-select-sm"></select>
+
+            <div class="fin-action-card mb-3">
+                <h6 class="mb-3"><i class="bi bi-sliders text-primary"></i> Report filters</h6>
+                <div class="intl-form">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label" for="rptType">Report type</label>
+                            <select id="rptType" class="form-select">${reportOpts}</select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="rptStation">Station</label>
+                            <select id="rptStation" class="form-select">${stationOpts}</select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="rptFrom">From</label>
+                            <input type="date" id="rptFrom" class="form-control" value="${toISO(thirtyDaysAgo)}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="rptTo">To</label>
+                            <input type="date" id="rptTo" class="form-control" value="${toISO(today)}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" for="rptProduct">Product</label>
+                            <select id="rptProduct" class="form-select">
+                                <option value="">All products</option>
+                                ${productOpts}
+                            </select>
+                        </div>
+                        <div class="col-md-1 d-grid">
+                            <button class="btn btn-intl btn-intl-primary" id="rptGenerate" style="min-height:40px;padding:8px;"><i class="bi bi-play-fill"></i></button>
+                        </div>
+                    </div>
+                    <div class="row g-2 mt-1" id="entitySelector" style="display:none;">
+                        <div class="col-md-4">
+                            <label class="form-label" for="rptEntity">Customer / supplier</label>
+                            <select id="rptEntity" class="form-select"></select>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="rptReset" style="border-radius:8px;"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                        <button type="button" class="btn btn-sm btn-outline-success" id="rptExportExcel" style="border-radius:8px;"><i class="bi bi-file-earmark-excel"></i> Excel</button>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="rptExportPDF" style="border-radius:8px;"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="rptPrint" style="border-radius:8px;"><i class="bi bi-printer"></i> Print</button>
+                    </div>
+                    <div class="fin-note mt-2 mb-0" id="rptHint"><i class="bi bi-info-circle"></i> Choose a report, set the date range, then generate.</div>
                 </div>
             </div>
-            <div class="row g-2 mt-2">
-                <div class="col-md-12 d-flex gap-2 flex-wrap">
-                    <button class="btn btn-outline-success btn-sm" id="rptExportExcel"><i class="bi bi-file-excel"></i> Excel</button>
-                    <button class="btn btn-outline-danger btn-sm" id="rptExportPDF"><i class="bi bi-file-pdf"></i> PDF</button>
-                    <button class="btn btn-outline-secondary btn-sm" id="rptPrint"><i class="bi bi-printer"></i> Print</button>
-                </div>
+
+            <div id="rptResult" class="fin-ledger-card">
+                <div class="intl-empty"><i class="bi bi-bar-chart"></i>Select a report type and click generate</div>
             </div>
-        </div>
-        <div id="rptResult" class="card-box">
-            <div class="text-center text-muted py-5">Select a report type and click <strong>Generate</strong>.</div>
         </div>`;
 
     document.getElementById('pageContent').innerHTML = html;
@@ -11106,14 +11176,25 @@ async function renderReports() {
 
     rptType.onchange = function() {
         const val = this.value;
+        const hint = document.getElementById('rptHint');
         if (val === 'customer_statement') {
             entitySelector.style.display = 'block';
             rptEntity.innerHTML = customerOpts;
+            if (hint) hint.innerHTML = '<i class="bi bi-info-circle"></i> Pick a customer, then generate the statement.';
         } else if (val === 'supplier_statement') {
             entitySelector.style.display = 'block';
             rptEntity.innerHTML = supplierOpts;
+            if (hint) hint.innerHTML = '<i class="bi bi-info-circle"></i> Pick a supplier, then generate the statement.';
         } else {
             entitySelector.style.display = 'none';
+            if (val === 'end_of_day') {
+                const todayStr = toISO(new Date());
+                document.getElementById('rptFrom').value = todayStr;
+                document.getElementById('rptTo').value = todayStr;
+                if (hint) hint.innerHTML = '<i class="bi bi-info-circle"></i> End of day uses the <strong>From</strong> date as the single day. Set station if you want one site only.';
+            } else if (hint) {
+                hint.innerHTML = '<i class="bi bi-info-circle"></i> Choose a report, set the date range, then generate.';
+            }
         }
     };
     rptType.dispatchEvent(new Event('change'));
@@ -11130,40 +11211,58 @@ async function renderReports() {
         };
     }
 
+    function parseReportDate(val) {
+        if (val == null || val === '') return null;
+        let dt = null;
+        if (typeof val.toDate === 'function') dt = val.toDate();
+        else if (val.seconds != null) dt = new Date(Number(val.seconds) * 1000);
+        else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+            const p = val.slice(0, 10).split('-').map(Number);
+            dt = new Date(p[0], p[1] - 1, p[2], 12, 0, 0, 0);
+        } else dt = new Date(val);
+        return (dt && !isNaN(dt.getTime())) ? dt : null;
+    }
+    function recordDate(x) {
+        const candidates = [x.sale_date, x.expense_date, x.payment_date, x.received_date, x.date, x.paid_date, x.created_at, x.timestamp];
+        for (const c of candidates) {
+            const dt = parseReportDate(c);
+            if (dt) return dt;
+        }
+        return null;
+    }
     function dateInRange(ts, from, to) {
-        if (!ts) return false;
-        const d = ts.toDate ? ts.toDate() : new Date(ts);
-        const f = new Date(from);
-        f.setHours(0, 0, 0, 0);
-        const t = new Date(to);
-        t.setHours(23, 59, 59, 999);
-        return d >= f && d <= t;
+        const d = parseReportDate(ts);
+        if (!d) return false;
+        const f = parseReportDate(from) || new Date(from);
+        const t = parseReportDate(to) || new Date(to);
+        if (!f || !t || isNaN(f.getTime()) || isNaN(t.getTime())) return false;
+        const f0 = new Date(f.getFullYear(), f.getMonth(), f.getDate(), 0, 0, 0, 0);
+        const t1 = new Date(t.getFullYear(), t.getMonth(), t.getDate(), 23, 59, 59, 999);
+        return d >= f0 && d <= t1;
     }
 
     function filterByCommon(arr, f) {
         return arr.filter(x => {
             if (f.stationId && String(x.station_id) !== String(f.stationId)) return false;
             if (f.product && x.product_type && x.product_type !== f.product) return false;
-            if (x.created_at && !dateInRange(x.created_at, f.from, f.to)) return false;
-            if (x.received_date && !dateInRange(x.received_date, f.from, f.to)) return false;
-            if (x.sale_date && !dateInRange(x.sale_date, f.from, f.to)) return false;
-            if (x.expense_date && !dateInRange(x.expense_date, f.from, f.to)) return false;
-            if (x.timestamp && !dateInRange(x.timestamp, f.from, f.to)) return false;
-            return true;
+            const d = recordDate(x);
+            if (!d) return false;
+            return dateInRange(d, f.from, f.to);
         });
     }
 
     function generateTable(headers, rows, title = '') {
-        let tableHtml = `<div class="table-responsive"><table class="table table-sm table-hover table-report">`;
-        if (title) tableHtml += `<caption class="fw-bold">${title}</caption>`;
-        tableHtml += `<thead><tr>`;
+        let tableHtml = `<div class="table-responsive intl-table-wrap"><table class="table table-sm mb-0 align-middle table-report">`;
+        if (title) tableHtml += `<caption class="fw-bold px-2 pt-2">${title}</caption>`;
+        tableHtml += `<thead style="position:sticky;top:0;z-index:2;"><tr>`;
         headers.forEach(h => tableHtml += `<th>${h}</th>`);
         tableHtml += `</tr></thead><tbody>`;
         if (rows.length === 0) {
-            tableHtml += `<tr><td colspan="${headers.length}" class="text-center text-muted">No results found</td></tr>`;
+            tableHtml += `<tr><td colspan="${headers.length}"><div class="intl-empty"><i class="bi bi-inbox"></i>No results for this filter</div></td></tr>`;
         } else {
-            rows.forEach(row => {
-                tableHtml += `<tr>`;
+            rows.forEach((row, idx) => {
+                const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                tableHtml += `<tr style="background:${bg};">`;
                 row.forEach(cell => tableHtml += `<td>${cell}</td>`);
                 tableHtml += `</tr>`;
             });
@@ -11172,29 +11271,32 @@ async function renderReports() {
         return tableHtml;
     }
 
+    function reportKpiRow(items) {
+        let h = '<div class="row g-2 mb-3">';
+        items.forEach(it => {
+            const color = it.tone === 'in' ? '#059669' : (it.tone === 'out' ? '#dc2626' : (it.tone === 'warn' ? '#d97706' : '#0f172a'));
+            h += `<div class="col-6 col-md-3"><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;">
+                <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.04em;color:#64748b;font-weight:700;">${it.label}</div>
+                <div style="font-size:1.15rem;font-weight:800;color:${color};font-variant-numeric:tabular-nums;margin-top:2px;">${it.value}</div>
+            </div></div>`;
+        });
+        h += '</div>';
+        return h;
+    }
+
     // ---- Report generators ----
 
-    // 1. End of Day
+    // 1. End of Day — uses robust dates (sale_date / expense_date / created_at)
     function generateEndOfDay(f) {
-        const dateStr = f.from;
-        const start = new Date(dateStr);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(dateStr);
-        end.setHours(23, 59, 59, 999);
+        // Single-day report: prefer From; if To differs, still use From as the day (UI syncs them)
+        const dateStr = f.from || f.to || toISO(today);
+        const dayFilter = { stationId: f.stationId, product: f.product, from: dateStr, to: dateStr };
 
-        const daySales = sales.filter(s => {
-            const d = s.created_at && s.created_at.toDate ? s.created_at.toDate() : new Date(s.created_at);
-            return d >= start && d <= end && s.status !== 'reversed' &&
-                (!f.stationId || String(s.station_id) === String(f.stationId));
-        });
-        const dayExpenses = expenses.filter(e => {
-            const d = e.created_at && e.created_at.toDate ? e.created_at.toDate() : new Date(e.created_at);
-            return d >= start && d <= end && (!f.stationId || String(e.station_id) === String(f.stationId));
-        });
-        const dayAdjustments = adjustments.filter(a => {
-            const d = a.created_at && a.created_at.toDate ? a.created_at.toDate() : new Date(a.created_at);
-            return d >= start && d <= end && (!f.stationId || String(a.station_id) === String(f.stationId));
-        });
+        const daySales = filterByCommon(sales, dayFilter).filter(s => s.status !== 'reversed' && s.reversed !== true);
+        const dayExpenses = filterByCommon(expenses, dayFilter).filter(e => e.status !== 'reversed' && e.reversed !== true);
+        const dayAdjustments = filterByCommon(adjustments, dayFilter).filter(a => a.status !== 'reversed' && a.reversed !== true);
+        const dayStock = filterByCommon(stock, dayFilter).filter(s => s.status !== 'reversed' && s.reversed !== true);
+        const dayRecons = filterByCommon(reconciliations, dayFilter);
 
         let totalRevenue = 0,
             totalCOGS = 0;
@@ -11228,22 +11330,30 @@ async function renderReports() {
             return [p, d.qty.toFixed(2) + 'L', formatMoney(d.revenue), formatMoney(d.cogs), formatMoney(profit)];
         });
 
-        const summaryRows = [
-            ['Total Revenue', formatMoney(totalRevenue)],
-            ['Total COGS', formatMoney(totalCOGS)],
-            ['Gross Profit', formatMoney(grossProfit)],
-            ['Total Expenses', formatMoney(totalExpenses)],
-            ['Total Losses', formatMoney(totalLosses)],
-            ['Net Profit', formatMoney(netProfit)],
-            ['Total Quantity Sold', totalQtySold.toFixed(2) + ' L'],
-            ['Number of Sales', daySales.length],
-        ];
-        let summaryHtml = '<div class="row g-3 mb-3">';
-        summaryRows.forEach(row => {
-            summaryHtml += `<div class="col-md-4"><strong>${row[0]}:</strong> ${row[1]}</div>`;
-        });
-        summaryHtml += '</div>';
-        const detailTable = generateTable(['Product', 'Qty Sold', 'Revenue', 'COGS', 'Profit'], detailRows, 'Sales by Product');
+        const offloadLitres = dayStock.reduce((sum, s) => {
+            return sum + (s.items || []).reduce((a, it) => a + (Number(it.quantity) || 0), 0);
+        }, 0);
+        const stLabel = f.stationId ? stationName(f.stationId) : 'All stations';
+        let summaryHtml = `<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <div>
+                <h5 class="mb-0 fw-bold">End of day · ${esc(dateStr)}</h5>
+                <div class="small text-muted">${esc(stLabel)} · ${daySales.length} sale${daySales.length===1?'':'s'} · ${dayRecons.length} reconciliation${dayRecons.length===1?'':'s'}</div>
+            </div>
+        </div>`;
+        summaryHtml += reportKpiRow([
+            { label: 'Revenue', value: formatMoney(totalRevenue), tone: 'in' },
+            { label: 'Gross profit', value: formatMoney(grossProfit), tone: grossProfit >= 0 ? 'in' : 'out' },
+            { label: 'Expenses', value: formatMoney(totalExpenses), tone: 'out' },
+            { label: 'Net profit', value: formatMoney(netProfit), tone: netProfit >= 0 ? 'in' : 'out' },
+            { label: 'Volume sold', value: totalQtySold.toFixed(0) + ' L', tone: '' },
+            { label: 'COGS', value: formatMoney(totalCOGS), tone: '' },
+            { label: 'Stock losses', value: formatMoney(totalLosses), tone: totalLosses ? 'warn' : '' },
+            { label: 'Offloaded', value: offloadLitres.toFixed(0) + ' L', tone: '' },
+        ]);
+        if (daySales.length === 0 && dayExpenses.length === 0) {
+            summaryHtml += `<div class="fin-note mb-3"><i class="bi bi-info-circle"></i> No sales or expenses found for <strong>${esc(dateStr)}</strong>. Check the date and station filter — sales use the sale date when available.</div>`;
+        }
+        const detailTable = generateTable(['Product', 'Qty Sold', 'Revenue', 'COGS', 'Profit'], detailRows, 'Sales by product');
         const htmlContent = summaryHtml + detailTable;
         return { html: htmlContent, headers: ['Product', 'Qty Sold', 'Revenue', 'COGS', 'Profit'], rows: detailRows, filename: 'EndOfDay_' + dateStr };
     }
@@ -13219,55 +13329,96 @@ async function renderStaff() {
     const users = await getAll('users');
 
     let html = `
-        <div class="row g-4">
-            <div class="col-lg-4">
-                <div class="card-box">
-                    <h5 class="mb-3"><i class="bi bi-person-plus"></i> Add Staff Member</h5>
-                    <form id="staffForm">
-                        <div class="mb-2"><label class="form-label small">Full Name *</label>
-                            <input type="text" id="staffName" class="form-control form-control-sm" required></div>
-                        <div class="mb-2"><label class="form-label small">Role / Position</label>
-                            <input type="text" id="staffRole" class="form-control form-control-sm" placeholder="e.g. Cashier, Manager"></div>
-                        <div class="mb-2"><label class="form-label small">Phone</label>
-                            <input type="text" id="staffPhone" class="form-control form-control-sm"></div>
-                        <div class="mb-2"><label class="form-label small">Email</label>
-                            <input type="email" id="staffEmail" class="form-control form-control-sm"></div>
-                        <div class="mb-2"><label class="form-label small">Linked User</label>
-                            <select id="staffUser" class="form-select form-select-sm">
-                                <option value="">— None —</option>
-                                ${users.filter(u => u.active !== false).map(u => `<option value="${u.id}">${u.name || u.username}</option>`).join('')}
-                            </select></div>
-                        <button type="submit" class="btn btn-primary w-100">Add Staff</button>
-                    </form>
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-person-badge"></i> Staff</h4>
+                        <div class="fin-sub">Team directory · roles &amp; contacts</div>
+                    </div>
+                    <span class="fin-period-chip"><i class="bi bi-people"></i> ${staff.length} member${staff.length===1?'':'s'}</span>
                 </div>
             </div>
-            <div class="col-lg-8">
-                <div class="card-box">
-                    <h5 class="mb-3"><i class="bi bi-people"></i> Staff</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Email</th><th>User</th><th>Actions</th></tr></thead>
-                            <tbody>`;
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="fin-action-card">
+                        <h6><i class="bi bi-person-plus text-primary"></i> Add staff member</h6>
+                        <form id="staffForm" class="intl-form">
+                            <div class="form-section">
+                                <div class="form-section-title">Details</div>
+                                <div class="form-field">
+                                    <label class="form-label" for="staffName">Full name *</label>
+                                    <input type="text" id="staffName" class="form-control" required placeholder="Full name">
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="staffRole">Role / position</label>
+                                    <input type="text" id="staffRole" class="form-control" placeholder="e.g. Cashier, Manager">
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="staffPhone">Phone</label>
+                                    <input type="text" id="staffPhone" class="form-control" placeholder="Optional">
+                                </div>
+                            </div>
+                            <div class="form-section" style="display:none;">
+                                <input type="hidden" id="staffEmail" value="">
+                                <select id="staffUser" style="display:none;"><option value=""></option>
+                                    ${users.filter(u => u.active !== false).map(u => `<option value="${u.id}">${esc(u.name || u.username)}</option>`).join('')}
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-intl btn-intl-primary"><i class="bi bi-plus-lg"></i> Add staff</button>
+                        </form>
+                        <div class="fin-note mt-2"><i class="bi bi-info-circle"></i> Login users are managed under Users. Staff is your on-site directory.</div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="fin-ledger-card">
+                        <div class="intl-section-head">
+                            <h6><i class="bi bi-people"></i> Staff directory</h6>
+                            <span class="meta">${staff.length}</span>
+                        </div>
+                        <div class="table-responsive intl-table-wrap" style="max-height:520px;overflow:auto;">
+                            <table class="table table-sm mb-0 align-middle">
+                                <thead style="position:sticky;top:0;z-index:2;">
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Phone</th>
+                                        <th class="text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
 
     if (staff.length === 0) {
-        html += '<tr><td colspan="6" class="text-muted text-center">No staff records</td></tr>';
+        html += '<tr><td colspan="4"><div class="intl-empty"><i class="bi bi-person-badge"></i>No staff records yet</div></td></tr>';
     } else {
-        staff.forEach(s => {
-            const linkedUser = users.find(u => u.id === s.user_id);
-            html += `<tr>
-                        <td><strong>${esc(s.name)}</strong></td>
-                        <td>${esc(s.role || '—')}</td>
-                        <td>${esc(s.phone || '—')}</td>
-                        <td>${esc(s.email || '—')}</td>
-                        <td>${linkedUser ? linkedUser.username : '—'}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-danger delete-staff-btn" data-id="${s.id}"><i class="bi bi-trash"></i></button>
-                        </td>
-                    </tr>`;
+        staff.forEach((s, idx) => {
+            const initials = String(s.name || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            html += `<tr style="background:${rowBg};">
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="intl-avatar" style="width:32px;height:32px;font-size:0.7rem;border-radius:10px;">${esc(initials)}</span>
+                        <div class="fw-semibold">${esc(s.name || '—')}</div>
+                    </div>
+                </td>
+                <td><span class="intl-chip">${esc(s.role || s.position || '—')}</span></td>
+                <td class="small text-nowrap">${esc(s.phone || '—')}</td>
+                <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-staff-btn py-0 px-1" data-id="${s.id}" title="Delete"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`;
         });
     }
 
-    html += `</tbody></table></div></div></div></div>`;
+    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
     document.getElementById('pageContent').innerHTML = html;
 
     document.getElementById('staffForm').onsubmit = async function(e) {
@@ -13279,8 +13430,8 @@ async function renderStaff() {
                 name: name,
                 role: document.getElementById('staffRole').value.trim() || null,
                 phone: document.getElementById('staffPhone').value.trim() || null,
-                email: document.getElementById('staffEmail').value.trim() || null,
-                user_id: document.getElementById('staffUser').value || null,
+                email: (document.getElementById('staffEmail') && document.getElementById('staffEmail').value.trim()) || null,
+                user_id: (document.getElementById('staffUser') && document.getElementById('staffUser').value) || null,
                 created_by: state.user.id
             });
             toast('Staff added');
