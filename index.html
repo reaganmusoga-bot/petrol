@@ -854,6 +854,83 @@
             font-weight: 700; margin-bottom: 14px; letter-spacing: -0.01em;
             display: flex; align-items: center; gap: 8px;
         }
+
+        /* ===== International entry forms ===== */
+        .intl-form .form-section {
+            margin-bottom: 14px; padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .intl-form .form-section:last-of-type { border-bottom: none; margin-bottom: 8px; padding-bottom: 0; }
+        .intl-form .form-section-title {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.06em; color: #64748b; margin-bottom: 10px;
+        }
+        .intl-form .form-label, .intl-form label.form-label {
+            font-size: 0.78rem !important; font-weight: 600 !important;
+            color: #334155 !important; margin-bottom: 5px !important;
+        }
+        .intl-form .form-control,
+        .intl-form .form-select,
+        .intl-form .form-control-sm,
+        .intl-form .form-select-sm {
+            min-height: 40px; height: auto !important;
+            padding: 8px 12px !important; font-size: 0.875rem !important;
+            border-radius: 10px !important; border: 1px solid #e2e8f0 !important;
+            background: #fff !important; color: #0f172a;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .intl-form .form-control:focus,
+        .intl-form .form-select:focus {
+            border-color: #1e3a5f !important;
+            box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12) !important;
+            outline: none;
+        }
+        .intl-form .form-control::placeholder { color: #94a3b8; }
+        .intl-form .form-hint {
+            font-size: 0.72rem; color: #94a3b8; margin-top: 4px;
+        }
+        .intl-form .form-row-2 {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        }
+        @media (max-width: 576px) { .intl-form .form-row-2 { grid-template-columns: 1fr; } }
+        .intl-form .form-field { margin-bottom: 10px; }
+        .intl-form .form-check {
+            padding: 8px 10px; background: #f8fafc; border-radius: 8px;
+            border: 1px solid #f1f5f9; margin-bottom: 6px;
+        }
+        .intl-form .form-check-label { font-size: 0.82rem; color: #475569; }
+        .intl-form .btn-intl {
+            min-height: 42px; border-radius: 10px !important;
+            font-weight: 600; font-size: 0.875rem; padding: 10px 16px;
+            border: none; display: inline-flex; align-items: center;
+            justify-content: center; gap: 8px; width: 100%;
+            transition: transform 0.12s, box-shadow 0.12s;
+        }
+        .intl-form .btn-intl:hover { transform: translateY(-1px); }
+        .intl-form .btn-intl-primary {
+            background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+        }
+        .intl-form .btn-intl-danger {
+            background: linear-gradient(135deg, #b91c1c, #dc2626); color: #fff;
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+        }
+        .intl-form .btn-intl-success {
+            background: linear-gradient(135deg, #047857, #059669); color: #fff;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+        }
+        .intl-form .btn-intl-warning {
+            background: linear-gradient(135deg, #b45309, #d97706); color: #fff;
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+        }
+        [data-theme="dark"] .intl-form .form-control,
+        [data-theme="dark"] .intl-form .form-select {
+            background: #1a1a1a !important; border-color: #333 !important; color: #e0e0e0;
+        }
+        [data-theme="dark"] .intl-form .form-section { border-bottom-color: #333; }
+        [data-theme="dark"] .intl-form .form-check { background: #1a1a1a; border-color: #333; }
+        [data-theme="dark"] .intl-form .form-label { color: #cbd5e1 !important; }
+
         .fin-ledger-card {
             background: var(--card-bg); border: 1px solid var(--border-color);
             border-radius: 14px; padding: 16px 16px 12px; box-shadow: var(--shadow);
@@ -8035,27 +8112,49 @@ async function renderFinancials() {
                             <div class="col-lg-4">
                                 <div class="fin-action-card border border-primary">
                                     <h6><i class="bi bi-bank2 text-primary"></i> Add Bank Account</h6>
-                                    <form id="baForm">
-                                        <div class="mb-2">
-                                            <label class="form-label small fw-semibold"><i class="bi bi-geo-alt-fill text-primary"></i> Station *</label>
-                                            <select id="baStation" class="form-select form-select-sm" required>
-                                                <option value="all">🌐 All stations (company-wide)</option>
-                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-                                            </select>
+                                    <form id="baForm" class="intl-form">
+                                        <div class="form-section">
+                                            <div class="form-section-title">Station</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="baStation">Station *</label>
+                                                <select id="baStation" class="form-select" required>
+                                                    <option value="all">All stations (company-wide)</option>
+                                                    ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId) ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                                </select>
+                                                <div class="form-hint">Company-wide accounts appear under every station</div>
+                                            </div>
                                         </div>
-                                        <div class="mb-2"><label class="form-label small">Bank name *</label>
-                                            <input id="baName" class="form-control form-control-sm" placeholder="e.g. Stanbic" required></div>
-                                        <div class="mb-2"><label class="form-label small">Account name *</label>
-                                            <input id="baAccName" class="form-control form-control-sm" placeholder="e.g. Operations" required></div>
-                                        <div class="mb-2"><label class="form-label small">Account number *</label>
-                                            <input id="baAccNum" class="form-control form-control-sm" placeholder="Account number" maxlength="20" required></div>
-                                        <div class="mb-2"><label class="form-label small">Branch</label>
-                                            <input id="baBranch" class="form-control form-control-sm" placeholder="Optional"></div>
-                                        <div class="mb-3"><label class="form-label small">Opening balance</label>
-                                            <input type="number" id="baOpening" class="form-control form-control-sm" step="0.01" min="0" value="0"></div>
-                                        <button type="submit" class="btn btn-primary w-100 btn-sm"><i class="bi bi-plus-lg"></i> Add Account</button>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Account details</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="baName">Bank name *</label>
+                                                <input id="baName" class="form-control" placeholder="e.g. Stanbic" required>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="baAccName">Account name *</label>
+                                                <input id="baAccName" class="form-control" placeholder="e.g. Operations" required>
+                                            </div>
+                                            <div class="form-row-2">
+                                                <div class="form-field">
+                                                    <label class="form-label" for="baAccNum">Account number *</label>
+                                                    <input id="baAccNum" class="form-control" placeholder="Number" maxlength="20" required>
+                                                </div>
+                                                <div class="form-field">
+                                                    <label class="form-label" for="baBranch">Branch</label>
+                                                    <input id="baBranch" class="form-control" placeholder="Optional">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Opening</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="baOpening">Opening balance</label>
+                                                <input type="number" id="baOpening" class="form-control" step="0.01" min="0" value="0">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-intl btn-intl-primary"><i class="bi bi-plus-lg"></i> Add Account</button>
                                     </form>
-                                    <p class="small text-muted mt-2 mb-0"><span class="badge rounded-pill" style="background:#f59e0b;color:#fff;font-size:0.62rem;">Cash Till</span> is auto-created per station and receives cash/mobile sales.</p>
+                                    <div class="fin-note mt-2 mb-0"><span class="intl-chip" style="background:#fef3c7;color:#92400e;">Cash Till</span> is auto-created per station for cash &amp; mobile sales.</div>
                                 </div>
                             </div>
                             <div class="col-lg-8">
@@ -8079,39 +8178,65 @@ async function renderFinancials() {
                             <div class="col-lg-5">
                                 <div class="fin-action-card">
                                     <h6><i class="bi bi-receipt text-danger"></i> Record Expense</h6>
-                                    <form id="expForm">
-                                        <div class="mb-2"><label class="form-label small">Station * <span class="text-muted fw-normal">(where expense is made)</span></label>
-                                            <select id="expStation" class="form-select form-select-sm" required>
-                                                <option value="">— Select station —</option>
-                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-                                            </select>
+                                    <form id="expForm" class="intl-form">
+                                        <div class="form-section">
+                                            <div class="form-section-title">Station &amp; account</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="expStation">Station *</label>
+                                                <select id="expStation" class="form-select" required>
+                                                    <option value="">— Select station —</option>
+                                                    ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
+                                                </select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="expSource">Source account *</label>
+                                                <select id="expSource" class="form-select" required>
+                                                    <option value="">— Select station first —</option>
+                                                </select>
+                                                <div class="form-hint">Only accounts for the selected station</div>
+                                            </div>
                                         </div>
-                                        <div class="mb-2"><label class="form-label small">Source Account * <span class="text-muted fw-normal">(from selected station only)</span></label>
-                                            <select id="expSource" class="form-select form-select-sm" required>
-                                                <option value="">— Select station first —</option>
-                                            </select>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Expense details</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="expPerson">Associate</label>
+                                                <select id="expPerson" class="form-select">
+                                                    <option value="">— Select person —</option>${userOpts}
+                                                </select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="expDesc">Description *</label>
+                                                <input id="expDesc" class="form-control" placeholder="What was paid for" required>
+                                            </div>
+                                            <div class="form-row-2">
+                                                <div class="form-field">
+                                                    <label class="form-label" for="expAmount">Amount *</label>
+                                                    <input type="number" id="expAmount" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+                                                </div>
+                                                <div class="form-field">
+                                                    <label class="form-label" for="expDate">Date</label>
+                                                    <input type="date" id="expDate" class="form-control" value="${today}">
+                                                </div>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="expCategory">Category</label>
+                                                <select id="expCategory" class="form-select">${expenseCategories}</select>
+                                            </div>
                                         </div>
-                                        <div class="mb-2"><label class="form-label small">Person (who made the expense)</label>
-                                            <select id="expPerson" class="form-select form-select-sm">
-                                                <option value="">— Select Person —</option>${userOpts}
-                                            </select></div>
-                                        <div class="mb-2"><input id="expDesc" class="form-control form-control-sm" placeholder="Description *" required></div>
-                                        <div class="mb-2"><input type="number" id="expAmount" class="form-control form-control-sm" placeholder="Amount *" step="0.01" min="0" required></div>
-                                        <div class="mb-2"><label class="form-label small">Category</label>
-                                            <select id="expCategory" class="form-select form-select-sm">${expenseCategories}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Date</label>
-                                            <input type="date" id="expDate" class="form-control form-control-sm" value="${today}"></div>
-                                        <div class="mb-2"><div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="expRecurring">
-                                            <label class="form-check-label" for="expRecurring">Recurring (monthly)</label>
-                                        </div></div>
-                                        <div class="mb-2"><div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="expAutoRecord">
-                                            <label class="form-check-label" for="expAutoRecord">Auto-record future months</label>
-                                        </div></div>
-                                        <button class="btn btn-danger w-100">Record Expense</button>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Options</div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="expRecurring">
+                                                <label class="form-check-label" for="expRecurring">Recurring monthly</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="expAutoRecord">
+                                                <label class="form-check-label" for="expAutoRecord">Auto-record future months</label>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-intl btn-intl-danger"><i class="bi bi-check2"></i> Record Expense</button>
                                     </form>
-                                    <div class="mt-2 small text-muted">Note: Salary expenses are handled via the Payroll module.</div>
+                                    <div class="fin-note"><i class="bi bi-info-circle"></i> Salary payments are handled in Payroll, not as expenses.</div>
                                 </div>
                             </div>
                             <div class="col-lg-7">
@@ -8153,20 +8278,43 @@ async function renderFinancials() {
                             <div class="col-lg-5">
                                 <div class="fin-action-card">
                                     <h6><i class="bi bi-bank text-success"></i> Record Deposit</h6>
-                                    <form id="bankForm">
-                                        <div class="mb-2"><label class="form-label small">From Account</label>
-                                            <select id="bfSource" class="form-select form-select-sm" required>${depositSourceOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">To Account</label>
-                                            <select id="bfAccount" class="form-select form-select-sm" required>
-                                                <option value="">Select Bank Account</option>
-                                                ${accounts.map(a => `<option value="${a.id}">${esc(a.bank_name)} – ${esc(a.account_number)}</option>`).join('')}
-                                            </select></div>
-                                        <div class="mb-2"><label class="form-label small">Depositor name *</label><input id="bfDepositor" class="form-control form-control-sm" placeholder="Cashier or person depositing" required></div>
-                                        <div class="mb-2"><input type="number" id="bfAmount" class="form-control form-control-sm" placeholder="Amount *" step="0.01" min="0" required></div>
-                                        <div class="mb-2"><input id="bfDesc" class="form-control form-control-sm" placeholder="Description"></div>
-                                        <div class="mb-2"><label class="form-label small">Date</label>
-                                            <input type="date" id="bfDate" class="form-control form-control-sm" value="${today}"></div>
-                                        <button class="btn btn-success w-100">Record Transfer</button>
+                                    <form id="bankForm" class="intl-form">
+                                        <div class="form-section">
+                                            <div class="form-section-title">Accounts</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="bfSource">From account *</label>
+                                                <select id="bfSource" class="form-select" required>${depositSourceOptions}</select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="bfAccount">To account *</label>
+                                                <select id="bfAccount" class="form-select" required>
+                                                    <option value="">Select bank account</option>
+                                                    ${accounts.map(a => `<option value="${a.id}">${esc(a.bank_name)} – ${esc(a.account_number)}</option>`).join('')}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Deposit</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="bfDepositor">Depositor *</label>
+                                                <input id="bfDepositor" class="form-control" placeholder="Who is depositing" required>
+                                            </div>
+                                            <div class="form-row-2">
+                                                <div class="form-field">
+                                                    <label class="form-label" for="bfAmount">Amount *</label>
+                                                    <input type="number" id="bfAmount" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+                                                </div>
+                                                <div class="form-field">
+                                                    <label class="form-label" for="bfDate">Date</label>
+                                                    <input type="date" id="bfDate" class="form-control" value="${today}">
+                                                </div>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="bfDesc">Description</label>
+                                                <input id="bfDesc" class="form-control" placeholder="Optional note">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-intl btn-intl-success"><i class="bi bi-check2"></i> Record Deposit</button>
                                     </form>
                                 </div>
                             </div>
@@ -8202,26 +8350,47 @@ async function renderFinancials() {
                                 <div class="card-box h-100 border border-primary">
                                     <h6 class="mb-2"><i class="bi bi-cash-stack text-primary"></i> Pay Supplier (after goods / invoice)</h6>
                                     <p class="small text-muted mb-3">Payment for goods already received or against an open invoice. Reduces what the company owes.</p>
-                                    <form id="paymentForm">
-                                        <div class="mb-2"><label class="form-label small">Station <span class="text-muted fw-normal">(optional — any station / account allowed)</span></label>
-                                            <select id="payStation" class="form-select form-select-sm">
-                                                <option value="">— Any / All stations —</option>
-                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-                                            </select>
+                                    <form id="paymentForm" class="intl-form">
+                                        <div class="form-section">
+                                            <div class="form-section-title">Supplier &amp; station</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="paySupplier">Supplier *</label>
+                                                <select id="paySupplier" class="form-select" required>${supplierOptions}</select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="payStation">Station</label>
+                                                <select id="payStation" class="form-select">
+                                                    <option value="">— Optional —</option>
+                                                    ${(state.stations || []).map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')}
+                                                </select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="paySource">Pay from *</label>
+                                                <select id="paySource" class="form-select" required>${accountOptions}</select>
+                                            </div>
                                         </div>
-                                        <div class="mb-2"><label class="form-label small">Supplier *</label>
-                                            <select id="paySupplier" class="form-select form-select-sm" required>${supplierOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Pay From * <span class="text-muted fw-normal">(any station account)</span></label>
-                                            <select id="paySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
-                                            <input type="number" id="payAmount" class="form-control form-control-sm" placeholder="0" step="0.01" min="0" required></div>
-                                        <div class="mb-2"><label class="form-label small">Invoice / Reference</label>
-                                            <input id="payReference" class="form-control form-control-sm" placeholder="Invoice #"></div>
-                                        <div class="mb-2"><label class="form-label small">Note</label>
-                                            <input id="payNote" class="form-control form-control-sm" placeholder="Optional note"></div>
-                                        <div class="mb-2"><label class="form-label small">Date</label>
-                                            <input type="date" id="payDate" class="form-control form-control-sm" value="${today}"></div>
-                                        <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-circle"></i> Record Payment</button>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Payment</div>
+                                            <div class="form-row-2">
+                                                <div class="form-field">
+                                                    <label class="form-label" for="payAmount">Amount *</label>
+                                                    <input type="number" id="payAmount" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+                                                </div>
+                                                <div class="form-field">
+                                                    <label class="form-label" for="payDate">Date</label>
+                                                    <input type="date" id="payDate" class="form-control" value="${today}">
+                                                </div>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="payReference">Reference</label>
+                                                <input id="payReference" class="form-control" placeholder="Invoice or receipt no.">
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="payNote">Note</label>
+                                                <input id="payNote" class="form-control" placeholder="Optional">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-intl btn-intl-primary"><i class="bi bi-check2"></i> Record Payment</button>
                                     </form>
                                 </div>
                             </div>
@@ -8229,26 +8398,47 @@ async function renderFinancials() {
                                 <div class="card-box h-100 border border-warning">
                                     <h6 class="mb-2"><i class="bi bi-wallet2 text-warning"></i> Prepayment (before supplying goods)</h6>
                                     <p class="small text-muted mb-3">Give the supplier money <strong>before</strong> delivery. Creates a <strong>prepaid credit</strong> on their account. When they later offload goods, that credit is used up automatically (balance rises toward zero).</p>
-                                    <form id="prepaymentForm">
-                                        <div class="mb-2"><label class="form-label small">Station <span class="text-muted fw-normal">(optional — any account allowed)</span></label>
-                                            <select id="prepayStation" class="form-select form-select-sm">
-                                                <option value="">— Any / All stations —</option>
-                                                ${(state.stations || []).map(s => `<option value="${esc(s.id)}" ${String(s.id) === String(state.currentStationId || '') ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}
-                                            </select>
+                                    <form id="prepaymentForm" class="intl-form">
+                                        <div class="form-section">
+                                            <div class="form-section-title">Supplier &amp; station</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="prepaySupplier">Supplier *</label>
+                                                <select id="prepaySupplier" class="form-select" required>${supplierOptions}</select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="prepayStation">Station</label>
+                                                <select id="prepayStation" class="form-select">
+                                                    <option value="">— Optional —</option>
+                                                    ${(state.stations || []).map(s => `<option value="${esc(s.id)}">${esc(s.name)}</option>`).join('')}
+                                                </select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="prepaySource">Pay from *</label>
+                                                <select id="prepaySource" class="form-select" required>${accountOptions}</select>
+                                            </div>
                                         </div>
-                                        <div class="mb-2"><label class="form-label small">Supplier *</label>
-                                            <select id="prepaySupplier" class="form-select form-select-sm" required>${supplierOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Pay From * <span class="text-muted fw-normal">(any station account)</span></label>
-                                            <select id="prepaySource" class="form-select form-select-sm" required>${accountOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Prepayment Amount (UGX) *</label>
-                                            <input type="number" id="prepayAmount" class="form-control form-control-sm" placeholder="0" step="0.01" min="0" required></div>
-                                        <div class="mb-2"><label class="form-label small">Reference</label>
-                                            <input id="prepayReference" class="form-control form-control-sm" placeholder="e.g. Advance for next delivery"></div>
-                                        <div class="mb-2"><label class="form-label small">Note</label>
-                                            <input id="prepayNote" class="form-control form-control-sm" placeholder="Purpose of prepayment"></div>
-                                        <div class="mb-2"><label class="form-label small">Date</label>
-                                            <input type="date" id="prepayDate" class="form-control form-control-sm" value="${today}"></div>
-                                        <button type="submit" class="btn btn-warning w-100"><i class="bi bi-lightning-charge"></i> Record Prepayment</button>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Prepayment</div>
+                                            <div class="form-row-2">
+                                                <div class="form-field">
+                                                    <label class="form-label" for="prepayAmount">Amount *</label>
+                                                    <input type="number" id="prepayAmount" class="form-control" placeholder="0.00" step="0.01" min="0" required>
+                                                </div>
+                                                <div class="form-field">
+                                                    <label class="form-label" for="prepayDate">Date</label>
+                                                    <input type="date" id="prepayDate" class="form-control" value="${today}">
+                                                </div>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="prepayReference">Reference</label>
+                                                <input id="prepayReference" class="form-control" placeholder="e.g. Advance for delivery">
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="prepayNote">Note</label>
+                                                <input id="prepayNote" class="form-control" placeholder="Purpose of prepayment">
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-intl btn-intl-warning"><i class="bi bi-lightning-charge"></i> Record Prepayment</button>
                                     </form>
                                 </div>
                             </div>
@@ -8281,15 +8471,29 @@ async function renderFinancials() {
                     <div class="tab-pane fade" id="credit" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-lg-5">
-                                <div class="card-box">
-                                    <h6 class="mb-3">Set Credit Limit</h6>
-                                    <form id="creditForm">
-                                        <div class="mb-2"><label class="form-label small">Supplier</label>
-                                            <select id="creditSupplier" class="form-select form-select-sm">${supplierOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Customer</label>
-                                            <select id="creditCustomer" class="form-select form-select-sm">${customerOptions}</select></div>
-                                        <div class="mb-2"><input type="number" id="creditLimit" class="form-control form-control-sm" placeholder="Credit Limit (UGX) *" step="1" required></div>
-                                        <button class="btn btn-warning w-100">Set Credit Limit</button>
+                                <div class="fin-action-card">
+                                    <h6><i class="bi bi-shield-check text-warning"></i> Set Credit Limit</h6>
+                                    <form id="creditForm" class="intl-form">
+                                        <div class="form-section">
+                                            <div class="form-section-title">Party</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="creditSupplier">Supplier</label>
+                                                <select id="creditSupplier" class="form-select">${supplierOptions}</select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="creditCustomer">Customer</label>
+                                                <select id="creditCustomer" class="form-select">${customerOptions}</select>
+                                            </div>
+                                            <div class="form-hint">Choose either a supplier or a customer</div>
+                                        </div>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Limit</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="creditLimit">Credit limit *</label>
+                                                <input type="number" id="creditLimit" class="form-control" placeholder="0" step="1" required>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-intl btn-intl-warning"><i class="bi bi-shield-check"></i> Set Credit Limit</button>
                                     </form>
                                 </div>
                             </div>
@@ -8322,26 +8526,44 @@ async function renderFinancials() {
                     <div class="tab-pane fade" id="recurring" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-lg-5">
-                                <div class="card-box">
-                                    <h6 class="mb-3">Schedule Recurring Expense</h6>
-                                    <form id="recurringForm">
-                                        <div class="mb-2"><label class="form-label small">Description *</label>
-                                            <input type="text" id="recDesc" class="form-control form-control-sm" placeholder="e.g. Rent" required></div>
-                                        <div class="mb-2"><label class="form-label small">Amount (UGX) *</label>
-                                            <input type="number" id="recAmount" class="form-control form-control-sm" placeholder="Amount" step="1" required></div>
-                                        <div class="mb-2"><label class="form-label small">Category</label>
-                                            <select id="recCategory" class="form-select form-select-sm">${expenseCategories}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Source Account</label>
-                                            <select id="recSource" class="form-select form-select-sm" required>${accountOptions}</select></div>
-                                        <div class="mb-2"><label class="form-label small">Day of Month (1-28)</label>
-                                            <input type="number" id="recDay" class="form-control form-control-sm" placeholder="e.g. 1 for 1st of month" min="1" max="28" value="1" required></div>
-                                        <div class="mb-2"><div class="form-check">
-                                            <input class="form-check-input" type="checkbox" id="recAutoRecord" checked>
-                                            <label class="form-check-label" for="recAutoRecord">Auto-record on scheduled day</label>
-                                        </div></div>
-                                        <button class="btn btn-success w-100">Schedule Recurring</button>
+                                <div class="fin-action-card">
+                                    <h6><i class="bi bi-arrow-repeat text-success"></i> Schedule Recurring</h6>
+                                    <form id="recurringForm" class="intl-form">
+                                        <div class="form-section">
+                                            <div class="form-section-title">Schedule</div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="recDesc">Description *</label>
+                                                <input type="text" id="recDesc" class="form-control" placeholder="e.g. Rent" required>
+                                            </div>
+                                            <div class="form-row-2">
+                                                <div class="form-field">
+                                                    <label class="form-label" for="recAmount">Amount *</label>
+                                                    <input type="number" id="recAmount" class="form-control" placeholder="0" step="1" required>
+                                                </div>
+                                                <div class="form-field">
+                                                    <label class="form-label" for="recDay">Day of month *</label>
+                                                    <input type="number" id="recDay" class="form-control" placeholder="1–28" min="1" max="28" value="1" required>
+                                                </div>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="recCategory">Category</label>
+                                                <select id="recCategory" class="form-select">${expenseCategories}</select>
+                                            </div>
+                                            <div class="form-field">
+                                                <label class="form-label" for="recSource">Source account *</label>
+                                                <select id="recSource" class="form-select" required>${accountOptions}</select>
+                                            </div>
+                                        </div>
+                                        <div class="form-section">
+                                            <div class="form-section-title">Automation</div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="recAutoRecord" checked>
+                                                <label class="form-check-label" for="recAutoRecord">Auto-record on scheduled day</label>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-intl btn-intl-success"><i class="bi bi-calendar-plus"></i> Schedule Recurring</button>
                                     </form>
-                                    <div class="mt-2 small text-muted">Recurring expenses will be automatically recorded on the selected day each month if auto-record is enabled.</div>
+                                    <div class="fin-note"><i class="bi bi-info-circle"></i> When auto-record is on, the expense posts on the chosen day each month.</div>
                                 </div>
                             </div>
                             <div class="col-lg-7">
