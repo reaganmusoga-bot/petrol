@@ -2971,22 +2971,57 @@ async function renderDashboard() {
     const totalLitres = Object.values(stockByProduct).reduce((a, b) => a + b, 0);
 
     // Period filter for dashboard KPIs
+    // MTD / YTD always use the *current* local calendar month & year, so stats
+    // automatically reset when a new month (or year) begins.
     const period = state.dashPeriod || 'mtd';
-    const periodStart = (() => {
-        const d = new Date();
-        d.setHours(0, 0, 0, 0);
-        if (period === 'today') return d;
-        if (period === '7d') { d.setDate(d.getDate() - 6); return d; }
-        if (period === 'mtd') { d.setDate(1); return d; }
-        if (period === 'ytd') { d.setMonth(0, 1); return d; }
-        return null; // all
+    const _nowLocal = new Date();
+    const periodBounds = (() => {
+        const start = new Date(_nowLocal.getFullYear(), _nowLocal.getMonth(), _nowLocal.getDate(), 0, 0, 0, 0);
+        const end = new Date(_nowLocal.getFullYear(), _nowLocal.getMonth(), _nowLocal.getDate(), 23, 59, 59, 999);
+        if (period === 'today') {
+            return { start, end };
+        }
+        if (period === '7d') {
+            const s = new Date(start);
+            s.setDate(s.getDate() - 6);
+            return { start: s, end };
+        }
+        if (period === 'mtd') {
+            // First day of current month → end of today (local)
+            const s = new Date(_nowLocal.getFullYear(), _nowLocal.getMonth(), 1, 0, 0, 0, 0);
+            return { start: s, end };
+        }
+        if (period === 'ytd') {
+            const s = new Date(_nowLocal.getFullYear(), 0, 1, 0, 0, 0, 0);
+            return { start: s, end };
+        }
+        return { start: null, end: null }; // all time
     })();
+    function recordDate(s) {
+        // Prefer business date fields over created_at so month boundaries are correct
+        const candidates = [
+            s.sale_date, s.expense_date, s.payment_date, s.date, s.adj_date,
+            s.created_at, s.timestamp, s.paid_date
+        ];
+        for (const c of candidates) {
+            if (c == null || c === '') continue;
+            let dt = null;
+            if (typeof c.toDate === 'function') dt = c.toDate();
+            else if (c.seconds != null) dt = new Date(Number(c.seconds) * 1000);
+            else if (typeof c === 'string' && /^\d{4}-\d{2}-\d{2}/.test(c)) {
+                // Parse YYYY-MM-DD as local date (avoid UTC shift)
+                const parts = c.slice(0, 10).split('-').map(Number);
+                dt = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0);
+            } else dt = new Date(c);
+            if (dt && !isNaN(dt.getTime())) return dt;
+        }
+        return null;
+    }
     const inPeriod = (s) => {
-        if (!periodStart) return true;
-        const dt = s.created_at && s.created_at.toDate ? s.created_at.toDate()
-            : (s.sale_date ? new Date(s.sale_date) : (s.created_at ? new Date(s.created_at) : null));
-        if (!dt || isNaN(dt.getTime())) return false;
-        return dt >= periodStart;
+        if (!periodBounds.start) return true;
+        const dt = recordDate(s);
+        if (!dt) return false;
+        return dt >= periodBounds.start && dt <= periodBounds.end;
     };
     const pSales = fSales.filter(inPeriod);
     const pPayments = fPayments.filter(inPeriod);
@@ -3012,7 +3047,19 @@ async function renderDashboard() {
         }
     });
     const netProfit = grossProfit - totalExpenses - totalLosses;
-    const periodLabel = ({ today: 'Today', '7d': 'Last 7 days', mtd: 'This month', ytd: 'This year', all: 'All time' })[period] || 'Period';
+    const periodLabelBase = ({ today: 'Today', '7d': 'Last 7 days', mtd: 'This month', ytd: 'This year', all: 'All time' })[period] || 'Period';
+    const periodRangeText = (() => {
+        if (!periodBounds.start) return '';
+        const fmt = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+        if (period === 'today') return fmt(periodBounds.start);
+        if (period === 'mtd') {
+            const monthName = periodBounds.start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            return monthName; // e.g. "August 2026" — resets automatically next month
+        }
+        if (period === 'ytd') return String(periodBounds.start.getFullYear());
+        return fmt(periodBounds.start) + ' – ' + fmt(periodBounds.end);
+    })();
+    const periodLabel = periodRangeText ? (periodLabelBase + ' · ' + periodRangeText) : periodLabelBase;
 
     const now = new Date();
     const todayStr = now.toDateString();
@@ -3196,6 +3243,20 @@ async function renderDashboard() {
             renderDashboard();
         };
     });
+    // When the calendar day (and thus month/year) changes while the user is on
+    // the dashboard, re-render so MTD / YTD / Today stats roll over automatically.
+    if (window._dashDayWatch) { clearInterval(window._dashDayWatch); window._dashDayWatch = null; }
+    const dashDayKey = _nowLocal.getFullYear() + '-' + (_nowLocal.getMonth() + 1) + '-' + _nowLocal.getDate();
+    window._dashDayKey = dashDayKey;
+    window._dashDayWatch = setInterval(function() {
+        if (state.currentPage !== 'dashboard') return;
+        const n = new Date();
+        const key = n.getFullYear() + '-' + (n.getMonth() + 1) + '-' + n.getDate();
+        if (key !== window._dashDayKey) {
+            window._dashDayKey = key;
+            renderDashboard();
+        }
+    }, 30000);
     const stockBtn = document.getElementById('lowStockAlertBtn');
     if (stockBtn) stockBtn.onclick = function() { checkLowStock(); };
 
@@ -5385,41 +5446,32 @@ async function renderShortageRecovery() {
         });
     }
 
-    // Outstanding list
+    // Outstanding list — columns: Cashier | Station | Paid | Forgiven | Total
     let outstandingRows = '';
     const outstandingList = cashiersWithShortage
         .map(u => ({ u, rem: remaining[u.id] || 0 }))
         .filter(x => x.rem > 0)
         .sort((a, b) => b.rem - a.rem);
     if (outstandingList.length === 0) {
-        outstandingRows = '<tr><td colspan="6"><div class="intl-empty"><i class="bi bi-check2-circle"></i>No outstanding shortages — all clear</div></td></tr>';
+        outstandingRows = '<tr><td colspan="5"><div class="intl-empty"><i class="bi bi-check2-circle"></i>No outstanding shortages — all clear</div></td></tr>';
     } else {
         outstandingList.forEach(({ u, rem }) => {
             const total = shortageByCashier[u.id] || 0;
-            const ded = salaryDeducted[u.id] || 0;
             const paid = paidRecovered[u.id] || 0;
             const forg = forgivenAmt[u.id] || 0;
-            const cleared = total > 0 ? Math.min(100, ((total - rem) / total) * 100) : 100;
             const initials = String(u.name || u.username || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+            const stLabel = u.station_id ? stationName(u.station_id) : '—';
             outstandingRows += `<tr>
                 <td>
                     <div class="d-flex align-items-center gap-2">
                         <span class="intl-avatar">${esc(initials)}</span>
-                        <div>
-                            <div class="fw-semibold">${esc(u.name || u.username)}</div>
-                            <div class="small text-muted">${esc(u.role || 'cashier')}${u.station_id ? ' · ' + esc(stationName(u.station_id)) : ''}</div>
-                        </div>
+                        <div class="fw-semibold text-truncate" style="max-width:160px;" title="${esc(u.name || u.username)}">${esc(u.name || u.username)}</div>
                     </div>
                 </td>
-                <td><span class="amt amt-out">${formatMoney(total)}</span></td>
-                <td><span class="amt amt-in">${formatMoney(paid)}</span></td>
-                <td><span class="amt amt-info">${formatMoney(forg)}</span></td>
-                <td><span class="amt amt-warn">${formatMoney(ded)}</span></td>
-                <td>
-                    <div class="fw-bold amt amt-out">${formatMoney(rem)}</div>
-                    <div class="intl-progress" title="${cleared.toFixed(0)}% cleared"><span style="width:${cleared.toFixed(1)}%;"></span></div>
-                    <div class="small text-muted mt-1">${cleared.toFixed(0)}% cleared</div>
-                </td>
+                <td class="text-nowrap"><span class="small text-muted">${esc(stLabel)}</span></td>
+                <td class="text-end"><span class="amt amt-in">${formatMoney(paid)}</span></td>
+                <td class="text-end"><span class="amt amt-info">${formatMoney(forg)}</span></td>
+                <td class="text-end"><span class="amt amt-out fw-bold">${formatMoney(total)}</span></td>
             </tr>`;
         });
     }
@@ -5495,16 +5547,15 @@ async function renderShortageRecovery() {
                         <h5><i class="bi bi-people-fill" style="color:#dc2626;"></i> Outstanding Shortages</h5>
                         <span class="meta">${outstandingList.length} cashier${outstandingList.length === 1 ? '' : 's'}</span>
                     </div>
-                    <div class="table-responsive intl-table-wrap">
-                        <table class="table table-sm mb-0 align-middle">
-                            <thead>
+                    <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;-webkit-overflow-scrolling:touch;">
+                        <table class="table table-sm mb-0 align-middle" style="min-width:520px;width:100%;">
+                            <thead style="position:sticky;top:0;z-index:2;">
                                 <tr>
-                                    <th style="width:28%;">Cashier</th>
-                                    <th style="width:12%;">Total</th>
-                                    <th style="width:12%;">Paid</th>
-                                    <th style="width:12%;">Forgiven</th>
-                                    <th style="width:12%;">Salary</th>
-                                    <th style="width:24%;">Remaining</th>
+                                    <th style="min-width:160px;">Cashier</th>
+                                    <th style="min-width:100px;">Station</th>
+                                    <th class="text-end" style="min-width:100px;">Paid</th>
+                                    <th class="text-end" style="min-width:100px;">Forgiven</th>
+                                    <th class="text-end" style="min-width:110px;">Total</th>
                                 </tr>
                             </thead>
                             <tbody>${outstandingRows}</tbody>
@@ -7583,7 +7634,7 @@ async function renderFinancials() {
             };
             const sorted = [...expenses].sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
             let rows = '';
-            sorted.slice(0, 25).forEach((e, idx) => {
+            sorted.forEach((e, idx) => {
                 let sourceLabel = 'Unknown';
                 if (e.source_account === 'petty_cash' || e.source_account === 'cash_till') {
                     sourceLabel = e.source_account === 'petty_cash' ? 'Petty Cash' : 'Cash Till';
@@ -7596,20 +7647,21 @@ async function renderFinancials() {
                 const meta = catMeta[catKey] || { label: catKey.replace(/_/g, ' '), cls: 'default' };
                 const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
                 const stName = e.station_id ? stationName(e.station_id) : '';
+                const desc = e.description || '—';
                 rows += `<tr style="background:${rowBg};">
-                        <td>
-                            <div class="fw-semibold text-truncate" style="max-width:150px;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</div>
-                            ${stName ? `<div class="small text-muted text-truncate" style="max-width:150px;">${esc(stName)}</div>` : ''}
+                        <td style="width:16%;">
+                            <div class="fw-semibold text-truncate" style="max-width:110px;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</div>
+                            ${stName ? `<div class="small text-muted text-truncate" style="max-width:110px;" title="${esc(stName)}">${esc(stName)}</div>` : ''}
                         </td>
-                        <td>
-                            <div class="text-truncate" style="max-width:260px;" title="${esc(e.description || '')}">${esc(e.description || '—')}</div>
-                            ${person ? `<div class="small text-muted"><i class="bi bi-person"></i> ${esc(person)}</div>` : ''}
+                        <td style="width:22%;">
+                            <div class="text-truncate" style="max-width:140px;font-size:0.8rem;" title="${esc(desc)}">${esc(desc)}</div>
+                            ${person ? `<div class="small text-muted text-truncate" style="max-width:140px;"><i class="bi bi-person"></i> ${esc(person)}</div>` : ''}
                         </td>
-                        <td><span class="intl-cat ${meta.cls}">${esc(meta.label)}</span></td>
-                        <td class="text-end"><span class="amt amt-out">${formatMoney(e.amount)}</span></td>
-                        <td class="text-nowrap small text-muted">${formatDate(e.expense_date || e.date || e.created_at)}</td>
-                        <td class="text-end pe-3">
-                            ${e.recurring ? '<span class="intl-chip forgive" title="Recurring"><i class="bi bi-arrow-repeat"></i></span>' : ''}
+                        <td style="width:14%;"><span class="intl-cat ${meta.cls}">${esc(meta.label)}</span></td>
+                        <td class="text-end text-nowrap" style="width:18%;"><span class="amt amt-out">${formatMoney(e.amount)}</span></td>
+                        <td class="text-nowrap small text-muted" style="width:12%;">${formatDate(e.expense_date || e.date || e.created_at)}</td>
+                        <td class="text-end" style="width:8%;">
+                            ${e.is_recurring || e.recurring ? '<span class="intl-chip forgive" title="Recurring"><i class="bi bi-arrow-repeat"></i></span>' : ''}
                         </td>
                     </tr>`;
             });
@@ -7859,17 +7911,25 @@ async function renderFinancials() {
                             <div class="col-lg-7">
                                 <div class="card-box">
                                     <div class="intl-section-head">
-                                        <h6><i class="bi bi-receipt text-danger"></i> Recent Expenses</h6>
-                                        <span class="meta">${expenses.length} record${expenses.length === 1 ? '' : 's'}</span>
+                                        <h6><i class="bi bi-receipt text-danger"></i> Expenses</h6>
+                                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                                            <span class="meta">${expenses.length} record${expenses.length === 1 ? '' : 's'}</span>
+                                            <button type="button" class="btn btn-sm btn-outline-success" id="exportExpensesExcelBtn" title="Download Excel">
+                                                <i class="bi bi-file-earmark-excel"></i> Excel
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="exportExpensesCsvBtn" title="Download CSV">
+                                                <i class="bi bi-download"></i> CSV
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="table-responsive intl-table-wrap" style="max-height:360px;">
-                                        <table class="table table-sm mb-0 align-middle">
+                                    <div class="table-responsive intl-table-wrap" style="max-height:420px;overflow:auto;-webkit-overflow-scrolling:touch;">
+                                        <table class="table table-sm mb-0 align-middle" style="table-layout:fixed;width:100%;min-width:560px;">
                                             <thead style="position:sticky;top:0;z-index:2;">
                                                 <tr>
-                                                    <th style="width:18%;">Source</th>
-                                                    <th style="width:32%;">Description</th>
+                                                    <th style="width:16%;">Source</th>
+                                                    <th style="width:22%;">Description</th>
                                                     <th style="width:14%;">Category</th>
-                                                    <th class="text-end" style="width:16%;">Amount</th>
+                                                    <th class="text-end" style="width:18%;">Amount</th>
                                                     <th style="width:12%;">Date</th>
                                                     <th style="width:8%;"></th>
                                                 </tr>
@@ -8503,6 +8563,56 @@ async function renderFinancials() {
         if (expStationEl) {
             expStationEl.addEventListener('change', refreshExpenseAccounts);
             refreshExpenseAccounts();
+        }
+
+
+        function buildExpenseExportRows() {
+            const catLabels = {
+                operations: 'Operations', utilities: 'Utilities', maintenance: 'Maintenance',
+                petty_cash: 'Petty Cash', vendor_payment: 'Vendor Payment', other: 'Other'
+            };
+            const sorted = [...expenses].sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
+            return sorted.map(e => {
+                let sourceLabel = 'Unknown';
+                if (e.source_account === 'petty_cash' || e.source_account === 'cash_till') {
+                    sourceLabel = e.source_account === 'petty_cash' ? 'Petty Cash' : 'Cash Till';
+                } else {
+                    const acc = accounts.find(a => a.id === e.source_account);
+                    if (acc) sourceLabel = acc.account_name || acc.bank_name || 'Account';
+                }
+                const person = e.person_name || '';
+                const cat = catLabels[e.category] || (e.category || 'Other');
+                const st = e.station_id ? stationName(e.station_id) : '';
+                return [
+                    formatDate(e.expense_date || e.date || e.created_at),
+                    st,
+                    sourceLabel,
+                    e.description || '',
+                    person,
+                    cat,
+                    Number(e.amount) || 0,
+                    (e.is_recurring || e.recurring) ? 'Yes' : 'No'
+                ];
+            });
+        }
+        const expExportHeaders = ['Date', 'Station', 'Source', 'Description', 'Person', 'Category', 'Amount', 'Recurring'];
+        const expExcelBtn = document.getElementById('exportExpensesExcelBtn');
+        if (expExcelBtn) {
+            expExcelBtn.onclick = function() {
+                const rows = buildExpenseExportRows();
+                if (!rows.length) { toast('No expenses to export', 'warning'); return; }
+                exportExcel(expExportHeaders, rows, 'expenses_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+                toast('Expenses exported to Excel', 'success');
+            };
+        }
+        const expCsvBtn = document.getElementById('exportExpensesCsvBtn');
+        if (expCsvBtn) {
+            expCsvBtn.onclick = function() {
+                const rows = buildExpenseExportRows();
+                if (!rows.length) { toast('No expenses to export', 'warning'); return; }
+                exportCSV(expExportHeaders, rows, 'expenses_' + new Date().toISOString().slice(0, 10) + '.csv');
+                toast('Expenses exported to CSV', 'success');
+            };
         }
 
         document.getElementById('expForm').onsubmit = async function(e) {
