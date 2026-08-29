@@ -251,100 +251,199 @@
         .credit-limit-ok { color: #198754; font-weight: 700; }
 
         /* Login */
+        /* ===== Login — international split canvas ===== */
+        /* ===== Login — market / international (split stage) ===== */
         .login-wrap {
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: stretch;
             justify-content: center;
-            padding: 24px 16px 32px;
+            padding: 0;
             position: relative;
             overflow: hidden;
-            background:
-                radial-gradient(ellipse 90% 60% at 10% 0%, rgba(255,193,7,0.14) 0%, transparent 55%),
-                radial-gradient(ellipse 70% 50% at 95% 85%, rgba(37,99,235,0.12) 0%, transparent 50%),
-                linear-gradient(160deg, #07111f 0%, #0b1a33 42%, #132a4a 78%, #0b1a33 100%);
+            background: #0a1220;
         }
-        .login-wrap::before {
+        .login-wrap::before,
+        .login-wrap::after { display: none; }
+        .login-shell {
+            position: relative; z-index: 1;
+            width: 100%;
+            max-width: 980px;
+            min-height: 100vh;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            align-items: stretch;
+        }
+        @media (max-width: 860px) {
+            .login-shell {
+                grid-template-columns: 1fr;
+                max-width: 440px;
+                min-height: auto;
+                padding: 28px 16px 36px;
+                align-content: center;
+            }
+            .login-hero { display: none !important; }
+            .login-panel { border-radius: 20px; box-shadow: 0 24px 48px rgba(0,0,0,0.35); }
+        }
+        .login-hero {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 48px 44px 40px;
+            color: #fff;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(255,193,7,0.22) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 40% at 90% 90%, rgba(56,189,248,0.12) 0%, transparent 50%),
+                linear-gradient(165deg, #07101c 0%, #0b1a33 45%, #152a4a 100%);
+            overflow: hidden;
+        }
+        .login-hero::before {
             content: '';
             position: absolute;
             inset: 0;
             background-image:
-                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 48px 48px;
-            mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000 20%, transparent 75%);
+                linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.5;
             pointer-events: none;
         }
-        .login-wrap::after {
+        .login-hero::after {
             content: '';
             position: absolute;
-            width: 420px; height: 420px;
+            width: 280px; height: 280px;
             border-radius: 50%;
-            right: -120px; bottom: -160px;
-            background: radial-gradient(circle, rgba(255,193,7,0.18) 0%, transparent 68%);
+            right: -80px; bottom: -60px;
+            background: radial-gradient(circle, rgba(255,193,7,0.2) 0%, transparent 70%);
             pointer-events: none;
         }
-        .login-shell {
-            position: relative; z-index: 1;
-            width: 100%; max-width: 420px;
-            display: flex; flex-direction: column; gap: 14px;
+        .login-hero-top,
+        .login-hero-mid,
+        .login-hero-bot { position: relative; z-index: 1; }
+        .login-hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.9);
+        }
+        .login-hero-badge i { color: #ffc107; }
+        .login-hero h2 {
+            margin: 28px 0 12px;
+            font-size: clamp(1.75rem, 2.4vw, 2.15rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            color: #fff;
+        }
+        .login-hero h2 span {
+            display: block;
+            background: linear-gradient(90deg, #ffc107, #fde68a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .login-hero-lead {
+            margin: 0;
+            font-size: 0.95rem;
+            line-height: 1.55;
+            color: rgba(226,232,240,0.78);
+            max-width: 34ch;
+            font-weight: 500;
+        }
+        .login-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 28px;
+        }
+        .login-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.92);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .login-pill i { color: #38bdf8; font-size: 0.9rem; }
+        .login-hero-bot {
+            font-size: 0.75rem;
+            color: rgba(255,255,255,0.45);
+            font-weight: 500;
+        }
+        .login-hero-bot strong { color: rgba(255,255,255,0.7); }
+        .login-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #f8fafc;
+            padding: 40px 44px;
         }
         .login-card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 36px 32px 28px;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+            max-width: 360px;
             width: 100%;
-            box-shadow:
-                0 4px 6px rgba(0,0,0,0.04),
-                0 24px 48px rgba(0,0,0,0.22),
-                0 0 0 1px rgba(255,255,255,0.08);
-            border: 1px solid rgba(226,232,240,0.9);
+            margin: 0 auto;
         }
         .login-brand {
-            text-align: center;
             margin-bottom: 28px;
+            text-align: left;
         }
         .login-mark {
-            width: 56px; height: 56px;
-            margin: 0 auto 14px;
+            width: 48px; height: 48px;
+            margin: 0 0 16px;
             display: flex; align-items: center; justify-content: center;
-            border-radius: 16px;
-            background: linear-gradient(145deg, #0b1a33 0%, #1e3a5f 100%);
-            box-shadow: 0 10px 24px rgba(11,26,51,0.28);
+            border-radius: 14px;
+            background: linear-gradient(145deg, #0b1a33, #1e3a5f);
+            box-shadow: 0 8px 20px rgba(11,26,51,0.2);
             color: #ffc107;
-            font-size: 1.55rem;
+            font-size: 1.35rem;
         }
         .login-brand h1 {
             margin: 0;
-            font-size: 1.35rem;
+            font-size: 1.45rem;
             font-weight: 800;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.03em;
             color: #0b1a33;
-            line-height: 1.25;
+            line-height: 1.2;
         }
         .login-brand .tagline {
             margin: 6px 0 0;
-            font-size: 0.86rem;
+            font-size: 0.88rem;
             color: #64748b;
             font-weight: 500;
         }
         .login-card .form-floating { margin-bottom: 14px; }
         .login-card .form-floating > .form-control {
-            min-height: 52px;
+            min-height: 54px;
             border-radius: 12px;
-            border-color: #e2e8f0;
+            border: 1.5px solid #e2e8f0;
             font-size: 0.95rem;
-            background: #f8fafc;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.03);
         }
         .login-card .form-floating > .form-control:focus {
             background: #fff;
             border-color: #0b1a33;
-            box-shadow: 0 0 0 3px rgba(11,26,51,0.12);
+            box-shadow: 0 0 0 3px rgba(11,26,51,0.1);
         }
-        .login-card .form-floating > label {
-            color: #64748b;
-            padding-left: 1rem;
-        }
+        .login-card .form-floating > label { color: #64748b; padding-left: 1rem; }
         .login-card .form-floating > .form-control:focus ~ label,
         .login-card .form-floating > .form-control:not(:placeholder-shown) ~ label {
             color: #0b1a33;
@@ -357,22 +456,23 @@
         .login-card .password-toggle:hover { color: #0b1a33; background: #f1f5f9; }
         .login-card .btn-login {
             width: 100%;
-            min-height: 48px;
-            margin-top: 6px;
+            min-height: 50px;
+            margin-top: 8px;
             border: none;
             border-radius: 12px;
             font-weight: 700;
             font-size: 0.95rem;
-            letter-spacing: 0.01em;
-            color: #fff;
-            background: linear-gradient(135deg, #0b1a33 0%, #1a3a6a 100%);
-            box-shadow: 0 8px 20px rgba(11,26,51,0.25);
-            transition: transform 0.15s, box-shadow 0.15s;
+            letter-spacing: 0.02em;
+            color: #0b1a33;
+            background: linear-gradient(135deg, #ffc107 0%, #f59e0b 100%);
+            box-shadow: 0 8px 20px rgba(245,158,11,0.35);
+            transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
         }
         .login-card .btn-login:hover {
             transform: translateY(-1px);
-            box-shadow: 0 12px 28px rgba(11,26,51,0.32);
-            color: #fff;
+            filter: brightness(1.03);
+            box-shadow: 0 12px 28px rgba(245,158,11,0.4);
+            color: #0b1a33;
         }
         .login-card .btn-login:active { transform: translateY(0); }
         .login-card .btn-primary {
@@ -380,53 +480,62 @@
             border: none; padding: 12px; font-weight: 700; border-radius: 12px;
         }
         .login-secondary {
-            margin-top: 22px;
-            padding-top: 18px;
-            border-top: 1px solid #f1f5f9;
-            text-align: center;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: left;
         }
         .login-secondary .hint {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: #94a3b8;
             margin-bottom: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         .login-secondary .btn {
             border-radius: 999px;
             font-size: 0.78rem;
             font-weight: 600;
-            padding: 5px 14px;
+            padding: 6px 14px;
+            border-color: #cbd5e1;
+            color: #475569;
+        }
+        .login-secondary .btn:hover {
+            background: #0b1a33;
+            border-color: #0b1a33;
+            color: #fff;
         }
         .login-card #createCompanyForm h5 {
             font-weight: 800;
             color: #0b1a33;
             letter-spacing: -0.02em;
+            text-align: left !important;
         }
         .login-card #createCompanyForm .form-control {
             min-height: 44px;
             border-radius: 10px;
             border-color: #e2e8f0;
-            background: #f8fafc;
+            background: #fff;
         }
         .login-card #createCompanyForm .form-label {
-            font-size: 0.78rem;
+            font-size: 0.72rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.04em;
             color: #64748b;
         }
         .login-footer {
-            text-align: center;
-            color: rgba(255,255,255,0.55);
+            display: none;
+        }
+        .login-panel-foot {
+            margin-top: 28px;
             font-size: 0.72rem;
+            color: #94a3b8;
+            text-align: center;
             font-weight: 500;
-            letter-spacing: 0.02em;
-            padding: 0 8px;
         }
-        .login-footer strong { color: rgba(255,255,255,0.75); font-weight: 600; }
-        @media (max-width: 480px) {
-            .login-card { padding: 28px 22px 22px; border-radius: 16px; }
-            .login-brand h1 { font-size: 1.2rem; }
-        }
+        .login-panel-foot strong { color: #64748b; }
 
         /* Autocomplete */
         .autocomplete-wrapper { position: relative; }
@@ -1157,53 +1266,71 @@
     ============================================================ -->
     <div id="loginScreen" class="login-wrap">
         <div class="login-shell">
-            <div class="login-card">
-                <div class="login-brand">
-                    <div class="login-mark"><i class="bi bi-fuel-pump-fill"></i></div>
-                    <h1>PetroManager Pro</h1>
-                    <p class="tagline">Fuel operations · multi-station control</p>
-                </div>
-                <div id="normalLogin">
-                    <form id="loginForm" autocomplete="off">
-                        <div class="form-floating autocomplete-wrapper">
-                            <input type="text" id="loginUsername" class="form-control" required placeholder=" " autocomplete="off" autocapitalize="off" spellcheck="false" />
-                            <label for="loginUsername">Username</label>
-                            <div id="usernameSuggestions" class="autocomplete-dropdown" style="display:none;"></div>
-                        </div>
-                        <div class="form-floating position-relative">
-                            <input type="password" id="loginPassword" class="form-control" required placeholder=" " autocomplete="current-password" />
-                            <label for="loginPassword">Password</label>
-                            <button type="button" class="password-toggle" id="togglePassword" tabindex="-1" aria-label="Show password">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </div>
-                        <button type="submit" class="btn btn-login" id="loginBtn">Sign in</button>
-                        <div id="loginError" class="text-danger text-center mt-3 small" style="display:none;"></div>
-                    </form>
-                    <div class="login-secondary">
-                        <div class="hint">First-time setup</div>
-                        <div class="d-flex flex-wrap gap-2 justify-content-center">
-                            <button type="button" id="showCreateCompanyBtn" class="btn btn-outline-secondary btn-sm">Create company</button>
-                            <button type="button" id="diagnoseBtn" class="btn btn-outline-secondary btn-sm">Diagnose</button>
-                        </div>
-                        <div id="diagnoseBox" class="mt-3 p-2 bg-light rounded small text-start" style="display:none;"></div>
+            <aside class="login-hero" aria-hidden="true">
+                <div class="login-hero-top">
+                    <span class="login-hero-badge"><i class="bi bi-shield-check"></i> Trusted station ops</span>
+                    <h2>Run every litre<br><span>with clarity</span></h2>
+                    <p class="login-hero-lead">Sales, stock, shifts, payroll and financials — one control room for modern fuel networks.</p>
+                    <div class="login-pills">
+                        <span class="login-pill"><i class="bi bi-speedometer2"></i> Live meters</span>
+                        <span class="login-pill"><i class="bi bi-wallet2"></i> Finance</span>
+                        <span class="login-pill"><i class="bi bi-graph-up-arrow"></i> Reports</span>
+                        <span class="login-pill"><i class="bi bi-buildings"></i> Multi-station</span>
                     </div>
                 </div>
-                <div id="createCompanyForm" style="display:none;">
-                    <h5 class="mb-1 text-center">Create company</h5>
-                    <p class="text-center text-muted small mb-3">Sets up your first organisation and admin user</p>
-                    <div class="mb-2"><label class="form-label">Company name</label><input type="text" id="newCompName" class="form-control" placeholder="e.g. GIMIX Fuel"></div>
-                    <div class="mb-2"><label class="form-label">Tagline</label><input type="text" id="newCompTagline" class="form-control" placeholder="Optional"></div>
-                    <div class="mb-2"><label class="form-label">Address</label><input type="text" id="newCompAddress" class="form-control" placeholder="Optional"></div>
-                    <div class="mb-2"><label class="form-label">Admin username</label><input type="text" id="newCompAdminUser" class="form-control" placeholder="admin"></div>
-                    <div class="mb-3"><label class="form-label">Admin password</label><input type="password" id="newCompAdminPass" class="form-control" placeholder="Min 4 characters"></div>
-                    <button type="button" id="createCompanyBtn" class="btn btn-warning w-100" style="border-radius:12px;min-height:44px;font-weight:700;">Create company &amp; admin</button>
-                    <button type="button" id="cancelCreateCompanyBtn" class="btn btn-outline-secondary w-100 mt-2" style="border-radius:12px;min-height:42px;">Back to sign in</button>
-                    <div id="createCompanyResult" class="text-center mt-3 small"></div>
+                <div class="login-hero-bot">
+                    Built for operators who measure every drop · <strong>PetroManager Pro</strong>
                 </div>
-            </div>
-            <div class="login-footer">
-                PetroManager Pro · <strong>v1.4.6</strong> · Musoga Reagan © 2026
+            </aside>
+            <div class="login-panel">
+                <div class="login-card">
+                    <div class="login-brand">
+                        <div class="login-mark"><i class="bi bi-fuel-pump-fill"></i></div>
+                        <h1>Welcome back</h1>
+                        <p class="tagline">Sign in to your station network</p>
+                    </div>
+                    <div id="normalLogin">
+                        <form id="loginForm" autocomplete="off">
+                            <div class="form-floating autocomplete-wrapper">
+                                <input type="text" id="loginUsername" class="form-control" required placeholder=" " autocomplete="off" autocapitalize="off" spellcheck="false" />
+                                <label for="loginUsername">Username</label>
+                                <div id="usernameSuggestions" class="autocomplete-dropdown" style="display:none;"></div>
+                            </div>
+                            <div class="form-floating position-relative">
+                                <input type="password" id="loginPassword" class="form-control" required placeholder=" " autocomplete="current-password" />
+                                <label for="loginPassword">Password</label>
+                                <button type="button" class="password-toggle" id="togglePassword" tabindex="-1" aria-label="Show password">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            <button type="submit" class="btn btn-login" id="loginBtn">Sign in</button>
+                            <div id="loginError" class="text-danger text-center mt-3 small" style="display:none;"></div>
+                        </form>
+                        <div class="login-secondary">
+                            <div class="hint">Setup</div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button type="button" id="showCreateCompanyBtn" class="btn btn-outline-secondary btn-sm">Create company</button>
+                                <button type="button" id="diagnoseBtn" class="btn btn-outline-secondary btn-sm">Diagnose</button>
+                            </div>
+                            <div id="diagnoseBox" class="mt-3 p-2 bg-light rounded small text-start" style="display:none;"></div>
+                        </div>
+                    </div>
+                    <div id="createCompanyForm" style="display:none;">
+                        <h5 class="mb-1">Create company</h5>
+                        <p class="text-muted small mb-3">First organisation and admin account</p>
+                        <div class="mb-2"><label class="form-label">Company name</label><input type="text" id="newCompName" class="form-control" placeholder="e.g. GIMIX Fuel"></div>
+                        <div class="mb-2"><label class="form-label">Tagline</label><input type="text" id="newCompTagline" class="form-control" placeholder="Optional"></div>
+                        <div class="mb-2"><label class="form-label">Address</label><input type="text" id="newCompAddress" class="form-control" placeholder="Optional"></div>
+                        <div class="mb-2"><label class="form-label">Admin username</label><input type="text" id="newCompAdminUser" class="form-control" placeholder="admin"></div>
+                        <div class="mb-3"><label class="form-label">Admin password</label><input type="password" id="newCompAdminPass" class="form-control" placeholder="Min 4 characters"></div>
+                        <button type="button" id="createCompanyBtn" class="btn btn-warning w-100" style="border-radius:12px;min-height:44px;font-weight:700;">Create company &amp; admin</button>
+                        <button type="button" id="cancelCreateCompanyBtn" class="btn btn-outline-secondary w-100 mt-2" style="border-radius:12px;min-height:42px;">Back to sign in</button>
+                        <div id="createCompanyResult" class="text-center mt-3 small"></div>
+                    </div>
+                    <div class="login-panel-foot">
+                        PetroManager Pro · <strong>v1.4.6</strong> · Musoga Reagan © 2026
+                    </div>
+                </div>
             </div>
         </div>
     </div>
