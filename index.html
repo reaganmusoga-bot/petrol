@@ -168,119 +168,159 @@
         }
         .page-title { font-weight: 600; font-size: 1.15rem; color: var(--text-color); }
 
-        /* Account menu & sign-out (international) */
+        /* Account menu & sign-out — classic international */
         .account-trigger {
-            display: flex; align-items: center; gap: 10px;
-            padding: 4px 8px 4px 4px;
-            border-radius: 999px;
-            border: 1px solid var(--border-color);
-            background: var(--card-bg);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 2px 6px 2px 2px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
             cursor: pointer;
-            transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+            transition: background 0.15s;
         }
-        .account-trigger:hover {
-            background: var(--bg);
-            border-color: #cbd5e1;
-            box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+        .account-trigger:hover,
+        .account-trigger:focus {
+            background: rgba(15, 23, 42, 0.05);
+            outline: none;
         }
         .account-trigger .account-avatar {
-            width: 34px; height: 34px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            background: linear-gradient(145deg, #0b1a33, #1e3a5f);
-            color: #ffc107;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.85rem; font-weight: 700;
+            background: #0b1a33;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
             flex-shrink: 0;
         }
         .account-trigger .account-name {
-            font-weight: 600; font-size: 0.88rem; color: var(--text-color);
-            max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--text-color);
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .account-trigger .account-chevron {
+            font-size: 0.65rem;
+            color: #94a3b8;
+            margin-right: 2px;
         }
         .account-menu {
-            min-width: 280px;
-            padding: 8px 0;
-            border: 1px solid var(--border-color);
-            border-radius: 14px;
-            box-shadow: 0 12px 40px rgba(15,23,42,0.12);
-        }
-        .account-menu .account-menu-head {
-            padding: 12px 16px 10px;
-        }
-        .account-menu .account-menu-head .name {
-            font-weight: 700; font-size: 0.95rem; color: var(--text-color); line-height: 1.25;
-        }
-        .account-menu .account-menu-head .meta {
-            font-size: 0.78rem; color: #64748b; margin-top: 2px;
+            min-width: 200px;
+            padding: 6px;
+            margin-top: 6px !important;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(15, 23, 42, 0.04);
+            background: #fff;
         }
         .account-menu .dropdown-item {
-            padding: 10px 16px;
-            font-size: 0.9rem;
+            padding: 9px 12px;
+            font-size: 0.875rem;
             font-weight: 500;
-            display: flex; align-items: center; gap: 10px;
-            color: var(--text-color);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1e293b;
         }
         .account-menu .dropdown-item i {
-            width: 18px; text-align: center; color: #64748b;
+            width: 16px;
+            text-align: center;
+            font-size: 0.95rem;
+            color: #64748b;
         }
-        .account-menu .dropdown-item:hover {
-            background: #f1f5f9;
+        .account-menu .dropdown-item:hover,
+        .account-menu .dropdown-item:focus {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+        .account-menu .dropdown-item:hover i {
+            color: #475569;
+        }
+        .account-menu .dropdown-divider {
+            margin: 4px 8px;
+            border-color: #f1f5f9;
+            opacity: 1;
         }
         .account-menu .dropdown-item.account-signout {
-            color: #b91c1c;
+            color: #1e293b;
         }
-        .account-menu .dropdown-item.account-signout i { color: #b91c1c; }
+        .account-menu .dropdown-item.account-signout i {
+            color: #64748b;
+        }
         .account-menu .dropdown-item.account-signout:hover {
-            background: #fef2f2;
-            color: #991b1b;
+            background: #f8fafc;
+            color: #0f172a;
         }
         .signout-modal .modal-content {
             border: none;
-            border-radius: 16px;
-            box-shadow: 0 24px 48px rgba(15,23,42,0.18);
+            border-radius: 12px;
+            box-shadow: 0 16px 40px rgba(15, 23, 42, 0.14);
             overflow: hidden;
         }
         .signout-modal .modal-body {
-            padding: 28px 28px 8px;
+            padding: 28px 24px 12px;
             text-align: center;
         }
         .signout-modal .signout-icon {
-            width: 56px; height: 56px;
-            margin: 0 auto 16px;
-            border-radius: 16px;
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 14px;
+            border-radius: 50%;
             background: #f1f5f9;
             color: #0b1a33;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
         }
         .signout-modal h5 {
-            font-weight: 800;
-            letter-spacing: -0.02em;
-            color: #0b1a33;
-            margin-bottom: 8px;
+            font-weight: 650;
+            font-size: 1.05rem;
+            letter-spacing: -0.01em;
+            color: #0f172a;
+            margin-bottom: 6px;
         }
         .signout-modal p {
             color: #64748b;
-            font-size: 0.92rem;
+            font-size: 0.875rem;
             line-height: 1.5;
             margin-bottom: 0;
         }
         .signout-modal .modal-footer {
             border-top: none;
-            padding: 16px 28px 28px;
+            padding: 12px 24px 24px;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
         }
         .signout-modal .btn-cancel-signout {
-            min-width: 110px;
-            border-radius: 10px;
-            font-weight: 600;
+            min-width: 120px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.875rem;
             border-color: #e2e8f0;
             color: #475569;
+            background: #fff;
+        }
+        .signout-modal .btn-cancel-signout:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            color: #334155;
         }
         .signout-modal .btn-confirm-signout {
-            min-width: 110px;
-            border-radius: 10px;
-            font-weight: 700;
+            min-width: 100px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
             background: #0b1a33;
             border-color: #0b1a33;
             color: #fff;
@@ -1564,18 +1604,17 @@
                         <div class="account-trigger" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu" id="accountMenuTrigger">
                             <div class="account-avatar" id="headerAvatar">U</div>
                             <span class="account-name d-none d-md-inline" id="headerUser">—</span>
-                            <i class="bi bi-chevron-down text-muted" style="font-size:0.7rem;margin-right:4px;"></i>
+                            <i class="bi bi-chevron-down account-chevron"></i>
                         </div>
                         <ul class="dropdown-menu dropdown-menu-end account-menu">
-                            <li class="account-menu-head">
-                                <div class="name" id="headerUserFull">—</div>
-                                <div class="meta"><span id="headerRole">—</span> · <span id="headerCompany">—</span></div>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" id="headerSwitchUser" href="#"><i class="bi bi-people"></i> Switch account</a></li>
+                            <li><a class="dropdown-item" id="headerSwitchUser" href="#"><i class="bi bi-arrow-left-right"></i> Switch user</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item account-signout" id="headerLogout" href="#"><i class="bi bi-box-arrow-right"></i> Sign out</a></li>
                         </ul>
+                        <!-- kept for JS compatibility (not shown) -->
+                        <span id="headerRole" class="d-none"></span>
+                        <span id="headerCompany" class="d-none"></span>
+                        <span id="headerUserFull" class="d-none"></span>
                     </div>
                 </div>
             </header>
