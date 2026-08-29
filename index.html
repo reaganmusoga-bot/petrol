@@ -1839,7 +1839,7 @@ const BACKUP_COLLECTIONS = [
     'expenses', 'customers', 'audit_logs', 'messages', 'salaries', 'salary_advances',
     'suppliers', 'supplier_payments', 'credit_limits', 'recurring_expenses',
     'invoices', 'staff', 'maintenance', 'tank_levels', 'fuel_prices',
-    'inventory_history', 'supplier_transactions', 'customer_transactions'
+    'inventory_history', 'supplier_transactions', 'customer_transactions', 'shortage_recoveries'
 ];
 
 async function downloadCompanyBackup() {
@@ -2478,6 +2478,7 @@ function buildSidebar() {
             icon: 'bi-tools',
             children: [
                 { label: 'Balancing', page: 'balancing' },
+                { label: 'Shortage Recovery', page: 'shortage_recovery' },
                 { label: 'Customers', page: 'customers' },
                 { label: 'Maintenance', page: 'maintenance' },
                 { label: 'Staff', page: 'staff' }
@@ -2615,7 +2616,9 @@ function navigate(page) {
         fuel_prices: 'Fuel Prices',
         tank_levels: 'Tank Levels',
         staff: 'Staff Management',
-        maintenance: 'Maintenance Logs'
+        maintenance: 'Maintenance Logs',
+        shortage_recovery: 'Shortage Recovery',
+        licenses: 'License Manager'
     };
     document.getElementById('pageTitle').textContent = titles[page] || page;
     renderPage(page);
@@ -2946,6 +2949,13 @@ async function renderDashboard() {
         const diff = Number(r.difference) || 0;
         if (diff < 0) openShortage += Math.abs(diff);
     });
+    try {
+        const sRec = await getAll('shortage_recoveries') || [];
+        sRec.forEach(r => { openShortage -= Number(r.amount) || 0; });
+        const sals = await getAll('salaries') || [];
+        sals.forEach(s => { openShortage -= Number(s.deducted_shortage) || 0; });
+        openShortage = Math.max(0, openShortage);
+    } catch (_) {}
     const creditOverdue = customers.filter(c => Number(c.current_balance || 0) > 0).length;
     const marginPct = totalRevenue > 0 ? (grossProfit / totalRevenue * 100) : 0;
 
@@ -5157,11 +5167,421 @@ async function renderBalancing() {
 }
 
 // ===== Register renderers =====
+
+// ----- SHORTAGE RECOVERY & FORGIVENESS -----
+async function renderShortageRecovery() {
+    if (!isAdmin(state.user.role)) {
+        document.getElementById('pageContent').innerHTML = '<div class="alert alert-danger">Access denied. Only managers and admins can manage shortage recoveries.</div>';
+        return;
+    }
+
+    const allUsers = await getAll('users');
+    const recons = await getAll('reconciliations') || [];
+    const salaries = await getAll('salaries') || [];
+    const recoveries = await getAll('shortage_recoveries') || [];
+    const bankAccounts = await getAll('bank_accounts') || [];
+    if (!state.stations || !state.stations.length) {
+        try { await loadStations(); } catch (_) {}
+    }
+
+    // Aggregate shortage / recovered / forgiven / salary-deducted per cashier
+    const shortageByCashier = {};
+    recons.forEach(r => {
+        const cid = r.cashier_id;
+        if (!cid) return;
+        const diff = Number(r.difference) || 0;
+        if (diff >= 0) return;
+        if (!shortageByCashier[cid]) shortageByCashier[cid] = 0;
+        shortageByCashier[cid] += Math.abs(diff);
+    });
+    const salaryDeducted = {};
+    salaries.forEach(s => {
+        const cid = s.employee_id;
+        if (!cid) return;
+        if (!salaryDeducted[cid]) salaryDeducted[cid] = 0;
+        salaryDeducted[cid] += Number(s.deducted_shortage) || 0;
+    });
+    const paidRecovered = {};
+    const forgivenAmt = {};
+    recoveries.forEach(r => {
+        const cid = r.cashier_id;
+        if (!cid) return;
+        const amt = Number(r.amount) || 0;
+        if (r.type === 'forgiveness') {
+            if (!forgivenAmt[cid]) forgivenAmt[cid] = 0;
+            forgivenAmt[cid] += amt;
+        } else {
+            if (!paidRecovered[cid]) paidRecovered[cid] = 0;
+            paidRecovered[cid] += amt;
+        }
+    });
+
+    const remaining = {};
+    Object.keys(shortageByCashier).forEach(cid => {
+        const total = shortageByCashier[cid] || 0;
+        const ded = salaryDeducted[cid] || 0;
+        const paid = paidRecovered[cid] || 0;
+        const forg = forgivenAmt[cid] || 0;
+        remaining[cid] = Math.max(0, total - ded - paid - forg);
+    });
+
+    // Cashiers with any shortage history
+    const cashierIds = new Set([
+        ...Object.keys(shortageByCashier),
+        ...Object.keys(paidRecovered),
+        ...Object.keys(forgivenAmt)
+    ]);
+    const cashiersWithShortage = allUsers.filter(u =>
+        u.active !== false && (remaining[u.id] > 0 || cashierIds.has(u.id))
+    );
+
+    let cashierOpts = '<option value="">— Select cashier —</option>';
+    cashiersWithShortage.forEach(u => {
+        const rem = remaining[u.id] || 0;
+        const label = rem > 0
+            ? `${esc(u.name || u.username)} — outstanding ${formatMoney(rem)}`
+            : `${esc(u.name || u.username)} — cleared`;
+        cashierOpts += `<option value="${u.id}" data-remaining="${rem}">${label}</option>`;
+    });
+    // Also allow picking any active user (in case of edge cases)
+    allUsers.filter(u => u.active !== false && !cashiersWithShortage.find(c => c.id === u.id)).forEach(u => {
+        cashierOpts += `<option value="${u.id}" data-remaining="0">${esc(u.name || u.username)}</option>`;
+    });
+
+    let stationOpts = '<option value="">— Select station —</option>';
+    (state.stations || []).forEach(s => {
+        stationOpts += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
+    });
+
+    let accountOpts = '<option value="">— Select account —</option>';
+    accountOpts += '<option value="cash_till">💵 Cash Till (selected station)</option>';
+    accountOpts += '<option value="petty_cash">💰 Petty Cash (selected station)</option>';
+    [...bankAccounts].sort((a, b) => String(a.bank_name || '').localeCompare(String(b.bank_name || ''))).forEach(a => {
+        if (a.is_system) return;
+        const stLabel = (a.company_wide || !a.station_id) ? 'All stations' : stationName(a.station_id);
+        accountOpts += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name || a.account_name || 'Account')} – ${esc(a.account_number || '')} · ${esc(stLabel)}</option>`;
+    });
+
+    // Summary cards
+    let totalOutstanding = 0, totalPaid = 0, totalForgiven = 0;
+    Object.values(remaining).forEach(v => totalOutstanding += v);
+    Object.values(paidRecovered).forEach(v => totalPaid += v);
+    Object.values(forgivenAmt).forEach(v => totalForgiven += v);
+
+    // History table
+    const sortedRec = [...recoveries].sort((a, b) => tsMillis(b.created_at || b.timestamp) - tsMillis(a.created_at || a.timestamp));
+    let historyRows = '';
+    if (sortedRec.length === 0) {
+        historyRows = '<tr><td colspan="7" class="text-muted text-center">No shortage recoveries or forgiveness recorded yet</td></tr>';
+    } else {
+        sortedRec.slice(0, 50).forEach(r => {
+            const emp = allUsers.find(u => u.id === r.cashier_id);
+            const empName = emp ? (emp.name || emp.username) : (r.cashier_name || 'Unknown');
+            const typeBadge = r.type === 'forgiveness'
+                ? '<span class="badge bg-info text-dark">Forgiven</span>'
+                : '<span class="badge bg-success">Payment received</span>';
+            historyRows += `<tr>
+                <td class="fs-xs">${formatDate(r.recovery_date || r.created_at || r.timestamp)}</td>
+                <td><strong>${esc(empName)}</strong></td>
+                <td>${typeBadge}</td>
+                <td class="fw-bold">${formatMoney(r.amount)}</td>
+                <td class="small">${esc(r.reason || '—')}</td>
+                <td class="small">${r.station_id ? esc(stationName(r.station_id)) : '—'}</td>
+                <td class="small">${esc(r.received_by_name || '—')}</td>
+            </tr>`;
+        });
+    }
+
+    // Outstanding list
+    let outstandingRows = '';
+    const outstandingList = cashiersWithShortage
+        .map(u => ({ u, rem: remaining[u.id] || 0 }))
+        .filter(x => x.rem > 0)
+        .sort((a, b) => b.rem - a.rem);
+    if (outstandingList.length === 0) {
+        outstandingRows = '<tr><td colspan="5" class="text-muted text-center">No outstanding shortages 🎉</td></tr>';
+    } else {
+        outstandingList.forEach(({ u, rem }) => {
+            const total = shortageByCashier[u.id] || 0;
+            const ded = salaryDeducted[u.id] || 0;
+            const paid = paidRecovered[u.id] || 0;
+            const forg = forgivenAmt[u.id] || 0;
+            outstandingRows += `<tr>
+                <td><strong>${esc(u.name || u.username)}</strong></td>
+                <td class="text-danger">${formatMoney(total)}</td>
+                <td class="text-success">${formatMoney(paid)}</td>
+                <td class="text-info">${formatMoney(forg)}</td>
+                <td class="text-warning">${formatMoney(ded)}</td>
+                <td class="fw-bold text-danger">${formatMoney(rem)}</td>
+            </tr>`;
+        });
+    }
+
+    const html = `
+        <div class="stat-grid kpi-compact mb-3">
+            <div class="stat-item">
+                <div class="icon" style="background:#dc3545;"><i class="bi bi-exclamation-triangle"></i></div>
+                <div><div class="num">${formatCompactMoney(totalOutstanding)}</div><div class="lbl">Outstanding shortages</div></div>
+            </div>
+            <div class="stat-item">
+                <div class="icon" style="background:#198754;"><i class="bi bi-cash-coin"></i></div>
+                <div><div class="num">${formatCompactMoney(totalPaid)}</div><div class="lbl">Cash recovered</div></div>
+            </div>
+            <div class="stat-item">
+                <div class="icon" style="background:#0dcaf0;"><i class="bi bi-hand-thumbs-up"></i></div>
+                <div><div class="num">${formatCompactMoney(totalForgiven)}</div><div class="lbl">Forgiven</div></div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <div class="card-box border border-success">
+                    <h5 class="mb-2"><i class="bi bi-cash-stack text-success"></i> Receive Shortage Payment</h5>
+                    <p class="small text-muted">Record cash (or transfer) paid by a cashier to clear part or all of their shortage. Money is deposited into the selected account.</p>
+                    <form id="shortagePayForm">
+                        <div class="mb-2"><label class="form-label small">Cashier *</label>
+                            <select id="spCashier" class="form-select form-select-sm" required>${cashierOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Station *</label>
+                            <select id="spStation" class="form-select form-select-sm" required>${stationOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Amount received *</label>
+                            <input type="number" id="spAmount" class="form-control form-control-sm" step="1" min="1" required placeholder="e.g. 50000">
+                            <div class="form-text" id="spRemainingHint">Select a cashier to see outstanding balance</div>
+                        </div>
+                        <div class="mb-2"><label class="form-label small">Deposit into *</label>
+                            <select id="spAccount" class="form-select form-select-sm" required>${accountOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Date *</label>
+                            <input type="date" id="spDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}" required></div>
+                        <div class="mb-2"><label class="form-label small">Note / reference</label>
+                            <input type="text" id="spNote" class="form-control form-control-sm" placeholder="e.g. Cash paid at office"></div>
+                        <button type="submit" class="btn btn-success w-100"><i class="bi bi-check2-circle"></i> Record Payment Received</button>
+                    </form>
+                    <div id="spResult" class="mt-2 small"></div>
+                </div>
+
+                <div class="card-box mt-3 border border-info">
+                    <h5 class="mb-2"><i class="bi bi-hand-thumbs-up text-info"></i> Forgive Shortage</h5>
+                    <p class="small text-muted">Write off part or all of a cashier&apos;s shortage when they provide a satisfactory explanation. Requires a clear reason (audit trail).</p>
+                    <form id="shortageForgiveForm">
+                        <div class="mb-2"><label class="form-label small">Cashier *</label>
+                            <select id="sfCashier" class="form-select form-select-sm" required>${cashierOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Station</label>
+                            <select id="sfStation" class="form-select form-select-sm">${stationOpts}</select></div>
+                        <div class="mb-2"><label class="form-label small">Amount to forgive *</label>
+                            <input type="number" id="sfAmount" class="form-control form-control-sm" step="1" min="1" required placeholder="e.g. 20000">
+                            <div class="form-text" id="sfRemainingHint">Select a cashier to see outstanding balance</div>
+                        </div>
+                        <div class="mb-2"><label class="form-label small">Explanation from cashier *</label>
+                            <textarea id="sfReason" class="form-control form-control-sm" rows="3" required placeholder="Cashier explained that…"></textarea>
+                            <div class="form-text">Required for audit. Be specific.</div>
+                        </div>
+                        <div class="mb-2"><label class="form-label small">Date *</label>
+                            <input type="date" id="sfDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}" required></div>
+                        <button type="submit" class="btn btn-info w-100 text-white"><i class="bi bi-hand-thumbs-up"></i> Forgive Shortage</button>
+                    </form>
+                    <div id="sfResult" class="mt-2 small"></div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="card-box mb-3">
+                    <h5 class="mb-3"><i class="bi bi-people"></i> Outstanding Shortages by Cashier</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead><tr>
+                                <th>Cashier</th>
+                                <th>Total shortage</th>
+                                <th>Paid</th>
+                                <th>Forgiven</th>
+                                <th>Salary deducted</th>
+                                <th>Remaining</th>
+                            </tr></thead>
+                            <tbody>${outstandingRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-box">
+                    <h5 class="mb-3"><i class="bi bi-clock-history"></i> Recovery &amp; Forgiveness History</h5>
+                    <div class="table-responsive" style="max-height:420px;overflow-y:auto;">
+                        <table class="table table-sm table-hover">
+                            <thead><tr>
+                                <th>Date</th><th>Cashier</th><th>Type</th><th>Amount</th><th>Reason / Note</th><th>Station</th><th>Recorded by</th>
+                            </tr></thead>
+                            <tbody>${historyRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('pageContent').innerHTML = html;
+
+    function updateRemainingHint(selectId, hintId, amountId) {
+        const sel = document.getElementById(selectId);
+        const hint = document.getElementById(hintId);
+        if (!sel || !hint) return;
+        const opt = sel.options[sel.selectedIndex];
+        const rem = parseFloat(opt && opt.dataset.remaining) || 0;
+        if (!sel.value) {
+            hint.textContent = 'Select a cashier to see outstanding balance';
+        } else if (rem <= 0) {
+            hint.innerHTML = '<span class="text-success">No outstanding shortage for this cashier</span>';
+        } else {
+            hint.innerHTML = 'Outstanding: <strong class="text-danger">' + formatMoney(rem) + '</strong>';
+            const amt = document.getElementById(amountId);
+            if (amt && !amt.value) amt.value = Math.round(rem);
+        }
+    }
+    document.getElementById('spCashier').onchange = function() {
+        updateRemainingHint('spCashier', 'spRemainingHint', 'spAmount');
+        const emp = allUsers.find(u => u.id === this.value);
+        if (emp && emp.station_id) {
+            const st = document.getElementById('spStation');
+            if (st) st.value = String(emp.station_id);
+        }
+    };
+    document.getElementById('sfCashier').onchange = function() {
+        updateRemainingHint('sfCashier', 'sfRemainingHint', 'sfAmount');
+        const emp = allUsers.find(u => u.id === this.value);
+        if (emp && emp.station_id) {
+            const st = document.getElementById('sfStation');
+            if (st) st.value = String(emp.station_id);
+        }
+    };
+
+    // ---- Receive payment ----
+    document.getElementById('shortagePayForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const cashierId = document.getElementById('spCashier').value;
+        const stationId = document.getElementById('spStation').value;
+        const amount = parseFloat(document.getElementById('spAmount').value) || 0;
+        const account = document.getElementById('spAccount').value;
+        const date = document.getElementById('spDate').value;
+        const note = (document.getElementById('spNote').value || '').trim();
+        const resultEl = document.getElementById('spResult');
+        if (!cashierId) { toast('Select a cashier', 'warning'); return; }
+        if (!stationId) { toast('Select a station', 'warning'); return; }
+        if (amount <= 0) { toast('Enter a valid amount', 'warning'); return; }
+        if (!account) { toast('Select the account to deposit into', 'warning'); return; }
+        if (!date) { toast('Select a date', 'warning'); return; }
+
+        const opt = document.getElementById('spCashier').options[document.getElementById('spCashier').selectedIndex];
+        const outstanding = parseFloat(opt.dataset.remaining) || 0;
+        if (outstanding > 0 && amount > outstanding + 0.01) {
+            if (!confirm('Amount (' + formatMoney(amount) + ') is higher than outstanding shortage (' + formatMoney(outstanding) + '). Continue anyway?')) return;
+        }
+
+        const emp = allUsers.find(u => u.id === cashierId);
+        const empName = emp ? (emp.name || emp.username) : 'Unknown';
+        try {
+            const resolved = resolveAccountRefId(account, stationId) || account;
+            if (resolved) {
+                const acc = await getDoc('bank_accounts', resolved);
+                if (!acc && account !== 'petty_cash' && account !== 'cash_till') {
+                    toast('Selected account not found', 'danger'); return;
+                }
+                if (acc) {
+                    await updateDoc('bank_accounts', resolved, {
+                        balance: (Number(acc.balance) || 0) + amount
+                    });
+                } else if (account === 'cash_till' || account === 'petty_cash') {
+                    try { await ensureSystemCashAccounts(stationId); } catch (_) {}
+                    const acc2 = await getDoc('bank_accounts', resolved);
+                    if (acc2) {
+                        await updateDoc('bank_accounts', resolved, {
+                            balance: (Number(acc2.balance) || 0) + amount
+                        });
+                    }
+                }
+            }
+            await addDoc('shortage_recoveries', {
+                cashier_id: cashierId,
+                cashier_name: empName,
+                station_id: String(stationId),
+                amount: amount,
+                type: 'payment',
+                reason: note || 'Cash shortage repayment',
+                deposit_account: account,
+                recovery_date: date,
+                received_by: state.user.id,
+                received_by_name: state.user.name || state.user.username || 'Admin'
+            });
+            try {
+                await postJournal({
+                    entry_type: 'shortage_recovery',
+                    station_id: stationId,
+                    description: 'Shortage recovery from ' + empName,
+                    lines: [
+                        { account: account, debit: amount, credit: 0, memo: 'Cash received' },
+                        { account: 'cashier_shortage', debit: 0, credit: amount, memo: empName }
+                    ]
+                });
+            } catch (_) {}
+            await logAudit('shortage_payment', { cashier_id: cashierId, amount: amount });
+            toast('Payment of ' + formatMoney(amount) + ' recorded from ' + empName, 'success');
+            resultEl.innerHTML = '<span class="text-success">✅ Payment recorded. Outstanding balance updated.</span>';
+            renderShortageRecovery();
+        } catch (err) {
+            toast('Error: ' + err.message, 'danger');
+            resultEl.innerHTML = '<span class="text-danger">' + err.message + '</span>';
+        }
+    };
+
+    // ---- Forgive ----
+    document.getElementById('shortageForgiveForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const cashierId = document.getElementById('sfCashier').value;
+        const stationId = document.getElementById('sfStation').value || '';
+        const amount = parseFloat(document.getElementById('sfAmount').value) || 0;
+        const reason = (document.getElementById('sfReason').value || '').trim();
+        const date = document.getElementById('sfDate').value;
+        const resultEl = document.getElementById('sfResult');
+        if (!cashierId) { toast('Select a cashier', 'warning'); return; }
+        if (amount <= 0) { toast('Enter a valid amount', 'warning'); return; }
+        if (reason.length < 10) {
+            toast('Please enter a clear explanation (at least 10 characters) for the audit trail', 'warning');
+            return;
+        }
+        if (!date) { toast('Select a date', 'warning'); return; }
+
+        const opt = document.getElementById('sfCashier').options[document.getElementById('sfCashier').selectedIndex];
+        const outstanding = parseFloat(opt.dataset.remaining) || 0;
+        if (outstanding > 0 && amount > outstanding + 0.01) {
+            if (!confirm('Forgiveness amount is higher than outstanding shortage. Continue?')) return;
+        }
+        if (!confirm('Forgive ' + formatMoney(amount) + ' of shortage for this cashier?\n\nReason: ' + reason)) return;
+
+        const emp = allUsers.find(u => u.id === cashierId);
+        const empName = emp ? (emp.name || emp.username) : 'Unknown';
+        try {
+            await addDoc('shortage_recoveries', {
+                cashier_id: cashierId,
+                cashier_name: empName,
+                station_id: stationId ? String(stationId) : null,
+                amount: amount,
+                type: 'forgiveness',
+                reason: reason,
+                recovery_date: date,
+                received_by: state.user.id,
+                received_by_name: state.user.name || state.user.username || 'Admin'
+            });
+            await logAudit('shortage_forgiveness', { cashier_id: cashierId, amount: amount, reason: reason });
+            toast('Forgave ' + formatMoney(amount) + ' for ' + empName, 'success');
+            resultEl.innerHTML = '<span class="text-success">✅ Shortage forgiven and recorded in audit log.</span>';
+            renderShortageRecovery();
+        } catch (err) {
+            toast('Error: ' + err.message, 'danger');
+            resultEl.innerHTML = '<span class="text-danger">' + err.message + '</span>';
+        }
+    };
+}
+
 registerPageRenderer('shifts', renderShifts);
 registerPageRenderer('meters', renderMeters);
 registerPageRenderer('balancing', renderBalancing);
+registerPageRenderer('shortage_recovery', renderShortageRecovery);
 
-console.log('Part 7 loaded – Shifts, Meters, Balancing (with "Next" fix)');
+console.log('Part 7 loaded – Shifts, Meters, Balancing, Shortage Recovery');
+
 </script>
 <script>
 // ============================================================
@@ -10451,16 +10871,36 @@ async function renderPayroll() {
             salaryDeductions[cid] += Number(s.deducted_shortage) || 0;
         }
     });
+    // Cash paid back + forgiven shortages reduce what can still be deducted from salary
+    const shortageRecoveriesList = await getAll('shortage_recoveries') || [];
+    const recoveredPaid = {};
+    const recoveredForgiven = {};
+    shortageRecoveriesList.forEach(r => {
+        const cid = r.cashier_id;
+        if (!cid) return;
+        const amt = Number(r.amount) || 0;
+        if (r.type === 'forgiveness') {
+            if (!recoveredForgiven[cid]) recoveredForgiven[cid] = 0;
+            recoveredForgiven[cid] += amt;
+        } else {
+            if (!recoveredPaid[cid]) recoveredPaid[cid] = 0;
+            recoveredPaid[cid] += amt;
+        }
+    });
     const remainingBalances = {};
     Object.keys(cashierBalances).forEach(cid => {
         const bal = cashierBalances[cid];
         const deducted = salaryDeductions[cid] || 0;
+        const paid = recoveredPaid[cid] || 0;
+        const forg = recoveredForgiven[cid] || 0;
         remainingBalances[cid] = {
             totalShortage: bal.shortage,
             deductedShortage: deducted,
-            remainingShortage: Math.max(0, bal.shortage - deducted),
+            paidRecovery: paid,
+            forgiven: forg,
+            remainingShortage: Math.max(0, bal.shortage - deducted - paid - forg),
             excess: bal.excess,
-            net: bal.net - deducted,
+            net: bal.net - deducted - paid - forg,
             count: bal.count
         };
     });
@@ -11279,6 +11719,7 @@ buildSidebar = function() {
             icon: 'bi-tools',
             children: [
                 { label: 'Balancing', page: 'balancing' },
+                { label: 'Shortage Recovery', page: 'shortage_recovery' },
                 { label: 'Customers', page: 'customers' },
                 { label: 'Maintenance', page: 'maintenance' },
                 { label: 'Staff', page: 'staff' }
@@ -11675,6 +12116,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
       ['shifts', 'renderShifts'],
       ['meters', 'renderMeters'],
       ['balancing', 'renderBalancing'],
+      ['shortage_recovery', 'renderShortageRecovery'],
       ['inventory', 'renderInventory'],
       ['stock', 'renderStock'],
       ['adjustments', 'renderAdjustments'],
