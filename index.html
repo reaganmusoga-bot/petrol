@@ -691,6 +691,98 @@
         .balance-zero { color: #6c757d; }
         .statement-table .debit { color: #dc3545; }
         .statement-table .credit { color: #198754; }
+
+        /* ===== International ledger tables ===== */
+        .intl-table-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        }
+        .intl-table-wrap .table { margin: 0; font-size: 0.84rem; border-collapse: separate; border-spacing: 0; }
+        .intl-table-wrap thead th {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            color: #f8fafc;
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 11px 14px;
+            border: none;
+            white-space: nowrap;
+        }
+        .intl-table-wrap tbody td {
+            padding: 12px 14px;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .intl-table-wrap tbody tr:last-child td { border-bottom: none; }
+        .intl-table-wrap tbody tr:hover td { background: #f8fafc !important; }
+        .intl-table-wrap .amt {
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+            font-family: 'Segoe UI', system-ui, ui-monospace, monospace;
+            letter-spacing: -0.01em;
+        }
+        .intl-table-wrap .amt-out { color: #dc2626; }
+        .intl-table-wrap .amt-in { color: #059669; }
+        .intl-table-wrap .amt-warn { color: #d97706; }
+        .intl-table-wrap .amt-info { color: #0284c7; }
+        .intl-cat {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 999px;
+            font-size: 0.68rem; font-weight: 600; letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .intl-cat.operations { background: #e0e7ff; color: #3730a3; }
+        .intl-cat.utilities { background: #fef3c7; color: #92400e; }
+        .intl-cat.maintenance { background: #ffedd5; color: #9a3412; }
+        .intl-cat.petty_cash { background: #ecfdf5; color: #065f46; }
+        .intl-cat.vendor_payment { background: #f3e8ff; color: #6b21a8; }
+        .intl-cat.other, .intl-cat.default { background: #f1f5f9; color: #475569; }
+        .intl-avatar {
+            width: 34px; height: 34px; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.78rem; color: #fff;
+            background: linear-gradient(135deg, #1e3a5f, #3b82f6);
+            flex-shrink: 0;
+        }
+        .intl-progress {
+            height: 6px; border-radius: 999px; background: #e2e8f0; overflow: hidden; margin-top: 6px; max-width: 120px;
+        }
+        .intl-progress > span {
+            display: block; height: 100%; border-radius: 999px;
+            background: linear-gradient(90deg, #f59e0b, #dc2626);
+        }
+        .intl-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 999px;
+            font-size: 0.68rem; font-weight: 600;
+        }
+        .intl-chip.pay { background: #d1fae5; color: #065f46; }
+        .intl-chip.forgive { background: #e0f2fe; color: #075985; }
+        .intl-empty {
+            text-align: center; padding: 36px 16px; color: #94a3b8;
+        }
+        .intl-empty i { font-size: 2rem; opacity: 0.35; display: block; margin-bottom: 8px; }
+        .intl-section-head {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .intl-section-head h6, .intl-section-head h5 {
+            margin: 0; font-weight: 700; letter-spacing: -0.01em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .intl-section-head .meta {
+            font-size: 0.75rem; color: #64748b; background: #f1f5f9;
+            padding: 4px 10px; border-radius: 999px; font-weight: 600;
+        }
+        [data-theme="dark"] .intl-table-wrap { background: #1e1e1e; border-color: #333; }
+        [data-theme="dark"] .intl-table-wrap tbody td { color: #e0e0e0; border-bottom-color: #333; }
+        [data-theme="dark"] .intl-table-wrap tbody tr:hover td { background: #2a2a2a !important; }
+        [data-theme="dark"] .intl-empty { color: #888; }
     </style>
 </head>
 <body>
@@ -5272,22 +5364,23 @@ async function renderShortageRecovery() {
     const sortedRec = [...recoveries].sort((a, b) => tsMillis(b.created_at || b.timestamp) - tsMillis(a.created_at || a.timestamp));
     let historyRows = '';
     if (sortedRec.length === 0) {
-        historyRows = '<tr><td colspan="7" class="text-muted text-center">No shortage recoveries or forgiveness recorded yet</td></tr>';
+        historyRows = '<tr><td colspan="7"><div class="intl-empty"><i class="bi bi-clock-history"></i>No recoveries or forgiveness recorded yet</div></td></tr>';
     } else {
         sortedRec.slice(0, 50).forEach(r => {
             const emp = allUsers.find(u => u.id === r.cashier_id);
             const empName = emp ? (emp.name || emp.username) : (r.cashier_name || 'Unknown');
             const typeBadge = r.type === 'forgiveness'
-                ? '<span class="badge bg-info text-dark">Forgiven</span>'
-                : '<span class="badge bg-success">Payment received</span>';
+                ? '<span class="intl-chip forgive"><i class="bi bi-hand-thumbs-up"></i> Forgiven</span>'
+                : '<span class="intl-chip pay"><i class="bi bi-cash-coin"></i> Payment</span>';
+            const amtCls = r.type === 'forgiveness' ? 'amt-info' : 'amt-in';
             historyRows += `<tr>
-                <td class="fs-xs">${formatDate(r.recovery_date || r.created_at || r.timestamp)}</td>
-                <td><strong>${esc(empName)}</strong></td>
+                <td class="small text-muted text-nowrap">${formatDate(r.recovery_date || r.created_at || r.timestamp)}</td>
+                <td><div class="fw-semibold">${esc(empName)}</div></td>
                 <td>${typeBadge}</td>
-                <td class="fw-bold">${formatMoney(r.amount)}</td>
-                <td class="small">${esc(r.reason || '—')}</td>
-                <td class="small">${r.station_id ? esc(stationName(r.station_id)) : '—'}</td>
-                <td class="small">${esc(r.received_by_name || '—')}</td>
+                <td><span class="amt ${amtCls}">${formatMoney(r.amount)}</span></td>
+                <td class="small" style="max-width:220px;"><div class="text-truncate" title="${esc(r.reason || '')}">${esc(r.reason || '—')}</div></td>
+                <td class="small text-muted">${r.station_id ? esc(stationName(r.station_id)) : '—'}</td>
+                <td class="small text-muted">${esc(r.received_by_name || '—')}</td>
             </tr>`;
         });
     }
@@ -5299,20 +5392,34 @@ async function renderShortageRecovery() {
         .filter(x => x.rem > 0)
         .sort((a, b) => b.rem - a.rem);
     if (outstandingList.length === 0) {
-        outstandingRows = '<tr><td colspan="5" class="text-muted text-center">No outstanding shortages 🎉</td></tr>';
+        outstandingRows = '<tr><td colspan="6"><div class="intl-empty"><i class="bi bi-check2-circle"></i>No outstanding shortages — all clear</div></td></tr>';
     } else {
         outstandingList.forEach(({ u, rem }) => {
             const total = shortageByCashier[u.id] || 0;
             const ded = salaryDeducted[u.id] || 0;
             const paid = paidRecovered[u.id] || 0;
             const forg = forgivenAmt[u.id] || 0;
+            const cleared = total > 0 ? Math.min(100, ((total - rem) / total) * 100) : 100;
+            const initials = String(u.name || u.username || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
             outstandingRows += `<tr>
-                <td><strong>${esc(u.name || u.username)}</strong></td>
-                <td class="text-danger">${formatMoney(total)}</td>
-                <td class="text-success">${formatMoney(paid)}</td>
-                <td class="text-info">${formatMoney(forg)}</td>
-                <td class="text-warning">${formatMoney(ded)}</td>
-                <td class="fw-bold text-danger">${formatMoney(rem)}</td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="intl-avatar">${esc(initials)}</span>
+                        <div>
+                            <div class="fw-semibold">${esc(u.name || u.username)}</div>
+                            <div class="small text-muted">${esc(u.role || 'cashier')}${u.station_id ? ' · ' + esc(stationName(u.station_id)) : ''}</div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="amt amt-out">${formatMoney(total)}</span></td>
+                <td><span class="amt amt-in">${formatMoney(paid)}</span></td>
+                <td><span class="amt amt-info">${formatMoney(forg)}</span></td>
+                <td><span class="amt amt-warn">${formatMoney(ded)}</span></td>
+                <td>
+                    <div class="fw-bold amt amt-out">${formatMoney(rem)}</div>
+                    <div class="intl-progress" title="${cleared.toFixed(0)}% cleared"><span style="width:${cleared.toFixed(1)}%;"></span></div>
+                    <div class="small text-muted mt-1">${cleared.toFixed(0)}% cleared</div>
+                </td>
             </tr>`;
         });
     }
@@ -5384,28 +5491,44 @@ async function renderShortageRecovery() {
 
             <div class="col-lg-7">
                 <div class="card-box mb-3">
-                    <h5 class="mb-3"><i class="bi bi-people"></i> Outstanding Shortages by Cashier</h5>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead><tr>
-                                <th>Cashier</th>
-                                <th>Total shortage</th>
-                                <th>Paid</th>
-                                <th>Forgiven</th>
-                                <th>Salary deducted</th>
-                                <th>Remaining</th>
-                            </tr></thead>
+                    <div class="intl-section-head">
+                        <h5><i class="bi bi-people-fill" style="color:#dc2626;"></i> Outstanding Shortages</h5>
+                        <span class="meta">${outstandingList.length} cashier${outstandingList.length === 1 ? '' : 's'}</span>
+                    </div>
+                    <div class="table-responsive intl-table-wrap">
+                        <table class="table table-sm mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width:28%;">Cashier</th>
+                                    <th style="width:12%;">Total</th>
+                                    <th style="width:12%;">Paid</th>
+                                    <th style="width:12%;">Forgiven</th>
+                                    <th style="width:12%;">Salary</th>
+                                    <th style="width:24%;">Remaining</th>
+                                </tr>
+                            </thead>
                             <tbody>${outstandingRows}</tbody>
                         </table>
                     </div>
                 </div>
                 <div class="card-box">
-                    <h5 class="mb-3"><i class="bi bi-clock-history"></i> Recovery &amp; Forgiveness History</h5>
-                    <div class="table-responsive" style="max-height:420px;overflow-y:auto;">
-                        <table class="table table-sm table-hover">
-                            <thead><tr>
-                                <th>Date</th><th>Cashier</th><th>Type</th><th>Amount</th><th>Reason / Note</th><th>Station</th><th>Recorded by</th>
-                            </tr></thead>
+                    <div class="intl-section-head">
+                        <h5><i class="bi bi-clock-history" style="color:#64748b;"></i> Recovery History</h5>
+                        <span class="meta">${sortedRec.length} entr${sortedRec.length === 1 ? 'y' : 'ies'}</span>
+                    </div>
+                    <div class="table-responsive intl-table-wrap" style="max-height:420px;">
+                        <table class="table table-sm mb-0 align-middle">
+                            <thead style="position:sticky;top:0;z-index:2;">
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Cashier</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Reason / Note</th>
+                                    <th>Station</th>
+                                    <th>By</th>
+                                </tr>
+                            </thead>
                             <tbody>${historyRows}</tbody>
                         </table>
                     </div>
@@ -7448,11 +7571,19 @@ async function renderFinancials() {
 
         function expenseRows() {
             if (expenses.length === 0) {
-                return '<tr><td colspan="5" class="text-muted text-center py-4">No expenses recorded yet</td></tr>';
+                return '<tr><td colspan="6"><div class="intl-empty"><i class="bi bi-receipt"></i>No expenses recorded yet</div></td></tr>';
             }
+            const catMeta = {
+                operations: { label: 'Operations', cls: 'operations' },
+                utilities: { label: 'Utilities', cls: 'utilities' },
+                maintenance: { label: 'Maintenance', cls: 'maintenance' },
+                petty_cash: { label: 'Petty Cash', cls: 'petty_cash' },
+                vendor_payment: { label: 'Vendor', cls: 'vendor_payment' },
+                other: { label: 'Other', cls: 'other' }
+            };
             const sorted = [...expenses].sort((a, b) => tsMillis(b.created_at || b.date) - tsMillis(a.created_at || a.date));
             let rows = '';
-            sorted.slice(0, 20).forEach((e, idx) => {
+            sorted.slice(0, 25).forEach((e, idx) => {
                 let sourceLabel = 'Unknown';
                 if (e.source_account === 'petty_cash' || e.source_account === 'cash_till') {
                     sourceLabel = e.source_account === 'petty_cash' ? 'Petty Cash' : 'Cash Till';
@@ -7460,18 +7591,26 @@ async function renderFinancials() {
                     const acc = accounts.find(a => a.id === e.source_account);
                     if (acc) sourceLabel = acc.account_name || acc.bank_name || 'Account';
                 }
+                const person = e.person_name || (e.person_id ? (state.allUsers.find(u => u.id === e.person_id) || {}).name : '') || '';
+                const catKey = (e.category || 'other').toString();
+                const meta = catMeta[catKey] || { label: catKey.replace(/_/g, ' '), cls: 'default' };
                 const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-                const cat = (e.category || 'other').toString();
-                rows += `<tr style="background:${rowBg};border-bottom:1px solid #f1f5f9;">
-                        <td class="py-2 ps-3">
-                            <div class="fw-semibold text-truncate" style="max-width:140px;font-size:0.85rem;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</div>
+                const stName = e.station_id ? stationName(e.station_id) : '';
+                rows += `<tr style="background:${rowBg};">
+                        <td>
+                            <div class="fw-semibold text-truncate" style="max-width:150px;" title="${esc(sourceLabel)}">${esc(sourceLabel)}</div>
+                            ${stName ? `<div class="small text-muted text-truncate" style="max-width:150px;">${esc(stName)}</div>` : ''}
                         </td>
-                        <td class="py-2">
-                            <div class="text-truncate" style="max-width:280px;font-size:0.85rem;" title="${esc(e.description || '')}">${esc(e.description || '—')}</div>
+                        <td>
+                            <div class="text-truncate" style="max-width:260px;" title="${esc(e.description || '')}">${esc(e.description || '—')}</div>
+                            ${person ? `<div class="small text-muted"><i class="bi bi-person"></i> ${esc(person)}</div>` : ''}
                         </td>
-                        <td class="py-2"><span class="badge rounded-pill" style="background:#e2e8f0;color:#334155;font-weight:500;font-size:0.7rem;">${esc(cat)}</span></td>
-                        <td class="py-2 text-end fw-bold text-nowrap" style="color:#dc2626;font-variant-numeric:tabular-nums;min-width:7.5rem;">${formatMoney(e.amount)}</td>
-                        <td class="py-2 pe-3 text-nowrap small text-muted">${formatDate(e.expense_date || e.date || e.created_at)}</td>
+                        <td><span class="intl-cat ${meta.cls}">${esc(meta.label)}</span></td>
+                        <td class="text-end"><span class="amt amt-out">${formatMoney(e.amount)}</span></td>
+                        <td class="text-nowrap small text-muted">${formatDate(e.expense_date || e.date || e.created_at)}</td>
+                        <td class="text-end pe-3">
+                            ${e.recurring ? '<span class="intl-chip forgive" title="Recurring"><i class="bi bi-arrow-repeat"></i></span>' : ''}
+                        </td>
                     </tr>`;
             });
             return rows;
@@ -7719,16 +7858,20 @@ async function renderFinancials() {
                             </div>
                             <div class="col-lg-7">
                                 <div class="card-box">
-                                                                        <h6 class="mb-3"><i class="bi bi-receipt"></i> Recent Expenses</h6>
-                                    <div class="table-responsive" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;max-height:320px;">
-                                        <table class="table table-sm mb-0 align-middle" style="font-size:0.85rem;">
-                                            <thead style="position:sticky;top:0;z-index:1;">
-                                                <tr style="background:linear-gradient(135deg,#0b1a33,#1a3a6a);color:#fff;">
-                                                    <th class="py-2 ps-3" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:18%;">Source</th>
-                                                    <th class="py-2" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:36%;">Description</th>
-                                                    <th class="py-2" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:14%;">Category</th>
-                                                    <th class="py-2 text-end" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:18%;">Amount</th>
-                                                    <th class="py-2 pe-3" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.04em;font-weight:600;width:14%;">Date</th>
+                                    <div class="intl-section-head">
+                                        <h6><i class="bi bi-receipt text-danger"></i> Recent Expenses</h6>
+                                        <span class="meta">${expenses.length} record${expenses.length === 1 ? '' : 's'}</span>
+                                    </div>
+                                    <div class="table-responsive intl-table-wrap" style="max-height:360px;">
+                                        <table class="table table-sm mb-0 align-middle">
+                                            <thead style="position:sticky;top:0;z-index:2;">
+                                                <tr>
+                                                    <th style="width:18%;">Source</th>
+                                                    <th style="width:32%;">Description</th>
+                                                    <th style="width:14%;">Category</th>
+                                                    <th class="text-end" style="width:16%;">Amount</th>
+                                                    <th style="width:12%;">Date</th>
+                                                    <th style="width:8%;"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>${expenseRows()}</tbody>
