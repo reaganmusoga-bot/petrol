@@ -256,62 +256,177 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #e0e5ec 0%, #f5f7fa 100%);
-            padding: 20px;
+            padding: 24px 16px 32px;
             position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(ellipse 90% 60% at 10% 0%, rgba(255,193,7,0.14) 0%, transparent 55%),
+                radial-gradient(ellipse 70% 50% at 95% 85%, rgba(37,99,235,0.12) 0%, transparent 50%),
+                linear-gradient(160deg, #07111f 0%, #0b1a33 42%, #132a4a 78%, #0b1a33 100%);
         }
         .login-wrap::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.05"><path d="M20 20 L80 20 L80 80 L20 80 Z"/><path d="M40 40 L60 40 L60 60 L40 60 Z"/></svg>') repeat;
-            background-size: 100px 100px;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 70% 70% at 50% 45%, #000 20%, transparent 75%);
             pointer-events: none;
         }
+        .login-wrap::after {
+            content: '';
+            position: absolute;
+            width: 420px; height: 420px;
+            border-radius: 50%;
+            right: -120px; bottom: -160px;
+            background: radial-gradient(circle, rgba(255,193,7,0.18) 0%, transparent 68%);
+            pointer-events: none;
+        }
+        .login-shell {
+            position: relative; z-index: 1;
+            width: 100%; max-width: 420px;
+            display: flex; flex-direction: column; gap: 14px;
+        }
         .login-card {
-            background: rgba(255,255,255,0.9);
-            backdrop-filter: blur(10px);
-            border-radius: 24px;
-            padding: 40px 36px;
-            max-width: 460px;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 36px 32px 28px;
             width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.06);
-            border: 1px solid rgba(255,255,255,0.5);
-            position: relative;
-            z-index: 1;
+            box-shadow:
+                0 4px 6px rgba(0,0,0,0.04),
+                0 24px 48px rgba(0,0,0,0.22),
+                0 0 0 1px rgba(255,255,255,0.08);
+            border: 1px solid rgba(226,232,240,0.9);
         }
-        .login-card .logo { text-align: center; margin-bottom: 28px; }
-        .login-card .logo i {
-            font-size: 3.2rem;
+        .login-brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+        .login-mark {
+            width: 56px; height: 56px;
+            margin: 0 auto 14px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 16px;
+            background: linear-gradient(145deg, #0b1a33 0%, #1e3a5f 100%);
+            box-shadow: 0 10px 24px rgba(11,26,51,0.28);
             color: #ffc107;
-            background: #0b1a33;
-            padding: 16px;
-            border-radius: 18px;
-            box-shadow: 0 8px 20px rgba(11,26,51,0.2);
+            font-size: 1.55rem;
         }
-        .login-card .logo h4 { margin-top: 12px; font-weight: 700; color: #0b1a33; }
-        .login-card .logo p { color: #6c7a8e; font-size: 0.9rem; margin-bottom: 0; }
-        .login-card .form-floating { margin-bottom: 16px; }
-        .login-card .form-floating>select { padding-top: 1.6rem; padding-bottom: 0.4rem; }
-        .login-card .form-floating>label { padding-left: 1rem; }
+        .login-brand h1 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #0b1a33;
+            line-height: 1.25;
+        }
+        .login-brand .tagline {
+            margin: 6px 0 0;
+            font-size: 0.86rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .login-card .form-floating { margin-bottom: 14px; }
+        .login-card .form-floating > .form-control {
+            min-height: 52px;
+            border-radius: 12px;
+            border-color: #e2e8f0;
+            font-size: 0.95rem;
+            background: #f8fafc;
+        }
+        .login-card .form-floating > .form-control:focus {
+            background: #fff;
+            border-color: #0b1a33;
+            box-shadow: 0 0 0 3px rgba(11,26,51,0.12);
+        }
+        .login-card .form-floating > label {
+            color: #64748b;
+            padding-left: 1rem;
+        }
+        .login-card .form-floating > .form-control:focus ~ label,
+        .login-card .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #0b1a33;
+        }
         .login-card .password-toggle {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            background: none; border: none; color: #6c7a8e; z-index: 10; cursor: pointer;
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: #94a3b8; z-index: 10; cursor: pointer;
+            padding: 6px; border-radius: 8px;
         }
+        .login-card .password-toggle:hover { color: #0b1a33; background: #f1f5f9; }
+        .login-card .btn-login {
+            width: 100%;
+            min-height: 48px;
+            margin-top: 6px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: 0.01em;
+            color: #fff;
+            background: linear-gradient(135deg, #0b1a33 0%, #1a3a6a 100%);
+            box-shadow: 0 8px 20px rgba(11,26,51,0.25);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .login-card .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 12px 28px rgba(11,26,51,0.32);
+            color: #fff;
+        }
+        .login-card .btn-login:active { transform: translateY(0); }
         .login-card .btn-primary {
             background: linear-gradient(135deg, #0b1a33, #1a3a6a);
-            border: none; padding: 12px; font-weight: 600; border-radius: 12px;
-            transition: transform 0.2s, box-shadow 0.2s;
+            border: none; padding: 12px; font-weight: 700; border-radius: 12px;
         }
-        .login-card .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(11,26,51,0.3); }
-        .login-card .btn-outline-warning { border-radius: 30px; padding: 4px 16px; font-size: 0.8rem; }
-        .login-card .btn-outline-secondary { border-radius: 30px; padding: 4px 16px; font-size: 0.8rem; }
-        .login-card .form-control:focus, .login-card .form-select:focus {
-            border-color: #0b1a33;
-            box-shadow: 0 0 0 0.25rem rgba(11,26,51,0.15);
+        .login-secondary {
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px solid #f1f5f9;
+            text-align: center;
         }
-        .login-card .form-floating>.form-control:focus~label,
-        .login-card .form-floating>.form-select:focus~label { color: #0b1a33; }
+        .login-secondary .hint {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+        .login-secondary .btn {
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 5px 14px;
+        }
+        .login-card #createCompanyForm h5 {
+            font-weight: 800;
+            color: #0b1a33;
+            letter-spacing: -0.02em;
+        }
+        .login-card #createCompanyForm .form-control {
+            min-height: 44px;
+            border-radius: 10px;
+            border-color: #e2e8f0;
+            background: #f8fafc;
+        }
+        .login-card #createCompanyForm .form-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+        }
+        .login-footer {
+            text-align: center;
+            color: rgba(255,255,255,0.55);
+            font-size: 0.72rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            padding: 0 8px;
+        }
+        .login-footer strong { color: rgba(255,255,255,0.75); font-weight: 600; }
+        @media (max-width: 480px) {
+            .login-card { padding: 28px 22px 22px; border-radius: 16px; }
+            .login-brand h1 { font-size: 1.2rem; }
+        }
 
         /* Autocomplete */
         .autocomplete-wrapper { position: relative; }
@@ -1041,46 +1156,54 @@
     LOGIN SCREEN
     ============================================================ -->
     <div id="loginScreen" class="login-wrap">
-        <div class="login-card">
-            <div class="logo">
-                <i class="bi bi-fuel-pump"></i>
-                <h4>PetroManager Pro</h4>
-                <p>Multi-Company Fuel Management</p>
-                <p style="font-size:0.7rem;opacity:0.55;margin-top:4px;">by Musoga Reagan · <strong>v1.4.3</strong> International Foundation</p>
-            </div>
-            <div id="normalLogin">
-                <form id="loginForm" autocomplete="off">
-                    <div class="form-floating autocomplete-wrapper">
-                        <input type="text" id="loginUsername" class="form-control" required placeholder=" " autocomplete="off" autocapitalize="off" spellcheck="false" />
-                        <label for="loginUsername">Username</label>
-                        <div id="usernameSuggestions" class="autocomplete-dropdown" style="display:none;"></div>
-                    </div>
-                    <div class="form-floating position-relative">
-                        <input type="password" id="loginPassword" class="form-control" required placeholder=" " autocomplete="current-password" />
-                        <label for="loginPassword">Password</label>
-                        <button type="button" class="password-toggle" id="togglePassword" tabindex="-1">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-lg w-100" id="loginBtn">Sign In</button>
-                    <div id="loginError" class="text-danger text-center mt-3 small" style="display:none;"></div>
-                </form>
-                <div class="mt-4 text-center d-flex flex-wrap gap-2 justify-content-center">
-                    <button type="button" id="showCreateCompanyBtn" class="btn btn-outline-warning btn-sm">Create First Company</button>
-                    <button type="button" id="diagnoseBtn" class="btn btn-outline-info btn-sm">Diagnose</button>
+        <div class="login-shell">
+            <div class="login-card">
+                <div class="login-brand">
+                    <div class="login-mark"><i class="bi bi-fuel-pump-fill"></i></div>
+                    <h1>PetroManager Pro</h1>
+                    <p class="tagline">Fuel operations · multi-station control</p>
                 </div>
-                <div id="diagnoseBox" class="mt-3 p-2 bg-light rounded small" style="display:none;"></div>
+                <div id="normalLogin">
+                    <form id="loginForm" autocomplete="off">
+                        <div class="form-floating autocomplete-wrapper">
+                            <input type="text" id="loginUsername" class="form-control" required placeholder=" " autocomplete="off" autocapitalize="off" spellcheck="false" />
+                            <label for="loginUsername">Username</label>
+                            <div id="usernameSuggestions" class="autocomplete-dropdown" style="display:none;"></div>
+                        </div>
+                        <div class="form-floating position-relative">
+                            <input type="password" id="loginPassword" class="form-control" required placeholder=" " autocomplete="current-password" />
+                            <label for="loginPassword">Password</label>
+                            <button type="button" class="password-toggle" id="togglePassword" tabindex="-1" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-login" id="loginBtn">Sign in</button>
+                        <div id="loginError" class="text-danger text-center mt-3 small" style="display:none;"></div>
+                    </form>
+                    <div class="login-secondary">
+                        <div class="hint">First-time setup</div>
+                        <div class="d-flex flex-wrap gap-2 justify-content-center">
+                            <button type="button" id="showCreateCompanyBtn" class="btn btn-outline-secondary btn-sm">Create company</button>
+                            <button type="button" id="diagnoseBtn" class="btn btn-outline-secondary btn-sm">Diagnose</button>
+                        </div>
+                        <div id="diagnoseBox" class="mt-3 p-2 bg-light rounded small text-start" style="display:none;"></div>
+                    </div>
+                </div>
+                <div id="createCompanyForm" style="display:none;">
+                    <h5 class="mb-1 text-center">Create company</h5>
+                    <p class="text-center text-muted small mb-3">Sets up your first organisation and admin user</p>
+                    <div class="mb-2"><label class="form-label">Company name</label><input type="text" id="newCompName" class="form-control" placeholder="e.g. GIMIX Fuel"></div>
+                    <div class="mb-2"><label class="form-label">Tagline</label><input type="text" id="newCompTagline" class="form-control" placeholder="Optional"></div>
+                    <div class="mb-2"><label class="form-label">Address</label><input type="text" id="newCompAddress" class="form-control" placeholder="Optional"></div>
+                    <div class="mb-2"><label class="form-label">Admin username</label><input type="text" id="newCompAdminUser" class="form-control" placeholder="admin"></div>
+                    <div class="mb-3"><label class="form-label">Admin password</label><input type="password" id="newCompAdminPass" class="form-control" placeholder="Min 4 characters"></div>
+                    <button type="button" id="createCompanyBtn" class="btn btn-warning w-100" style="border-radius:12px;min-height:44px;font-weight:700;">Create company &amp; admin</button>
+                    <button type="button" id="cancelCreateCompanyBtn" class="btn btn-outline-secondary w-100 mt-2" style="border-radius:12px;min-height:42px;">Back to sign in</button>
+                    <div id="createCompanyResult" class="text-center mt-3 small"></div>
+                </div>
             </div>
-            <div id="createCompanyForm" style="display:none;">
-                <h5 class="mb-3 text-center">Create First Company</h5>
-                <div class="mb-3"><label class="form-label">Company Name</label><input type="text" id="newCompName" class="form-control" placeholder="e.g. GIMIX Fuel"></div>
-                <div class="mb-3"><label class="form-label">Tagline</label><input type="text" id="newCompTagline" class="form-control" placeholder="Fueling Uganda"></div>
-                <div class="mb-3"><label class="form-label">Address</label><input type="text" id="newCompAddress" class="form-control" placeholder="Kampala, Uganda"></div>
-                <div class="mb-3"><label class="form-label">Admin Username</label><input type="text" id="newCompAdminUser" class="form-control" placeholder="admin"></div>
-                <div class="mb-3"><label class="form-label">Admin Password</label><input type="password" id="newCompAdminPass" class="form-control" placeholder="Min 4 characters"></div>
-                <button type="button" id="createCompanyBtn" class="btn btn-warning w-100">Create Company & Admin</button>
-                <button type="button" id="cancelCreateCompanyBtn" class="btn btn-outline-secondary w-100 mt-2">Cancel</button>
-                <div id="createCompanyResult" class="text-center mt-3 small"></div>
+            <div class="login-footer">
+                PetroManager Pro · <strong>v1.4.6</strong> · Musoga Reagan © 2026
             </div>
         </div>
     </div>
