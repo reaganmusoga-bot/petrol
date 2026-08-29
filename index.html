@@ -7665,12 +7665,26 @@ async function renderFinancials() {
             accountOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)} – ${esc(a.account_number || '')}${esc(st)}</option>`;
         });
 
-        let depositSourceOptions =
-            '<option value="cash_till">Cash Till (this station)</option><option value="petty_cash">Petty Cash (this station)</option>';
+        // From-account: list ALL accounts (tills, petty cash, banks) with clear labels
+        let depositSourceOptions = '<option value="" disabled selected>Select account</option>';
+        depositSourceOptions += '<option value="cash_till">💵 Cash Till (current station)</option>';
+        depositSourceOptions += '<option value="petty_cash">💰 Petty Cash (current station)</option>';
         sortedAccounts.forEach(a => {
-            if (a.is_system) return;
-            const st = (a.company_wide || !a.station_id) ? ' · All stations' : (' · ' + stationName(a.station_id));
-            depositSourceOptions += `<option value="${esc(a.id)}">🏦 ${esc(a.bank_name)}${esc(st)}</option>`;
+            const isCashTill = a.system_kind === 'cash_till' || (a.is_system && /cash\s*till/i.test(String(a.account_name || '') + String(a.bank_name || '')));
+            const isPetty = a.system_kind === 'petty_cash' || (a.is_system && /petty/i.test(String(a.account_name || '') + String(a.bank_name || '')));
+            const st = (a.company_wide || !a.station_id) ? 'All stations' : stationName(a.station_id);
+            const bal = formatMoney(Number(a.balance) || 0);
+            let label;
+            if (isCashTill) {
+                label = `💵 Cash Till · ${st} · ${bal}`;
+            } else if (isPetty) {
+                label = `💰 Petty Cash · ${st} · ${bal}`;
+            } else {
+                const name = a.account_name || a.bank_name || 'Account';
+                const num = a.account_number ? ` · ${a.account_number}` : '';
+                label = `🏦 ${name}${num} · ${st} · ${bal}`;
+            }
+            depositSourceOptions += `<option value="${esc(a.id)}">${esc(label)}</option>`;
         });
 
         let supplierOptions = '<option value="">Select supplier</option>';
@@ -8409,8 +8423,22 @@ async function renderFinancials() {
                                             <div class="form-field">
                                                 <label class="form-label" for="bfAccount">To account *</label>
                                                 <select id="bfAccount" class="form-select" required>
-                                                    <option value="" disabled selected>Select bank account</option>
-                                                    ${accounts.map(a => `<option value="${a.id}">${esc(a.bank_name)} – ${esc(a.account_number)}</option>`).join('')}
+                                                    <option value="" disabled selected>Select account</option>
+                                                    ${sortedAccounts.map(a => {
+                                                        const isCashTill = a.system_kind === 'cash_till' || (a.is_system && /cash\s*till/i.test(String(a.account_name || '') + String(a.bank_name || '')));
+                                                        const isPetty = a.system_kind === 'petty_cash' || (a.is_system && /petty/i.test(String(a.account_name || '') + String(a.bank_name || '')));
+                                                        const st = (a.company_wide || !a.station_id) ? 'All stations' : stationName(a.station_id);
+                                                        const bal = formatMoney(Number(a.balance) || 0);
+                                                        let label;
+                                                        if (isCashTill) label = `💵 Cash Till · ${st} · ${bal}`;
+                                                        else if (isPetty) label = `💰 Petty Cash · ${st} · ${bal}`;
+                                                        else {
+                                                            const name = a.account_name || a.bank_name || 'Account';
+                                                            const num = a.account_number ? ` · ${a.account_number}` : '';
+                                                            label = `🏦 ${name}${num} · ${st} · ${bal}`;
+                                                        }
+                                                        return `<option value="${esc(a.id)}">${esc(label)}</option>`;
+                                                    }).join('')}
                                                 </select>
                                                 <div class="fin-bal-hint empty" id="bfAccountBal"></div>
                                             </div>
