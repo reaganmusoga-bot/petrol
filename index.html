@@ -1011,6 +1011,14 @@
         [data-theme="dark"] .tank-visual { background: #1a1a1a; border-color: #444; }
         [data-theme="dark"] .inv-add-bar { background: #1a1a1a; border-color: #444; }
 
+        #offloadTable thead th {
+            font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+            font-weight: 700; color: #64748b; border-bottom: 1px solid #e2e8f0;
+        }
+        #offloadTable td { vertical-align: middle; padding: 8px 10px; }
+        #offloadTable .offload-row:nth-child(even) { background: #fafbfc; }
+
+
 
 
         .fin-ledger-card {
@@ -3618,31 +3626,75 @@ async function renderSales() {
     let cart = [];
     let scannedBarcode = '';
 
+    const _salesNow = new Date();
+    const activeSales = sales.filter(s => s.status !== 'reversed' && s.reversed !== true);
+    const mtdSales = activeSales.filter(s => {
+        const d = s.sale_date || s.created_at;
+        let dt = null;
+        if (d && d.toDate) dt = d.toDate();
+        else if (typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d)) dt = new Date(d.slice(0,10));
+        else if (d && d.seconds) dt = new Date(d.seconds * 1000);
+        else if (d) dt = new Date(d);
+        return dt && dt.getMonth() === _salesNow.getMonth() && dt.getFullYear() === _salesNow.getFullYear();
+    });
+    const mtdRev = mtdSales.reduce((s, x) => s + (Number(x.amount) || Number(x.total) || 0), 0);
+    const mtdLitres = mtdSales.reduce((s, x) => s + (Number(x.quantity) || 0), 0);
+
     let html = `
-        <div class="row g-3">
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-cart-check"></i> Sales</h4>
+                        <div class="fin-sub">POS · cart · invoices</div>
+                    </div>
+                    <span class="fin-period-chip"><i class="bi bi-calendar3"></i> This month</span>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="fin-kpi in">
+                        <div class="k-label">Revenue (MTD)</div>
+                        <div class="k-value">${formatCompactMoney(mtdRev)}</div>
+                        <div class="k-hint">${mtdSales.length} sale${mtdSales.length===1?'':'s'}</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">Volume (MTD)</div>
+                        <div class="k-value">${mtdLitres.toFixed(0)} <span style="font-size:0.65em;opacity:.85">L</span></div>
+                        <div class="k-hint">Fuel sold</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">All records</div>
+                        <div class="k-value">${sales.length}</div>
+                        <div class="k-hint">Including reversed</div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3">
             <div class="col-lg-5">
-                <div class="card-box">
-                    <h5 class="mb-3">New Sale</h5>
+                <div class="fin-action-card">
+                    <h6><i class="bi bi-plus-circle text-success"></i> New sale</h6>
+                    <div class="intl-form">
+                    <div class="form-section">
+                        <div class="form-section-title">Sale details</div>
                     <div class="row g-2 mb-2">
                         <div class="col-md-6">
-                            <label class="form-label small">Station *</label>
-                            <select id="saleStation" class="form-select form-select-sm" ${roleNorm(state.user.role) === 'cashier' ? 'disabled' : ''}>
-                                <option value="">— Select —</option>${stationOpts}
+                            <label class="form-label">Station *</label>
+                            <select id="saleStation" class="form-select" ${roleNorm(state.user.role) === 'cashier' ? 'disabled' : ''}>
+                                <option value="" disabled selected>Select station</option>${stationOpts}
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">Cashier *</label>
-                            <select id="saleCashier" class="form-select form-select-sm">${cashierOpts}</select>
+                            <label class="form-label">Cashier *</label>
+                            <select id="saleCashier" class="form-select">${cashierOpts}</select>
                         </div>
                     </div>
                     <div class="row g-2 mb-2">
                         <div class="col-md-6">
-                            <label class="form-label small">Sale Date *</label>
-                            <input type="date" id="saleDate" class="form-control form-control-sm" value="${todayISO}">
+                            <label class="form-label">Sale Date *</label>
+                            <input type="date" id="saleDate" class="form-control" value="${todayISO}">
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label small">Payment</label>
-                            <select id="salePayment" class="form-select form-select-sm">
+                            <label class="form-label">Payment</label>
+                            <select id="salePayment" class="form-select">
                                 <option value="cash">Cash</option>
                                 <option value="mobile">Mobile Money</option>
                                 <option value="card">Card</option>
@@ -3651,10 +3703,10 @@ async function renderSales() {
                         </div>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small">Customer</label>
+                        <label class="form-label">Customer</label>
                         <div class="row g-1">
                             <div class="col-8">
-                                <select id="saleCustomerSelect" class="form-select form-select-sm">
+                                <select id="saleCustomerSelect" class="form-select">
                                     <option value="walk-in">Walk-in</option>
                                     ${customerOpts}
                                     <option value="custom">➕ Custom...</option>
@@ -3664,11 +3716,11 @@ async function renderSales() {
                                 <span class="badge bg-info" id="customerBalanceDisplay" style="display:none;">Balance: 0</span>
                             </div>
                         </div>
-                        <input type="text" id="saleCustomerName" class="form-control form-control-sm mt-1" placeholder="Or type custom name" style="display:none;">
+                        <input type="text" id="saleCustomerName" class="form-control mt-1" placeholder="Or type custom name" style="display:none;">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label small">Currency</label>
-                        <select id="saleCurrency" class="form-select form-select-sm">
+                        <label class="form-label">Currency</label>
+                        <select id="saleCurrency" class="form-select">
                             <option value="UGX">UGX (Uganda Shilling)</option>
                             <option value="USD">USD (US Dollar)</option>
                             <option value="KES">KES (Kenya Shilling)</option>
@@ -3678,20 +3730,20 @@ async function renderSales() {
                     <hr>
                     <div class="row g-2 mb-2">
                         <div class="col-4">
-                            <label class="form-label small">Barcode</label>
-                            <input type="text" id="saleBarcode" class="form-control form-control-sm barcode-input" placeholder="Scan code">
+                            <label class="form-label">Barcode</label>
+                            <input type="text" id="saleBarcode" class="form-control barcode-input" placeholder="Scan code">
                         </div>
                         <div class="col-3">
-                            <label class="form-label small">Product *</label>
-                            <select id="saleProduct" class="form-select form-select-sm">${productOpts}</select>
+                            <label class="form-label">Product *</label>
+                            <select id="saleProduct" class="form-select">${productOpts}</select>
                         </div>
                         <div class="col-3">
-                            <label class="form-label small">Qty (L) *</label>
-                            <input type="number" id="saleQty" class="form-control form-control-sm" step="0.01" min="0.01" placeholder="0">
+                            <label class="form-label">Qty (L) *</label>
+                            <input type="number" id="saleQty" class="form-control" step="0.01" min="0.01" placeholder="0">
                         </div>
                         <div class="col-2">
-                            <label class="form-label small">Price</label>
-                            <input type="number" id="salePrice" class="form-control form-control-sm bg-light" step="1" readonly>
+                            <label class="form-label">Price</label>
+                            <input type="number" id="salePrice" class="form-control bg-light" step="1" readonly>
                         </div>
                     </div>
                     <div class="row g-2 mb-2">
@@ -3699,43 +3751,44 @@ async function renderSales() {
                         <div class="col-8"><button class="btn btn-outline-primary btn-sm w-100" id="addToCartBtn"><i class="bi bi-plus-circle"></i> Add to Cart</button></div>
                     </div>
                     <div class="discount-row mb-2">
-                        <label class="form-label small mb-1">Discount</label>
+                        <label class="form-label mb-1">Discount</label>
                         <div class="row g-2">
-                            <div class="col-5"><select id="saleDiscType" class="form-select form-select-sm"><option value="none">None</option><option value="fixed">Fixed (UGX)</option><option value="percent">Percent (%)</option></select></div>
-                            <div class="col-7"><input type="number" id="saleDiscValue" class="form-control form-control-sm" min="0" step="1" placeholder="0" disabled></div>
+                            <div class="col-5"><select id="saleDiscType" class="form-select"><option value="none">None</option><option value="fixed">Fixed (UGX)</option><option value="percent">Percent (%)</option></select></div>
+                            <div class="col-7"><input type="number" id="saleDiscValue" class="form-control" min="0" step="1" placeholder="0" disabled></div>
                         </div>
                     </div>
                     <div class="mb-2" id="mmRefWrap" style="display:none;">
-                        <label class="form-label small">Mobile money reference</label>
-                        <input type="text" id="saleMmRef" class="form-control form-control-sm" placeholder="e.g. MTN / Airtel receipt no.">
+                        <label class="form-label">Mobile money reference</label>
+                        <input type="text" id="saleMmRef" class="form-control" placeholder="e.g. MTN / Airtel receipt no.">
                     </div>
                     <div id="cartBox" class="mb-3"></div>
-                    <button type="button" class="btn btn-success w-100" id="completeSaleBtn" disabled>
-                        <i class="bi bi-check-circle"></i> Complete Sale & Generate Invoice
+                    <button type="button" class="btn btn-intl btn-intl-success" id="completeSaleBtn" disabled>
+                        <i class="bi bi-check-circle"></i> Complete sale &amp; invoice
                     </button>
-                    <div class="small text-muted mt-2">
-                        <strong>Keys:</strong> <kbd>Enter</kbd> add to cart · <kbd>F9</kbd> complete sale · <kbd>F2</kbd> focus qty
+                    <div class="fin-note mt-2 mb-0">
+                        <kbd>Enter</kbd> add · <kbd>F9</kbd> complete · <kbd>F2</kbd> qty
+                    </div>
                     </div>
                 </div>
             </div>
 
             <div class="col-lg-7">
-                <div class="card-box">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0">Sales History</h5>
-                        <span class="badge bg-secondary">${sales.length}</span>
+                <div class="fin-ledger-card">
+                    <div class="intl-section-head">
+                        <h6><i class="bi bi-receipt"></i> Sales history</h6>
+                        <span class="meta">${sales.length}</span>
                     </div>
-                    <div class="mb-2 row g-1">
-                        <div class="col-md-4"><input type="text" id="salesSearch" class="form-control form-control-sm" placeholder="Search..."></div>
-                        <div class="col-md-4"><input type="date" id="salesDateFrom" class="form-control form-control-sm" value="${new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)}"></div>
-                        <div class="col-md-4"><input type="date" id="salesDateTo" class="form-control form-control-sm" value="${todayISO}"></div>
+                    <div class="fin-filter-bar">
+                        <input type="search" class="form-control fin-q" id="salesSearch" placeholder="Search product, cashier…">
+                        <input type="date" class="form-control fin-d" id="salesDateFrom" value="${new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)}">
+                        <input type="date" class="form-control fin-d" id="salesDateTo" value="${todayISO}">
                     </div>
-                    <div class="table-responsive" style="max-height:450px; overflow-y:auto;">
-                        <table class="table table-sm table-hover" id="salesTable">
-                            <thead><tr>
-                                <th>#</th><th>Station</th><th>Cashier</th><th>Product</th><th>Qty</th><th>Price</th><th>Amount</th>
-                                <th>Disc.</th><th>Payment</th><th>Date</th>
-                                ${isAdmin(state.user.role) ? '<th>Actions</th>' : ''}
+                    <div class="table-responsive intl-table-wrap" style="max-height:480px; overflow-y:auto;">
+                        <table class="table table-sm mb-0 align-middle" id="salesTable" style="min-width:720px;width:100%;">
+                            <thead style="position:sticky;top:0;z-index:2;"><tr>
+                                <th>#</th><th>Station</th><th>Cashier</th><th>Product</th><th class="text-end">Qty</th><th class="text-end">Price</th><th class="text-end">Amount</th>
+                                <th class="text-end">Disc.</th><th>Pay</th><th>Date</th>
+                                ${isAdmin(state.user.role) ? '<th class="text-end"></th>' : ''}
                             </tr></thead>
                             <tbody>`;
 
@@ -4513,29 +4566,31 @@ async function renderShifts() {
     let startFields = '';
     displayProducts.forEach(p => {
         const id = 'start_' + p.replace(/[^a-zA-Z0-9]/g, '_');
-        startFields += `<div class="col"><input type="number" id="${id}" class="form-control form-control-sm" placeholder="${p}" step="0.01" ${p === displayProducts[0] ? 'required' : ''}><small class="text-muted">${p}</small></div>`;
+        startFields += `<div class="col"><input type="number" id="${id}" class="form-control" placeholder="${p}" step="0.01" ${p === displayProducts[0] ? 'required' : ''}><small class="text-muted">${p}</small></div>`;
     });
 
     let endFields = '';
     displayProducts.forEach(p => {
         const id = 'end_' + p.replace(/[^a-zA-Z0-9]/g, '_');
-        endFields += `<div class="col"><input type="number" id="${id}" class="form-control form-control-sm" placeholder="${p}" step="0.01" ${p === displayProducts[0] ? 'required' : ''}><small class="text-muted">${p}</small></div>`;
+        endFields += `<div class="col"><input type="number" id="${id}" class="form-control" placeholder="${p}" step="0.01" ${p === displayProducts[0] ? 'required' : ''}><small class="text-muted">${p}</small></div>`;
     });
 
     let formHtml = '';
     if (isCashier) {
         if (!myActive) {
             formHtml = `<form id="startShiftForm">
-                <div class="mb-2"><label class="form-label small">Station</label>
-                    <select id="shiftStation" class="form-select form-select-sm" disabled>
+                <div class="form-section">
+                <div class="form-section-title">Open shift</div>
+                <div class="form-field"><label class="form-label">Station</label>
+                    <select id="shiftStation" class="form-select" disabled>
                         <option>${stationName(state.user.station_id)}</option>
                     </select></div>
-                <div class="mb-2"><label class="form-label small">Shift Type</label>
-                    <select id="shiftType" class="form-select form-select-sm"><option value="day">Day</option><option value="night">Night</option></select></div>
-                <div class="mb-2"><label class="form-label small">Opening cash float</label>
-                    <input type="number" id="shiftOpeningFloat" class="form-control form-control-sm" step="1" min="0" value="0" placeholder="Cash in drawer at start">
+                <div class="form-field"><label class="form-label">Shift type</label>
+                    <select id="shiftType" class="form-select"><option value="day">Day</option><option value="night">Night</option></select></div>
+                <div class="form-field"><label class="form-label">Opening cash float</label>
+                    <input type="number" id="shiftOpeningFloat" class="form-control" step="1" min="0" value="0" placeholder="Cash in drawer at start">
                 </div>
-                <div class="mb-2"><label class="form-label small">Opening Meters (L)</label>
+                <div class="form-field"><label class="form-label">Opening meters (L)</label>
                     <div class="row g-1">${startFields}</div>
                 </div>
                 <button type="submit" class="btn btn-success w-100">Start Shift</button></form>`;
@@ -4543,12 +4598,12 @@ async function renderShifts() {
             const openFloat = Number(myActive.opening_float || 0);
             formHtml = `<form id="endShiftForm">
                 <p class="small text-muted">Active ${myActive.shift_type} shift since ${formatDateTime(myActive.created_at)}</p>
-                <div class="mb-2"><label class="form-label small">Opening float</label>
-                    <input type="text" class="form-control form-control-sm" value="${formatMoney(openFloat)}" readonly></div>
-                <div class="mb-2"><label class="form-label small">Closing cash counted *</label>
-                    <input type="number" id="shiftClosingCash" class="form-control form-control-sm" step="1" min="0" placeholder="Physical cash counted" required>
+                <div class="mb-2"><label class="form-label">Opening float</label>
+                    <input type="text" class="form-control" value="${formatMoney(openFloat)}" readonly></div>
+                <div class="mb-2"><label class="form-label">Closing cash counted *</label>
+                    <input type="number" id="shiftClosingCash" class="form-control" step="1" min="0" placeholder="Physical cash counted" required>
                 </div>
-                <div class="mb-2"><label class="form-label small">Closing Meters (L)</label>
+                <div class="mb-2"><label class="form-label">Closing Meters (L)</label>
                     <div class="row g-1">${endFields}</div>
                 </div>
                 <button type="submit" class="btn btn-danger w-100">End Shift & Z-Report</button></form>`;
@@ -4610,14 +4665,49 @@ async function renderShifts() {
         });
     }
 
-    let html = `<div class="row g-4">
-        <div class="col-lg-4"><div class="card-box"><h5 class="mb-3"><i class="bi bi-clock"></i> ${isCashier ? 'My Shift' : 'Shifts'}</h5> ${formHtml}</div></div>
-        <div class="col-lg-8"><div class="card-box"><h5 class="mb-3"><i class="bi bi-clock-history"></i> Shift History</h5>
-            <p class="small text-muted mb-2">Each product has separate <strong>Start</strong>, <strong>End</strong>, and <strong>Sold</strong> (End − Start) columns.</p>
-            <div class="table-responsive" style="max-height:520px;"><table class="table table-sm table-hover table-bordered align-middle mb-0" style="min-width:960px;">
-                <thead class="sticky-top">${headerRow}</thead>
+    const activeCount = shifts.filter(s => s.status === 'active').length;
+    const closedCount = shifts.filter(s => s.status === 'closed').length;
+    let html = `<div class="fin-workspace">
+        <div class="fin-header">
+            <div class="fin-title-row">
+                <div>
+                    <h4><i class="bi bi-clock-history"></i> ${isCashier ? 'My Shifts' : 'Shifts'}</h4>
+                    <div class="fin-sub">Open &amp; close shifts · meter readings</div>
+                </div>
+                <span class="fin-period-chip"><i class="bi bi-activity"></i> ${activeCount} active</span>
+            </div>
+            <div class="fin-kpi-row" style="grid-template-columns:repeat(3,1fr);">
+                <div class="fin-kpi in">
+                    <div class="k-label">Active now</div>
+                    <div class="k-value">${activeCount}</div>
+                    <div class="k-hint">On duty</div>
+                </div>
+                <div class="fin-kpi">
+                    <div class="k-label">Closed</div>
+                    <div class="k-value">${closedCount}</div>
+                    <div class="k-hint">Completed shifts</div>
+                </div>
+                <div class="fin-kpi">
+                    <div class="k-label">All records</div>
+                    <div class="k-value">${shifts.length}</div>
+                    <div class="k-hint">History</div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3">
+        <div class="col-lg-4"><div class="fin-action-card"><h6><i class="bi bi-clock text-primary"></i> ${isCashier ? 'My shift' : 'Shift control'}</h6>
+            <div class="intl-form">${formHtml}</div></div></div>
+        <div class="col-lg-8"><div class="fin-ledger-card">
+            <div class="intl-section-head">
+                <h6><i class="bi bi-table"></i> Shift history</h6>
+                <span class="meta">${shifts.length}</span>
+            </div>
+            <div class="fin-note mb-2">Each product: <strong>Start</strong> · <strong>End</strong> · <strong>Sold</strong> (End − Start).</div>
+            <div class="table-responsive intl-table-wrap" style="max-height:520px;">
+                <table class="table table-sm mb-0 align-middle" style="min-width:960px;">
+                <thead style="position:sticky;top:0;z-index:2;">${headerRow}</thead>
                 <tbody>${bodyRows}</tbody>
-            </table></div></div></div></div>`;
+            </table></div></div></div></div></div>`;
 
     document.getElementById('pageContent').innerHTML = html;
 
@@ -4875,19 +4965,28 @@ async function renderBalancing() {
 
     const todayISO = today.toISOString().slice(0, 10);
     const html = `
-        <div class="card-box mb-3 border border-warning">
-            <h6 class="mb-2"><i class="bi bi-lock-fill text-warning"></i> Day close (period lock)</h6>
-            <p class="small text-muted mb-2">Closing a day blocks new sales for that station on that date until reopened by a manager.</p>
-            <div class="row g-2 align-items-end">
-                <div class="col-md-3"><label class="form-label small">Station</label>
-                    <select id="dayCloseStation" class="form-select form-select-sm"><option value="">— Select —</option>${stationOptions}</select></div>
-                <div class="col-md-3"><label class="form-label small">Date</label>
-                    <input type="date" id="dayCloseDate" class="form-control form-control-sm" value="${todayISO}"></div>
-                <div class="col-md-3"><label class="form-label small">Note</label>
-                    <input type="text" id="dayCloseNote" class="form-control form-control-sm" placeholder="Optional"></div>
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-balance-scale"></i> Balancing</h4>
+                        <div class="fin-sub">Reconcile cashier shifts · day close locks</div>
+                    </div>
+                </div>
+            </div>
+            <div class="fin-action-card mb-3" style="border:1px solid #fde68a;background:linear-gradient(180deg,#fffbeb,#fff);">
+            <h6 class="mb-2"><i class="bi bi-lock-fill text-warning"></i> Day close</h6>
+            <p class="small text-muted mb-2">Closing a day blocks new sales for that station on that date until a manager reopens it.</p>
+            <div class="row g-2 align-items-end intl-form">
+                <div class="col-md-3"><label class="form-label">Station</label>
+                    <select id="dayCloseStation" class="form-select"><option value="" disabled selected>Select station</option>${stationOptions}</select></div>
+                <div class="col-md-3"><label class="form-label">Date</label>
+                    <input type="date" id="dayCloseDate" class="form-control" value="${todayISO}"></div>
+                <div class="col-md-3"><label class="form-label">Note</label>
+                    <input type="text" id="dayCloseNote" class="form-control" placeholder="Optional"></div>
                 <div class="col-md-3 d-flex gap-1">
-                    <button type="button" class="btn btn-warning btn-sm flex-fill" id="btnCloseDay"><i class="bi bi-lock"></i> Close day</button>
-                    <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" id="btnReopenDay"><i class="bi bi-unlock"></i> Reopen</button>
+                    <button type="button" class="btn btn-warning flex-fill" id="btnCloseDay" style="border-radius:10px;min-height:40px;"><i class="bi bi-lock"></i> Close day</button>
+                    <button type="button" class="btn btn-outline-secondary flex-fill" id="btnReopenDay" style="border-radius:10px;min-height:40px;"><i class="bi bi-unlock"></i> Reopen</button>
                 </div>
             </div>
             <div id="dayCloseStatus" class="small mt-2 text-muted"></div>
@@ -4897,14 +4996,14 @@ async function renderBalancing() {
             <p class="text-muted small">Select a station and cashier. The system will show the <strong>most recent unreconciled</strong> closed shift.</p>
             <p class="text-muted small"><strong>Math:</strong> <span class="text-primary">End Reading − Start Reading = Quantity Sold</span> (meters increase as fuel is dispensed).</p>
             <form id="balancingFilter" class="row g-2 mb-3">
-                <div class="col-md-3"><label class="form-label small">Station</label>
-                    <select id="balStation" class="form-select form-select-sm" required><option value="">Select station</option>${stationOptions}</select></div>
-                <div class="col-md-3"><label class="form-label small">Cashier</label>
-                    <select id="balCashier" class="form-select form-select-sm" required><option value="">— Select Cashier —</option>${cashierOptions}</select></div>
-                <div class="col-md-2"><label class="form-label small">From</label>
-                    <input type="date" id="balFrom" class="form-control form-control-sm" value="${startDate.toISOString().slice(0,10)}"></div>
-                <div class="col-md-2"><label class="form-label small">To</label>
-                    <input type="date" id="balTo" class="form-control form-control-sm" value="${endDate.toISOString().slice(0,10)}"></div>
+                <div class="col-md-3"><label class="form-label">Station</label>
+                    <select id="balStation" class="form-select" required><option value="">Select station</option>${stationOptions}</select></div>
+                <div class="col-md-3"><label class="form-label">Cashier</label>
+                    <select id="balCashier" class="form-select" required><option value="">— Select Cashier —</option>${cashierOptions}</select></div>
+                <div class="col-md-2"><label class="form-label">From</label>
+                    <input type="date" id="balFrom" class="form-control" value="${startDate.toISOString().slice(0,10)}"></div>
+                <div class="col-md-2"><label class="form-label">To</label>
+                    <input type="date" id="balTo" class="form-control" value="${endDate.toISOString().slice(0,10)}"></div>
                 <div class="col-md-2 d-flex align-items-end"><button type="submit" class="btn btn-primary btn-sm w-100"><i class="bi bi-search"></i> Load Shift</button></div>
             </form>
             <div id="balancingResult" class="balancing-result">
@@ -5179,12 +5278,12 @@ async function renderBalancing() {
         let meterRows = `<tr><td><strong>Start</strong></td>`;
         products.forEach(p => {
             const safe = p.replace(/[^a-zA-Z0-9]/g, '_');
-            meterRows += `<td><input type="number" class="form-control form-control-sm edit-start-meter" data-product="${esc(p)}" id="editStart_${safe}" value="${Number(startReadings[p]).toFixed(2)}" step="0.01" style="min-width:90px"></td>`;
+            meterRows += `<td><input type="number" class="form-control edit-start-meter" data-product="${esc(p)}" id="editStart_${safe}" value="${Number(startReadings[p]).toFixed(2)}" step="0.01" style="min-width:90px"></td>`;
         });
         meterRows += `</tr><tr><td><strong>End</strong></td>`;
         products.forEach(p => {
             const safe = p.replace(/[^a-zA-Z0-9]/g, '_');
-            meterRows += `<td><input type="number" class="form-control form-control-sm edit-end-meter" data-product="${esc(p)}" id="editEnd_${safe}" value="${Number(endReadings[p]).toFixed(2)}" step="0.01" style="min-width:90px"></td>`;
+            meterRows += `<td><input type="number" class="form-control edit-end-meter" data-product="${esc(p)}" id="editEnd_${safe}" value="${Number(endReadings[p]).toFixed(2)}" step="0.01" style="min-width:90px"></td>`;
         });
         meterRows += `</tr><tr><td><strong>Sold</strong></td>`;
         products.forEach(p => {
@@ -5209,7 +5308,7 @@ async function renderBalancing() {
             <td colspan="${products.length}">
                 <div class="input-group input-group-sm" style="max-width:280px;">
                     <span class="input-group-text">UGX</span>
-                    <input type="number" id="balDiscountInput" class="form-control form-control-sm text-danger fw-bold"
+                    <input type="number" id="balDiscountInput" class="form-control text-danger fw-bold"
                         step="1" min="0" value="${Number(totalDiscountsGiven || 0).toFixed(0)}"
                         placeholder="0">
                 </div>
@@ -5629,7 +5728,7 @@ async function renderShortageRecovery() {
         u.active !== false && (remaining[u.id] > 0 || cashierIds.has(u.id))
     );
 
-    let cashierOpts = '<option value="">— Select cashier —</option>';
+    let cashierOpts = '<option value="">Select cashier</option>';
     cashiersWithShortage.forEach(u => {
         const rem = remaining[u.id] || 0;
         const label = rem > 0
@@ -5642,7 +5741,7 @@ async function renderShortageRecovery() {
         cashierOpts += `<option value="${u.id}" data-remaining="0">${esc(u.name || u.username)}</option>`;
     });
 
-    let stationOpts = '<option value="">— Select station —</option>';
+    let stationOpts = '<option value="">Select station</option>';
     (state.stations || []).forEach(s => {
         stationOpts += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
     });
@@ -5739,20 +5838,20 @@ async function renderShortageRecovery() {
                     <h5 class="mb-2"><i class="bi bi-cash-stack text-success"></i> Receive Shortage Payment</h5>
                     <p class="small text-muted">Record cash (or transfer) paid by a cashier to clear part or all of their shortage. Money is deposited into the selected account.</p>
                     <form id="shortagePayForm">
-                        <div class="mb-2"><label class="form-label small">Cashier *</label>
-                            <select id="spCashier" class="form-select form-select-sm" required>${cashierOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Station *</label>
-                            <select id="spStation" class="form-select form-select-sm" required>${stationOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Amount received *</label>
-                            <input type="number" id="spAmount" class="form-control form-control-sm" step="1" min="1" required placeholder="e.g. 50000">
+                        <div class="mb-2"><label class="form-label">Cashier *</label>
+                            <select id="spCashier" class="form-select" required>${cashierOpts}</select></div>
+                        <div class="mb-2"><label class="form-label">Station *</label>
+                            <select id="spStation" class="form-select" required>${stationOpts}</select></div>
+                        <div class="mb-2"><label class="form-label">Amount received *</label>
+                            <input type="number" id="spAmount" class="form-control" step="1" min="1" required placeholder="e.g. 50000">
                             <div class="form-text" id="spRemainingHint">Select a cashier to see outstanding balance</div>
                         </div>
-                        <div class="mb-2"><label class="form-label small">Deposit into *</label>
-                            <select id="spAccount" class="form-select form-select-sm" required>${accountOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Date *</label>
-                            <input type="date" id="spDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}" required></div>
-                        <div class="mb-2"><label class="form-label small">Note / reference</label>
-                            <input type="text" id="spNote" class="form-control form-control-sm" placeholder="e.g. Cash paid at office"></div>
+                        <div class="mb-2"><label class="form-label">Deposit into *</label>
+                            <select id="spAccount" class="form-select" required>${accountOpts}</select></div>
+                        <div class="mb-2"><label class="form-label">Date *</label>
+                            <input type="date" id="spDate" class="form-control" value="${new Date().toISOString().slice(0,10)}" required></div>
+                        <div class="mb-2"><label class="form-label">Note / reference</label>
+                            <input type="text" id="spNote" class="form-control" placeholder="e.g. Cash paid at office"></div>
                         <button type="submit" class="btn btn-success w-100"><i class="bi bi-check2-circle"></i> Record Payment Received</button>
                     </form>
                     <div id="spResult" class="mt-2 small"></div>
@@ -5762,20 +5861,20 @@ async function renderShortageRecovery() {
                     <h5 class="mb-2"><i class="bi bi-hand-thumbs-up text-info"></i> Forgive Shortage</h5>
                     <p class="small text-muted">Write off part or all of a cashier&apos;s shortage when they provide a satisfactory explanation. Requires a clear reason (audit trail).</p>
                     <form id="shortageForgiveForm">
-                        <div class="mb-2"><label class="form-label small">Cashier *</label>
-                            <select id="sfCashier" class="form-select form-select-sm" required>${cashierOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Station</label>
-                            <select id="sfStation" class="form-select form-select-sm">${stationOpts}</select></div>
-                        <div class="mb-2"><label class="form-label small">Amount to forgive *</label>
-                            <input type="number" id="sfAmount" class="form-control form-control-sm" step="1" min="1" required placeholder="e.g. 20000">
+                        <div class="mb-2"><label class="form-label">Cashier *</label>
+                            <select id="sfCashier" class="form-select" required>${cashierOpts}</select></div>
+                        <div class="mb-2"><label class="form-label">Station</label>
+                            <select id="sfStation" class="form-select">${stationOpts}</select></div>
+                        <div class="mb-2"><label class="form-label">Amount to forgive *</label>
+                            <input type="number" id="sfAmount" class="form-control" step="1" min="1" required placeholder="e.g. 20000">
                             <div class="form-text" id="sfRemainingHint">Select a cashier to see outstanding balance</div>
                         </div>
-                        <div class="mb-2"><label class="form-label small">Explanation from cashier *</label>
-                            <textarea id="sfReason" class="form-control form-control-sm" rows="3" required placeholder="Cashier explained that…"></textarea>
+                        <div class="mb-2"><label class="form-label">Explanation from cashier *</label>
+                            <textarea id="sfReason" class="form-control" rows="3" required placeholder="Cashier explained that…"></textarea>
                             <div class="form-text">Required for audit. Be specific.</div>
                         </div>
-                        <div class="mb-2"><label class="form-label small">Date *</label>
-                            <input type="date" id="sfDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}" required></div>
+                        <div class="mb-2"><label class="form-label">Date *</label>
+                            <input type="date" id="sfDate" class="form-control" value="${new Date().toISOString().slice(0,10)}" required></div>
                         <button type="submit" class="btn btn-info w-100 text-white"><i class="bi bi-hand-thumbs-up"></i> Forgive Shortage</button>
                     </form>
                     <div id="sfResult" class="mt-2 small"></div>
@@ -6483,78 +6582,87 @@ async function renderStock() {
                 <div class="fin-action-card">
                     <h6><i class="bi bi-truck text-info"></i> Receive fuel</h6>
                     <form id="stockForm" class="intl-form">
-                        <div class="row g-2 mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label small">Station *</label>
-                                <select id="recStation" class="form-select form-select-sm" required>${stationOptions}</select>
+                        <div class="form-section">
+                            <div class="form-section-title">Delivery</div>
+                            <div class="form-row-2">
+                                <div class="form-field">
+                                    <label class="form-label" for="recStation">Station *</label>
+                                    <select id="recStation" class="form-select" required>${stationOptions}</select>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="recSupplier">Supplier</label>
+                                    <select id="recSupplier" class="form-select">${supplierOpts}</select>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Supplier</label>
-                                <select id="recSupplier" class="form-select form-select-sm">${supplierOpts}</select>
+                            <div class="form-row-2">
+                                <div class="form-field">
+                                    <label class="form-label" for="recInvoice">Invoice / delivery # *</label>
+                                    <input type="text" id="recInvoice" class="form-control" placeholder="e.g. DN-2026-0042" required>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="recDate">Date</label>
+                                    <input type="date" id="recDate" class="form-control" value="${new Date().toISOString().slice(0,10)}">
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Delivery / Invoice # *</label>
-                                <input type="text" id="recInvoice" class="form-control form-control-sm" placeholder="e.g. DN-2026-0042" required>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Date</label>
-                                <input type="date" id="recDate" class="form-control form-control-sm" value="${new Date().toISOString().slice(0,10)}">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Payment Terms</label>
-                                <select id="recPaymentTerms" class="form-select form-select-sm">
-                                    <option value="cash">Cash</option>
-                                    <option value="credit">Credit (On Account)</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label small">Freight / Other Cost</label>
-                                <input type="number" id="recFreight" class="form-control form-control-sm" step="1" min="0" placeholder="0" value="0">
+                            <div class="form-row-2">
+                                <div class="form-field">
+                                    <label class="form-label" for="recPaymentTerms">Payment terms</label>
+                                    <select id="recPaymentTerms" class="form-select">
+                                        <option value="cash">Cash</option>
+                                        <option value="credit">Credit (on account)</option>
+                                    </select>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="recFreight">Freight / other cost</label>
+                                    <input type="number" id="recFreight" class="form-control" step="1" min="0" placeholder="0" value="0">
+                                </div>
                             </div>
                         </div>
 
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered" id="offloadTable">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th style="width:40%;">Product</th>
-                                        <th style="width:18%;">Quantity (L)</th>
-                                        <th style="width:18%;">Cost Price (UGX/L)</th>
-                                        <th style="width:18%;">Line Total (UGX)</th>
-                                        <th style="width:6%;"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="offloadItems"></tbody>
-                                <tfoot>
-                                    <tr>
-                                        <td colspan="3" class="text-end fw-bold">Subtotal</td>
-                                        <td class="text-end fw-bold" id="offloadSubtotal">0</td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="3" class="text-end fw-bold">Freight</td>
-                                        <td class="text-end" id="offloadFreightDisplay">0</td>
-                                        <td></td>
-                                    </tr>
-                                    <tr>
-                                        <td colspan="3" class="text-end fw-bold fs-5">Total Cost</td>
-                                        <td class="text-end fw-bold fs-5 text-primary" id="offloadTotal">0</td>
-                                        <td></td>
-                                    </tr>
-                                </tfoot>
-                            </table>
+                        <div class="form-section">
+                            <div class="form-section-title">Line items</div>
+                            <div class="table-responsive intl-table-wrap" style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+                                <table class="table table-sm mb-0 align-middle" id="offloadTable" style="min-width:100%;">
+                                    <thead style="background:#f8fafc;">
+                                        <tr>
+                                            <th style="width:34%;">Product</th>
+                                            <th style="width:18%;" class="text-end">Qty (L)</th>
+                                            <th style="width:20%;" class="text-end">Cost / L</th>
+                                            <th style="width:20%;" class="text-end">Line total</th>
+                                            <th style="width:8%;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="offloadItems"></tbody>
+                                </table>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="addOffloadRow" style="border-radius:8px;">
+                                <i class="bi bi-plus-lg"></i> Add line
+                            </button>
                         </div>
 
-                        <div class="d-flex gap-2 mt-2">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="addOffloadRow"><i class="bi bi-plus"></i> Add Item</button>
-                            <button type="submit" class="btn btn-success btn-sm flex-grow-1"><i class="bi bi-check-circle"></i> Receive & Generate Voucher</button>
+                        <div class="form-section" style="border-bottom:none;">
+                            <div class="d-flex flex-wrap justify-content-between gap-2 mb-3" style="background:#f8fafc;border-radius:12px;padding:12px 14px;border:1px solid #e2e8f0;">
+                                <div>
+                                    <div class="small text-muted text-uppercase" style="font-size:0.65rem;letter-spacing:0.05em;font-weight:700;">Subtotal</div>
+                                    <div class="fw-bold" id="offloadSubtotal" style="font-variant-numeric:tabular-nums;">0</div>
+                                </div>
+                                <div>
+                                    <div class="small text-muted text-uppercase" style="font-size:0.65rem;letter-spacing:0.05em;font-weight:700;">Freight</div>
+                                    <div class="fw-bold" id="offloadFreightDisplay" style="font-variant-numeric:tabular-nums;">0</div>
+                                </div>
+                                <div>
+                                    <div class="small text-muted text-uppercase" style="font-size:0.65rem;letter-spacing:0.05em;font-weight:700;">Total cost</div>
+                                    <div class="fw-bold text-success fs-5" id="offloadTotal" style="font-variant-numeric:tabular-nums;">0</div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-intl btn-intl-success"><i class="bi bi-check2-circle"></i> Receive &amp; generate voucher</button>
                         </div>
                     </form>
                 </div>
             </div>
 
             <div class="col-lg-5">
-                <div class="card-box">
+                <div class="fin-ledger-card">
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h5 class="mb-0"><i class="bi bi-clock-history"></i> Offloading History</h5>
                         <span class="badge bg-light text-muted border">${stock.length} record(s)</span>
@@ -6609,19 +6717,19 @@ async function renderStock() {
         row.className = 'offload-row';
         row.innerHTML = `
             <td>
-                <select class="form-select form-select-sm offload-product">${productOpts}</select>
+                <select class="form-select offload-product" style="min-height:38px;border-radius:8px;">${productOpts}</select>
             </td>
             <td>
-                <input type="number" class="form-control form-control-sm offload-qty" step="0.01" min="0.01" value="${qty}" placeholder="0.00">
+                <input type="number" class="form-control offload-qty text-end" step="0.01" min="0.01" value="${qty}" placeholder="0.00" style="min-height:38px;border-radius:8px;">
             </td>
             <td>
-                <input type="number" class="form-control form-control-sm offload-cost" step="10" min="0" value="${cost}" placeholder="0">
+                <input type="number" class="form-control offload-cost text-end" step="10" min="0" value="${cost}" placeholder="0" style="min-height:38px;border-radius:8px;">
             </td>
-            <td>
-                <span class="offload-line-total fw-bold">0</span>
+            <td class="text-end">
+                <span class="offload-line-total fw-bold" style="font-variant-numeric:tabular-nums;">0</span>
             </td>
-            <td>
-                <button type="button" class="btn btn-sm btn-outline-danger remove-offload-row"><i class="bi bi-x"></i></button>
+            <td class="text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-offload-row py-1 px-2" style="border-radius:8px;"><i class="bi bi-x-lg"></i></button>
             </td>
         `;
         tbody.appendChild(row);
@@ -7096,68 +7204,74 @@ async function renderAdjustments() {
             <div class="fin-action-card">
                 <h6><i class="bi bi-sliders text-warning"></i> Stock adjustment</h6>
                 <form id="adjForm" class="intl-form" novalidate>
-                    <div class="mb-2">
-                        <label class="form-label small">Adjustment Type *</label>
-                        <select id="adjType" class="form-select form-select-sm">
-                            <option value="quantity">Quantity (Stock Volume)</option>
-                            <option value="cost_price">Cost Price</option>
-                            <option value="selling_price">Selling Price</option>
-                            <option value="both_prices">Cost + Selling Price</option>
-                            <option value="mass_quantity">Mass Quantity (Multiple Products)</option>
-                        </select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Station *</label>
-                        <select id="adjStation" class="form-select form-select-sm">${stationOptions}</select>
-                    </div>
-                    <div id="adjProductGroup">
-                        <div class="mb-2">
-                            <label class="form-label small">Product *</label>
-                            <select id="adjProduct" class="form-select form-select-sm">${productOpts}</select>
+                    <div class="form-section">
+                        <div class="form-section-title">What to adjust</div>
+                        <div class="form-field">
+                            <label class="form-label" for="adjType">Adjustment type *</label>
+                            <select id="adjType" class="form-select">
+                                <option value="quantity">Quantity (stock volume)</option>
+                                <option value="cost_price">Cost price</option>
+                                <option value="selling_price">Selling price</option>
+                                <option value="both_prices">Cost + selling price</option>
+                                <option value="mass_quantity">Mass quantity (multiple products)</option>
+                            </select>
                         </div>
-                    </div>
-                    <div id="adjMassGroup" style="display:none;">
-                        <div class="mb-2">
-                            <label class="form-label small">Select Products (Ctrl/Cmd + click)</label>
-                            <select id="adjMassProducts" class="form-select form-select-sm" multiple size="4">${productOpts}</select>
+                        <div class="form-field">
+                            <label class="form-label" for="adjStation">Station *</label>
+                            <select id="adjStation" class="form-select">${stationOptions}</select>
                         </div>
-                    </div>
-                    <div class="mb-2 p-2 bg-light rounded small" id="adjCurrentInfo">
-                        <span class="text-muted">Current values will appear here</span>
-                    </div>
-                    <div id="adjQtySection">
-                        <div class="row g-2 mb-2">
-                            <div class="col-6">
-                                <label class="form-label small">Current Qty (L)</label>
-                                <input type="number" id="adjCurrentQty" class="form-control form-control-sm bg-light" step="0.01" readonly tabindex="-1">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small">New Quantity (L) *</label>
-                                <input type="number" id="adjNewQty" class="form-control form-control-sm" step="0.01" min="0" placeholder="Target qty">
+                        <div id="adjProductGroup">
+                            <div class="form-field">
+                                <label class="form-label" for="adjProduct">Product *</label>
+                                <select id="adjProduct" class="form-select">${productOpts}</select>
                             </div>
                         </div>
-                        <div class="mb-2 p-2 rounded small" id="adjQtyDelta" style="background:#e8f4fd;display:none;">
-                            <span class="text-muted">Difference: </span><strong id="adjDeltaValue">0 L</strong>
+                        <div id="adjMassGroup" style="display:none;">
+                            <div class="form-field">
+                                <label class="form-label" for="adjMassProducts">Products (Ctrl/Cmd + click)</label>
+                                <select id="adjMassProducts" class="form-select" multiple size="4">${productOpts}</select>
+                            </div>
+                        </div>
+                        <div class="fin-note mb-0" id="adjCurrentInfo">
+                            <span class="text-muted">Current values appear here when you pick a product</span>
                         </div>
                     </div>
-                    <div id="adjCostSection" style="display:none;">
-                        <div class="mb-2">
-                            <label class="form-label small">New Cost Price (UGX/L) *</label>
-                            <input type="number" id="adjCost" class="form-control form-control-sm" step="10" min="0" placeholder="e.g. 3800">
+                    <div class="form-section">
+                        <div class="form-section-title">New values</div>
+                        <div id="adjQtySection">
+                            <div class="form-row-2">
+                                <div class="form-field">
+                                    <label class="form-label" for="adjCurrentQty">Current qty (L)</label>
+                                    <input type="number" id="adjCurrentQty" class="form-control" style="background:#f8fafc;" step="0.01" readonly tabindex="-1">
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="adjNewQty">New quantity (L) *</label>
+                                    <input type="number" id="adjNewQty" class="form-control" step="0.01" min="0" placeholder="Target qty">
+                                </div>
+                            </div>
+                            <div class="fin-note mb-2" id="adjQtyDelta" style="display:none;background:#eff6ff;border-color:#bfdbfe;">
+                                <span class="text-muted">Difference: </span><strong id="adjDeltaValue">0 L</strong>
+                            </div>
+                        </div>
+                        <div id="adjCostSection" style="display:none;">
+                            <div class="form-field">
+                                <label class="form-label" for="adjCost">New cost price (UGX/L) *</label>
+                                <input type="number" id="adjCost" class="form-control" step="10" min="0" placeholder="e.g. 3800">
+                            </div>
+                        </div>
+                        <div id="adjSellSection" style="display:none;">
+                            <div class="form-field">
+                                <label class="form-label" for="adjSell">New selling price (UGX/L) *</label>
+                                <input type="number" id="adjSell" class="form-control" step="10" min="0" placeholder="e.g. 4200">
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="adjReason">Reason *</label>
+                            <input type="text" id="adjReason" class="form-control" placeholder="e.g. price revision, spill, leakage" required>
                         </div>
                     </div>
-                    <div id="adjSellSection" style="display:none;">
-                        <div class="mb-2">
-                            <label class="form-label small">New Selling Price (UGX/L) *</label>
-                            <input type="number" id="adjSell" class="form-control form-control-sm" step="10" min="0" placeholder="e.g. 4200">
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label small">Reason *</label>
-                        <input type="text" id="adjReason" class="form-control form-control-sm" placeholder="e.g. price revision, spill, leakage" required>
-                    </div>
-                    <button type="submit" class="btn btn-warning w-100" id="adjSubmitBtn">
-                        <i class="bi bi-check2-circle"></i> Apply Adjustment
+                    <button type="submit" class="btn btn-intl btn-intl-warning" id="adjSubmitBtn">
+                        <i class="bi bi-check2-circle"></i> Apply adjustment
                     </button>
                 </form>
             </div>
@@ -7166,14 +7280,17 @@ async function renderAdjustments() {
 
   html += `
         <div class="col-lg-${canAdjust ? '7' : '12'}">
-            <div class="card-box">
-                <h5 class="mb-3">Adjustment History</h5>
-                <div class="table-responsive">
-                    <table class="table table-sm table-hover">
-                        <thead>
+            <div class="fin-ledger-card">
+                <div class="intl-section-head">
+                    <h6><i class="bi bi-clock-history"></i> Adjustment history</h6>
+                    <span class="meta">${adjCount}</span>
+                </div>
+                <div class="table-responsive intl-table-wrap" style="max-height:520px;overflow:auto;">
+                    <table class="table table-sm mb-0 align-middle">
+                        <thead style="position:sticky;top:0;z-index:2;">
                             <tr>
                                 <th>Station</th><th>Product</th><th>Type</th><th>Change</th><th>Reason</th><th>Date</th>
-                                ${canAdjust ? '<th>Actions</th>' : ''}
+                                ${canAdjust ? '<th class="text-end">Actions</th>' : ''}
                             </tr>
                         </thead>
                         <tbody>`;
@@ -10903,7 +11020,7 @@ async function renderReports() {
     });
 
     // ---- Customer & Supplier dropdowns for statements ----
-    let customerOpts = '<option value="">— Select Customer —</option>';
+    let customerOpts = '<option value="">Walk-in / cash customer</option>';
     customers.forEach(c => {
         customerOpts += `<option value="${c.id}">${c.name}</option>`;
     });
