@@ -167,6 +167,130 @@
             transition: background 0.3s, border-color 0.3s;
         }
         .page-title { font-weight: 600; font-size: 1.15rem; color: var(--text-color); }
+
+        /* Account menu & sign-out (international) */
+        .account-trigger {
+            display: flex; align-items: center; gap: 10px;
+            padding: 4px 8px 4px 4px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+        }
+        .account-trigger:hover {
+            background: var(--bg);
+            border-color: #cbd5e1;
+            box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+        }
+        .account-trigger .account-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #0b1a33, #1e3a5f);
+            color: #ffc107;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700;
+            flex-shrink: 0;
+        }
+        .account-trigger .account-name {
+            font-weight: 600; font-size: 0.88rem; color: var(--text-color);
+            max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .account-menu {
+            min-width: 280px;
+            padding: 8px 0;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            box-shadow: 0 12px 40px rgba(15,23,42,0.12);
+        }
+        .account-menu .account-menu-head {
+            padding: 12px 16px 10px;
+        }
+        .account-menu .account-menu-head .name {
+            font-weight: 700; font-size: 0.95rem; color: var(--text-color); line-height: 1.25;
+        }
+        .account-menu .account-menu-head .meta {
+            font-size: 0.78rem; color: #64748b; margin-top: 2px;
+        }
+        .account-menu .dropdown-item {
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex; align-items: center; gap: 10px;
+            color: var(--text-color);
+        }
+        .account-menu .dropdown-item i {
+            width: 18px; text-align: center; color: #64748b;
+        }
+        .account-menu .dropdown-item:hover {
+            background: #f1f5f9;
+        }
+        .account-menu .dropdown-item.account-signout {
+            color: #b91c1c;
+        }
+        .account-menu .dropdown-item.account-signout i { color: #b91c1c; }
+        .account-menu .dropdown-item.account-signout:hover {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+        .signout-modal .modal-content {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 24px 48px rgba(15,23,42,0.18);
+            overflow: hidden;
+        }
+        .signout-modal .modal-body {
+            padding: 28px 28px 8px;
+            text-align: center;
+        }
+        .signout-modal .signout-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto 16px;
+            border-radius: 16px;
+            background: #f1f5f9;
+            color: #0b1a33;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+        .signout-modal h5 {
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #0b1a33;
+            margin-bottom: 8px;
+        }
+        .signout-modal p {
+            color: #64748b;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+        .signout-modal .modal-footer {
+            border-top: none;
+            padding: 16px 28px 28px;
+            justify-content: center;
+            gap: 10px;
+        }
+        .signout-modal .btn-cancel-signout {
+            min-width: 110px;
+            border-radius: 10px;
+            font-weight: 600;
+            border-color: #e2e8f0;
+            color: #475569;
+        }
+        .signout-modal .btn-confirm-signout {
+            min-width: 110px;
+            border-radius: 10px;
+            font-weight: 700;
+            background: #0b1a33;
+            border-color: #0b1a33;
+            color: #fff;
+        }
+        .signout-modal .btn-confirm-signout:hover {
+            background: #152a4a;
+            border-color: #152a4a;
+            color: #fff;
+        }
+
         .page-content { padding: 22px 24px; }
         .card-box {
             background: var(--card-bg);
@@ -1386,6 +1510,24 @@
         </div>
     </div>
 
+
+    <!-- Sign out confirmation -->
+    <div class="modal fade signout-modal" id="signOutModal" tabindex="-1" aria-labelledby="signOutModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="signout-icon"><i class="bi bi-box-arrow-right"></i></div>
+                    <h5 id="signOutModalTitle">Sign out?</h5>
+                    <p>You will need your credentials to access the station network again.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-cancel-signout" data-bs-dismiss="modal">Stay signed in</button>
+                    <button type="button" class="btn btn-confirm-signout" id="confirmSignOutBtn">Sign out</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ============================================================
     MAIN APP
     ============================================================ -->
@@ -1419,17 +1561,20 @@
                         <option value="">All Stations</option>
                     </select>
                     <div class="dropdown">
-                        <div class="d-flex align-items-center gap-2" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="cursor:pointer;">
-                            <span class="fw-semibold d-none d-md-inline" id="headerUser">—</span>
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width:36px;height:36px;" id="headerAvatar">U</div>
-                            <i class="bi bi-chevron-down text-muted small"></i>
+                        <div class="account-trigger" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu" id="accountMenuTrigger">
+                            <div class="account-avatar" id="headerAvatar">U</div>
+                            <span class="account-name d-none d-md-inline" id="headerUser">—</span>
+                            <i class="bi bi-chevron-down text-muted" style="font-size:0.7rem;margin-right:4px;"></i>
                         </div>
-                        <ul class="dropdown-menu dropdown-menu-end shadow">
-                            <li><span class="dropdown-item-text text-muted small" id="headerRole">—</span></li>
-                            <li><span class="dropdown-item-text text-muted small" id="headerCompany">—</span></li>
+                        <ul class="dropdown-menu dropdown-menu-end account-menu">
+                            <li class="account-menu-head">
+                                <div class="name" id="headerUserFull">—</div>
+                                <div class="meta"><span id="headerRole">—</span> · <span id="headerCompany">—</span></div>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" id="headerSwitchUser"><i class="bi bi-arrow-repeat"></i> Switch User</a></li>
-                            <li><a class="dropdown-item text-danger" id="headerLogout"><i class="bi bi-box-arrow-right"></i> Sign Out</a></li>
+                            <li><a class="dropdown-item" id="headerSwitchUser" href="#"><i class="bi bi-people"></i> Switch account</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item account-signout" id="headerLogout" href="#"><i class="bi bi-box-arrow-right"></i> Sign out</a></li>
                         </ul>
                     </div>
                 </div>
@@ -2919,6 +3064,14 @@ async function tryRestoreSession() {
 }
 
 function logout() {
+    // Close sign-out modal if open
+    try {
+        const modalEl = document.getElementById('signOutModal');
+        if (modalEl && typeof bootstrap !== 'undefined') {
+            const inst = bootstrap.Modal.getInstance(modalEl);
+            if (inst) inst.hide();
+        }
+    } catch (_) {}
     if (state.sessionTimer) { clearTimeout(state.sessionTimer); state.sessionTimer = null; }
     try { if (typeof auth !== 'undefined') auth.signOut(); } catch (_) {}
     localStorage.removeItem('petro_session');
@@ -3052,6 +3205,8 @@ function initApp() {
     document.getElementById('sidebarUser').textContent = name;
     document.getElementById('sidebarRole').textContent = state.user.role;
     document.getElementById('headerUser').textContent = name;
+    const headerUserFull = document.getElementById('headerUserFull');
+    if (headerUserFull) headerUserFull.textContent = name;
     document.getElementById('headerRole').textContent = state.user.role;
     document.getElementById('headerAvatar').textContent = name.charAt(0).toUpperCase();
     if (state.user.companyId) {
@@ -3373,11 +3528,30 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('normalLogin').style.display = 'block';
     };
     document.getElementById('createCompanyBtn').onclick = createFirstCompany;
+    const confirmSignOutBtn = document.getElementById('confirmSignOutBtn');
+    if (confirmSignOutBtn) {
+        confirmSignOutBtn.onclick = function() {
+            this.disabled = true;
+            this.textContent = 'Signing out…';
+            logout();
+            setTimeout(() => {
+                this.disabled = false;
+                this.textContent = 'Sign out';
+            }, 800);
+        };
+    }
     const diagnoseBtn = document.getElementById('diagnoseBtn');
     if (diagnoseBtn) diagnoseBtn.onclick = runDiagnose;
     document.body.addEventListener('click', function(e) {
-        if (e.target.closest('#headerLogout')) { e.preventDefault();
-            logout(); }
+        if (e.target.closest('#headerLogout')) {
+            e.preventDefault();
+            const modalEl = document.getElementById('signOutModal');
+            if (modalEl && typeof bootstrap !== 'undefined') {
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            } else {
+                logout();
+            }
+        }
         if (e.target.closest('#headerSwitchUser')) { e.preventDefault();
             logout(); }
     });
