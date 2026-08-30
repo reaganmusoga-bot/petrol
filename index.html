@@ -2899,6 +2899,87 @@ async function adjustInventory(stationId, product, delta, costPrice = null, reas
 }
 
 // ===== 🔑 UPDATED: License & Trial Logic with Super Admin bypass =====
+
+// ===== License packages (stations + users) =====
+const LICENSE_CONTACT = '0703796153';
+const LICENSE_PACKAGES = [
+    {
+        id: 'starter',
+        name: 'Starter',
+        stations: '1–2',
+        users: '1–10',
+        monthly: 27,
+        yearly: 275,
+        stationsMax: 2,
+        usersMax: 10
+    },
+    {
+        id: 'growth',
+        name: 'Growth',
+        stations: '1–4',
+        users: '1–15',
+        monthly: 49,
+        yearly: 499,
+        stationsMax: 4,
+        usersMax: 15
+    },
+    {
+        id: 'business',
+        name: 'Business',
+        stations: '1–8',
+        users: '1–30',
+        monthly: 100,
+        yearly: 1000,
+        stationsMax: 8,
+        usersMax: 30
+    },
+    {
+        id: 'enterprise',
+        name: 'Enterprise',
+        stations: 'Unlimited',
+        users: 'Unlimited',
+        monthly: 140,
+        yearly: 1500,
+        stationsMax: null,
+        usersMax: null
+    }
+];
+const LICENSE_TRAINING_PER_STATION = 30; // USD transport & training per station
+
+function licensePackagesTableHtml(compact) {
+    const rows = LICENSE_PACKAGES.map(p => `
+        <tr>
+            <td><strong>${p.name}</strong></td>
+            <td>${p.stations} stations</td>
+            <td>${p.users} users</td>
+            <td class="text-end">$${p.monthly}/mo</td>
+            <td class="text-end">$${p.yearly}/yr</td>
+        </tr>`).join('');
+    return `
+        <div class="table-responsive ${compact ? 'mb-2' : 'mb-3'}">
+            <table class="table table-sm table-bordered align-middle mb-2" style="font-size:${compact ? '0.8rem' : '0.85rem'};">
+                <thead class="table-light">
+                    <tr>
+                        <th>Package</th>
+                        <th>Stations</th>
+                        <th>Users</th>
+                        <th class="text-end">Monthly</th>
+                        <th class="text-end">Yearly</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+        <p class="small text-muted mb-1">
+            <i class="bi bi-truck"></i> Transport &amp; training: <strong>$${LICENSE_TRAINING_PER_STATION} per station</strong> on all packages.
+        </p>
+        <p class="small mb-0">
+            <i class="bi bi-telephone-fill text-success"></i>
+            Contact the licensing team: <strong><a href="tel:${LICENSE_CONTACT}">${LICENSE_CONTACT}</a></strong>
+            to issue or renew a license.
+        </p>`;
+}
+
 async function checkLicense(companyId) {
     // SUPER ADMIN BYPASS
     if (state.user && state.user.role === 'super_admin') {
@@ -2997,22 +3078,22 @@ function showLicenseModal() {
                     </div>
                     <div class="modal-body">
                         ${isTrialActive ? `
-                            <p>You are on a <strong>5‑day trial</strong>.</p>
-                            <p>You have <strong>${state.trialDaysLeft} day(s)</strong> remaining.</p>
-                            <p>Please purchase a license to continue using PetroManager Pro after the trial ends.</p>
+                            <p>You are on a <strong>5‑day trial</strong> with <strong>${state.trialDaysLeft} day(s)</strong> remaining.</p>
+                            <p class="mb-2">Choose a package before the trial ends to keep uninterrupted access.</p>
                         ` : `
-                            <p>Your trial has <strong>expired</strong>.</p>
-                            <p>You can no longer access the software.</p>
-                            <p>Please contact your administrator or purchase a license to continue.</p>
+                            <p>Your trial or license has <strong>expired</strong>. Access is limited until a package is activated.</p>
+                            <p class="mb-2">Contact the licensing team to issue a license for your company.</p>
                         `}
+                        <h6 class="mt-3 mb-2" style="font-weight:700;font-size:0.85rem;">License packages</h6>
+                        ${licensePackagesTableHtml(true)}
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer flex-wrap">
                         ${isTrialActive ? `
-                            <button type="button" class="btn btn-secondary" id="dismissLicenseBtn">I will get license later</button>
-                            <button type="button" class="btn btn-primary" id="getLicenseBtn"><i class="bi bi-cart-plus"></i> Get License</button>
-                        ` : `
-                            <button type="button" class="btn btn-primary" id="getLicenseBtn"><i class="bi bi-cart-plus"></i> Get License</button>
-                        `}
+                            <button type="button" class="btn btn-secondary" id="dismissLicenseBtn">Remind me later</button>
+                        ` : ''}
+                        <a class="btn btn-success" id="getLicenseBtn" href="tel:${LICENSE_CONTACT}">
+                            <i class="bi bi-telephone-fill"></i> Call ${LICENSE_CONTACT}
+                        </a>
                     </div>
                 </div>
             </div>
@@ -3026,10 +3107,12 @@ function showLicenseModal() {
     const modalEl = document.getElementById('licenseModal');
     const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
 
-    document.getElementById('getLicenseBtn').addEventListener('click', function() {
-        const licenseUrl = 'https://petromanager.ug/license';
-        window.open(licenseUrl, '_blank');
-    });
+    const getLicBtn = document.getElementById('getLicenseBtn');
+    if (getLicBtn && getLicBtn.tagName !== 'A') {
+        getLicBtn.addEventListener('click', function() {
+            window.location.href = 'tel:' + LICENSE_CONTACT;
+        });
+    }
 
     const dismissBtn = document.getElementById('dismissLicenseBtn');
     if (dismissBtn) {
@@ -15261,18 +15344,32 @@ async function renderLicenses() {
         licenseMap[data.companyId].push({ id: doc.id, ...data });
     });
 
-    // ---- Build table ----
+    // ---- Build page ----
     let html = `
+        <div class="card-box mb-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                <div>
+                    <h5 class="mb-1"><i class="bi bi-key"></i> License Manager</h5>
+                    <div class="text-muted small">Packages by stations &amp; users · issue via licensing team</div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <a class="btn btn-success btn-sm" href="tel:${LICENSE_CONTACT}"><i class="bi bi-telephone-fill"></i> ${LICENSE_CONTACT}</a>
+                    <button class="btn btn-primary btn-sm" id="addLicenseBtn"><i class="bi bi-plus-circle"></i> Add License</button>
+                </div>
+            </div>
+            <h6 class="fw-bold mb-2">Packages</h6>
+            ${licensePackagesTableHtml(false)}
+        </div>
         <div class="card-box">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0"><i class="bi bi-key"></i> License Manager</h5>
-                <button class="btn btn-primary btn-sm" id="addLicenseBtn"><i class="bi bi-plus-circle"></i> Add License</button>
+                <h6 class="mb-0 fw-bold">Company licenses</h6>
             </div>
             <div class="table-responsive">
                 <table class="table table-sm table-hover">
                     <thead>
                         <tr>
                             <th>Company</th>
+                            <th>Package</th>
                             <th>License Status</th>
                             <th>Expiry Date</th>
                             <th>Trial Days Left</th>
@@ -15282,7 +15379,7 @@ async function renderLicenses() {
                     <tbody>`;
 
     if (companies.length === 0) {
-        html += `<tr><td colspan="5" class="text-muted text-center">No companies found</td></tr>`;
+        html += `<tr><td colspan="6" class="text-muted text-center">No companies found</td></tr>`;
     } else {
         for (const company of companies) {
             const companyLicenses = licenseMap[company.id] || [];
@@ -15328,9 +15425,13 @@ async function renderLicenses() {
                 `;
             }
 
+            const pkgId = (activeLicense && activeLicense.package) ? activeLicense.package : '';
+            const pkgMeta = LICENSE_PACKAGES.find(p => p.id === pkgId);
+            const pkgLabel = pkgMeta ? pkgMeta.name : (pkgId || '—');
             html += `
                 <tr>
                     <td><strong>${esc(company.name || company.id)}</strong></td>
+                    <td>${esc(pkgLabel)}</td>
                     <td>${statusBadge}</td>
                     <td>${expiryDisplay}</td>
                     <td>${trialDaysLeft > 0 ? trialDaysLeft + ' days' : '—'}</td>
@@ -15364,6 +15465,21 @@ async function renderLicenses() {
                                 </select>
                             </div>
                             <div class="mb-3">
+                                <label class="form-label">Package</label>
+                                <select id="licensePackage" class="form-select" required>
+                                    <option value="">— Select package —</option>
+                                    ${LICENSE_PACKAGES.map(p => `<option value="${p.id}">${p.name} · ${p.stations} stations · ${p.users} users · $${p.monthly}/mo or $${p.yearly}/yr</option>`).join('')}
+                                </select>
+                                <div class="form-text">Transport &amp; training: $${LICENSE_TRAINING_PER_STATION} per station (all packages). Issue via ${LICENSE_CONTACT}.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Billing</label>
+                                <select id="licenseBilling" class="form-select">
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label">Expiry Date</label>
                                 <input type="date" id="licenseExpiry" class="form-control" required>
                             </div>
@@ -15392,6 +15508,8 @@ async function renderLicenses() {
         document.getElementById('licenseCompany').value = '';
         document.getElementById('licenseExpiry').value = '';
         document.getElementById('licenseKey').value = '';
+        const lp = document.getElementById('licensePackage'); if (lp) lp.value = '';
+        const lb = document.getElementById('licenseBilling'); if (lb) lb.value = 'monthly';
         document.getElementById('licenseEditId').value = '';
         document.getElementById('licenseFormResult').innerHTML = '';
         const modal = new bootstrap.Modal(document.getElementById('licenseModal'));
@@ -15464,6 +15582,12 @@ async function renderLicenses() {
             resultDiv.innerHTML = '<span class="text-danger">Please select an expiry date.</span>';
             return;
         }
+        const pkg = (document.getElementById('licensePackage') || {}).value || '';
+        const billing = (document.getElementById('licenseBilling') || {}).value || 'monthly';
+        if (!pkg) {
+            resultDiv.innerHTML = '<span class="text-danger">Please select a package.</span>';
+            return;
+        }
 
         try {
             const expiry = new Date(expiryDate);
@@ -15477,6 +15601,8 @@ async function renderLicenses() {
                 await db.collection('licenses').doc(editId).update({
                     expiryDate: firebase.firestore.Timestamp.fromDate(expiry),
                     isActive: true,
+                    package: pkg,
+                    billing: billing,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 toast('License extended successfully', 'success');
@@ -15485,6 +15611,8 @@ async function renderLicenses() {
                 await db.collection('licenses').add({
                     companyId: companyId,
                     isActive: true,
+                    package: pkg,
+                    billing: billing,
                     expiryDate: firebase.firestore.Timestamp.fromDate(expiry),
                     key: key,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
