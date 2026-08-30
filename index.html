@@ -1197,15 +1197,39 @@
             overflow: auto;
             background: #fff;
             box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-            max-height: 560px;
+            max-height: min(70vh, 640px);
+            width: 100%;
+        }
+        .sales-workspace {
+            --sales-form-w: 1fr;
+        }
+        .sales-form-panel {
+            position: sticky;
+            top: 72px;
+        }
+        .sales-history-panel {
+            min-width: 0;
+        }
+        .sales-history-panel .fin-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .sales-history-panel .fin-filter-bar .fin-q {
+            flex: 1 1 220px;
+            min-width: 180px;
+        }
+        .sales-history-wrap {
+            width: 100%;
         }
         .sales-history-table {
             width: 100%;
-            min-width: 1480px;
+            min-width: 1680px;
             margin: 0;
             border-collapse: separate;
             border-spacing: 0;
-            font-size: 0.92rem;
+            font-size: 0.95rem;
             table-layout: fixed;
         }
         .sales-history-table thead th {
@@ -1224,7 +1248,7 @@
             vertical-align: middle;
         }
         .sales-history-table tbody td {
-            padding: 16px;
+            padding: 15px 18px;
             vertical-align: middle;
             border-bottom: 1px solid #eef2f7;
             color: #1e293b;
@@ -1238,19 +1262,19 @@
             color: #94a3b8;
         }
         .sales-history-table tbody tr.sale-row-reversed:hover td { background: #f1f5f9; }
-        .sales-history-table .col-idx { width: 56px; }
-        .sales-history-table .col-date { width: 150px; }
-        .sales-history-table .col-station { width: 140px; }
-        .sales-history-table .col-cashier { width: 130px; }
-        .sales-history-table .col-product { width: 130px; }
-        .sales-history-table .col-qty { width: 100px; }
-        .sales-history-table .col-price { width: 130px; }
-        .sales-history-table .col-disc { width: 120px; }
-        .sales-history-table .col-amount { width: 140px; }
-        .sales-history-table .col-pay { width: 110px; }
-        .sales-history-table .col-customer { width: 140px; }
-        .sales-history-table .col-status { width: 110px; }
-        .sales-history-table .col-actions { width: 220px; }
+        .sales-history-table .col-idx { width: 52px; }
+        .sales-history-table .col-date { width: 168px; }
+        .sales-history-table .col-station { width: 160px; }
+        .sales-history-table .col-cashier { width: 150px; }
+        .sales-history-table .col-product { width: 140px; }
+        .sales-history-table .col-qty { width: 110px; }
+        .sales-history-table .col-price { width: 140px; }
+        .sales-history-table .col-disc { width: 130px; }
+        .sales-history-table .col-amount { width: 150px; }
+        .sales-history-table .col-pay { width: 120px; }
+        .sales-history-table .col-customer { width: 160px; }
+        .sales-history-table .col-status { width: 120px; }
+        .sales-history-table .col-actions { width: 240px; }
         .sales-history-table .num {
             font-variant-numeric: tabular-nums;
             font-family: 'Segoe UI', system-ui, sans-serif;
@@ -4348,9 +4372,9 @@ async function renderSales() {
                     </div>
                 </div>
             </div>
-            <div class="row g-3">
-            <div class="col-lg-5">
-                <div class="fin-action-card">
+            <div class="row g-3 align-items-start sales-workspace">
+            <div class="col-12 col-xl-4 col-lg-4">
+                <div class="fin-action-card sales-form-panel">
                     <h6><i class="bi bi-plus-circle text-success"></i> New sale</h6>
                     <div class="intl-form">
                     <div class="form-section">
@@ -4452,8 +4476,8 @@ async function renderSales() {
                 </div>
             </div>
 
-            <div class="col-lg-7">
-                <div class="fin-ledger-card">
+            <div class="col-12 col-xl-8 col-lg-8">
+                <div class="fin-ledger-card sales-history-panel">
                     <div class="intl-section-head">
                         <h6><i class="bi bi-receipt"></i> Sales history</h6>
                         <span class="meta">${sales.length}</span>
