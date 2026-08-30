@@ -4346,7 +4346,9 @@ async function renderDashboard() {
     // Period filter for dashboard KPIs
     // MTD / YTD always use the *current* local calendar month & year, so stats
     // automatically reset when a new month (or year) begins.
-    const period = state.dashPeriod || 'mtd';
+    let period = state.dashPeriod || localStorage.getItem('petro_dash_period') || 'mtd';
+    if (!['today', '7d', 'mtd', 'ytd', 'all'].includes(period)) period = 'mtd';
+    state.dashPeriod = period;
     const _nowLocal = new Date();
     const periodBounds = (() => {
         const start = new Date(_nowLocal.getFullYear(), _nowLocal.getMonth(), _nowLocal.getDate(), 0, 0, 0, 0);
@@ -4439,16 +4441,34 @@ async function renderDashboard() {
     const yest = new Date(now); yest.setDate(yest.getDate() - 1);
     const yestStr = yest.toDateString();
     const saleDate = (s) => {
-        const d = s.created_at && s.created_at.toDate ? s.created_at.toDate() : (s.sale_date ? new Date(s.sale_date) : new Date(s.created_at));
-        return d;
+        try {
+            if (s.sale_date) {
+                if (typeof s.sale_date.toDate === 'function') return s.sale_date.toDate();
+                if (typeof s.sale_date === 'string' && /^\d{4}-\d{2}-\d{2}/.test(s.sale_date)) {
+                    const p = s.sale_date.slice(0, 10).split('-').map(Number);
+                    return new Date(p[0], p[1] - 1, p[2], 12, 0, 0, 0);
+                }
+                return new Date(s.sale_date);
+            }
+            if (s.created_at && typeof s.created_at.toDate === 'function') return s.created_at.toDate();
+            if (s.created_at && s.created_at.seconds != null) return new Date(Number(s.created_at.seconds) * 1000);
+            if (s.created_at) return new Date(s.created_at);
+        } catch (_) {}
+        return new Date(0);
     };
-    const todaySales = fSales.filter(s => saleDate(s).toDateString() === todayStr).reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
-    const yesterdaySales = fSales.filter(s => saleDate(s).toDateString() === yestStr).reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+    const todaySales = fSales.filter(s => { const d = saleDate(s); return d && !isNaN(d.getTime()) && d.toDateString() === todayStr; }).reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
+    const yesterdaySales = fSales.filter(s => { const d = saleDate(s); return d && !isNaN(d.getTime()) && d.toDateString() === yestStr; }).reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
     const todayDeltaPct = yesterdaySales > 0 ? ((todaySales - yesterdaySales) / yesterdaySales * 100) : (todaySales > 0 ? 100 : 0);
     const activeShifts = fShifts.filter(s => s.status === 'active').length;
     const stationLabel = state.currentStationId ? stationName(state.currentStationId) : 'All Stations';
-    const lowStockItems = await checkLowStock();
-    const lowCount = lowStockItems ? lowStockItems.length : 0;
+    let lowCount = 0;
+    try {
+        const lowStockItems = await checkLowStock();
+        lowCount = lowStockItems ? lowStockItems.length : 0;
+    } catch (e) {
+        console.warn('checkLowStock on dashboard:', e);
+        lowCount = 0;
+    }
     const totalCustomers = customers.length;
     const totalSuppliers = suppliers.length;
 
@@ -4646,8 +4666,6 @@ async function renderDashboard() {
             renderDashboard();
         }
     }, 30000);
-    const stockBtn = document.getElementById('lowStockAlertBtn');
-    if (stockBtn) stockBtn.onclick = function() { checkLowStock(); };
 
     // Render charts
     setTimeout(() => {
@@ -10010,6 +10028,9 @@ async function renderFinancials() {
                             <button type="button" class="btn btn-sm btn-light" id="finPrintStatementBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
                                 <i class="bi bi-printer"></i> Print statement
                             </button>
+                            <button type="button" class="btn btn-sm btn-warning" id="finTillBalanceBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
+                                <i class="bi bi-scales"></i> Balance accounts
+                            </button>
                         </div>
                     </div>
                     <div class="fin-kpi-row">
@@ -10711,7 +10732,7 @@ async function renderFinancials() {
         }
         function bindPrintStatement() {
             const tillBalBtn = document.getElementById('finTillBalanceBtn');
-            if (tillBalBtn) tillBalBtn.onclick = function() { showTillBalanceTool(); };
+            if (tillBalBtn) tillBalBtn.onclick = function() { if (typeof showTillBalanceTool === 'function') showTillBalanceTool(); else toast('Balance tool not loaded', 'danger'); };
             const btn = document.getElementById('finPrintStatementBtn');
             if (!btn) return;
             btn.onclick = function() {
