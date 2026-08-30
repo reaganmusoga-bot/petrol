@@ -1161,6 +1161,42 @@
         }
         .intl-table-wrap tbody tr:last-child td { border-bottom: none; }
         .intl-table-wrap tbody tr:hover td { background: #f8fafc !important; }
+        .intl-table-wrap tbody tr.sale-row-reversed td {
+            background: #fafafa;
+            color: #94a3b8;
+        }
+        .intl-table-wrap tbody tr.sale-row-reversed:hover td { background: #f1f5f9 !important; }
+        .sale-status {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 9px; border-radius: 999px;
+            font-size: 0.68rem; font-weight: 650; letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .sale-status.is-posted { background: #ecfdf5; color: #047857; }
+        .sale-status.is-reversed { background: #f1f5f9; color: #64748b; }
+        .sale-pay {
+            display: inline-block;
+            padding: 3px 8px; border-radius: 6px;
+            font-size: 0.7rem; font-weight: 600;
+            background: #f1f5f9; color: #475569;
+            text-transform: capitalize;
+        }
+        .sale-pay.pay-credit { background: #eff6ff; color: #1d4ed8; }
+        .sale-pay.pay-mobile { background: #f5f3ff; color: #6d28d9; }
+        .sale-pay.pay-card { background: #ecfeff; color: #0e7490; }
+        .sale-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: nowrap; }
+        .sale-actions .btn {
+            font-size: 0.72rem; font-weight: 600;
+            padding: 4px 10px; border-radius: 7px;
+            white-space: nowrap;
+        }
+        .intl-table-wrap .num { font-variant-numeric: tabular-nums; font-family: 'Segoe UI', system-ui, sans-serif; }
+        .intl-table-wrap .cell-muted { color: #64748b; font-size: 0.8rem; }
+        .intl-table-wrap .empty-sales {
+            text-align: center; padding: 48px 24px; color: #94a3b8;
+        }
+        .intl-table-wrap .empty-sales i { font-size: 1.75rem; display: block; margin-bottom: 10px; color: #cbd5e1; }
+
         .intl-table-wrap .amt {
             font-variant-numeric: tabular-nums;
             font-weight: 700;
@@ -4347,46 +4383,78 @@ async function renderSales() {
                         <input type="date" class="form-control fin-d" id="salesDateFrom" value="${new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)}">
                         <input type="date" class="form-control fin-d" id="salesDateTo" value="${todayISO}">
                     </div>
-                    <div class="table-responsive intl-table-wrap" style="max-height:480px; overflow-y:auto;">
-                        <table class="table table-sm mb-0 align-middle" id="salesTable" style="min-width:720px;width:100%;">
-                            <thead style="position:sticky;top:0;z-index:2;"><tr>
-                                <th>#</th><th>Station</th><th>Cashier</th><th>Product</th><th class="text-end">Qty</th><th class="text-end">Price</th><th class="text-end">Amount</th>
-                                <th class="text-end">Disc.</th><th>Pay</th><th>Date</th>
-                                ${isAdmin(state.user.role) ? '<th class="text-end"></th>' : ''}
-                            </tr></thead>
+                    <div class="table-responsive intl-table-wrap" style="max-height:520px; overflow-y:auto;">
+                        <table class="table table-sm mb-0 align-middle" id="salesTable" style="min-width:1100px;width:100%;">
+                            <thead style="position:sticky;top:0;z-index:2;">
+                                <tr>
+                                    <th style="width:40px;">#</th>
+                                    <th>Date &amp; time</th>
+                                    <th>Station</th>
+                                    <th>Cashier</th>
+                                    <th>Product</th>
+                                    <th class="text-end">Qty (L)</th>
+                                    <th class="text-end">Unit price</th>
+                                    <th class="text-end">Discount</th>
+                                    <th class="text-end">Amount</th>
+                                    <th>Payment</th>
+                                    <th>Customer</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
                             <tbody>`;
 
+    const canReverse = isAdmin(state.user.role);
+    const colCount = 13;
     if (sales.length === 0) {
-        html += '<tr><td colspan="11" class="text-muted text-center">No sales yet</td></tr>';
+        html += `<tr><td colspan="${colCount}"><div class="empty-sales"><i class="bi bi-receipt"></i>No sales recorded yet</div></td></tr>`;
     } else {
-        sales.slice(0, 50).forEach((s, idx) => {
-            const isReversed = s.status === 'reversed';
-            const cashierName = (state.cashiers.find(c => c.id === s.recorded_by) || {}).name ||
-                (state.cashiers.find(c => c.id === s.recorded_by) || {}).username || '—';
-            const rowClass = isReversed ? 'table-secondary text-muted' : '';
-            const productClass = (s.product_type || '').toLowerCase();
-            html += `<tr class="${rowClass}">
-                <td>${idx + 1}</td>
-                <td>${stationName(s.station_id)}</td>
-                <td class="fs-xs">${cashierName}</td>
-                <td><span class="product-badge ${productClass}">${s.product_type}</span></td>
-                <td>${Number(s.quantity).toFixed(2)}</td>
-                <td>${formatMoney(s.selling_price, s.currency || 'UGX')}</td>
-                <td><strong>${formatMoney(s.amount, s.currency || 'UGX')}</strong></td>
-                <td class="text-danger">${s.discount ? formatMoney(s.discount, s.currency || 'UGX') : '—'}</td>
-                <td><span class="badge bg-secondary">${s.payment_method || 'cash'}</span>
-                    ${isReversed ? '<br><span class="badge bg-danger">Reversed</span>' : ''}
-                </td>
-                <td class="fs-xs">${formatDate(s.sale_date || s.created_at)}
-                    ${isReversed && s.reversed_at ? '<br><span class="text-danger">Rev: ' + formatDate(s.reversed_at) + '</span>' : ''}
-                </td>
-                ${isAdmin(state.user.role) ? (isReversed
-                    ? `<td><span class="badge bg-secondary">Reversed</span></td>`
-                    : `<td>
-                        <button class="btn btn-sm btn-outline-warning reverse-sale-btn" data-id="${s.id}" data-qty="${s.quantity}" data-product="${s.product_type}" data-station="${s.station_id}" data-amount="${s.amount || 0}" data-payment="${s.payment_method || 'cash'}" data-customer="${s.customer_id || ''}" title="Reverse"><i class="bi bi-arrow-counterclockwise"></i></button>
-                        <button class="btn btn-sm btn-outline-primary invoice-btn" data-id="${s.id}" title="Invoice"><i class="bi bi-file-pdf"></i></button>
-                    </td>`
-                ) : ''}
+        sales.slice(0, 100).forEach((s, idx) => {
+            const isReversed = s.status === 'reversed' || s.reversed === true;
+            const cashierRec = state.cashiers.find(c => c.id === s.recorded_by) || state.allUsers.find(u => u.id === s.recorded_by) || {};
+            const cashierName = cashierRec.name || cashierRec.username || '—';
+            const productClass = (s.product_type || '').toLowerCase().replace(/\s+/g, '');
+            const pay = (s.payment_method || 'cash').toLowerCase();
+            const payClass = pay === 'credit' ? 'pay-credit' : (pay === 'mobile' || pay === 'mobile_money' || pay === 'momo' ? 'pay-mobile' : (pay === 'card' || pay === 'bank' ? 'pay-card' : ''));
+            const cust = customers.find(c => c.id === s.customer_id);
+            const custName = cust ? (cust.name || cust.phone || '—') : (s.customer_name || (pay === 'credit' ? '—' : 'Walk-in'));
+            const cur = s.currency || currencySymbol || 'UGX';
+            const qty = Number(s.quantity) || 0;
+            const price = Number(s.selling_price) || 0;
+            const amount = Number(s.amount) || 0;
+            const disc = Number(s.discount) || 0;
+            const dateStr = formatDate(s.sale_date || s.created_at);
+            const revNote = isReversed && s.reversed_at ? `<div class="cell-muted" style="margin-top:2px;">Reversed ${formatDate(s.reversed_at)}</div>` : '';
+
+            let actionsHtml = '';
+            if (isReversed) {
+                actionsHtml = `<span class="cell-muted">—</span>`;
+            } else {
+                const reverseBtn = canReverse
+                    ? `<button type="button" class="btn btn-sm btn-outline-secondary reverse-sale-btn" data-id="${s.id}" data-qty="${qty}" data-product="${esc(s.product_type || '')}" data-station="${s.station_id}" data-amount="${amount}" data-payment="${esc(s.payment_method || 'cash')}" data-customer="${s.customer_id || ''}" title="Reverse this sale"><i class="bi bi-arrow-counterclockwise"></i> Reverse</button>`
+                    : '';
+                actionsHtml = `<div class="sale-actions">
+                        <button type="button" class="btn btn-sm btn-outline-primary invoice-btn" data-id="${s.id}" title="View invoice"><i class="bi bi-printer"></i> Invoice</button>
+                        ${reverseBtn}
+                    </div>`;
+            }
+
+            html += `<tr class="${isReversed ? 'sale-row-reversed' : ''}">
+                <td class="cell-muted">${idx + 1}</td>
+                <td><div class="num">${dateStr}</div>${revNote}</td>
+                <td>${esc(stationName(s.station_id))}</td>
+                <td>${esc(cashierName)}</td>
+                <td><span class="product-badge ${productClass}">${esc(s.product_type || '—')}</span></td>
+                <td class="text-end num">${qty.toFixed(2)}</td>
+                <td class="text-end num cell-muted">${formatMoney(price, cur)}</td>
+                <td class="text-end num">${disc > 0 ? formatMoney(disc, cur) : '<span class="cell-muted">—</span>'}</td>
+                <td class="text-end num"><strong>${formatMoney(amount, cur)}</strong></td>
+                <td><span class="sale-pay ${payClass}">${esc(s.payment_method || 'cash')}</span></td>
+                <td>${esc(custName)}</td>
+                <td>${isReversed
+                    ? '<span class="sale-status is-reversed">Reversed</span>'
+                    : '<span class="sale-status is-posted">Posted</span>'}</td>
+                <td class="text-end">${actionsHtml}</td>
             </tr>`;
         });
     }
@@ -4899,8 +4967,9 @@ async function renderSales() {
             const amount = parseFloat(this.dataset.amount) || 0;
             const payment = (this.dataset.payment || 'cash').toLowerCase();
             const customerId = this.dataset.customer || '';
-            if (!confirm('Reverse sale of ' + qty + 'L ' + product + '?\n\nHistory is kept. Stock is restored.' +
-                (payment === 'credit' && customerId ? '\nCustomer credit balance will also be reduced.' : '')))
+            if (!confirm('Reverse this sale?\n\n' + qty + ' L of ' + product + ' will be restored to stock.' +
+                (payment === 'credit' && customerId ? '\nAny credit charged to the customer will be adjusted.' : '') +
+                '\n\nThe original record stays in history as Reversed.'))
                 return;
             try {
                 showLoading(true);
