@@ -1200,6 +1200,141 @@
             max-height: min(70vh, 640px);
             width: 100%;
         }
+
+        /* ===== Make Sales page ===== */
+        .make-sales-page { display: flex; flex-direction: column; gap: 16px; }
+        .ms-header {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end;
+            gap: 12px; margin-bottom: 2px;
+        }
+        .ms-header h4 {
+            margin: 0; font-weight: 800; letter-spacing: -0.03em; font-size: 1.35rem; color: #0f172a;
+        }
+        .ms-header .ms-sub { margin: 4px 0 0; font-size: 0.875rem; color: #64748b; font-weight: 500; }
+        .ms-kpis {
+            display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+        }
+        @media (max-width: 768px) { .ms-kpis { grid-template-columns: 1fr; } }
+        .ms-kpi {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            padding: 14px 16px; min-width: 0;
+        }
+        .ms-kpi .lbl {
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #64748b;
+        }
+        .ms-kpi .val {
+            font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em;
+            margin-top: 4px; color: #0f172a; line-height: 1.2;
+            font-variant-numeric: tabular-nums;
+        }
+        .ms-kpi .hint { font-size: 0.75rem; color: #94a3b8; margin-top: 2px; }
+        .ms-layout {
+            display: grid;
+            grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+            gap: 16px;
+            align-items: start;
+        }
+        @media (max-width: 1100px) {
+            .ms-layout { grid-template-columns: 1fr; }
+            .sales-form-panel { position: static !important; }
+        }
+        .ms-form-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+        }
+        .ms-form-card .ms-form-head {
+            padding: 14px 18px;
+            border-bottom: 1px solid #eef2f7;
+            background: #f8fafc;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .ms-form-card .ms-form-head h6 {
+            margin: 0; font-weight: 750; font-size: 0.95rem; color: #0f172a;
+        }
+        .ms-form-card .ms-form-head .ms-form-badge {
+            margin-left: auto;
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.04em; color: #64748b;
+            background: #e2e8f0; padding: 3px 8px; border-radius: 999px;
+        }
+        .ms-form-body { padding: 16px 18px 18px; }
+        .ms-form-body .form-label {
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.04em; color: #64748b; margin-bottom: 4px;
+        }
+        .ms-form-body .form-control,
+        .ms-form-body .form-select {
+            min-height: 40px; border-radius: 9px; border-color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+        .ms-form-body .form-control:focus,
+        .ms-form-body .form-select:focus {
+            border-color: #0b1a33;
+            box-shadow: 0 0 0 3px rgba(11,26,51,0.1);
+        }
+        .ms-block {
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .ms-block:last-of-type { border-bottom: none; margin-bottom: 10px; padding-bottom: 0; }
+        .ms-block-title {
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.06em; color: #94a3b8; margin-bottom: 10px;
+        }
+        .ms-btn-row { display: flex; gap: 8px; }
+        .ms-btn-row .btn { flex: 1; border-radius: 9px; font-weight: 650; font-size: 0.85rem; min-height: 40px; }
+        .ms-complete-btn {
+            width: 100%; min-height: 48px; border: none; border-radius: 10px;
+            font-weight: 750; font-size: 0.95rem;
+            background: linear-gradient(135deg, #0b1a33, #1a3a6a);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(11,26,51,0.2);
+        }
+        .ms-complete-btn:hover:not(:disabled) { filter: brightness(1.05); color: #fff; }
+        .ms-complete-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+        .ms-shortcuts {
+            margin-top: 10px; text-align: center;
+            font-size: 0.75rem; color: #94a3b8;
+        }
+        .ms-shortcuts kbd {
+            background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px;
+            padding: 1px 5px; font-size: 0.7rem; color: #475569;
+        }
+        .ms-history-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 16px 12px;
+            box-shadow: 0 1px 3px rgba(15,23,42,0.04);
+            min-width: 0;
+        }
+        .ms-history-card .ms-hist-head {
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+            gap: 10px; margin-bottom: 12px;
+        }
+        .ms-history-card .ms-hist-head h6 {
+            margin: 0; font-weight: 750; font-size: 0.95rem; color: #0f172a;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .ms-history-card .ms-count {
+            font-size: 0.75rem; font-weight: 700; color: #64748b;
+            background: #f1f5f9; padding: 4px 10px; border-radius: 999px;
+        }
+        .ms-filters {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+        }
+        .ms-filters .form-control {
+            border-radius: 9px; border-color: #e2e8f0; min-height: 38px; font-size: 0.875rem;
+        }
+        .ms-filters .ms-search { flex: 1 1 200px; min-width: 160px; }
+        .ms-filters .ms-date { flex: 0 0 150px; }
+
         .sales-workspace {
             --sales-form-w: 1fr;
         }
@@ -3460,7 +3595,7 @@ function buildSidebar() {
     menuStructure.push({ label: 'Dashboard', icon: 'bi-grid-1x2-fill', page: 'dashboard', isLeaf: true });
 
     if (role === 'cashier') {
-        menuStructure.push({ label: 'Sales', icon: 'bi-cart-check', page: 'sales', isLeaf: true });
+        menuStructure.push({ label: 'Make Sales', icon: 'bi-cart-check', page: 'sales', isLeaf: true });
         menuStructure.push({ label: 'My Shifts', icon: 'bi-clock-history', page: 'shifts', isLeaf: true });
         menuStructure.push({ label: 'Meter Readings', icon: 'bi-speedometer2', page: 'meters', isLeaf: true });
         menuStructure.push({ label: 'Messages', icon: 'bi-chat-dots', page: 'messages', isLeaf: true });
@@ -3469,7 +3604,7 @@ function buildSidebar() {
             label: 'Sales',
             icon: 'bi-cart-check',
             children: [
-                { label: 'Sales Desk', page: 'sales' },
+                { label: 'Make Sales', page: 'sales' },
                 { label: 'Shifts', page: 'shifts' },
                 { label: 'Meter Readings', page: 'meters' },
                 { label: 'Invoices', page: 'invoices' }
@@ -3621,7 +3756,7 @@ function navigate(page) {
     });
     const titles = {
         dashboard: 'Dashboard',
-        sales: 'Sales',
+        sales: 'Make Sales',
         shifts: 'Shifts',
         meters: 'Meter Readings',
         balancing: 'Cashier Balancing',
@@ -4165,7 +4300,7 @@ async function renderDashboard() {
 
         <!-- Quick actions -->
         <div class="row g-2 mb-3">
-            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('sales')"><i class="bi bi-cart-plus fs-4 text-primary"></i><div class="small fw-semibold mt-1">Sales</div></div></div>
+            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('sales')"><i class="bi bi-cart-plus fs-4 text-primary"></i><div class="small fw-semibold mt-1">Make Sales</div></div></div>
             <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('balancing')"><i class="bi bi-balance-scale fs-4 text-warning"></i><div class="small fw-semibold mt-1">Balance</div></div></div>
             <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('inventory')"><i class="bi bi-box-seam fs-4 text-success"></i><div class="small fw-semibold mt-1">Inventory</div></div></div>
             <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('stock')"><i class="bi bi-truck fs-4 text-info"></i><div class="small fw-semibold mt-1">Offload</div></div></div>
@@ -4345,147 +4480,163 @@ async function renderSales() {
     const mtdLitres = mtdSales.reduce((s, x) => s + (Number(x.quantity) || 0), 0);
 
     let html = `
-        <div class="fin-workspace">
-            <div class="fin-header">
-                <div class="fin-title-row">
-                    <div>
-                        <h4><i class="bi bi-cart-check"></i> Sales</h4>
-                        <div class="fin-sub">POS · cart · invoices</div>
-                    </div>
-                    <span class="fin-period-chip"><i class="bi bi-calendar3"></i> This month</span>
-                </div>
-                <div class="fin-kpi-row" style="grid-template-columns:repeat(3,1fr);">
-                    <div class="fin-kpi in">
-                        <div class="k-label">Revenue (MTD)</div>
-                        <div class="k-value">${formatCompactMoney(mtdRev)}</div>
-                        <div class="k-hint">${mtdSales.length} sale${mtdSales.length===1?'':'s'}</div>
-                    </div>
-                    <div class="fin-kpi">
-                        <div class="k-label">Volume (MTD)</div>
-                        <div class="k-value">${mtdLitres.toFixed(0)} <span style="font-size:0.65em;opacity:.85">L</span></div>
-                        <div class="k-hint">Fuel sold</div>
-                    </div>
-                    <div class="fin-kpi">
-                        <div class="k-label">All records</div>
-                        <div class="k-value">${sales.length}</div>
-                        <div class="k-hint">Including reversed</div>
-                    </div>
+        <div class="make-sales-page">
+            <div class="ms-header">
+                <div>
+                    <h4><i class="bi bi-cart-check text-primary"></i> Make Sales</h4>
+                    <p class="ms-sub">Record fuel sales, manage the cart, and review history</p>
                 </div>
             </div>
-            <div class="row g-3 align-items-start sales-workspace">
-            <div class="col-12 col-xl-4 col-lg-4">
-                <div class="fin-action-card sales-form-panel">
-                    <h6><i class="bi bi-plus-circle text-success"></i> New sale</h6>
-                    <div class="intl-form">
-                    <div class="form-section">
-                        <div class="form-section-title">Sale details</div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6">
-                            <label class="form-label">Station *</label>
-                            <select id="saleStation" class="form-select" ${roleNorm(state.user.role) === 'cashier' ? 'disabled' : ''}>
-                                <option value="" disabled selected>Select station</option>${stationOpts}
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Cashier *</label>
-                            <select id="saleCashier" class="form-select">${cashierOpts}</select>
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6">
-                            <label class="form-label">Sale Date *</label>
-                            <input type="date" id="saleDate" class="form-control" value="${todayISO}">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Payment</label>
-                            <select id="salePayment" class="form-select">
-                                <option value="cash">Cash</option>
-                                <option value="mobile">Mobile Money</option>
-                                <option value="card">Card</option>
-                                <option value="credit">Credit</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Customer</label>
-                        <div class="row g-1">
-                            <div class="col-8">
-                                <select id="saleCustomerSelect" class="form-select">
-                                    <option value="walk-in">Walk-in</option>
-                                    ${customerOpts}
-                                    <option value="custom">➕ Custom...</option>
-                                </select>
-                            </div>
-                            <div class="col-4">
-                                <span class="badge bg-info" id="customerBalanceDisplay" style="display:none;">Balance: 0</span>
-                            </div>
-                        </div>
-                        <input type="text" id="saleCustomerName" class="form-control mt-1" placeholder="Or type custom name" style="display:none;">
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Currency</label>
-                        <select id="saleCurrency" class="form-select">
-                            <option value="UGX">UGX (Uganda Shilling)</option>
-                            <option value="USD">USD (US Dollar)</option>
-                            <option value="KES">KES (Kenya Shilling)</option>
-                            <option value="TZS">TZS (Tanzania Shilling)</option>
-                        </select>
-                    </div>
-                    <hr>
-                    <div class="row g-2 mb-2">
-                        <div class="col-4">
-                            <label class="form-label">Barcode</label>
-                            <input type="text" id="saleBarcode" class="form-control barcode-input" placeholder="Scan code">
-                        </div>
-                        <div class="col-3">
-                            <label class="form-label">Product *</label>
-                            <select id="saleProduct" class="form-select">${productOpts}</select>
-                        </div>
-                        <div class="col-3">
-                            <label class="form-label">Qty (L) *</label>
-                            <input type="number" id="saleQty" class="form-control" step="0.01" min="0.01" placeholder="0">
-                        </div>
-                        <div class="col-2">
-                            <label class="form-label">Price</label>
-                            <input type="number" id="salePrice" class="form-control bg-light" step="1" readonly>
-                        </div>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-4"><button class="btn btn-outline-primary btn-sm w-100" id="barcodeLookupBtn"><i class="bi bi-upc-scan"></i> Lookup</button></div>
-                        <div class="col-8"><button class="btn btn-outline-primary btn-sm w-100" id="addToCartBtn"><i class="bi bi-plus-circle"></i> Add to Cart</button></div>
-                    </div>
-                    <div class="discount-row mb-2">
-                        <label class="form-label mb-1">Discount</label>
-                        <div class="row g-2">
-                            <div class="col-5"><select id="saleDiscType" class="form-select"><option value="none">None</option><option value="fixed">Fixed (UGX)</option><option value="percent">Percent (%)</option></select></div>
-                            <div class="col-7"><input type="number" id="saleDiscValue" class="form-control" min="0" step="1" placeholder="0" disabled></div>
-                        </div>
-                    </div>
-                    <div class="mb-2" id="mmRefWrap" style="display:none;">
-                        <label class="form-label">Mobile money reference</label>
-                        <input type="text" id="saleMmRef" class="form-control" placeholder="e.g. MTN / Airtel receipt no.">
-                    </div>
-                    <div id="cartBox" class="mb-3"></div>
-                    <button type="button" class="btn btn-intl btn-intl-success" id="completeSaleBtn" disabled>
-                        <i class="bi bi-check-circle"></i> Complete sale &amp; invoice
-                    </button>
-                    <div class="fin-note mt-2 mb-0">
-                        <kbd>Enter</kbd> add · <kbd>F9</kbd> complete · <kbd>F2</kbd> qty
-                    </div>
-                    </div>
+            <div class="ms-kpis">
+                <div class="ms-kpi">
+                    <div class="lbl">Revenue (month)</div>
+                    <div class="val">${formatCompactMoney(mtdRev)}</div>
+                    <div class="hint">${mtdSales.length} sale${mtdSales.length === 1 ? '' : 's'} this month</div>
+                </div>
+                <div class="ms-kpi">
+                    <div class="lbl">Volume (month)</div>
+                    <div class="val">${mtdLitres.toFixed(0)} <span style="font-size:0.7em;font-weight:650;color:#64748b">L</span></div>
+                    <div class="hint">Litres sold</div>
+                </div>
+                <div class="ms-kpi">
+                    <div class="lbl">History</div>
+                    <div class="val">${sales.length}</div>
+                    <div class="hint">All recorded sales</div>
                 </div>
             </div>
 
-            <div class="col-12 col-xl-8 col-lg-8">
-                <div class="fin-ledger-card sales-history-panel">
-                    <div class="intl-section-head">
-                        <h6><i class="bi bi-receipt"></i> Sales history</h6>
-                        <span class="meta">${sales.length}</span>
+            <div class="ms-layout">
+                <div class="ms-form-card sales-form-panel">
+                    <div class="ms-form-head">
+                        <i class="bi bi-plus-circle-fill text-success"></i>
+                        <h6>New sale</h6>
+                        <span class="ms-form-badge">POS</span>
                     </div>
-                    <div class="fin-filter-bar">
-                        <input type="search" class="form-control fin-q" id="salesSearch" placeholder="Search product, cashier…">
-                        <input type="date" class="form-control fin-d" id="salesDateFrom" value="${new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)}">
-                        <input type="date" class="form-control fin-d" id="salesDateTo" value="${todayISO}">
+                    <div class="ms-form-body">
+                        <div class="ms-block">
+                            <div class="ms-block-title">Details</div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label">Station *</label>
+                                    <select id="saleStation" class="form-select" ${roleNorm(state.user.role) === 'cashier' ? 'disabled' : ''}>
+                                        <option value="" disabled selected>Select station</option>${stationOpts}
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Cashier</label>
+                                    <select id="saleCashier" class="form-select">
+                                        ${cashierOpts}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" id="saleDate" class="form-control" value="${todayISO}">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Payment</label>
+                                    <select id="salePayment" class="form-select">
+                                        <option value="cash">Cash</option>
+                                        <option value="mobile">Mobile money</option>
+                                        <option value="card">Card</option>
+                                        <option value="credit">Credit</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Customer</label>
+                                <div class="row g-1 align-items-center">
+                                    <div class="col-8">
+                                        <select id="saleCustomerSelect" class="form-select">
+                                            <option value="walk-in">Walk-in</option>
+                                            ${customerOpts}
+                                            <option value="custom">Custom…</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-4">
+                                        <span class="badge bg-info" id="customerBalanceDisplay" style="display:none;">Balance: 0</span>
+                                    </div>
+                                </div>
+                                <input type="text" id="saleCustomerName" class="form-control mt-1" placeholder="Custom customer name" style="display:none;">
+                            </div>
+                            <div>
+                                <label class="form-label">Currency</label>
+                                <select id="saleCurrency" class="form-select">
+                                    <option value="UGX">UGX — Uganda Shilling</option>
+                                    <option value="USD">USD — US Dollar</option>
+                                    <option value="KES">KES — Kenya Shilling</option>
+                                    <option value="TZS">TZS — Tanzania Shilling</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="ms-block">
+                            <div class="ms-block-title">Line items</div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-4">
+                                    <label class="form-label">Barcode</label>
+                                    <input type="text" id="saleBarcode" class="form-control" placeholder="Scan">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">Product *</label>
+                                    <select id="saleProduct" class="form-select">
+                                        <option value="">Select</option>${productOpts}
+                                    </select>
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">Qty (L) *</label>
+                                    <input type="number" id="saleQty" class="form-control" step="0.01" min="0.01" placeholder="0">
+                                </div>
+                                <div class="col-2">
+                                    <label class="form-label">Price</label>
+                                    <input type="number" id="salePrice" class="form-control bg-light" step="1" readonly>
+                                </div>
+                            </div>
+                            <div class="ms-btn-row mb-2">
+                                <button type="button" class="btn btn-outline-secondary" id="barcodeLookupBtn"><i class="bi bi-upc-scan"></i> Lookup</button>
+                                <button type="button" class="btn btn-outline-primary" id="addToCartBtn"><i class="bi bi-plus-lg"></i> Add to cart</button>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Discount</label>
+                                <div class="row g-2">
+                                    <div class="col-5">
+                                        <select id="saleDiscType" class="form-select">
+                                            <option value="none">None</option>
+                                            <option value="fixed">Fixed amount</option>
+                                            <option value="percent">Percent (%)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-7">
+                                        <input type="number" id="saleDiscValue" class="form-control" min="0" step="1" placeholder="0" disabled>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-0" id="mmRefWrap" style="display:none;">
+                                <label class="form-label">Mobile money reference</label>
+                                <input type="text" id="saleMmRef" class="form-control" placeholder="Receipt / reference number">
+                            </div>
+                        </div>
+
+                        <div id="cartBox" class="mb-3"></div>
+                        <button type="button" class="ms-complete-btn" id="completeSaleBtn" disabled>
+                            <i class="bi bi-check-circle"></i> Complete sale
+                        </button>
+                        <div class="ms-shortcuts">
+                            <kbd>Enter</kbd> add · <kbd>F9</kbd> complete · <kbd>F2</kbd> qty
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ms-history-card sales-history-panel">
+                    <div class="ms-hist-head">
+                        <h6><i class="bi bi-clock-history"></i> Sales history</h6>
+                        <span class="ms-count">${sales.length} records</span>
+                    </div>
+                    <div class="ms-filters">
+                        <input type="search" class="form-control ms-search" id="salesSearch" placeholder="Search product, cashier, customer…">
+                        <input type="date" class="form-control ms-date" id="salesDateFrom" value="${new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10)}">
+                        <input type="date" class="form-control ms-date" id="salesDateTo" value="${todayISO}">
                     </div>
                     <div class="sales-history-wrap">
                         <table class="sales-history-table" id="salesTable">
@@ -14311,7 +14462,7 @@ buildSidebar = function() {
     menuStructure.push({ label: 'Dashboard', icon: 'bi-grid-1x2-fill', page: 'dashboard', isLeaf: true });
 
     if (role === 'cashier') {
-        menuStructure.push({ label: 'Sales', icon: 'bi-cart-check', page: 'sales', isLeaf: true });
+        menuStructure.push({ label: 'Make Sales', icon: 'bi-cart-check', page: 'sales', isLeaf: true });
         menuStructure.push({ label: 'My Shifts', icon: 'bi-clock-history', page: 'shifts', isLeaf: true });
         menuStructure.push({ label: 'Meter Readings', icon: 'bi-speedometer2', page: 'meters', isLeaf: true });
         menuStructure.push({ label: 'Messages', icon: 'bi-chat-dots', page: 'messages', isLeaf: true });
@@ -14320,7 +14471,7 @@ buildSidebar = function() {
             label: 'Sales',
             icon: 'bi-cart-check',
             children: [
-                { label: 'Sales Desk', page: 'sales' },
+                { label: 'Make Sales', page: 'sales' },
                 { label: 'Shifts', page: 'shifts' },
                 { label: 'Meter Readings', page: 'meters' },
                 { label: 'Invoices', page: 'invoices' }
