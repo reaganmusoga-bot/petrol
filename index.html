@@ -812,6 +812,291 @@
             .dash-hero-metric .value { font-size: 1.35rem !important; }
         }
         /* Dashboard redesign */
+
+        /* ===== Dashboard — international command center ===== */
+        .dash-cc {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 1400px;
+        }
+        .dash-cc-top {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .dash-cc-top h3 {
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #0f172a;
+        }
+        .dash-cc-meta {
+            margin-top: 4px;
+            font-size: 0.84rem;
+            color: #64748b;
+            font-weight: 500;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            align-items: center;
+        }
+        .dash-cc-meta .sep { color: #cbd5e1; }
+        .dash-cc-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+        .dash-cc-period {
+            display: inline-flex;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 3px;
+            gap: 2px;
+        }
+        .dash-cc-period button {
+            border: none;
+            background: transparent;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 650;
+            color: #64748b;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .dash-cc-period button.active {
+            background: #fff;
+            color: #0f172a;
+            box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+        }
+        .dash-cc-period button:hover:not(.active) { color: #0f172a; }
+        .dash-cc-btn {
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            border-radius: 9px;
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+        }
+        .dash-cc-btn:hover { background: #f8fafc; color: #0f172a; }
+        .dash-cc-heroes {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+        @media (max-width: 900px) {
+            .dash-cc-heroes { grid-template-columns: 1fr; }
+        }
+        .dash-cc-hero {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 18px 20px;
+            min-width: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .dash-cc-hero.primary {
+            background: linear-gradient(145deg, #0b1a33 0%, #1a3a6a 100%);
+            border-color: transparent;
+            color: #fff;
+        }
+        .dash-cc-hero .lbl {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+        }
+        .dash-cc-hero.primary .lbl { color: rgba(255,255,255,0.7); }
+        .dash-cc-hero .val {
+            margin-top: 8px;
+            font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.15;
+            font-variant-numeric: tabular-nums;
+            word-break: break-word;
+        }
+        .dash-cc-hero.primary .val { color: #fff; }
+        .dash-cc-hero .sub {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+        .dash-cc-hero.primary .sub { color: rgba(255,255,255,0.75); }
+        .dash-cc-hero .sub.up { color: #059669; }
+        .dash-cc-hero .sub.down { color: #dc2626; }
+        .dash-cc-hero.primary .sub.up { color: #6ee7b7; }
+        .dash-cc-hero.primary .sub.down { color: #fca5a5; }
+        .dash-cc-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 992px) {
+            .dash-cc-grid { grid-template-columns: 1fr; }
+        }
+        .dash-cc-panel {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 18px;
+            min-width: 0;
+        }
+        .dash-cc-panel h6 {
+            margin: 0 0 14px;
+            font-size: 0.82rem;
+            font-weight: 750;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dash-cc-panel h6 .tag {
+            margin-left: auto;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 999px;
+        }
+        .dash-attn-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 11px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+        .dash-attn-item:last-child { border-bottom: none; }
+        .dash-attn-item .attn-left {
+            display: flex; align-items: center; gap: 10px; min-width: 0;
+        }
+        .dash-attn-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+            background: #cbd5e1;
+        }
+        .dash-attn-dot.warn { background: #f59e0b; }
+        .dash-attn-dot.danger { background: #ef4444; }
+        .dash-attn-dot.info { background: #3b82f6; }
+        .dash-attn-dot.ok { background: #10b981; }
+        .dash-attn-item .btn {
+            font-size: 0.75rem; font-weight: 650;
+            padding: 4px 10px; border-radius: 7px; white-space: nowrap;
+        }
+        .dash-cc-stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+        .dash-cc-stat {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px 14px;
+            min-width: 0;
+        }
+        .dash-cc-stat .v {
+            font-weight: 750;
+            font-size: 1.05rem;
+            color: #0f172a;
+            font-variant-numeric: tabular-nums;
+            word-break: break-word;
+        }
+        .dash-cc-stat .l {
+            font-size: 0.72rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .dash-cc-stock {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .dash-cc-stock span {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #334155;
+            background: #f1f5f9;
+            padding: 6px 10px;
+            border-radius: 8px;
+        }
+        .dash-cc-actions-row {
+            display: grid;
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 10px;
+        }
+        @media (max-width: 900px) {
+            .dash-cc-actions-row { grid-template-columns: repeat(3, 1fr); }
+        }
+        .dash-cc-qa {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+        }
+        .dash-cc-qa:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 14px rgba(15,23,42,0.06);
+            transform: translateY(-1px);
+        }
+        .dash-cc-qa i {
+            font-size: 1.25rem;
+            color: #0b1a33;
+        }
+        .dash-cc-qa div {
+            margin-top: 6px;
+            font-size: 0.78rem;
+            font-weight: 650;
+            color: #334155;
+        }
+        .dash-cc-charts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        @media (max-width: 900px) {
+            .dash-cc-charts { grid-template-columns: 1fr; }
+        }
+        .dash-cc-chart-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 16px 18px;
+        }
+        .dash-cc-chart-card h6 {
+            margin: 0 0 12px;
+            font-size: 0.82rem;
+            font-weight: 750;
+            color: #0f172a;
+        }
+        .dash-cc-insight {
+            font-size: 0.84rem;
+            color: #475569;
+            background: #f8fafc;
+            border: 1px solid #eef2f7;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 500;
+        }
+        .dash-cc-insight strong { color: #0f172a; }
+
         .dash-topbar {
             display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
             gap: 12px; margin-bottom: 18px;
@@ -4045,7 +4330,7 @@ async function renderDashboard() {
 
     const fInv = inv.filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId));
     // Fuel sales only — exclude reversed and customer-payment receipts (those are not fuel revenue)
-    const fSales = sales.filter(s => s.status !== 'reversed' && s.type !== 'payment' && (!state.currentStationId || String(s.station_id) === String(state.currentStationId)));
+    const fSales = sales.filter(s => s.status !== 'reversed' && s.reversed !== true && s.type !== 'payment' && (!state.currentStationId || String(s.station_id) === String(state.currentStationId)));
     const fPayments = sales.filter(s => s.status !== 'reversed' && s.type === 'payment' && (!state.currentStationId || String(s.station_id) === String(state.currentStationId)));
     const fShifts = shifts.filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId));
     const fExpenses = expenses.filter(e => e.status !== 'reversed' && e.reversed !== true && (!state.currentStationId || String(e.station_id) === String(state.currentStationId)));
@@ -4198,123 +4483,137 @@ async function renderDashboard() {
 
     const isCashierUser = roleNorm(state.user.role) === 'cashier';
 
+    // Insight line
+    let insightText = '';
+    if (Math.abs(todayDeltaPct) >= 0.5) {
+        const dir = todayDeltaPct >= 0 ? 'up' : 'down';
+        insightText = `Today's fuel sales are <strong>${dir} ${Math.abs(todayDeltaPct).toFixed(1)}%</strong> versus yesterday (${formatCompactMoney(yesterdaySales)}).`;
+    } else {
+        insightText = `Today's fuel sales are <strong>in line with yesterday</strong> (${formatCompactMoney(yesterdaySales)}).`;
+    }
+    if (unreconciledCount > 0) {
+        insightText += ` <strong>${unreconciledCount}</strong> closed shift${unreconciledCount === 1 ? '' : 's'} still need balancing.`;
+    } else if (lowCount > 0) {
+        insightText += ` <strong>${lowCount}</strong> product${lowCount === 1 ? '' : 's'} are below stock threshold.`;
+    }
+
+    const stockChips = Object.keys(stockByProduct).length
+        ? Object.keys(stockByProduct).map(p =>
+            `<span>${esc(p)} · ${Number(stockByProduct[p]).toFixed(0)} L</span>`
+          ).join('')
+        : '<span class="text-muted">No inventory yet</span>';
+
+    // Attention items
+    const attnItems = [];
+    if (unreconciledCount > 0) {
+        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot warn"></span><span><strong>${unreconciledCount}</strong> shift${unreconciledCount === 1 ? '' : 's'} not balanced</span></div><button type="button" class="btn btn-outline-warning btn-sm" onclick="navigate('balancing')">Balance</button></div>`);
+    } else {
+        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot ok"></span><span class="text-muted">All closed shifts balanced</span></div><span class="text-success small fw-semibold">OK</span></div>`);
+    }
+    if (activeShifts > 0) {
+        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot info"></span><span><strong>${activeShifts}</strong> active shift${activeShifts === 1 ? '' : 's'}</span></div><button type="button" class="btn btn-outline-primary btn-sm" onclick="navigate('shifts')">View</button></div>`);
+    }
+    if (lowCount > 0) {
+        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot danger"></span><span><strong>${lowCount}</strong> low stock item${lowCount === 1 ? '' : 's'}</span></div><button type="button" class="btn btn-outline-danger btn-sm" onclick="navigate('inventory')">Inventory</button></div>`);
+    } else {
+        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot ok"></span><span class="text-muted">Stock levels healthy</span></div><span class="text-success small fw-semibold">OK</span></div>`);
+    }
+    if (openShortage > 0) {
+        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot warn"></span><span>Cashier shortages · <strong>${formatCompactMoney(openShortage)}</strong></span></div><button type="button" class="btn btn-outline-secondary btn-sm" onclick="navigate('payroll')">Payroll</button></div>`);
+    }
+    if (creditOverdue > 0) {
+        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot warn"></span><span><strong>${creditOverdue}</strong> customer${creditOverdue === 1 ? '' : 's'} with balance due</span></div><button type="button" class="btn btn-outline-secondary btn-sm" onclick="navigate('customers')">Customers</button></div>`);
+    }
+
     let html = `
-        <div class="dash-topbar">
-            <div>
-                <h4>${esc(companyData.name || 'PetroManager')}</h4>
-                <div class="text-muted small mt-1">
-                    <i class="bi bi-pin-map"></i> ${esc(stationLabel)}
-                    · <i class="bi bi-person"></i> ${esc(state.user.role)}
-                    · ${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-                </div>
-            </div>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-                <div class="dash-period" id="dashPeriodBtns">
-                    <button type="button" data-period="today" class="${period === 'today' ? 'active' : ''}">Today</button>
-                    <button type="button" data-period="7d" class="${period === '7d' ? 'active' : ''}">7D</button>
-                    <button type="button" data-period="mtd" class="${period === 'mtd' ? 'active' : ''}">MTD</button>
-                    <button type="button" data-period="ytd" class="${period === 'ytd' ? 'active' : ''}">YTD</button>
-                    <button type="button" data-period="all" class="${period === 'all' ? 'active' : ''}">All</button>
-                </div>
-                ${canManageCompany(state.user.role) ? `<button class="btn btn-sm btn-outline-secondary" id="editCompanyBtn"><i class="bi bi-pencil"></i> Company</button>` : ''}
-                <button class="btn btn-sm btn-outline-secondary" id="dailyReportBtn"><i class="bi bi-envelope"></i> Email report</button>
-                <button class="btn btn-sm btn-outline-secondary" id="lowStockAlertBtn"><i class="bi bi-bell"></i> Stock check</button>
-            </div>
-        </div>
-
-        <!-- Hero metrics (period-scoped) -->
-        <div class="dash-hero-row">
-            <div class="dash-hero-metric" title="${formatMoney(todaySales)}">
-                <div class="label">Today's fuel sales</div>
-                <div class="value text-primary">${formatCompactMoney(todaySales)}</div>
-                <div class="delta ${deltaClass(todayDeltaPct)}">${deltaLabel(todayDeltaPct)} · yday ${formatCompactMoney(yesterdaySales)}</div>
-            </div>
-            <div class="dash-hero-metric" title="${formatMoney(totalRevenue)}">
-                <div class="label">Fuel revenue · ${periodLabel}</div>
-                <div class="value">${formatCompactMoney(totalRevenue)}</div>
-                <div class="delta flat">Margin ${marginPct.toFixed(1)}% · GP ${formatCompactMoney(grossProfit)} · Collections ${formatCompactMoney(totalCollections)}</div>
-            </div>
-            <div class="dash-hero-metric" title="${formatMoney(netProfit)}">
-                <div class="label">Net profit · ${periodLabel}</div>
-                <div class="value ${netProfit >= 0 ? 'profit-positive' : 'profit-negative'}">${formatCompactMoney(netProfit)}</div>
-                <div class="delta flat">Expenses ${formatCompactMoney(totalExpenses)} · losses ${formatCompactMoney(totalLosses)}</div>
-            </div>
-        </div>
-
-        <div class="dash-main-grid">
-            <div class="dash-attention">
-                <h6><i class="bi bi-exclamation-circle text-warning"></i> Needs attention</h6>
-                ${unreconciledCount > 0 ? `<div class="item"><span><strong>${unreconciledCount}</strong> shift(s) not balanced</span><button class="btn btn-sm btn-outline-warning go" onclick="navigate('balancing')">Balance</button></div>` : `<div class="item text-muted"><span>All closed shifts balanced</span><span class="text-success">OK</span></div>`}
-                ${activeShifts > 0 ? `<div class="item"><span><strong>${activeShifts}</strong> active shift(s)</span><button class="btn btn-sm btn-outline-primary go" onclick="navigate('shifts')">Shifts</button></div>` : ''}
-                ${lowCount > 0 ? `<div class="item"><span><strong>${lowCount}</strong> low stock item(s)</span><button class="btn btn-sm btn-outline-danger go" onclick="navigate('inventory')">Inventory</button></div>` : `<div class="item text-muted"><span>Stock levels OK</span><span class="text-success">OK</span></div>`}
-                ${openShortage > 0 ? `<div class="item"><span>Cashier shortages ~ <strong>${formatCompactMoney(openShortage)}</strong></span><button class="btn btn-sm btn-outline-secondary go" onclick="navigate('payroll')">Payroll</button></div>` : ''}
-                ${creditOverdue > 0 ? `<div class="item"><span><strong>${creditOverdue}</strong> customer(s) with balance due</span><button class="btn btn-sm btn-outline-secondary go" onclick="navigate('customers')">Customers</button></div>` : ''}
-                ${unreconciledCount === 0 && lowCount === 0 && openShortage === 0 && creditOverdue === 0 && activeShifts === 0 ? `<div class="item text-muted"><span>Nothing urgent right now</span></div>` : ''}
-            </div>
-            <div>
-                <div class="dash-sec-metrics">
-                    <div class="dash-sec-metric" title="${formatMoney(totalExpenses)}"><div class="v">${formatCompactMoney(totalExpenses)}</div><div class="l">Expenses</div></div>
-                    <div class="dash-sec-metric"><div class="v">${totalLitres >= 1000 ? (totalLitres/1000).toFixed(1)+'k' : totalLitres.toFixed(0)} L</div><div class="l">Total stock</div></div>
-                    <div class="dash-sec-metric"><div class="v">${activeShifts}</div><div class="l">Open shifts</div></div>
-                    <div class="dash-sec-metric"><div class="v">${totalCustomers}</div><div class="l">Customers</div></div>
-                    <div class="dash-sec-metric"><div class="v">${totalSuppliers}</div><div class="l">Suppliers</div></div>
-                    <div class="dash-sec-metric" title="${formatMoney(totalLosses)}"><div class="v text-danger">${formatCompactMoney(totalLosses)}</div><div class="l">Inv. losses</div></div>
-                </div>
-                <div class="mt-3">
-                    <div class="small text-muted mb-2 fw-semibold">Stock by product</div>
-                    <div class="dash-sec-metrics">
-                        ${Object.keys(stockByProduct).length ? Object.keys(stockByProduct).map(p => `
-                            <div class="dash-sec-metric"><div class="v">${Number(stockByProduct[p]).toFixed(0)} L</div><div class="l">${esc(p)}</div></div>
-                        `).join('') : '<div class="text-muted small">No inventory yet</div>'}
+        <div class="dash-cc">
+            <div class="dash-cc-top">
+                <div>
+                    <h3>${esc(companyData.name || 'PetroManager')}</h3>
+                    <div class="dash-cc-meta">
+                        <span><i class="bi bi-geo-alt"></i> ${esc(stationLabel)}</span>
+                        <span class="sep">·</span>
+                        <span>${esc(state.user.role)}</span>
+                        <span class="sep">·</span>
+                        <span>${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
                     </div>
                 </div>
+                <div class="dash-cc-actions">
+                    <div class="dash-cc-period" id="dashPeriodBtns">
+                        <button type="button" data-period="today" class="${period === 'today' ? 'active' : ''}">Today</button>
+                        <button type="button" data-period="7d" class="${period === '7d' ? 'active' : ''}">7D</button>
+                        <button type="button" data-period="mtd" class="${period === 'mtd' ? 'active' : ''}">MTD</button>
+                        <button type="button" data-period="ytd" class="${period === 'ytd' ? 'active' : ''}">YTD</button>
+                        <button type="button" data-period="all" class="${period === 'all' ? 'active' : ''}">All</button>
+                    </div>
+                    ${canManageCompany(state.user.role) ? `<button type="button" class="dash-cc-btn" id="editCompanyBtn"><i class="bi bi-building"></i> Company</button>` : ''}
+                    <button type="button" class="dash-cc-btn" id="dailyReportBtn"><i class="bi bi-envelope"></i> Report</button>
+                    <button type="button" class="dash-cc-btn" id="lowStockAlertBtn"><i class="bi bi-bell"></i> Stock</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Multi-station owner scorecard -->
-        ${(!state.currentStationId && state.stations && state.stations.length > 1) ? (() => {
-            let rows = '';
-            state.stations.forEach(st => {
-                const sid = String(st.id);
-                const stSales = pSales.filter(s => String(s.station_id) === sid);
-                const rev = stSales.reduce((s, x) => s + (Number(x.amount) || 0), 0);
-                const stExp = pExpenses.filter(x => String(x.station_id) === sid).reduce((s, x) => s + (Number(x.amount) || 0), 0);
-                const stActive = fShifts.filter(x => String(x.station_id) === sid && x.status === 'active').length;
-                const stStock = (inv || []).filter(i => String(i.station_id) === sid).reduce((s, i) => s + (Number(i.quantity) || 0), 0);
-                rows += `<tr>
-                    <td>${esc(st.name)}</td>
-                    <td class="text-end">${formatCompactMoney(rev)}</td>
-                    <td class="text-end">${formatCompactMoney(stExp)}</td>
-                    <td class="text-end">${stStock.toFixed(0)} L</td>
-                    <td class="text-end">${stActive}</td>
-                </tr>`;
-            });
-            return `<div class="card-box mb-3">
-                <h6 class="mb-2"><i class="bi bi-building"></i> Stations comparison · ${esc(periodLabel)}</h6>
-                <div class="table-responsive"><table class="table table-sm mb-0">
-                    <thead><tr><th>Station</th><th class="text-end">Fuel sales</th><th class="text-end">Expenses</th><th class="text-end">Stock</th><th class="text-end">Open shifts</th></tr></thead>
-                    <tbody>${rows}</tbody>
-                </table></div>
-            </div>`;
-        })() : ''}
+            <div class="dash-cc-insight">${insightText}</div>
 
-        <!-- Quick actions -->
-        <div class="row g-2 mb-3">
-            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('sales')"><i class="bi bi-cart-plus fs-4 text-primary"></i><div class="small fw-semibold mt-1">Make Sales</div></div></div>
-            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('balancing')"><i class="bi bi-balance-scale fs-4 text-warning"></i><div class="small fw-semibold mt-1">Balance</div></div></div>
-            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('inventory')"><i class="bi bi-box-seam fs-4 text-success"></i><div class="small fw-semibold mt-1">Inventory</div></div></div>
-            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('stock')"><i class="bi bi-truck fs-4 text-info"></i><div class="small fw-semibold mt-1">Offload</div></div></div>
-            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('financials')"><i class="bi bi-wallet2 fs-4" style="color:#6f42c1"></i><div class="small fw-semibold mt-1">Finance</div></div></div>
-            <div class="col-4 col-md-2"><div class="card-box text-center quick-action-card py-3" onclick="navigate('payroll')"><i class="bi bi-people fs-4 text-success"></i><div class="small fw-semibold mt-1">Payroll</div></div></div>
-        </div>
+            <div class="dash-cc-heroes">
+                <div class="dash-cc-hero primary" title="${formatMoney(todaySales)}">
+                    <div class="lbl">Today's fuel sales</div>
+                    <div class="val">${formatCompactMoney(todaySales)}</div>
+                    <div class="sub ${deltaClass(todayDeltaPct)}">${deltaLabel(todayDeltaPct)} · yesterday ${formatCompactMoney(yesterdaySales)}</div>
+                </div>
+                <div class="dash-cc-hero" title="${formatMoney(totalRevenue)}">
+                    <div class="lbl">Fuel revenue · ${esc(periodLabel)}</div>
+                    <div class="val">${formatCompactMoney(totalRevenue)}</div>
+                    <div class="sub">Gross margin ${marginPct.toFixed(1)}% · GP ${formatCompactMoney(grossProfit)}</div>
+                </div>
+                <div class="dash-cc-hero" title="${formatMoney(netProfit)}">
+                    <div class="lbl">Net profit · ${esc(periodLabel)}</div>
+                    <div class="val" style="color:${netProfit >= 0 ? '#059669' : '#dc2626'}">${formatCompactMoney(netProfit)}</div>
+                    <div class="sub">Expenses ${formatCompactMoney(totalExpenses)} · losses ${formatCompactMoney(totalLosses)}</div>
+                </div>
+            </div>
 
-        <div class="dash-charts">
-            <div class="card-box"><h6 class="mb-3">Sales by product</h6><canvas id="productChart" height="200"></canvas></div>
-            <div class="card-box"><h6 class="mb-3">Last 7 days</h6><canvas id="trendChart" height="200"></canvas></div>
-        </div>
-        <div class="card-box mb-2">
-            <h6 class="mb-3">P&amp;L overview</h6>
-            <canvas id="pnlChart" height="80"></canvas>
+            <div class="dash-cc-grid">
+                <div class="dash-cc-panel">
+                    <h6><i class="bi bi-lightning-charge text-warning"></i> Needs attention <span class="tag">Live</span></h6>
+                    ${attnItems.join('')}
+                </div>
+                <div class="dash-cc-panel">
+                    <h6><i class="bi bi-activity"></i> Operations <span class="tag">${esc(periodLabel)}</span></h6>
+                    <div class="dash-cc-stats">
+                        <div class="dash-cc-stat" title="${formatMoney(totalExpenses)}"><div class="v">${formatCompactMoney(totalExpenses)}</div><div class="l">Expenses</div></div>
+                        <div class="dash-cc-stat"><div class="v">${totalLitres >= 1000 ? (totalLitres/1000).toFixed(1) + 'k' : totalLitres.toFixed(0)} L</div><div class="l">Stock on hand</div></div>
+                        <div class="dash-cc-stat"><div class="v">${activeShifts}</div><div class="l">Open shifts</div></div>
+                        <div class="dash-cc-stat"><div class="v">${totalCustomers}</div><div class="l">Customers</div></div>
+                        <div class="dash-cc-stat"><div class="v">${totalSuppliers}</div><div class="l">Suppliers</div></div>
+                        <div class="dash-cc-stat" title="${formatMoney(totalLosses)}"><div class="v" style="color:${totalLosses > 0 ? '#dc2626' : '#0f172a'}">${formatCompactMoney(totalLosses)}</div><div class="l">Inventory losses</div></div>
+                    </div>
+                    <div class="dash-cc-stock">${stockChips}</div>
+                </div>
+            </div>
+
+            <div class="dash-cc-actions-row">
+                <div class="dash-cc-qa" onclick="navigate('sales')"><i class="bi bi-cart-plus"></i><div>Make Sales</div></div>
+                <div class="dash-cc-qa" onclick="navigate('balancing')"><i class="bi bi-balance-scale"></i><div>Balance</div></div>
+                <div class="dash-cc-qa" onclick="navigate('inventory')"><i class="bi bi-box-seam"></i><div>Inventory</div></div>
+                <div class="dash-cc-qa" onclick="navigate('stock')"><i class="bi bi-truck"></i><div>Offload</div></div>
+                <div class="dash-cc-qa" onclick="navigate('financials')"><i class="bi bi-wallet2"></i><div>Finance</div></div>
+                <div class="dash-cc-qa" onclick="navigate('payroll')"><i class="bi bi-people"></i><div>Payroll</div></div>
+            </div>
+
+            <div class="dash-cc-charts">
+                <div class="dash-cc-chart-card">
+                    <h6>Sales by product</h6>
+                    <canvas id="productChart" height="200"></canvas>
+                </div>
+                <div class="dash-cc-chart-card">
+                    <h6>Last 7 days</h6>
+                    <canvas id="trendChart" height="200"></canvas>
+                </div>
+            </div>
+            <div class="dash-cc-chart-card">
+                <h6>P&amp;L overview · ${esc(periodLabel)}</h6>
+                <canvas id="pnlChart" height="80"></canvas>
+            </div>
         </div>`;
 
     document.getElementById('pageContent').innerHTML = html;
@@ -4324,6 +4623,8 @@ async function renderDashboard() {
     if (editBtn) editBtn.onclick = function() { navigate('company'); };
     const dailyBtn = document.getElementById('dailyReportBtn');
     if (dailyBtn) dailyBtn.onclick = sendDailyReportEmail;
+    const stockBtn = document.getElementById('lowStockAlertBtn');
+    if (stockBtn) stockBtn.onclick = function() { checkLowStock(); };
     document.querySelectorAll('#dashPeriodBtns button').forEach(btn => {
         btn.onclick = function() {
             state.dashPeriod = this.dataset.period || 'mtd';
@@ -5231,27 +5532,97 @@ async function renderSales() {
             const payment = (this.dataset.payment || 'cash').toLowerCase();
             const customerId = this.dataset.customer || '';
             if (!confirm('Reverse this sale?\n\n' + qty + ' L of ' + product + ' will be restored to stock.' +
-                (payment === 'credit' && customerId ? '\nAny credit charged to the customer will be adjusted.' : '') +
+                (payment === 'credit' && customerId
+                    ? '\nCustomer credit balance will be reduced by the sale amount.'
+                    : '\nCash / till balance will be reduced by the sale amount.') +
                 '\n\nThe original record stays in history as Reversed.'))
                 return;
             try {
                 showLoading(true);
+                // 1) Restore stock
                 await adjustInventory(stationId, product, qty, null, 'Sale reversal', 'reversal');
+
+                // 2) Mark sale reversed (excluded from revenue KPIs)
                 await updateDoc('sales', id, {
                     status: 'reversed',
+                    reversed: true,
                     reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
                     reversed_by: state.user.id
                 });
+
+                // 3) Money impact
                 if (payment === 'credit' && customerId && amount > 0) {
+                    // Undo credit charged to customer
                     await updateCustomerBalance(customerId, -amount, 'sale_reversal', id);
+                } else if (payment !== 'credit' && amount > 0) {
+                    // Undo deposit into station Cash Till (cash / mobile / card)
+                    try {
+                        if (typeof ensureSystemCashAccounts === 'function') {
+                            await ensureSystemCashAccounts(stationId);
+                        }
+                        const tillId = typeof systemCashAccountId === 'function'
+                            ? systemCashAccountId('cash_till', stationId)
+                            : null;
+                        if (tillId) {
+                            const tillRef = db.collection('bank_accounts').doc(tillId);
+                            await db.runTransaction(async (tx) => {
+                                const tillDoc = await tx.get(tillRef);
+                                if (tillDoc.exists) {
+                                    const bal = Number(tillDoc.data().balance) || 0;
+                                    tx.update(tillRef, {
+                                        balance: bal - amount,
+                                        last_reversal_at: firebase.firestore.FieldValue.serverTimestamp()
+                                    });
+                                }
+                            });
+                        }
+                    } catch (tillErr) {
+                        console.warn('Till reversal failed:', tillErr);
+                        toast('Sale reversed but till balance could not be updated: ' + tillErr.message, 'warning');
+                    }
                 }
-                await logAudit('reverse_sale', { saleId: id, product, qty, amount, payment, customerId: customerId || null });
-                toast('Sale reversed. Stock restored' + (payment === 'credit' && customerId ? ' and customer balance updated.' : '.'), 'success');
+
+                // 4) Reversing journal (ledger)
+                try {
+                    const taxOnSale = typeof calcTax === 'function' ? calcTax(amount) : { gross: amount, net: amount, tax: 0, label: 'Tax' };
+                    await postJournal({
+                        entry_type: 'sale_reversal',
+                        reference_id: id,
+                        station_id: stationId,
+                        description: 'Sale reversal · ' + product + ' · ' + payment,
+                        lines: [
+                            { account: payment === 'credit' ? 'Accounts Receivable' : 'Cash', debit: 0, credit: taxOnSale.gross },
+                            { account: 'Sales Revenue', debit: taxOnSale.net, credit: 0 },
+                            ...(taxOnSale.tax > 0 ? [{ account: 'Tax Payable (' + taxOnSale.label + ')', debit: taxOnSale.tax, credit: 0 }] : [])
+                        ]
+                    });
+                } catch (jErr) {
+                    console.warn('Reversal journal failed:', jErr);
+                }
+
+                try {
+                    await updateDoc('sales', id, {
+                        till_reversal_applied: true,
+                        till_reversal_at: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } catch (_) {}
+                await logAudit('reverse_sale', {
+                    saleId: id, product, qty, amount, payment,
+                    customerId: customerId || null,
+                    till_reversed: payment !== 'credit'
+                });
+                toast(
+                    'Sale reversed. Stock restored' +
+                    (payment === 'credit' && customerId
+                        ? ' and customer balance reduced.'
+                        : ' and till balance reduced.'),
+                    'success'
+                );
                 renderSales();
             } catch (err) { toast('Error: ' + err.message, 'danger'); }
             finally { showLoading(false); }
         };
-    });
+    }););
 
     // ---- Invoice button ----
     document.querySelectorAll('.invoice-btn').forEach(btn => {
@@ -8897,6 +9268,198 @@ async function renderTankLevels() {
 }
 
 
+
+// ===== One-time: balance tills for reversed sales that never reduced cash =====
+async function scanReversedSalesNeedingTillFix() {
+    const sales = await getAll('sales') || [];
+    const candidates = sales.filter(s => {
+        const isRev = s.status === 'reversed' || s.reversed === true;
+        if (!isRev) return false;
+        if (s.till_reversal_applied === true) return false;
+        const pay = String(s.payment_method || 'cash').toLowerCase();
+        if (pay === 'credit') return false;
+        const amt = Number(s.amount) || 0;
+        if (amt <= 0) return false;
+        return true;
+    });
+    const byStation = {};
+    candidates.forEach(s => {
+        const sid = String(s.station_id || 'unknown');
+        if (!byStation[sid]) byStation[sid] = { station_id: sid, count: 0, total: 0, sales: [] };
+        byStation[sid].count += 1;
+        byStation[sid].total += Number(s.amount) || 0;
+        byStation[sid].sales.push(s);
+    });
+    return { candidates, byStation, totalAmount: candidates.reduce((a, s) => a + (Number(s.amount) || 0), 0) };
+}
+
+async function applyReversedSalesTillFix() {
+    if (!isAdmin(state.user.role)) {
+        toast('Only managers can run account balancing.', 'danger');
+        return;
+    }
+    const scan = await scanReversedSalesNeedingTillFix();
+    if (!scan.candidates.length) {
+        toast('Accounts already balanced — no pending till corrections.', 'success');
+        return;
+    }
+    const summary = Object.values(scan.byStation).map(g =>
+        stationName(g.station_id) + ': ' + g.count + ' sale(s) · ' + formatMoney(g.total)
+    ).join('\n');
+    if (!confirm(
+        'One-time till correction\n\n' +
+        'This will reduce Cash Till balances for reversed sales that never reduced cash.\n\n' +
+        summary + '\n\n' +
+        'Total deduction: ' + formatMoney(scan.totalAmount) + '\n\n' +
+        'Each sale is marked so this never runs twice. Continue?'
+    )) return;
+
+    showLoading(true);
+    let fixed = 0, failed = 0;
+    try {
+        for (const s of scan.candidates) {
+            const amount = Number(s.amount) || 0;
+            const stationId = String(s.station_id || '');
+            try {
+                if (typeof ensureSystemCashAccounts === 'function') {
+                    await ensureSystemCashAccounts(stationId);
+                }
+                const tillId = typeof systemCashAccountId === 'function'
+                    ? systemCashAccountId('cash_till', stationId)
+                    : null;
+                if (tillId && amount > 0) {
+                    const tillRef = db.collection('bank_accounts').doc(tillId);
+                    await db.runTransaction(async (tx) => {
+                        const tillDoc = await tx.get(tillRef);
+                        if (tillDoc.exists) {
+                            const bal = Number(tillDoc.data().balance) || 0;
+                            tx.update(tillRef, {
+                                balance: bal - amount,
+                                last_reversal_at: firebase.firestore.FieldValue.serverTimestamp(),
+                                last_correction_note: 'one_time_reversed_sale_till_fix'
+                            });
+                        } else {
+                            tx.set(tillRef, {
+                                bank_name: 'Cash Till · ' + (stationName(stationId) || stationId),
+                                account_name: 'Station Cash Till',
+                                account_number: 'cash_till_' + stationId,
+                                balance: -amount,
+                                is_system: true,
+                                system_kind: 'cash_till',
+                                station_id: stationId,
+                                companyId: state.user.companyId,
+                                created_at: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                        }
+                    });
+                }
+                await updateDoc('sales', s.id, {
+                    till_reversal_applied: true,
+                    till_reversal_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    till_reversal_source: 'one_time_correction_tool'
+                });
+                try {
+                    const taxOnSale = typeof calcTax === 'function' ? calcTax(amount) : { gross: amount, net: amount, tax: 0, label: 'Tax' };
+                    await postJournal({
+                        entry_type: 'sale_reversal_correction',
+                        reference_id: s.id,
+                        station_id: stationId,
+                        description: 'One-time till correction for reversed sale · ' + (s.product_type || ''),
+                        lines: [
+                            { account: 'Cash', debit: 0, credit: taxOnSale.gross },
+                            { account: 'Sales Revenue', debit: taxOnSale.net, credit: 0 },
+                            ...(taxOnSale.tax > 0 ? [{ account: 'Tax Payable (' + taxOnSale.label + ')', debit: taxOnSale.tax, credit: 0 }] : [])
+                        ]
+                    });
+                } catch (_) {}
+                fixed++;
+            } catch (e) {
+                console.warn('Till fix failed for sale', s.id, e);
+                failed++;
+            }
+        }
+        await logAudit('one_time_till_correction', { fixed, failed, total: scan.totalAmount });
+        toast('Balancing complete: ' + fixed + ' sale(s) corrected' + (failed ? (', ' + failed + ' failed') : '') + '.', failed ? 'warning' : 'success');
+        if (typeof renderFinancials === 'function' && state.currentPage === 'financials') renderFinancials();
+        else if (typeof renderDashboard === 'function' && state.currentPage === 'dashboard') renderDashboard();
+    } finally {
+        showLoading(false);
+    }
+}
+
+async function showTillBalanceTool() {
+    if (!isAdmin(state.user.role)) {
+        toast('Only managers can open this tool.', 'danger');
+        return;
+    }
+    showLoading(true);
+    try {
+        const scan = await scanReversedSalesNeedingTillFix();
+        const rows = Object.values(scan.byStation).map(g =>
+            `<tr>
+                <td>${esc(stationName(g.station_id) || g.station_id)}</td>
+                <td class="text-end">${g.count}</td>
+                <td class="text-end fw-semibold">${formatMoney(g.total)}</td>
+            </tr>`
+        ).join('') || '<tr><td colspan="3" class="text-center text-muted">No pending corrections</td></tr>';
+
+        let modal = document.getElementById('tillBalanceModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'tillBalanceModal';
+            modal.className = 'modal fade';
+            modal.tabIndex = -1;
+            document.body.appendChild(modal);
+        }
+        modal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content" style="border-radius:14px;border:none;">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold">Balance accounts</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-2">
+                        <p class="text-muted small mb-3">
+                            One-time correction for <strong>reversed sales</strong> that restored stock but left cash in the till.
+                            This reduces each station Cash Till and marks those sales so it cannot run twice.
+                        </p>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-2">
+                                <thead><tr><th>Station</th><th class="text-end">Sales</th><th class="text-end">Till reduction</th></tr></thead>
+                                <tbody>${rows}</tbody>
+                                <tfoot>
+                                    <tr class="fw-bold">
+                                        <td>Total</td>
+                                        <td class="text-end">${scan.candidates.length}</td>
+                                        <td class="text-end">${formatMoney(scan.totalAmount)}</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        ${scan.candidates.length ? '' : '<div class="alert alert-success py-2 mb-0">All reversed sales are already balanced.</div>'}
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                        ${scan.candidates.length ? '<button type="button" class="btn btn-primary" id="applyTillBalanceBtn"><i class="bi bi-scales"></i> Apply correction</button>' : ''}
+                    </div>
+                </div>
+            </div>`;
+        const inst = bootstrap.Modal.getOrCreateInstance(modal);
+        inst.show();
+        const applyBtn = document.getElementById('applyTillBalanceBtn');
+        if (applyBtn) {
+            applyBtn.onclick = async function() {
+                inst.hide();
+                await applyReversedSalesTillFix();
+            };
+        }
+    } catch (e) {
+        toast('Could not scan sales: ' + e.message, 'danger');
+    } finally {
+        showLoading(false);
+    }
+}
+
 async function renderFinancials() {
     try {
         try { await ensureSystemCashAccounts(); } catch (_) {}
@@ -10147,6 +10710,8 @@ async function renderFinancials() {
             }
         }
         function bindPrintStatement() {
+            const tillBalBtn = document.getElementById('finTillBalanceBtn');
+            if (tillBalBtn) tillBalBtn.onclick = function() { showTillBalanceTool(); };
             const btn = document.getElementById('finPrintStatementBtn');
             if (!btn) return;
             btn.onclick = function() {
