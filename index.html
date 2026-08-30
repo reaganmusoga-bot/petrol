@@ -813,29 +813,29 @@
         }
         /* Dashboard redesign */
 
-        /* ===== Dashboard — international command center ===== */
+        /* ===== Dashboard — visual polish (space + colour) ===== */
         .dash-cc {
             display: flex;
             flex-direction: column;
-            gap: 18px;
-            max-width: 1400px;
+            gap: 22px;
+            max-width: 1280px;
         }
         .dash-cc-top {
             display: flex;
             flex-wrap: wrap;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 14px;
+            gap: 16px;
         }
         .dash-cc-top h3 {
             margin: 0;
-            font-size: 1.4rem;
+            font-size: 1.45rem;
             font-weight: 800;
             letter-spacing: -0.03em;
-            color: #0f172a;
+            color: #0b1a33;
         }
         .dash-cc-meta {
-            margin-top: 4px;
+            margin-top: 6px;
             font-size: 0.84rem;
             color: #64748b;
             font-weight: 500;
@@ -849,114 +849,148 @@
             display: flex;
             flex-wrap: wrap;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
         .dash-cc-period {
             display: inline-flex;
-            background: #f1f5f9;
-            border-radius: 10px;
-            padding: 3px;
+            background: #eef2ff;
+            border-radius: 12px;
+            padding: 4px;
             gap: 2px;
         }
         .dash-cc-period button {
             border: none;
             background: transparent;
-            padding: 7px 12px;
-            border-radius: 8px;
+            padding: 7px 13px;
+            border-radius: 9px;
             font-size: 0.78rem;
             font-weight: 650;
             color: #64748b;
             cursor: pointer;
-            transition: background 0.15s, color 0.15s;
+            transition: background 0.15s, color 0.15s, box-shadow 0.15s;
         }
         .dash-cc-period button.active {
             background: #fff;
-            color: #0f172a;
-            box-shadow: 0 1px 3px rgba(15,23,42,0.08);
+            color: #0b1a33;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
         }
-        .dash-cc-period button:hover:not(.active) { color: #0f172a; }
+        .dash-cc-period button:hover:not(.active) { color: #0b1a33; }
         .dash-cc-btn {
-            border: 1px solid #e2e8f0;
-            background: #fff;
-            border-radius: 9px;
-            padding: 7px 12px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 10px;
+            padding: 8px 12px;
             font-size: 0.8rem;
             font-weight: 600;
             color: #475569;
             cursor: pointer;
+            transition: background 0.15s, color 0.15s;
         }
-        .dash-cc-btn:hover { background: #f8fafc; color: #0f172a; }
+        .dash-cc-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .dash-cc-insight {
+            font-size: 0.9rem;
+            color: #334155;
+            background: linear-gradient(90deg, #f0f9ff 0%, #f8fafc 100%);
+            border: 1px solid #e0f2fe;
+            border-left: 4px solid #0ea5e9;
+            border-radius: 12px;
+            padding: 12px 16px;
+            font-weight: 500;
+            line-height: 1.45;
+        }
+        .dash-cc-insight strong { color: #0b1a33; font-weight: 750; }
         .dash-cc-heroes {
             display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 14px;
+            grid-template-columns: 1.2fr 1fr 1fr;
+            gap: 16px;
         }
         @media (max-width: 900px) {
             .dash-cc-heroes { grid-template-columns: 1fr; }
         }
         .dash-cc-hero {
-            background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 18px 20px;
+            border-radius: 16px;
+            padding: 20px 22px;
             min-width: 0;
+            border: 1px solid transparent;
             position: relative;
             overflow: hidden;
         }
         .dash-cc-hero.primary {
-            background: linear-gradient(145deg, #0b1a33 0%, #1a3a6a 100%);
-            border-color: transparent;
+            background: linear-gradient(145deg, #0b1a33 0%, #1e3a5f 55%, #1a4a7a 100%);
             color: #fff;
+            box-shadow: 0 12px 28px rgba(11, 26, 51, 0.22);
+        }
+        .dash-cc-hero.revenue {
+            background: linear-gradient(160deg, #ecfdf5 0%, #d1fae5 100%);
+            border-color: #a7f3d0;
+        }
+        .dash-cc-hero.profit {
+            background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 100%);
+            border-color: #fdba74;
         }
         .dash-cc-hero .lbl {
             font-size: 0.72rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: #64748b;
+            letter-spacing: 0.06em;
+            opacity: 0.85;
         }
-        .dash-cc-hero.primary .lbl { color: rgba(255,255,255,0.7); }
+        .dash-cc-hero.primary .lbl { color: rgba(255, 255, 255, 0.75); }
+        .dash-cc-hero.revenue .lbl { color: #047857; }
+        .dash-cc-hero.profit .lbl { color: #c2410c; }
         .dash-cc-hero .val {
-            margin-top: 8px;
-            font-size: clamp(1.4rem, 2.2vw, 1.85rem);
+            margin-top: 10px;
+            font-size: clamp(1.45rem, 2.4vw, 1.95rem);
             font-weight: 800;
             letter-spacing: -0.03em;
-            line-height: 1.15;
+            line-height: 1.1;
             font-variant-numeric: tabular-nums;
             word-break: break-word;
         }
         .dash-cc-hero.primary .val { color: #fff; }
+        .dash-cc-hero.revenue .val { color: #065f46; }
+        .dash-cc-hero.profit .val { color: #9a3412; }
         .dash-cc-hero .sub {
-            margin-top: 8px;
+            margin-top: 10px;
             font-size: 0.8rem;
             font-weight: 600;
-            color: #64748b;
+            opacity: 0.9;
         }
-        .dash-cc-hero.primary .sub { color: rgba(255,255,255,0.75); }
-        .dash-cc-hero .sub.up { color: #059669; }
-        .dash-cc-hero .sub.down { color: #dc2626; }
-        .dash-cc-hero.primary .sub.up { color: #6ee7b7; }
-        .dash-cc-hero.primary .sub.down { color: #fca5a5; }
+        .dash-cc-hero.primary .sub { color: rgba(255, 255, 255, 0.78); }
+        .dash-cc-hero.revenue .sub { color: #059669; }
+        .dash-cc-hero.profit .sub { color: #ea580c; }
+        .dash-cc-hero .sub.up { color: #10b981 !important; }
+        .dash-cc-hero .sub.down { color: #f87171 !important; }
+        .dash-cc-hero.primary .sub.up { color: #6ee7b7 !important; }
+        .dash-cc-hero.primary .sub.down { color: #fca5a5 !important; }
         .dash-cc-grid {
             display: grid;
-            grid-template-columns: 1.15fr 1fr;
-            gap: 14px;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 16px;
         }
         @media (max-width: 992px) {
             .dash-cc-grid { grid-template-columns: 1fr; }
         }
         .dash-cc-panel {
             background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            padding: 16px 18px;
+            border: 1px solid #e8eef5;
+            border-radius: 16px;
+            padding: 18px 20px;
             min-width: 0;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+        }
+        .dash-cc-panel.attn {
+            background: linear-gradient(180deg, #fffbeb 0%, #fff 40%);
+            border-color: #fde68a;
+        }
+        .dash-cc-panel.ops {
+            background: linear-gradient(180deg, #f8fafc 0%, #fff 45%);
         }
         .dash-cc-panel h6 {
             margin: 0 0 14px;
-            font-size: 0.82rem;
+            font-size: 0.84rem;
             font-weight: 750;
-            color: #0f172a;
+            color: #0b1a33;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -966,8 +1000,8 @@
             font-size: 0.68rem;
             font-weight: 700;
             color: #64748b;
-            background: #f1f5f9;
-            padding: 3px 8px;
+            background: rgba(15, 23, 42, 0.06);
+            padding: 3px 9px;
             border-radius: 999px;
         }
         .dash-attn-item {
@@ -975,96 +1009,116 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            padding: 11px 0;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
             font-size: 0.9rem;
             color: #334155;
         }
-        .dash-attn-item:last-child { border-bottom: none; }
+        .dash-attn-item:last-child { border-bottom: none; padding-bottom: 0; }
         .dash-attn-item .attn-left {
             display: flex; align-items: center; gap: 10px; min-width: 0;
         }
         .dash-attn-dot {
-            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+            width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
             background: #cbd5e1;
+            box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.25);
         }
-        .dash-attn-dot.warn { background: #f59e0b; }
-        .dash-attn-dot.danger { background: #ef4444; }
-        .dash-attn-dot.info { background: #3b82f6; }
-        .dash-attn-dot.ok { background: #10b981; }
+        .dash-attn-dot.warn { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+        .dash-attn-dot.danger { background: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2); }
+        .dash-attn-dot.info { background: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        .dash-attn-dot.ok { background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
         .dash-attn-item .btn {
-            font-size: 0.75rem; font-weight: 650;
-            padding: 4px 10px; border-radius: 7px; white-space: nowrap;
+            font-size: 0.74rem; font-weight: 650;
+            padding: 5px 11px; border-radius: 8px; white-space: nowrap;
         }
         .dash-cc-stats {
             display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 10px;
         }
+        @media (max-width: 600px) {
+            .dash-cc-stats { grid-template-columns: repeat(2, 1fr); }
+        }
         .dash-cc-stat {
-            background: #f8fafc;
-            border-radius: 10px;
+            background: #fff;
+            border: 1px solid #eef2f7;
+            border-radius: 12px;
             padding: 12px 14px;
             min-width: 0;
         }
         .dash-cc-stat .v {
             font-weight: 750;
             font-size: 1.05rem;
-            color: #0f172a;
+            color: #0b1a33;
             font-variant-numeric: tabular-nums;
             word-break: break-word;
         }
         .dash-cc-stat .l {
-            font-size: 0.72rem;
+            font-size: 0.7rem;
             color: #64748b;
-            font-weight: 600;
-            margin-top: 2px;
+            font-weight: 650;
+            margin-top: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
         .dash-cc-stock {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-top: 12px;
+            margin-top: 14px;
         }
         .dash-cc-stock span {
             font-size: 0.78rem;
-            font-weight: 600;
-            color: #334155;
-            background: #f1f5f9;
-            padding: 6px 10px;
-            border-radius: 8px;
+            font-weight: 650;
+            color: #1e3a5f;
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
+            padding: 6px 11px;
+            border-radius: 999px;
         }
         .dash-cc-actions-row {
-            display: grid;
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 10px;
-        }
-        @media (max-width: 900px) {
-            .dash-cc-actions-row { grid-template-columns: repeat(3, 1fr); }
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
         }
         .dash-cc-qa {
-            background: #fff;
-            border: 1px solid #e2e8f0;
+            flex: 1 1 auto;
+            min-width: 110px;
+            background: #0b1a33;
+            border: none;
             border-radius: 12px;
-            padding: 14px 10px;
+            padding: 12px 14px;
             text-align: center;
             cursor: pointer;
-            transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+            transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+            color: #fff;
         }
         .dash-cc-qa:hover {
-            border-color: #cbd5e1;
-            box-shadow: 0 4px 14px rgba(15,23,42,0.06);
+            filter: brightness(1.08);
+            box-shadow: 0 8px 20px rgba(11, 26, 51, 0.2);
             transform: translateY(-1px);
         }
         .dash-cc-qa i {
-            font-size: 1.25rem;
-            color: #0b1a33;
+            font-size: 1.15rem;
+            color: #ffc107;
         }
         .dash-cc-qa div {
             margin-top: 6px;
-            font-size: 0.78rem;
+            font-size: 0.75rem;
             font-weight: 650;
-            color: #334155;
+            color: rgba(255, 255, 255, 0.92);
+        }
+        .dash-cc-analytics {
+            border-top: 1px solid #eef2f7;
+            padding-top: 8px;
+        }
+        .dash-cc-analytics > .label {
+            font-size: 0.72rem;
+            font-weight: 750;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8;
+            margin-bottom: 12px;
         }
         .dash-cc-charts {
             display: grid;
@@ -1076,26 +1130,17 @@
         }
         .dash-cc-chart-card {
             background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
+            border: 1px solid #e8eef5;
+            border-radius: 16px;
             padding: 16px 18px;
+            box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
         }
         .dash-cc-chart-card h6 {
             margin: 0 0 12px;
             font-size: 0.82rem;
             font-weight: 750;
-            color: #0f172a;
+            color: #0b1a33;
         }
-        .dash-cc-insight {
-            font-size: 0.84rem;
-            color: #475569;
-            background: #f8fafc;
-            border: 1px solid #eef2f7;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-weight: 500;
-        }
-        .dash-cc-insight strong { color: #0f172a; }
 
         .dash-topbar {
             display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
@@ -4580,32 +4625,32 @@ async function renderDashboard() {
                     <div class="val">${formatCompactMoney(todaySales)}</div>
                     <div class="sub ${deltaClass(todayDeltaPct)}">${deltaLabel(todayDeltaPct)} · yesterday ${formatCompactMoney(yesterdaySales)}</div>
                 </div>
-                <div class="dash-cc-hero" title="${formatMoney(totalRevenue)}">
+                <div class="dash-cc-hero revenue" title="${formatMoney(totalRevenue)}">
                     <div class="lbl">Fuel revenue · ${esc(periodLabel)}</div>
                     <div class="val">${formatCompactMoney(totalRevenue)}</div>
-                    <div class="sub">Gross margin ${marginPct.toFixed(1)}% · GP ${formatCompactMoney(grossProfit)}</div>
+                    <div class="sub">Margin ${marginPct.toFixed(1)}% · GP ${formatCompactMoney(grossProfit)}</div>
                 </div>
-                <div class="dash-cc-hero" title="${formatMoney(netProfit)}">
+                <div class="dash-cc-hero profit" title="${formatMoney(netProfit)}">
                     <div class="lbl">Net profit · ${esc(periodLabel)}</div>
-                    <div class="val" style="color:${netProfit >= 0 ? '#059669' : '#dc2626'}">${formatCompactMoney(netProfit)}</div>
+                    <div class="val">${formatCompactMoney(netProfit)}</div>
                     <div class="sub">Expenses ${formatCompactMoney(totalExpenses)} · losses ${formatCompactMoney(totalLosses)}</div>
                 </div>
             </div>
 
             <div class="dash-cc-grid">
-                <div class="dash-cc-panel">
-                    <h6><i class="bi bi-lightning-charge text-warning"></i> Needs attention <span class="tag">Live</span></h6>
+                <div class="dash-cc-panel attn">
+                    <h6><i class="bi bi-lightning-charge-fill" style="color:#f59e0b"></i> Needs attention <span class="tag">Live</span></h6>
                     ${attnItems.join('')}
                 </div>
-                <div class="dash-cc-panel">
-                    <h6><i class="bi bi-activity"></i> Operations <span class="tag">${esc(periodLabel)}</span></h6>
+                <div class="dash-cc-panel ops">
+                    <h6><i class="bi bi-grid-1x2" style="color:#0ea5e9"></i> Snapshot <span class="tag">${esc(periodLabel)}</span></h6>
                     <div class="dash-cc-stats">
                         <div class="dash-cc-stat" title="${formatMoney(totalExpenses)}"><div class="v">${formatCompactMoney(totalExpenses)}</div><div class="l">Expenses</div></div>
-                        <div class="dash-cc-stat"><div class="v">${totalLitres >= 1000 ? (totalLitres/1000).toFixed(1) + 'k' : totalLitres.toFixed(0)} L</div><div class="l">Stock on hand</div></div>
+                        <div class="dash-cc-stat"><div class="v">${totalLitres >= 1000 ? (totalLitres/1000).toFixed(1) + 'k' : totalLitres.toFixed(0)} L</div><div class="l">Stock</div></div>
                         <div class="dash-cc-stat"><div class="v">${activeShifts}</div><div class="l">Open shifts</div></div>
                         <div class="dash-cc-stat"><div class="v">${totalCustomers}</div><div class="l">Customers</div></div>
                         <div class="dash-cc-stat"><div class="v">${totalSuppliers}</div><div class="l">Suppliers</div></div>
-                        <div class="dash-cc-stat" title="${formatMoney(totalLosses)}"><div class="v" style="color:${totalLosses > 0 ? '#dc2626' : '#0f172a'}">${formatCompactMoney(totalLosses)}</div><div class="l">Inventory losses</div></div>
+                        <div class="dash-cc-stat" title="${formatMoney(totalLosses)}"><div class="v" style="color:${totalLosses > 0 ? '#dc2626' : '#0b1a33'}">${formatCompactMoney(totalLosses)}</div><div class="l">Losses</div></div>
                     </div>
                     <div class="dash-cc-stock">${stockChips}</div>
                 </div>
@@ -4620,23 +4665,26 @@ async function renderDashboard() {
                 <div class="dash-cc-qa" onclick="navigate('payroll')"><i class="bi bi-people"></i><div>Payroll</div></div>
             </div>
 
-            <div class="dash-cc-charts">
-                <div class="dash-cc-chart-card">
-                    <h6>Sales by product</h6>
-                    <canvas id="productChart" height="200"></canvas>
+            <div class="dash-cc-analytics">
+                <div class="label">Analytics</div>
+                <div class="dash-cc-charts">
+                    <div class="dash-cc-chart-card">
+                        <h6>Sales by product</h6>
+                        <canvas id="productChart" height="180"></canvas>
+                    </div>
+                    <div class="dash-cc-chart-card">
+                        <h6>Last 7 days</h6>
+                        <canvas id="trendChart" height="180"></canvas>
+                    </div>
                 </div>
-                <div class="dash-cc-chart-card">
-                    <h6>Last 7 days</h6>
-                    <canvas id="trendChart" height="200"></canvas>
+                <div class="dash-cc-chart-card" style="margin-top:14px;">
+                    <h6>P&amp;L overview · ${esc(periodLabel)}</h6>
+                    <canvas id="pnlChart" height="70"></canvas>
                 </div>
-            </div>
-            <div class="dash-cc-chart-card">
-                <h6>P&amp;L overview · ${esc(periodLabel)}</h6>
-                <canvas id="pnlChart" height="80"></canvas>
             </div>
         </div>`;
 
-    document.getElementById('pageContent').innerHTML = html;
+document.getElementById('pageContent').innerHTML = html;
 
     // Buttons
     const editBtn = document.getElementById('editCompanyBtn');
