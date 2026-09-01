@@ -3540,8 +3540,10 @@ async function generateEndOfDayReport(dateStr) {
     const adjustments = await getAll('adjustments');
 
     const daySales = sales.filter(s => {
+        if (s.status === 'reversed' || s.reversed === true) return false;
+        if (s.type === 'payment' || String(s.product_type || '') === 'Customer Payment') return false;
         const d = s.created_at && s.created_at.toDate ? s.created_at.toDate() : new Date(s.created_at);
-        return d >= start && d <= end && s.status !== 'reversed';
+        return d >= start && d <= end;
     });
     const dayExpenses = expenses.filter(e => {
         const d = e.created_at && e.created_at.toDate ? e.created_at.toDate() : new Date(e.created_at);
@@ -4906,7 +4908,7 @@ async function renderSales() {
         .join('');
 
     const customerOpts = customers.map(c =>
-        `<option value="${c.id}" data-balance="${c.current_balance || 0}" data-name="${c.name}" data-station="${c.station_id || ''}">${c.name}</option>`
+        `<option value="${c.id}" data-balance="${c.current_balance || 0}" data-name="${c.name}" data-station="${c.station_id || ''}" data-plate="${esc(c.default_vehicle_plate || c.vehicle_plate || '')}">${c.name}</option>`
     ).join('');
 
     const productOpts = productTypes.map(p => `<option value="${p}">${p}</option>`).join('');
@@ -5009,6 +5011,11 @@ async function renderSales() {
                                     </div>
                                 </div>
                                 <input type="text" id="saleCustomerName" class="form-control mt-1" placeholder="Custom customer name" style="display:none;">
+                                <div class="mt-2">
+                                    <label class="form-label">Vehicle number plate</label>
+                                    <input type="text" id="saleVehiclePlate" class="form-control" placeholder="e.g. UBB 123A" autocomplete="off" style="text-transform:uppercase;">
+                                    <div class="form-text">Optional — plate of the vehicle taking fuel</div>
+                                </div>
                             </div>
                             <div>
                                 <label class="form-label">Currency</label>
@@ -5240,16 +5247,20 @@ async function renderSales() {
 
     saleCustomerSelect.onchange = function() {
         const val = this.value;
+        const plateEl = document.getElementById('saleVehiclePlate');
         if (val === 'custom') {
             saleCustomerName.style.display = 'block';
             saleCustomerName.value = '';
+            if (plateEl) plateEl.value = '';
         } else if (val === 'walk-in') {
             saleCustomerName.style.display = 'none';
             saleCustomerName.value = 'Walk-in';
+            if (plateEl) plateEl.value = '';
         } else {
             saleCustomerName.style.display = 'none';
             const opt = this.options[this.selectedIndex];
             saleCustomerName.value = opt.dataset.name || opt.text;
+            if (plateEl && opt.dataset.plate) plateEl.value = opt.dataset.plate;
         }
         updateCustomerBalance();
     };
@@ -5546,6 +5557,7 @@ async function renderSales() {
                         mobile_money_ref: mmRef || null,
                         customer_name: customerName,
                         customer_id: customerId,
+                        vehicle_plate: ((document.getElementById('saleVehiclePlate') || {}).value || '').trim().toUpperCase() || null,
                         transaction_id: transactionId,
                         recorded_by: cashierId,
                         sale_date: saleDate,
@@ -11774,6 +11786,11 @@ async function renderCustomers() {
                                     <label class="form-label" for="custAddress">Address</label>
                                     <input type="text" id="custAddress" class="form-control" placeholder="Optional">
                                 </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="custVehiclePlate">Default vehicle plate</label>
+                                    <input type="text" id="custVehiclePlate" class="form-control" placeholder="e.g. UBB 123A" style="text-transform:uppercase;">
+                                    <div class="form-hint">Used to pre-fill when making sales for this customer</div>
+                                </div>
                             </div>
                             <div class="form-section">
                                 <div class="form-section-title">Account</div>
@@ -11917,6 +11934,7 @@ async function renderCustomers() {
                 phone: document.getElementById('custPhone').value.trim() || null,
                 email: document.getElementById('custEmail').value.trim() || null,
                 address: document.getElementById('custAddress').value.trim() || null,
+                default_vehicle_plate: (document.getElementById('custVehiclePlate') && document.getElementById('custVehiclePlate').value || '').trim().toUpperCase() || null,
                 station_id: document.getElementById('custStation').value || null,
                 opening_balance: openingBal,
                 current_balance: openingBal,
@@ -12252,7 +12270,7 @@ async function renderCustomers() {
                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // 3. Record as SALE → this is what makes it appear in Revenue / Total Sales
+            // 3. Record payment receipt (type=payment) — NOT revenue; excluded from P&L / net profit
             const stationId = customerStation || state.currentStationId || (state.stations[0] && state.stations[0].id) || '1';
             const transactionId = 'PAY-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6);
 
@@ -12899,7 +12917,7 @@ async function renderReports() {
         const dateStr = f.from || f.to || toISO(today);
         const dayFilter = { stationId: f.stationId, product: f.product, from: dateStr, to: dateStr };
 
-        const daySales = filterByCommon(sales, dayFilter).filter(s => s.status !== 'reversed' && s.reversed !== true);
+        const daySales = filterByCommon(sales, dayFilter).filter(s => s.status !== 'reversed' && s.reversed !== true && s.type !== 'payment' && String(s.product_type || '') !== 'Customer Payment');
         const dayExpenses = filterByCommon(expenses, dayFilter).filter(e => e.status !== 'reversed' && e.reversed !== true);
         const dayAdjustments = filterByCommon(adjustments, dayFilter).filter(a => a.status !== 'reversed' && a.reversed !== true);
         const dayStock = filterByCommon(stock, dayFilter).filter(s => s.status !== 'reversed' && s.reversed !== true);
@@ -12967,7 +12985,7 @@ async function renderReports() {
 
     // 2. Profit & Loss
     function generateProfitLoss(f) {
-        const filteredSales = filterByCommon(sales, f).filter(s => s.status !== 'reversed');
+        const filteredSales = filterByCommon(sales, f).filter(s => s.status !== 'reversed' && s.reversed !== true && s.type !== 'payment' && String(s.product_type || '') !== 'Customer Payment');
         const filteredExpenses = filterByCommon(expenses, f);
         const filteredAdjustments = filterByCommon(adjustments, f);
 
@@ -13226,46 +13244,63 @@ async function renderReports() {
         const customer = customers.find(c => c.id === customerId);
         if (!customer) return { html: '<div class="alert alert-danger">Customer not found.</div>', headers: [], rows: [], filename: 'CustomerStatement' };
 
-        // Combine sales and customer_transactions
+        // Statement lines: all fuel sales + payments (no double-count of sale ledgers)
         const transactions = [];
-        // Sales (debit)
-        const custSales = sales.filter(s => s.customer_id === customerId && s.status !== 'reversed');
+        const custSales = sales.filter(s =>
+            String(s.customer_id) === String(customerId) &&
+            s.status !== 'reversed' && s.reversed !== true &&
+            s.type !== 'payment' &&
+            String(s.product_type || '') !== 'Customer Payment'
+        );
         custSales.forEach(s => {
+            const qty = Number(s.quantity) || 0;
+            const amt = Number(s.amount) || 0;
+            const pay = String(s.payment_method || 'cash').toLowerCase();
+            const isCredit = pay === 'credit';
+            const plate = (s.vehicle_plate || s.number_plate || '').trim();
+            let desc = `${s.product_type || 'Fuel'} ${qty.toFixed(2)}L`;
+            if (plate) desc += ` · ${plate}`;
+            desc += ` · ${pay}`;
             transactions.push({
                 date: s.sale_date || s.created_at,
-                type: 'Sale',
-                description: `${s.product_type} ${Number(s.quantity).toFixed(2)}L`,
-                amount: Number(s.amount) || 0,
-                balance: 0
+                type: isCredit ? 'Credit sale' : 'Sale',
+                description: desc,
+                displayAmount: amt,
+                balanceDelta: isCredit ? amt : 0
             });
         });
-        // Payments from customer_transactions (credit)
-        const custTrans = customerTransactions.filter(t => t.customer_id === customerId);
+        // Payments: customer_transactions credits only (skip sale-source rows — already listed)
+        const custTrans = (customerTransactions || []).filter(t => String(t.customer_id) === String(customerId));
         custTrans.forEach(t => {
             const amt = Number(t.amount) || 0;
-            // amount > 0 means debit (sale), amount < 0 means credit (payment)
-            // In our system, we store positive for sale, negative for payment
+            const src = String(t.source || '').toLowerCase();
+            if (src === 'sale' || src === 'credit_sale') return; // avoid double with sales
+            if (amt >= 0 && src !== 'payment' && src !== 'sale_reversal') return;
+            const delta = amt > 0 ? -Math.abs(amt) : amt; // payments reduce balance
             transactions.push({
-                date: t.timestamp,
-                type: amt > 0 ? 'Sale' : 'Payment',
-                description: t.source || 'Payment',
-                amount: amt,
-                balance: 0
+                date: t.timestamp || t.date || t.created_at,
+                type: src === 'sale_reversal' ? 'Reversal' : 'Payment',
+                description: t.note || t.source || 'Customer payment',
+                displayAmount: delta,
+                balanceDelta: delta
             });
         });
-        // Sort by date
-        transactions.sort((a, b) => (a.date?.toDate ? a.date.toDate() : new Date(a.date)) -
-            (b.date?.toDate ? b.date.toDate() : new Date(b.date)));
+        // Payments already taken from customer_transactions (negative amounts / source=payment)
+        transactions.sort((a, b) => {
+            const da = a.date && a.date.toDate ? a.date.toDate() : new Date(a.date || 0);
+            const db = b.date && b.date.toDate ? b.date.toDate() : new Date(b.date || 0);
+            return da - db;
+        });
 
-        let balance = customer.opening_balance || 0;
+        let balance = Number(customer.opening_balance) || 0;
         const rows = [];
         transactions.forEach(t => {
-            balance += Number(t.amount);
+            balance += Number(t.balanceDelta) || 0;
             rows.push([
                 formatDate(t.date),
                 t.type,
                 t.description,
-                formatMoney(t.amount),
+                formatMoney(t.displayAmount),
                 formatMoney(balance)
             ]);
         });
