@@ -4195,6 +4195,7 @@ function buildSidebar() {
     const isAdminRole = isAdmin(role);
     const menuStructure = [];
 
+    // Ordered by daily station workflow, then supporting modules
     menuStructure.push({ label: 'Dashboard', icon: 'bi-grid-1x2-fill', page: 'dashboard', isLeaf: true });
 
     if (role === 'cashier') {
@@ -4204,12 +4205,14 @@ function buildSidebar() {
         menuStructure.push({ label: 'Messages', icon: 'bi-chat-dots', page: 'messages', isLeaf: true });
     } else {
         menuStructure.push({
-            label: 'Sales',
+            label: 'Sales & shifts',
             icon: 'bi-cart-check',
             children: [
                 { label: 'Make Sales', page: 'sales' },
                 { label: 'Shifts', page: 'shifts' },
                 { label: 'Meter Readings', page: 'meters' },
+                { label: 'Balancing', page: 'balancing' },
+                { label: 'Shortage Recovery', page: 'shortage_recovery' },
                 { label: 'Invoices', page: 'invoices' }
             ]
         });
@@ -4227,24 +4230,21 @@ function buildSidebar() {
         });
 
         menuStructure.push({
-            label: 'Finance',
-            icon: 'bi-wallet2',
+            label: 'Parties',
+            icon: 'bi-people',
             children: [
-                { label: 'Financials', page: 'financials' },
-                { label: 'Payroll', page: 'payroll' },
-                { label: 'Suppliers', page: 'suppliers' }
+                { label: 'Customers', page: 'customers' },
+                { label: 'Suppliers', page: 'suppliers' },
+                { label: 'Staff', page: 'staff' }
             ]
         });
 
         menuStructure.push({
-            label: 'Operations',
-            icon: 'bi-tools',
+            label: 'Finance',
+            icon: 'bi-wallet2',
             children: [
-                { label: 'Balancing', page: 'balancing' },
-                { label: 'Shortage Recovery', page: 'shortage_recovery' },
-                { label: 'Customers', page: 'customers' },
-                { label: 'Maintenance', page: 'maintenance' },
-                { label: 'Staff', page: 'staff' }
+                { label: 'Financials', page: 'financials' },
+                { label: 'Payroll', page: 'payroll' }
             ]
         });
 
@@ -4253,6 +4253,15 @@ function buildSidebar() {
             icon: 'bi-bar-chart-line',
             children: [
                 { label: 'Reports Center', page: 'reports' }
+            ]
+        });
+
+        menuStructure.push({
+            label: 'Support',
+            icon: 'bi-tools',
+            children: [
+                { label: 'Maintenance', page: 'maintenance' },
+                { label: 'Messages', page: 'messages' }
             ]
         });
 
@@ -4272,12 +4281,11 @@ function buildSidebar() {
                 label: 'System',
                 icon: 'bi-buildings',
                 children: [
-                    { label: 'All Companies', page: 'companies' }
+                    { label: 'All Companies', page: 'companies' },
+                    { label: 'Licenses', page: 'licenses' }
                 ]
             });
         }
-
-        menuStructure.push({ label: 'Messages', icon: 'bi-chat-dots', page: 'messages', isLeaf: true });
     }
 
     const nav = document.getElementById('sidebarNav');
@@ -15392,10 +15400,8 @@ console.log('Part 10 loaded – Users, Company, Payroll, Messages, Invoices, Sta
 // PART 11: LICENSE MANAGER (SUPER ADMIN ONLY)
 // ============================================================
 
-// ----- Override buildSidebar to include Licenses menu -----
-// We replace the existing buildSidebar function with this enhanced version.
-// This adds "Licenses" under the "System" menu for Super Admin.
-
+// ----- buildSidebar (organized menu + Licenses for Super Admin) -----
+// Single definitive sidebar layout. Groups follow station workflow.
 const originalBuildSidebar = buildSidebar;
 
 buildSidebar = function() {
@@ -15403,6 +15409,7 @@ buildSidebar = function() {
     const isAdminRole = isAdmin(role);
     const menuStructure = [];
 
+    // Ordered by daily station workflow, then supporting modules
     menuStructure.push({ label: 'Dashboard', icon: 'bi-grid-1x2-fill', page: 'dashboard', isLeaf: true });
 
     if (role === 'cashier') {
@@ -15412,12 +15419,14 @@ buildSidebar = function() {
         menuStructure.push({ label: 'Messages', icon: 'bi-chat-dots', page: 'messages', isLeaf: true });
     } else {
         menuStructure.push({
-            label: 'Sales',
+            label: 'Sales & shifts',
             icon: 'bi-cart-check',
             children: [
                 { label: 'Make Sales', page: 'sales' },
                 { label: 'Shifts', page: 'shifts' },
                 { label: 'Meter Readings', page: 'meters' },
+                { label: 'Balancing', page: 'balancing' },
+                { label: 'Shortage Recovery', page: 'shortage_recovery' },
                 { label: 'Invoices', page: 'invoices' }
             ]
         });
@@ -15435,24 +15444,21 @@ buildSidebar = function() {
         });
 
         menuStructure.push({
-            label: 'Finance',
-            icon: 'bi-wallet2',
+            label: 'Parties',
+            icon: 'bi-people',
             children: [
-                { label: 'Financials', page: 'financials' },
-                { label: 'Payroll', page: 'payroll' },
-                { label: 'Suppliers', page: 'suppliers' }
+                { label: 'Customers', page: 'customers' },
+                { label: 'Suppliers', page: 'suppliers' },
+                { label: 'Staff', page: 'staff' }
             ]
         });
 
         menuStructure.push({
-            label: 'Operations',
-            icon: 'bi-tools',
+            label: 'Finance',
+            icon: 'bi-wallet2',
             children: [
-                { label: 'Balancing', page: 'balancing' },
-                { label: 'Shortage Recovery', page: 'shortage_recovery' },
-                { label: 'Customers', page: 'customers' },
-                { label: 'Maintenance', page: 'maintenance' },
-                { label: 'Staff', page: 'staff' }
+                { label: 'Financials', page: 'financials' },
+                { label: 'Payroll', page: 'payroll' }
             ]
         });
 
@@ -15461,6 +15467,15 @@ buildSidebar = function() {
             icon: 'bi-bar-chart-line',
             children: [
                 { label: 'Reports Center', page: 'reports' }
+            ]
+        });
+
+        menuStructure.push({
+            label: 'Support',
+            icon: 'bi-tools',
+            children: [
+                { label: 'Maintenance', page: 'maintenance' },
+                { label: 'Messages', page: 'messages' }
             ]
         });
 
@@ -15481,12 +15496,10 @@ buildSidebar = function() {
                 icon: 'bi-buildings',
                 children: [
                     { label: 'All Companies', page: 'companies' },
-                    { label: 'Licenses', page: 'licenses' }   // <-- NEW: License Manager
+                    { label: 'Licenses', page: 'licenses' }
                 ]
             });
         }
-
-        menuStructure.push({ label: 'Messages', icon: 'bi-chat-dots', page: 'messages', isLeaf: true });
     }
 
     const nav = document.getElementById('sidebarNav');
@@ -15546,7 +15559,7 @@ buildSidebar = function() {
     });
 };
 
-console.log('✅ buildSidebar updated with Licenses menu');
+console.log('✅ buildSidebar: organized workflow menu + Licenses');
 
 // ============================================================
 // LICENSE MANAGER RENDER FUNCTION
