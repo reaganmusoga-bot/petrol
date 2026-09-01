@@ -331,7 +331,195 @@
             color: #fff;
         }
 
-        .page-content { padding: 22px 24px; }
+        .page-content {
+            padding: 20px 24px 32px;
+            max-width: 1440px;
+        }
+
+        /* ===== Global visual system (unify screens) ===== */
+        .page-content h4,
+        .page-content h5,
+        .page-content .fin-title-row h4,
+        .page-content .ms-header h4,
+        .page-content .dash-cc-top h3 {
+            font-weight: 800 !important;
+            letter-spacing: -0.03em;
+            color: #0b1a33 !important;
+        }
+        .page-content .fin-sub,
+        .page-content .ms-sub {
+            color: #64748b !important;
+            font-weight: 500;
+        }
+
+        .page-content .card-box,
+        .page-content .fin-action-card,
+        .page-content .fin-ledger-card,
+        .page-content .ms-form-card,
+        .page-content .ms-history-card,
+        .page-content .dash-cc-panel,
+        .page-content .dash-cc-chart-card {
+            background: #fff !important;
+            border: 1px solid #e8eef5 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+        }
+        .page-content .fin-action-card,
+        .page-content .fin-ledger-card,
+        .page-content .card-box {
+            padding: 16px 18px !important;
+        }
+
+        .page-content .intl-section-head h6,
+        .page-content .ms-form-head h6,
+        .page-content .ms-hist-head h6,
+        .page-content .fin-action-card > h6,
+        .page-content .card-box > h5,
+        .page-content .card-box > h6 {
+            margin: 0 0 12px 0;
+            font-size: 0.92rem !important;
+            font-weight: 750 !important;
+            color: #0b1a33 !important;
+        }
+
+        .page-content .form-label {
+            font-size: 0.72rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b !important;
+            margin-bottom: 4px !important;
+        }
+        .page-content .form-control,
+        .page-content .form-select {
+            min-height: 40px;
+            border-radius: 9px !important;
+            border-color: #e2e8f0 !important;
+            font-size: 0.9rem !important;
+        }
+        .page-content .form-control:focus,
+        .page-content .form-select:focus {
+            border-color: #0b1a33 !important;
+            box-shadow: 0 0 0 3px rgba(11, 26, 51, 0.1) !important;
+        }
+        .page-content .form-section-title,
+        .page-content .ms-block-title {
+            font-size: 0.7rem !important;
+            font-weight: 800 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #94a3b8 !important;
+        }
+        .page-content .form-section,
+        .page-content .ms-block {
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .page-content .form-section:last-child,
+        .page-content .ms-block:last-of-type {
+            border-bottom: none;
+        }
+
+        .page-content .table-responsive,
+        .page-content .intl-table-wrap,
+        .page-content .sales-history-wrap {
+            border: 1px solid #e8eef5;
+            border-radius: 12px;
+            overflow: auto;
+            background: #fff;
+        }
+        .page-content table.table,
+        .page-content .sales-history-table {
+            margin-bottom: 0 !important;
+            font-size: 0.875rem;
+        }
+        .page-content table.table thead th,
+        .page-content .sales-history-table thead th {
+            background: #0b1a33 !important;
+            color: #f8fafc !important;
+            font-size: 0.7rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 12px 14px !important;
+            border: none !important;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .page-content table.table tbody td,
+        .page-content .sales-history-table tbody td {
+            padding: 12px 14px !important;
+            vertical-align: middle !important;
+            border-bottom: 1px solid #f1f5f9 !important;
+            border-top: none !important;
+            color: #1e293b;
+        }
+        .page-content table.table tbody tr:last-child td {
+            border-bottom: none !important;
+        }
+        .page-content table.table tbody tr:hover td {
+            background: #f8fafc !important;
+        }
+        .page-content .num {
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+        }
+
+        .page-content .btn {
+            border-radius: 9px !important;
+            font-weight: 650 !important;
+            font-size: 0.85rem !important;
+        }
+        .page-content .btn-sm {
+            font-size: 0.78rem !important;
+            padding: 5px 10px !important;
+        }
+        .page-content .btn-primary {
+            background: #0b1a33 !important;
+            border-color: #0b1a33 !important;
+        }
+        .page-content .btn-primary:hover {
+            background: #152a4a !important;
+            border-color: #152a4a !important;
+        }
+        .page-content .btn-outline-primary {
+            color: #0b1a33 !important;
+            border-color: #cbd5e1 !important;
+        }
+        .page-content .btn-outline-primary:hover {
+            background: #f1f5f9 !important;
+            color: #0b1a33 !important;
+        }
+
+        .page-content .fin-filter-bar,
+        .page-content .ms-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        .page-content .fin-workspace,
+        .page-content .make-sales-page,
+        .page-content .dash-cc {
+            gap: 16px;
+        }
+
+        .page-content .alert {
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+        .page-content .intl-empty,
+        .page-content .empty-sales {
+            text-align: center;
+            padding: 28px 16px;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+
         .card-box {
             background: var(--card-bg);
             border-radius: 12px;
@@ -13295,16 +13483,20 @@ async function renderReports() {
         let balance = Number(customer.opening_balance) || 0;
         const rows = [];
         transactions.forEach(t => {
-            balance += Number(t.balanceDelta) || 0;
+            const delta = Number(t.balanceDelta) || 0;
+            balance += delta;
+            const debit = delta > 0 ? formatMoney(delta) : '—';
+            const credit = delta < 0 ? formatMoney(Math.abs(delta)) : (delta === 0 && Number(t.displayAmount) > 0 ? formatMoney(t.displayAmount) + ' (paid)' : '—');
             rows.push([
                 formatDate(t.date),
                 t.type,
                 t.description,
-                formatMoney(t.displayAmount),
+                debit,
+                credit,
                 formatMoney(balance)
             ]);
         });
-        if (rows.length === 0) rows.push(['No transactions found', '', '', '', '']);
+        if (rows.length === 0) rows.push(['No transactions found', '', '', '—', '—', '—']);
         const balNow = Number(customer.current_balance || 0);
         const shareText = encodeURIComponent(
             'Account statement — ' + (customer.name || '') +
@@ -13327,8 +13519,8 @@ async function renderReports() {
               <button type="button" class="btn btn-sm btn-outline-secondary" onclick="navigator.clipboard.writeText(decodeURIComponent('${shareText.replace(/'/g, "\\'")}'))"><i class="bi bi-clipboard"></i> Copy text</button>
             </div>
             </div>`;
-        body += generateTable(['Date', 'Type', 'Description', 'Amount', 'Balance'], rows);
-        return { html: body, headers: ['Date', 'Type', 'Description', 'Amount', 'Balance'], rows, filename: 'CustomerStatement_' + customer.name };
+        body += generateTable(['Date', 'Type', 'Description', 'Debit', 'Credit', 'Balance'], rows);
+        return { html: body, headers: ['Date', 'Type', 'Description', 'Debit', 'Credit', 'Balance'], rows, filename: 'CustomerStatement_' + customer.name };
     }
 
     // 8. Supplier Statement (uses supplier_transactions and offloads)
