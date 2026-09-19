@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<html/><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -2773,6 +2773,193 @@ function formatDateTime(d) {
     return dt.toLocaleString('en-GB');
 }
 
+
+// ============================================================
+// OPERATIONAL P&L ENGINE (single source of truth)
+// Used by Dashboard, Reports (P&L / EOD), and Financials Overview
+// ============================================================
+/**
+ * Operational (management) P&L — not statutory GAAP.
+ * Revenue = posted fuel sales (net of discount), exclude reversed & payment receipts.
+ * COGS = cost_price at sale × qty.
+ * Gross = Revenue − COGS.
+ * Net = Gross − expenses − stock losses − optional payroll (net salaries + advances in period).
+ */
+function parseAppDate(val) {
+    if (val == null || val === '') return null;
+    let dt = null;
+    try {
+        if (typeof val.toDate === 'function') dt = val.toDate();
+        else if (val.seconds != null) dt = new Date(Number(val.seconds) * 1000);
+        else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
+            const p = val.slice(0, 10).split('-').map(Number);
+            dt = new Date(p[0], p[1] - 1, p[2], 12, 0, 0, 0);
+        } else dt = new Date(val);
+    } catch (_) { return null; }
+    return (dt && !isNaN(dt.getTime())) ? dt : null;
+}
+
+function recordBusinessDate(x) {
+    if (!x) return null;
+    const candidates = [x.sale_date, x.expense_date, x.payment_date, x.advance_date, x.paid_date,
+        x.received_date, x.date, x.period_end, x.created_at, x.timestamp];
+    for (const c of candidates) {
+        const dt = parseAppDate(c);
+        if (dt) return dt;
+    }
+    // Salary period "YYYY-MM" → last day of month for period filter
+    if (x.period && /^\d{4}-\d{2}$/.test(String(x.period))) {
+        const [y, m] = String(x.period).split('-').map(Number);
+        return new Date(y, m, 0, 12, 0, 0, 0);
+    }
+    return null;
+}
+
+function dateInBusinessRange(dt, fromStr, toStr) {
+    if (!dt) return false;
+    const f = fromStr ? parseAppDate(fromStr) : null;
+    const t = toStr ? parseAppDate(toStr) : null;
+    if (f && isNaN(f.getTime())) return false;
+    if (t && isNaN(t.getTime())) return false;
+    const f0 = f ? new Date(f.getFullYear(), f.getMonth(), f.getDate(), 0, 0, 0, 0) : null;
+    const t1 = t ? new Date(t.getFullYear(), t.getMonth(), t.getDate(), 23, 59, 59, 999) : null;
+    if (f0 && dt < f0) return false;
+    if (t1 && dt > t1) return false;
+    return true;
+}
+
+function isFuelSale(s) {
+    if (!s) return false;
+    if (s.status === 'reversed' || s.reversed === true) return false;
+    if (s.type === 'payment') return false;
+    if (String(s.product_type || '') === 'Customer Payment') return false;
+    return true;
+}
+
+/**
+ * @param {object} opts
+ * @param {array} opts.sales
+ * @param {array} opts.expenses
+ * @param {array} opts.adjustments
+ * @param {array} [opts.salaries]
+ * @param {array} [opts.advances]
+ * @param {string|null} [opts.stationId]
+ * @param {string|null} [opts.product]
+ * @param {string|null} [opts.from] YYYY-MM-DD
+ * @param {string|null} [opts.to] YYYY-MM-DD
+ * @param {boolean} [opts.includePayroll=true]
+ */
+function computeOperationalPnL(opts) {
+    const sales = opts.sales || [];
+    const expenses = opts.expenses || [];
+    const adjustments = opts.adjustments || [];
+    const salaries = opts.salaries || [];
+    const advances = opts.advances || [];
+    const stationId = opts.stationId ? String(opts.stationId) : null;
+    const product = opts.product || null;
+    const from = opts.from || null;
+    const to = opts.to || null;
+    const includePayroll = opts.includePayroll !== false;
+
+    function stationOk(x) {
+        if (!stationId) return true;
+        return String(x.station_id || '') === stationId;
+    }
+    function productOk(x) {
+        if (!product) return true;
+        return String(x.product_type || '') === String(product);
+    }
+    function inRange(x) {
+        return dateInBusinessRange(recordBusinessDate(x), from, to);
+    }
+
+    let totalRevenue = 0, totalCOGS = 0, totalQty = 0;
+    const byProduct = {};
+    const fuelSales = [];
+    sales.forEach(s => {
+        if (!isFuelSale(s) || !stationOk(s) || !productOk(s) || !inRange(s)) return;
+        const amt = Number(s.amount) || 0;
+        const qty = Number(s.quantity) || 0;
+        const cost = (Number(s.cost_price) || 0) * qty;
+        totalRevenue += amt;
+        totalCOGS += cost;
+        totalQty += qty;
+        fuelSales.push(s);
+        const p = s.product_type || 'Unknown';
+        if (!byProduct[p]) byProduct[p] = { revenue: 0, cogs: 0, qty: 0, count: 0 };
+        byProduct[p].revenue += amt;
+        byProduct[p].cogs += cost;
+        byProduct[p].qty += qty;
+        byProduct[p].count += 1;
+    });
+
+    const grossProfit = totalRevenue - totalCOGS;
+
+    let totalExpenses = 0;
+    const expenseList = [];
+    expenses.forEach(e => {
+        if (e.status === 'reversed' || e.reversed === true) return;
+        if (!stationOk(e) || !inRange(e)) return;
+        const amt = Number(e.amount) || 0;
+        totalExpenses += amt;
+        expenseList.push(e);
+    });
+
+    let totalLosses = 0;
+    adjustments.forEach(a => {
+        if (a.status === 'reversed' || a.reversed === true) return;
+        if (!stationOk(a) || !inRange(a)) return;
+        if (a.adj_type === 'quantity' && Number(a.quantity) < 0) {
+            const cost = Number(a.cost_price_at_change) || 0;
+            totalLosses += Math.abs(Number(a.quantity)) * cost;
+        }
+    });
+
+    let totalPayroll = 0;
+    if (includePayroll) {
+        salaries.forEach(s => {
+            if (s.status === 'reversed' || s.reversed === true) return;
+            if (!stationOk(s) || !inRange(s)) return;
+            totalPayroll += Number(s.net_pay) || 0;
+        });
+        advances.forEach(a => {
+            if (a.status === 'reversed' || a.reversed === true) return;
+            if (!stationOk(a) || !inRange(a)) return;
+            totalPayroll += Number(a.amount) || 0;
+        });
+    }
+
+    const netProfit = grossProfit - totalExpenses - totalLosses - totalPayroll;
+    const gpMargin = totalRevenue > 0 ? (grossProfit / totalRevenue * 100) : 0;
+    const npMargin = totalRevenue > 0 ? (netProfit / totalRevenue * 100) : 0;
+
+    return {
+        totalRevenue,
+        totalCOGS,
+        grossProfit,
+        totalExpenses,
+        totalLosses,
+        totalPayroll,
+        netProfit,
+        totalQty,
+        gpMargin,
+        npMargin,
+        byProduct,
+        salesCount: fuelSales.length,
+        expenseCount: expenseList.length,
+        includePayroll,
+        filters: { stationId, product, from, to }
+    };
+}
+
+function formatPnLPeriodLabel(from, to) {
+    if (!from && !to) return 'All time';
+    if (from && to && from === to) return from;
+    if (from && to) return from + ' → ' + to;
+    if (from) return 'From ' + from;
+    return 'Until ' + to;
+}
+
 function esc(s) {
     return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -4653,6 +4840,8 @@ async function renderDashboard() {
     const adjustments = await getAll('adjustments');
     const customers = await getAll('customers');
     const suppliers = await getAll('suppliers');
+    const salaries = await getAll('salaries') || [];
+    const salaryAdvances = await getAll('salary_advances') || [];
 
     const fInv = inv.filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId));
     // Fuel sales only — exclude reversed and customer-payment receipts (those are not fuel revenue)
@@ -4729,25 +4918,27 @@ async function renderDashboard() {
     const pExpenses = fExpenses.filter(inPeriod);
     const pAdjustments = fAdjustments.filter(inPeriod);
 
-    // Sales & Profit (fuel only, period-scoped)
-    let totalRevenue = 0,
-        totalCOGS = 0;
-    pSales.forEach(s => {
-        totalRevenue += Number(s.amount) || 0;
-        totalCOGS += (Number(s.cost_price) || 0) * (Number(s.quantity) || 0);
+    // Sales & Profit — shared operational P&L engine (includes payroll)
+    const _iso = (d) => d ? d.toISOString().slice(0, 10) : null;
+    const dashPnL = computeOperationalPnL({
+        sales,
+        expenses,
+        adjustments,
+        salaries,
+        advances: salaryAdvances,
+        stationId: state.currentStationId || null,
+        from: periodBounds.start ? _iso(periodBounds.start) : null,
+        to: periodBounds.end ? _iso(periodBounds.end) : null,
+        includePayroll: true
     });
+    const totalRevenue = dashPnL.totalRevenue;
+    const totalCOGS = dashPnL.totalCOGS;
+    const grossProfit = dashPnL.grossProfit;
+    const totalExpenses = dashPnL.totalExpenses;
+    const totalLosses = dashPnL.totalLosses;
+    const totalPayroll = dashPnL.totalPayroll;
+    const netProfit = dashPnL.netProfit;
     const totalCollections = pPayments.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
-    const grossProfit = totalRevenue - totalCOGS;
-    const totalExpenses = pExpenses.reduce((sum, x) => sum + (x.amount || 0), 0);
-    // Losses from adjustments: negative quantity changes * cost_price_at_change
-    let totalLosses = 0;
-    pAdjustments.forEach(a => {
-        if (a.adj_type === 'quantity' && Number(a.quantity) < 0) {
-            const cost = a.cost_price_at_change || 0;
-            totalLosses += Math.abs(Number(a.quantity)) * cost;
-        }
-    });
-    const netProfit = grossProfit - totalExpenses - totalLosses;
     const periodLabelBase = ({ today: 'Today', '7d': 'Last 7 days', mtd: 'This month', ytd: 'This year', all: 'All time' })[period] || 'Period';
     const periodRangeText = (() => {
         if (!periodBounds.start) return '';
@@ -9829,6 +10020,10 @@ async function renderFinancials() {
         const creditLimits = await getAll('credit_limits') || [];
         const recurringExpenses = await getAll('recurring_expenses') || [];
         const customers = await getAll('customers') || [];
+        const salesForPnL = await getAll('sales') || [];
+        const adjustmentsForPnL = await getAll('adjustments') || [];
+        const salariesForPnL = await getAll('salaries') || [];
+        const advancesForPnL = await getAll('salary_advances') || [];
         if (!state.stations || !state.stations.length) {
             try { await loadStations(); } catch (_) {}
         }
@@ -10354,13 +10549,29 @@ async function renderFinancials() {
         }).reduce((s, b) => s + (Number(b.amount) || 0), 0);
         const supplierPayables = suppliers.reduce((s, sup) => s + Math.max(0, Number(sup.current_balance) || 0), 0);
 
+        // Operational P&L for this month (follows station selector when set)
+        const finFrom = finMonthStart.toISOString().slice(0, 10);
+        const finTo = _finNow.toISOString().slice(0, 10);
+        const mtdPnL = computeOperationalPnL({
+            sales: salesForPnL,
+            expenses,
+            adjustments: adjustmentsForPnL,
+            salaries: salariesForPnL,
+            advances: advancesForPnL,
+            stationId: state.currentStationId || null,
+            from: finFrom,
+            to: finTo,
+            includePayroll: true
+        });
+        const stationScopeLabel = state.currentStationId ? stationName(state.currentStationId) : 'All stations';
+
         let html = `
             <div class="fin-workspace">
                 <div class="fin-header">
                     <div class="fin-title-row">
                         <div>
                             <h4><i class="bi bi-wallet2"></i> Financials</h4>
-                            <div class="fin-sub">Liquidity, expenses, transfers & payables · live balances</div>
+                            <div class="fin-sub">Cash position · movements · operational P&amp;L (same engine as Reports)</div>
                         </div>
                         <div class="d-flex flex-wrap gap-2 align-items-center">
                             <span class="fin-period-chip"><i class="bi bi-calendar3"></i> This month · ${finMonthLabel}</span>
@@ -10403,7 +10614,10 @@ async function renderFinancials() {
 
                 <ul class="nav fin-pills" id="financeTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="accounts-tab" data-bs-toggle="tab" data-bs-target="#accounts" type="button" role="tab"><i class="bi bi-bank2"></i> Accounts</button>
+                        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab"><i class="bi bi-speedometer2"></i> Overview</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="accounts-tab" data-bs-toggle="tab" data-bs-target="#accounts" type="button" role="tab"><i class="bi bi-bank2"></i> Accounts</button>
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="expenses-tab" data-bs-toggle="tab" data-bs-target="#expenses" type="button" role="tab"><i class="bi bi-receipt"></i> Expenses</button>
@@ -10423,8 +10637,53 @@ async function renderFinancials() {
                 </ul>
 
                 <div class="tab-content" id="financeTabsContent">
+                    <!-- Overview -->
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                        <div class="row g-3 mb-3">
+                            <div class="col-12">
+                                <div class="fin-note"><i class="bi bi-info-circle"></i>
+                                    <strong>Cash vs profit:</strong> Account balances are cash/liquidity.
+                                    Operational P&amp;L below includes credit sales as revenue and payroll (net salaries + advances).
+                                    Scope: <strong>${esc(stationScopeLabel)}</strong> · Month: <strong>${esc(finMonthLabel)}</strong>.
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="fin-action-card h-100">
+                                    <h6><i class="bi bi-cash-stack text-success"></i> Liquidity</h6>
+                                    <div class="mb-2"><span class="text-muted small">Total accounts</span><div class="fs-4 fw-bold">${formatMoney(totalLiquidity)}</div></div>
+                                    <div class="mb-2"><span class="text-muted small">Cash tills</span><div class="fw-semibold">${formatMoney(cashTillTotal)}</div></div>
+                                    <div><span class="text-muted small">Supplier payables</span><div class="fw-semibold text-danger">${formatMoney(supplierPayables)}</div></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="fin-action-card h-100">
+                                    <h6><i class="bi bi-graph-up-arrow text-primary"></i> This month · P&amp;L</h6>
+                                    <div class="mb-2"><span class="text-muted small">Revenue</span><div class="fw-bold text-success">${formatMoney(mtdPnL.totalRevenue)}</div></div>
+                                    <div class="mb-2"><span class="text-muted small">Gross profit</span><div class="fw-semibold">${formatMoney(mtdPnL.grossProfit)} <span class="small text-muted">(${mtdPnL.gpMargin.toFixed(1)}%)</span></div></div>
+                                    <div><span class="text-muted small">Net profit</span><div class="fs-5 fw-bold ${mtdPnL.netProfit >= 0 ? 'text-success' : 'text-danger'}">${formatMoney(mtdPnL.netProfit)}</div></div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="fin-action-card h-100">
+                                    <h6><i class="bi bi-arrow-down-up text-warning"></i> Outflows (MTD)</h6>
+                                    <div class="mb-2"><span class="text-muted small">Expenses</span><div class="fw-semibold">${formatMoney(mtdPnL.totalExpenses)}</div></div>
+                                    <div class="mb-2"><span class="text-muted small">Payroll (salaries + advances)</span><div class="fw-semibold">${formatMoney(mtdPnL.totalPayroll)}</div></div>
+                                    <div class="mb-2"><span class="text-muted small">Stock losses</span><div class="fw-semibold">${formatMoney(mtdPnL.totalLosses)}</div></div>
+                                    <div><span class="text-muted small">Bank deposits recorded</span><div class="fw-semibold">${formatMoney(mtdDeposits)}</div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="fin-note">
+                            <i class="bi bi-lightbulb"></i> Use tabs for postings:
+                            <strong>Accounts</strong> (banks/tills),
+                            <strong>Expenses</strong> (hits P&amp;L),
+                            <strong>Transfers</strong> (cash movement, not expense),
+                            <strong>Payments</strong> (suppliers / AP).
+                            Full date-range P&amp;L is under <strong>Reports → Profit &amp; loss</strong>.
+                        </div>
+                    </div>
                     <!-- Accounts -->
-                    <div class="tab-pane fade show active" id="accounts" role="tabpanel">
+                    <div class="tab-pane fade" id="accounts" role="tabpanel">
                         <div class="row g-3">
                             <div class="col-lg-4">
                                 <div class="fin-action-card border border-primary">
@@ -12859,89 +13118,101 @@ console.log('✅ All missing pages from Part 8 now registered.');
 // ============================================================
 
 async function renderReports() {
-    // ---- Fetch all data needed for reports ----
-    const sales = await getAll('sales');
-    const expenses = await getAll('expenses');
-    const adjustments = await getAll('adjustments');
-    const customers = await getAll('customers');
-    const suppliers = await getAll('suppliers');
-    const accounts = await getAll('bank_accounts');
-    const bankings = await getAll('bankings');
-    const supplierPayments = await getAll('supplier_payments');
-    const users = await getAll('users');
-    const inv = await getAll('inventory');
-    const reconciliations = await getAll('reconciliations');
-    const stock = await getAll('stock');  // offloading records
-    const customerTransactions = await getAll('customer_transactions');
-    const supplierTransactions = await getAll('supplier_transactions');
+    const sales = await getAll('sales') || [];
+    const expenses = await getAll('expenses') || [];
+    const adjustments = await getAll('adjustments') || [];
+    const customers = await getAll('customers') || [];
+    const suppliers = await getAll('suppliers') || [];
+    const accounts = await getAll('bank_accounts') || [];
+    const bankings = await getAll('bankings') || [];
+    const supplierPayments = await getAll('supplier_payments') || [];
+    const users = await getAll('users') || [];
+    const inv = await getAll('inventory') || [];
+    const reconciliations = await getAll('reconciliations') || [];
+    const stock = await getAll('stock') || [];
+    const customerTransactions = await getAll('customer_transactions') || [];
+    const supplierTransactions = await getAll('supplier_transactions') || [];
+    const salaries = await getAll('salaries') || [];
+    const salaryAdvances = await getAll('salary_advances') || [];
 
-    // ---- Product types for filter ----
     const productTypes = [...new Set(inv.map(i => i.product_type).filter(Boolean))];
-    const productOpts = productTypes.length > 0 ?
-        productTypes.map(p => `<option value="${p}">${p}</option>`).join('') :
-        '';
+    const productOpts = productTypes.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('');
 
-    // ---- Date helpers ----
     const today = new Date();
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
     function toISO(d) { return d.toISOString().slice(0, 10); }
 
-    // ---- Station dropdown ----
-    let stationOpts = '<option value="">All Stations</option>';
-    state.stations.forEach(s => {
+    let stationOpts = '<option value="">All stations</option>';
+    (state.stations || []).forEach(s => {
         const sel = state.currentStationId && String(s.id) === String(state.currentStationId) ? ' selected' : '';
-        stationOpts += '<option value="' + s.id + '"' + sel + '>' + s.name + '</option>';
+        stationOpts += `<option value="${esc(s.id)}"${sel}>${esc(s.name)}</option>`;
     });
-
-    // ---- Customer & Supplier dropdowns for statements ----
-    let customerOpts = '<option value="">Walk-in / cash customer</option>';
-    customers.forEach(c => {
-        customerOpts += `<option value="${c.id}">${c.name}</option>`;
-    });
+    let customerOpts = '<option value="">Select customer</option>';
+    customers.forEach(c => { customerOpts += `<option value="${esc(c.id)}">${esc(c.name)}</option>`; });
     let supplierOpts = '<option value="">Select supplier</option>';
-    suppliers.forEach(s => {
-        supplierOpts += `<option value="${s.id}">${s.name}</option>`;
+    suppliers.forEach(s => { supplierOpts += `<option value="${esc(s.id)}">${esc(s.name)}</option>`; });
+
+    const reportGroups = [
+        {
+            label: 'Daily operations',
+            items: [
+                { value: 'end_of_day', label: 'End of day summary' },
+                { value: 'sales_summary', label: 'Sales summary' },
+                { value: 'cashier_performance', label: 'Cashier performance' }
+            ]
+        },
+        {
+            label: 'Performance',
+            items: [
+                { value: 'profit_loss', label: 'Profit & loss (operational)' },
+                { value: 'expense_summary', label: 'Expense summary' }
+            ]
+        },
+        {
+            label: 'Credit & debt',
+            items: [
+                { value: 'ar_aging', label: 'AR aging (customer credit)' },
+                { value: 'ap_aging', label: 'AP aging (supplier debt)' },
+                { value: 'customer_balances', label: 'Customer balances' },
+                { value: 'supplier_balances', label: 'Supplier balances' },
+                { value: 'customer_statement', label: 'Customer statement' },
+                { value: 'supplier_statement', label: 'Supplier statement' }
+            ]
+        },
+        {
+            label: 'Stock & cash',
+            items: [
+                { value: 'inventory_snapshot', label: 'Inventory snapshot' },
+                { value: 'bank_reconciliation', label: 'Bank & cash position' }
+            ]
+        }
+    ];
+    let reportOpts = '';
+    reportGroups.forEach(g => {
+        reportOpts += `<optgroup label="${esc(g.label)}">`;
+        g.items.forEach(it => { reportOpts += `<option value="${it.value}">${esc(it.label)}</option>`; });
+        reportOpts += '</optgroup>';
     });
 
-    // ---- Report types ----
-    const reportTypes = [
-        { value: 'ar_aging', label: '📑 AR Aging (Customer Credit)' },
-        { value: 'ap_aging', label: '📑 AP Aging (Supplier Debt)' },
-        { value: 'end_of_day', label: '📅 End of Day Summary' },
-        { value: 'profit_loss', label: '📊 Profit & Loss Statement' },
-        { value: 'sales_summary', label: '💰 Sales Summary' },
-        { value: 'expense_summary', label: '💸 Expense Summary' },
-        { value: 'customer_balances', label: '📋 Customer Balance List' },
-        { value: 'supplier_balances', label: '📋 Supplier Balance List' },
-        { value: 'customer_statement', label: '👤 Customer Statement' },
-        { value: 'supplier_statement', label: '🏢 Supplier Statement' },
-        { value: 'inventory_snapshot', label: '📦 Inventory Snapshot' },
-        { value: 'cashier_performance', label: '👨‍💼 Cashier Performance' },
-        { value: 'bank_reconciliation', label: '🏦 Bank Reconciliation' },
-    ];
-    let reportOpts = reportTypes.map(r => `<option value="${r.value}">${r.label}</option>`).join('');
-
-    // ---- Build HTML ----
     let html = `
         <div class="fin-workspace">
             <div class="fin-header">
                 <div class="fin-title-row">
                     <div>
                         <h4><i class="bi bi-bar-chart-line"></i> Reports</h4>
-                        <div class="fin-sub">Financial, sales, inventory &amp; statements — export ready</div>
+                        <div class="fin-sub">Grouped by job · same P&amp;L engine as Dashboard &amp; Financials</div>
                     </div>
-                    <span class="fin-period-chip"><i class="bi bi-funnel"></i> ${reportTypes.length} report types</span>
+                    <span class="fin-period-chip"><i class="bi bi-diagram-3"></i> Operational management reports</span>
                 </div>
             </div>
 
             <div class="fin-action-card mb-3">
-                <h6 class="mb-3"><i class="bi bi-sliders text-primary"></i> Report filters</h6>
+                <h6 class="mb-3"><i class="bi bi-sliders text-primary"></i> Filters</h6>
                 <div class="intl-form">
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3">
-                            <label class="form-label" for="rptType">Report type</label>
+                            <label class="form-label" for="rptType">Report</label>
                             <select id="rptType" class="form-select">${reportOpts}</select>
                         </div>
                         <div class="col-md-2">
@@ -12956,7 +13227,7 @@ async function renderReports() {
                             <label class="form-label" for="rptTo">To</label>
                             <input type="date" id="rptTo" class="form-control" value="${toISO(today)}">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-2" id="rptProductWrap">
                             <label class="form-label" for="rptProduct">Product</label>
                             <select id="rptProduct" class="form-select">
                                 <option value="">All products</option>
@@ -12964,7 +13235,7 @@ async function renderReports() {
                             </select>
                         </div>
                         <div class="col-md-1 d-grid">
-                            <button class="btn btn-intl btn-intl-primary" id="rptGenerate" style="min-height:40px;padding:8px;"><i class="bi bi-play-fill"></i></button>
+                            <button class="btn btn-intl btn-intl-primary" id="rptGenerate" style="min-height:40px;padding:8px;" title="Generate"><i class="bi bi-play-fill"></i></button>
                         </div>
                     </div>
                     <div class="row g-2 mt-1" id="entitySelector" style="display:none;">
@@ -12973,54 +13244,41 @@ async function renderReports() {
                             <select id="rptEntity" class="form-select"></select>
                         </div>
                     </div>
+                    <div class="fin-note mt-3" id="rptHelp">
+                        <i class="bi bi-info-circle"></i> <span id="rptHelpText">Select a report and date range, then Generate.</span>
+                    </div>
                     <div class="d-flex flex-wrap gap-2 mt-3">
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="rptReset" style="border-radius:8px;"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
                         <button type="button" class="btn btn-sm btn-outline-success" id="rptExportExcel" style="border-radius:8px;"><i class="bi bi-file-earmark-excel"></i> Excel</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger" id="rptExportPDF" style="border-radius:8px;"><i class="bi bi-file-earmark-pdf"></i> PDF</button>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="rptPrint" style="border-radius:8px;"><i class="bi bi-printer"></i> Print</button>
                     </div>
-                    <div class="fin-note mt-2 mb-0" id="rptHint"><i class="bi bi-info-circle"></i> Choose a report, set the date range, then generate.</div>
                 </div>
             </div>
-
-            <div id="rptResult" class="fin-ledger-card">
-                <div class="intl-empty"><i class="bi bi-bar-chart"></i>Select a report type and click generate</div>
+            <div class="fin-ledger-card">
+                <div id="rptResult" class="intl-empty"><i class="bi bi-bar-chart"></i>Select a report type and click Generate.</div>
             </div>
         </div>`;
 
     document.getElementById('pageContent').innerHTML = html;
 
-    // ---- Toggle entity selector based on report type ----
-    const rptType = document.getElementById('rptType');
-    const entitySelector = document.getElementById('entitySelector');
-    const rptEntity = document.getElementById('rptEntity');
+    let lastReport = { html: '', headers: [], rows: [], filename: 'report' };
 
-    rptType.onchange = function() {
-        const val = this.value;
-        const hint = document.getElementById('rptHint');
-        if (val === 'customer_statement') {
-            entitySelector.style.display = 'block';
-            rptEntity.innerHTML = customerOpts;
-            if (hint) hint.innerHTML = '<i class="bi bi-info-circle"></i> Pick a customer, then generate the statement.';
-        } else if (val === 'supplier_statement') {
-            entitySelector.style.display = 'block';
-            rptEntity.innerHTML = supplierOpts;
-            if (hint) hint.innerHTML = '<i class="bi bi-info-circle"></i> Pick a supplier, then generate the statement.';
-        } else {
-            entitySelector.style.display = 'none';
-            if (val === 'end_of_day') {
-                const todayStr = toISO(new Date());
-                document.getElementById('rptFrom').value = todayStr;
-                document.getElementById('rptTo').value = todayStr;
-                if (hint) hint.innerHTML = '<i class="bi bi-info-circle"></i> End of day uses the <strong>From</strong> date as the single day. Set station if you want one site only.';
-            } else if (hint) {
-                hint.innerHTML = '<i class="bi bi-info-circle"></i> Choose a report, set the date range, then generate.';
-            }
-        }
+    const HELP = {
+        end_of_day: 'Single-day ops snapshot. Uses the From date as the day (To is synced).',
+        profit_loss: 'Operational P&L for the full date range. Revenue − COGS − expenses − stock losses − payroll (salaries & advances). Credit sales count; collections do not double-count.',
+        sales_summary: 'Line-level sales in range (excludes reversed).',
+        expense_summary: 'Expenses posted in Financials for the range.',
+        ar_aging: 'Customer balances owed to you (point-in-time; dates optional).',
+        ap_aging: 'Supplier balances you owe (point-in-time).',
+        customer_balances: 'All customer balances.',
+        supplier_balances: 'All supplier balances.',
+        customer_statement: 'Pick a customer. Movement history in range when dates set.',
+        supplier_statement: 'Pick a supplier. Movement history in range when dates set.',
+        inventory_snapshot: 'Current stock levels (not historical). Station filter applies.',
+        cashier_performance: 'Sales by cashier in the date range.',
+        bank_reconciliation: 'Account balances and recent deposits / movements.'
     };
-    rptType.dispatchEvent(new Event('change'));
 
-    // ---- Helper functions ----
     function getFilters() {
         return {
             type: document.getElementById('rptType').value,
@@ -13028,63 +13286,23 @@ async function renderReports() {
             from: document.getElementById('rptFrom').value,
             to: document.getElementById('rptTo').value,
             product: document.getElementById('rptProduct').value || null,
-            entityId: document.getElementById('rptEntity').value || null,
+            entityId: document.getElementById('rptEntity').value || null
         };
     }
 
-    function parseReportDate(val) {
-        if (val == null || val === '') return null;
-        let dt = null;
-        if (typeof val.toDate === 'function') dt = val.toDate();
-        else if (val.seconds != null) dt = new Date(Number(val.seconds) * 1000);
-        else if (typeof val === 'string' && /^\d{4}-\d{2}-\d{2}/.test(val)) {
-            const p = val.slice(0, 10).split('-').map(Number);
-            dt = new Date(p[0], p[1] - 1, p[2], 12, 0, 0, 0);
-        } else dt = new Date(val);
-        return (dt && !isNaN(dt.getTime())) ? dt : null;
-    }
-    function recordDate(x) {
-        const candidates = [x.sale_date, x.expense_date, x.payment_date, x.received_date, x.date, x.paid_date, x.created_at, x.timestamp];
-        for (const c of candidates) {
-            const dt = parseReportDate(c);
-            if (dt) return dt;
-        }
-        return null;
-    }
-    function dateInRange(ts, from, to) {
-        const d = parseReportDate(ts);
-        if (!d) return false;
-        const f = parseReportDate(from) || new Date(from);
-        const t = parseReportDate(to) || new Date(to);
-        if (!f || !t || isNaN(f.getTime()) || isNaN(t.getTime())) return false;
-        const f0 = new Date(f.getFullYear(), f.getMonth(), f.getDate(), 0, 0, 0, 0);
-        const t1 = new Date(t.getFullYear(), t.getMonth(), t.getDate(), 23, 59, 59, 999);
-        return d >= f0 && d <= t1;
-    }
-
-    function filterByCommon(arr, f) {
-        return arr.filter(x => {
-            if (f.stationId && String(x.station_id) !== String(f.stationId)) return false;
-            if (f.product && x.product_type && x.product_type !== f.product) return false;
-            const d = recordDate(x);
-            if (!d) return false;
-            return dateInRange(d, f.from, f.to);
-        });
-    }
-
-    function generateTable(headers, rows, title = '') {
+    function generateTable(headers, rows, title) {
         let tableHtml = `<div class="table-responsive intl-table-wrap"><table class="table table-sm mb-0 align-middle table-report">`;
         if (title) tableHtml += `<caption class="fw-bold px-2 pt-2">${title}</caption>`;
         tableHtml += `<thead style="position:sticky;top:0;z-index:2;"><tr>`;
-        headers.forEach(h => tableHtml += `<th>${h}</th>`);
+        headers.forEach(h => { tableHtml += `<th>${h}</th>`; });
         tableHtml += `</tr></thead><tbody>`;
-        if (rows.length === 0) {
+        if (!rows.length) {
             tableHtml += `<tr><td colspan="${headers.length}"><div class="intl-empty"><i class="bi bi-inbox"></i>No results for this filter</div></td></tr>`;
         } else {
             rows.forEach((row, idx) => {
                 const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
                 tableHtml += `<tr style="background:${bg};">`;
-                row.forEach(cell => tableHtml += `<td>${cell}</td>`);
+                row.forEach(cell => { tableHtml += `<td>${cell}</td>`; });
                 tableHtml += `</tr>`;
             });
         }
@@ -13105,701 +13323,371 @@ async function renderReports() {
         return h;
     }
 
-    // ---- Report generators ----
-
-    // 1. End of Day — uses robust dates (sale_date / expense_date / created_at)
-    function generateEndOfDay(f) {
-        // Single-day report: prefer From; if To differs, still use From as the day (UI syncs them)
-        const dateStr = f.from || f.to || toISO(today);
-        const dayFilter = { stationId: f.stationId, product: f.product, from: dateStr, to: dateStr };
-
-        const daySales = filterByCommon(sales, dayFilter).filter(s => s.status !== 'reversed' && s.reversed !== true && s.type !== 'payment' && String(s.product_type || '') !== 'Customer Payment');
-        const dayExpenses = filterByCommon(expenses, dayFilter).filter(e => e.status !== 'reversed' && e.reversed !== true);
-        const dayAdjustments = filterByCommon(adjustments, dayFilter).filter(a => a.status !== 'reversed' && a.reversed !== true);
-        const dayStock = filterByCommon(stock, dayFilter).filter(s => s.status !== 'reversed' && s.reversed !== true);
-        const dayRecons = filterByCommon(reconciliations, dayFilter);
-
-        let totalRevenue = 0,
-            totalCOGS = 0;
-        daySales.forEach(s => {
-            totalRevenue += Number(s.amount) || 0;
-            totalCOGS += (Number(s.cost_price) || 0) * (Number(s.quantity) || 0);
-        });
-        const grossProfit = totalRevenue - totalCOGS;
-        const totalExpenses = dayExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
-        let totalLosses = 0;
-        dayAdjustments.forEach(a => {
-            if (a.adj_type === 'quantity' && Number(a.quantity) < 0) {
-                const cost = a.cost_price_at_change || 0;
-                totalLosses += Math.abs(Number(a.quantity)) * cost;
-            }
-        });
-        const netProfit = grossProfit - totalExpenses - totalLosses;
-        const totalQtySold = daySales.reduce((sum, s) => sum + Number(s.quantity || 0), 0);
-
-        const productSales = {};
-        daySales.forEach(s => {
-            const p = s.product_type || 'Unknown';
-            if (!productSales[p]) productSales[p] = { qty: 0, revenue: 0, cogs: 0 };
-            productSales[p].qty += Number(s.quantity) || 0;
-            productSales[p].revenue += Number(s.amount) || 0;
-            productSales[p].cogs += (Number(s.cost_price) || 0) * (Number(s.quantity) || 0);
-        });
-        const detailRows = Object.keys(productSales).map(p => {
-            const d = productSales[p];
-            const profit = d.revenue - d.cogs;
-            return [p, d.qty.toFixed(2) + 'L', formatMoney(d.revenue), formatMoney(d.cogs), formatMoney(profit)];
-        });
-
-        const offloadLitres = dayStock.reduce((sum, s) => {
-            return sum + (s.items || []).reduce((a, it) => a + (Number(it.quantity) || 0), 0);
-        }, 0);
-        const stLabel = f.stationId ? stationName(f.stationId) : 'All stations';
-        let summaryHtml = `<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <div>
-                <h5 class="mb-0 fw-bold">End of day · ${esc(dateStr)}</h5>
-                <div class="small text-muted">${esc(stLabel)} · ${daySales.length} sale${daySales.length===1?'':'s'} · ${dayRecons.length} reconciliation${dayRecons.length===1?'':'s'}</div>
-            </div>
+    function periodBanner(title, f, extraNote) {
+        const period = formatPnLPeriodLabel(f.from, f.to);
+        const st = f.stationId ? stationName(f.stationId) : 'All stations';
+        const prod = f.product || 'All products';
+        return `<div class="mb-3" style="background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;border-radius:14px;padding:16px 18px;">
+            <div style="font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em;opacity:0.8;font-weight:700;">${title}</div>
+            <div style="font-size:1.15rem;font-weight:800;margin-top:4px;">Period: ${esc(period)}</div>
+            <div style="font-size:0.85rem;opacity:0.85;margin-top:6px;">Station: ${esc(st)} · Product: ${esc(prod)}</div>
+            ${extraNote ? `<div style="font-size:0.78rem;opacity:0.75;margin-top:8px;">${extraNote}</div>` : ''}
         </div>`;
-        summaryHtml += reportKpiRow([
-            { label: 'Revenue', value: formatMoney(totalRevenue), tone: 'in' },
-            { label: 'Gross profit', value: formatMoney(grossProfit), tone: grossProfit >= 0 ? 'in' : 'out' },
-            { label: 'Expenses', value: formatMoney(totalExpenses), tone: 'out' },
-            { label: 'Net profit', value: formatMoney(netProfit), tone: netProfit >= 0 ? 'in' : 'out' },
-            { label: 'Volume sold', value: totalQtySold.toFixed(0) + ' L', tone: '' },
-            { label: 'COGS', value: formatMoney(totalCOGS), tone: '' },
-            { label: 'Stock losses', value: formatMoney(totalLosses), tone: totalLosses ? 'warn' : '' },
-            { label: 'Offloaded', value: offloadLitres.toFixed(0) + ' L', tone: '' },
-        ]);
-        if (daySales.length === 0 && dayExpenses.length === 0) {
-            summaryHtml += `<div class="fin-note mb-3"><i class="bi bi-info-circle"></i> No sales or expenses found for <strong>${esc(dateStr)}</strong>. Check the date and station filter — sales use the sale date when available.</div>`;
-        }
-        const detailTable = generateTable(['Product', 'Qty Sold', 'Revenue', 'COGS', 'Profit'], detailRows, 'Sales by product');
-        const htmlContent = summaryHtml + detailTable;
-        return { html: htmlContent, headers: ['Product', 'Qty Sold', 'Revenue', 'COGS', 'Profit'], rows: detailRows, filename: 'EndOfDay_' + dateStr };
     }
 
-    // 2. Profit & Loss
+    // ---- Generators ----
+    function generateEndOfDay(f) {
+        const dateStr = f.from || f.to || toISO(today);
+        const dayF = { stationId: f.stationId, product: f.product, from: dateStr, to: dateStr };
+        const pnl = computeOperationalPnL({
+            sales, expenses, adjustments, salaries, advances: salaryAdvances,
+            stationId: dayF.stationId, product: dayF.product, from: dayF.from, to: dayF.to, includePayroll: true
+        });
+        const dayRecons = reconciliations.filter(r => {
+            if (dayF.stationId && String(r.station_id) !== String(dayF.stationId)) return false;
+            return dateInBusinessRange(recordBusinessDate(r), dateStr, dateStr);
+        });
+        const dayStock = stock.filter(s => {
+            if (s.status === 'reversed' || s.reversed === true) return false;
+            if (dayF.stationId && String(s.station_id) !== String(dayF.stationId)) return false;
+            return dateInBusinessRange(recordBusinessDate(s), dateStr, dateStr);
+        });
+        const offloadLitres = dayStock.reduce((sum, s) => {
+            const items = s.items || [];
+            return sum + items.reduce((a, it) => a + (Number(it.quantity) || 0), 0);
+        }, 0);
+
+        const productRows = Object.keys(pnl.byProduct).map(p => {
+            const d = pnl.byProduct[p];
+            const profit = d.revenue - d.cogs;
+            return [p, d.qty.toFixed(2), formatMoney(d.revenue), formatMoney(d.cogs), formatMoney(profit)];
+        });
+
+        let summaryHtml = periodBanner('End of day summary', dayF,
+            'Single calendar day. Payroll for this day is included in net profit when salary period/date falls on this day.');
+        summaryHtml += reportKpiRow([
+            { label: 'Revenue', value: formatMoney(pnl.totalRevenue), tone: 'in' },
+            { label: 'Gross profit', value: formatMoney(pnl.grossProfit), tone: pnl.grossProfit >= 0 ? 'in' : 'out' },
+            { label: 'Expenses', value: formatMoney(pnl.totalExpenses), tone: 'out' },
+            { label: 'Payroll', value: formatMoney(pnl.totalPayroll), tone: 'out' },
+            { label: 'Net profit', value: formatMoney(pnl.netProfit), tone: pnl.netProfit >= 0 ? 'in' : 'out' },
+            { label: 'Volume sold', value: pnl.totalQty.toFixed(0) + ' L', tone: '' },
+            { label: 'COGS', value: formatMoney(pnl.totalCOGS), tone: '' },
+            { label: 'Offloaded', value: offloadLitres.toFixed(0) + ' L', tone: '' }
+        ]);
+        if (pnl.salesCount === 0 && pnl.expenseCount === 0) {
+            summaryHtml += `<div class="fin-note mb-3"><i class="bi bi-info-circle"></i> No sales or expenses for <strong>${esc(dateStr)}</strong>.</div>`;
+        }
+        summaryHtml += `<div class="fin-note mb-3">${dayRecons.length} reconciliation(s) on this day.</div>`;
+        const detailTable = generateTable(['Product', 'Qty Sold', 'Revenue', 'COGS', 'Profit'], productRows, 'Sales by product');
+        return { html: summaryHtml + detailTable, headers: ['Product', 'Qty Sold', 'Revenue', 'COGS', 'Profit'], rows: productRows, filename: 'EndOfDay_' + dateStr };
+    }
+
     function generateProfitLoss(f) {
-        const filteredSales = filterByCommon(sales, f).filter(s => s.status !== 'reversed' && s.reversed !== true && s.type !== 'payment' && String(s.product_type || '') !== 'Customer Payment');
-        const filteredExpenses = filterByCommon(expenses, f);
-        const filteredAdjustments = filterByCommon(adjustments, f);
-
-        let totalRevenue = 0,
-            totalCOGS = 0;
-        const productData = {};
-        filteredSales.forEach(s => {
-            const p = s.product_type || 'Unknown';
-            const amt = Number(s.amount) || 0;
-            const cost = (Number(s.cost_price) || 0) * (Number(s.quantity) || 0);
-            totalRevenue += amt;
-            totalCOGS += cost;
-            if (!productData[p]) productData[p] = { revenue: 0, cogs: 0 };
-            productData[p].revenue += amt;
-            productData[p].cogs += cost;
+        const pnl = computeOperationalPnL({
+            sales, expenses, adjustments, salaries, advances: salaryAdvances,
+            stationId: f.stationId, product: f.product, from: f.from, to: f.to, includePayroll: true
         });
-        const grossProfit = totalRevenue - totalCOGS;
-        const totalExpenses = filteredExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
-        let totalLosses = 0;
-        filteredAdjustments.forEach(a => {
-            if (a.adj_type === 'quantity' && Number(a.quantity) < 0) {
-                const cost = a.cost_price_at_change || 0;
-                totalLosses += Math.abs(Number(a.quantity)) * cost;
-            }
-        });
-        const netProfit = grossProfit - totalExpenses - totalLosses;
-
-        const productRows = Object.keys(productData).map(p => {
-            const d = productData[p];
+        const productRows = Object.keys(pnl.byProduct).map(p => {
+            const d = pnl.byProduct[p];
             const profit = d.revenue - d.cogs;
             const margin = d.revenue > 0 ? (profit / d.revenue * 100) : 0;
             return [p, formatMoney(d.revenue), formatMoney(d.cogs), formatMoney(profit), margin.toFixed(1) + '%'];
         });
-
-        const summaryRows = [
-            ['Total Revenue', formatMoney(totalRevenue)],
-            ['Total COGS', formatMoney(totalCOGS)],
-            ['Gross Profit', formatMoney(grossProfit), (totalRevenue > 0 ? (grossProfit/totalRevenue*100).toFixed(1) : 0) + '%'],
-            ['Total Expenses', formatMoney(totalExpenses)],
-            ['Total Losses', formatMoney(totalLosses)],
-            ['Net Profit', formatMoney(netProfit), (totalRevenue > 0 ? (netProfit/totalRevenue*100).toFixed(1) : 0) + '%'],
-        ];
-        let summaryHtml = '<div class="row g-3 mb-3">';
-        summaryRows.forEach(row => {
-            summaryHtml += `<div class="col-md-4"><strong>${row[0]}:</strong> ${row[1]} ${row[2] ? ' ('+row[2]+')' : ''}</div>`;
-        });
-        summaryHtml += '</div>';
-        const detailTable = generateTable(['Product', 'Revenue', 'COGS', 'Profit', 'Margin'], productRows, 'Product Breakdown');
-        const htmlContent = summaryHtml + detailTable;
-        return { html: htmlContent, headers: ['Product', 'Revenue', 'COGS', 'Profit', 'Margin'], rows: productRows, filename: 'ProfitLoss' };
+        let summaryHtml = periodBanner('Profit & loss · operational', f,
+            'Net profit = (Revenue − COGS) − Expenses − Stock losses − Payroll (net salaries + advances). Credit sales included; customer collections are not revenue.');
+        summaryHtml += reportKpiRow([
+            { label: 'Revenue', value: formatMoney(pnl.totalRevenue), tone: 'in' },
+            { label: 'COGS', value: formatMoney(pnl.totalCOGS), tone: 'out' },
+            { label: 'Gross profit', value: formatMoney(pnl.grossProfit), tone: pnl.grossProfit >= 0 ? 'in' : 'out' },
+            { label: 'GP margin', value: pnl.gpMargin.toFixed(1) + '%', tone: '' },
+            { label: 'Expenses', value: formatMoney(pnl.totalExpenses), tone: 'out' },
+            { label: 'Stock losses', value: formatMoney(pnl.totalLosses), tone: pnl.totalLosses ? 'warn' : '' },
+            { label: 'Payroll', value: formatMoney(pnl.totalPayroll), tone: 'out' },
+            { label: 'Net profit', value: formatMoney(pnl.netProfit), tone: pnl.netProfit >= 0 ? 'in' : 'out' }
+        ]);
+        if (!productRows.length && pnl.totalRevenue === 0 && pnl.totalExpenses === 0 && pnl.totalPayroll === 0) {
+            summaryHtml += `<div class="fin-note mb-3"><i class="bi bi-info-circle"></i> No activity in this period. Widen dates or clear filters.</div>`;
+        }
+        const detailTable = generateTable(['Product', 'Revenue', 'COGS', 'Profit', 'Margin'], productRows, 'Product breakdown');
+        return {
+            html: summaryHtml + detailTable,
+            headers: ['Product', 'Revenue', 'COGS', 'Profit', 'Margin'],
+            rows: productRows,
+            filename: 'ProfitLoss_' + (f.from || '') + '_' + (f.to || '')
+        };
     }
 
-    // 3. Sales Summary
     function generateSalesSummary(f) {
-        const data = filterByCommon(sales, f).filter(s => s.status !== 'reversed');
-        let totalAmt = 0,
-            totalQty = 0;
-        data.forEach(s => {
-            totalQty += Number(s.quantity) || 0;
-            totalAmt += Number(s.amount) || 0;
-        });
-        const headers = ['Station', 'Cashier', 'Product', 'Qty (L)', 'Amount', 'Payment', 'Date'];
-        const rows = data.map(s => {
+        const rows = [];
+        sales.forEach(s => {
+            if (!isFuelSale(s)) return;
+            if (f.stationId && String(s.station_id) !== String(f.stationId)) return;
+            if (f.product && String(s.product_type) !== String(f.product)) return;
+            if (!dateInBusinessRange(recordBusinessDate(s), f.from, f.to)) return;
             const cashier = users.find(u => u.id === s.recorded_by);
-            return [
+            rows.push([
                 stationName(s.station_id),
-                cashier ? (cashier.name || cashier.username) : '—',
+                cashier ? (cashier.name || cashier.username) : (s.recorded_by || '—'),
                 s.product_type || '—',
                 (Number(s.quantity) || 0).toFixed(2),
                 formatMoney(s.amount),
-                s.payment_method || 'cash',
-                formatDate(s.sale_date || s.created_at)
-            ];
+                s.payment_method || '—',
+                formatDate(recordBusinessDate(s))
+            ]);
         });
-        let body = `<div class="d-flex justify-content-between mb-3"><h5 class="mb-0">Sales Summary</h5><div><strong>Total: ${formatMoney(totalAmt)}</strong> | Qty: ${totalQty.toFixed(2)}L</div></div>`;
-        body += generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'SalesSummary' };
+        let body = periodBanner('Sales summary', f, '') + generateTable(
+            ['Station', 'Cashier', 'Product', 'Qty (L)', 'Amount', 'Payment', 'Date'], rows);
+        return { html: body, headers: ['Station', 'Cashier', 'Product', 'Qty (L)', 'Amount', 'Payment', 'Date'], rows, filename: 'SalesSummary' };
     }
 
-    // 4. Expense Summary
     function generateExpenseSummary(f) {
-        const data = filterByCommon(expenses, f);
-        let total = 0;
-        const byCategory = {};
-        data.forEach(e => {
-            const amt = Number(e.amount) || 0;
-            total += amt;
-            const cat = e.category || 'other';
-            if (!byCategory[cat]) byCategory[cat] = 0;
-            byCategory[cat] += amt;
-        });
-        const headers = ['Station', 'Source', 'Person', 'Description', 'Category', 'Amount', 'Date'];
-        const rows = data.map(e => {
-            let sourceLabel = 'Unknown';
-            if (e.source_account === 'petty_cash') sourceLabel = 'Petty Cash';
-            else { const acc = accounts.find(a => a.id === e.source_account); if (acc) sourceLabel = acc.bank_name; }
-            return [
+        const rows = [];
+        expenses.forEach(e => {
+            if (e.status === 'reversed' || e.reversed === true) return;
+            if (f.stationId && String(e.station_id) !== String(f.stationId)) return;
+            if (!dateInBusinessRange(recordBusinessDate(e), f.from, f.to)) return;
+            rows.push([
+                formatDate(recordBusinessDate(e)),
                 stationName(e.station_id),
-                sourceLabel,
-                e.person_name || '—',
-                e.description || '—',
-                e.category || 'other',
-                formatMoney(e.amount),
-                formatDate(e.created_at)
-            ];
+                e.category || '—',
+                e.description || e.note || '—',
+                formatMoney(e.amount)
+            ]);
         });
-        let categorySummary = Object.keys(byCategory).map(cat =>
-            `<div class="badge bg-secondary me-1">${cat}: ${formatMoney(byCategory[cat])}</div>`
-        ).join(' ');
-        let body = `<div class="d-flex justify-content-between mb-3"><h5 class="mb-0">Expenses</h5><div><strong>Total: ${formatMoney(total)}</strong></div></div>
-                    <div class="mb-2">${categorySummary}</div>`;
-        body += generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'ExpenseSummary' };
+        let body = periodBanner('Expense summary', f, 'From Financials → Expenses.') + generateTable(
+            ['Date', 'Station', 'Category', 'Description', 'Amount'], rows);
+        return { html: body, headers: ['Date', 'Station', 'Category', 'Description', 'Amount'], rows, filename: 'ExpenseSummary' };
     }
 
-    // 4b. AR Aging — customer credit by age buckets (from last credit sale or balance)
     function generateARAging(f) {
-        const now = new Date();
-        const buckets = { current: 0, d30: 0, d60: 0, d90: 0, d90p: 0 };
-        const headers = ['Customer', 'Phone', 'Balance', 'Current', '1–30', '31–60', '61–90', '90+', 'Oldest Sale'];
-        const rows = [];
-        customers.forEach(c => {
-            const bal = Number(c.current_balance || 0);
-            if (bal <= 0) return;
-            if (f.stationId && c.station_id && String(c.station_id) !== String(f.stationId)) return;
-            // Age from most recent open credit sale for this customer
-            const creditSales = sales.filter(s =>
-                s.customer_id === c.id &&
-                s.status !== 'reversed' &&
-                s.type !== 'payment' &&
-                String(s.payment_method || '').toLowerCase() === 'credit'
-            );
-            let oldest = null;
-            creditSales.forEach(s => {
-                const d = s.created_at && s.created_at.toDate ? s.created_at.toDate()
-                    : (s.sale_date ? new Date(s.sale_date) : null);
-                if (d && (!oldest || d < oldest)) oldest = d;
-            });
-            const ageDays = oldest ? Math.floor((now - oldest) / 86400000) : 0;
-            let bCurrent = 0, b30 = 0, b60 = 0, b90 = 0, b90p = 0;
-            if (ageDays <= 0) { bCurrent = bal; buckets.current += bal; }
-            else if (ageDays <= 30) { b30 = bal; buckets.d30 += bal; }
-            else if (ageDays <= 60) { b60 = bal; buckets.d60 += bal; }
-            else if (ageDays <= 90) { b90 = bal; buckets.d90 += bal; }
-            else { b90p = bal; buckets.d90p += bal; }
-            rows.push([
-                c.name,
-                c.phone || '—',
-                formatMoney(bal),
-                formatMoney(bCurrent),
-                formatMoney(b30),
-                formatMoney(b60),
-                formatMoney(b90),
-                formatMoney(b90p),
-                oldest ? oldest.toLocaleDateString('en-GB') : '—'
-            ]);
-        });
-        rows.sort((a, b) => {
-            const na = parseFloat(String(a[2]).replace(/[^\d.-]/g, '')) || 0;
-            const nb = parseFloat(String(b[2]).replace(/[^\d.-]/g, '')) || 0;
-            return nb - na;
-        });
-        const totalAR = buckets.current + buckets.d30 + buckets.d60 + buckets.d90 + buckets.d90p;
-        let body = `<div class="mb-3"><h5>Accounts Receivable Aging</h5>
-            <p class="text-muted small">Outstanding customer credit balances by age of oldest open credit sale.</p>
-            <div class="row g-2 mb-3">
-              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(buckets.current)}</div><div class="small text-muted">Current</div></div></div>
-              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(buckets.d30)}</div><div class="small text-muted">1–30 days</div></div></div>
-              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(buckets.d60)}</div><div class="small text-muted">31–60</div></div></div>
-              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(buckets.d90)}</div><div class="small text-muted">61–90</div></div></div>
-              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold text-danger">${formatMoney(buckets.d90p)}</div><div class="small text-muted">90+</div></div></div>
-              <div class="col"><div class="card-box text-center py-2"><div class="fw-bold">${formatMoney(totalAR)}</div><div class="small text-muted">Total AR</div></div></div>
-            </div></div>`;
-        body += generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'AR_Aging' };
+        const rows = customers.map(c => {
+            const bal = Number(c.current_balance) || 0;
+            return [c.name, c.phone || '—', stationName(c.station_id), formatMoney(c.opening_balance || 0), formatMoney(bal), bal > 0 ? 'Owes company' : (bal < 0 ? 'Credit' : 'Settled')];
+        }).filter(r => true);
+        const body = periodBanner('AR aging / customer credit', f, 'Point-in-time balances (not reconstructed by date).') +
+            generateTable(['Customer', 'Phone', 'Station', 'Opening', 'Current', 'Status'], rows);
+        return { html: body, headers: ['Customer', 'Phone', 'Station', 'Opening', 'Current', 'Status'], rows, filename: 'AR_Aging' };
     }
 
-    // 4c. AP Aging — supplier balances owed
     function generateAPAging(f) {
-        const headers = ['Supplier', 'Phone', 'Balance Owed', 'Status'];
-        const rows = [];
-        let total = 0;
-        suppliers.forEach(s => {
-            const bal = Number(s.current_balance || 0);
-            if (bal <= 0) return;
-            total += bal;
-            rows.push([
-                s.name,
-                s.phone || '—',
-                formatMoney(bal),
-                bal > 0 ? 'Payable' : '—'
-            ]);
+        const rows = suppliers.map(s => {
+            const bal = Number(s.current_balance) || 0;
+            return [s.name, s.phone || '—', formatMoney(s.opening_balance || 0), formatMoney(bal), bal > 0 ? 'Company owes' : (bal < 0 ? 'Prepaid' : 'Settled')];
         });
-        rows.sort((a, b) => {
-            const na = parseFloat(String(a[2]).replace(/[^\d.-]/g, '')) || 0;
-            const nb = parseFloat(String(b[2]).replace(/[^\d.-]/g, '')) || 0;
-            return nb - na;
-        });
-        let body = `<div class="mb-3"><h5>Accounts Payable</h5>
-            <p class="text-muted small">Amounts currently owed to suppliers (positive supplier balance).</p>
-            <div class="alert alert-secondary py-2">Total AP: <strong>${formatMoney(total)}</strong> · ${rows.length} supplier(s)</div>
-            </div>`;
-        body += generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'AP_Aging' };
+        const body = periodBanner('AP aging / supplier debt', f, 'Point-in-time balances.') +
+            generateTable(['Supplier', 'Phone', 'Opening', 'Current', 'Status'], rows);
+        return { html: body, headers: ['Supplier', 'Phone', 'Opening', 'Current', 'Status'], rows, filename: 'AP_Aging' };
     }
 
-    // 5. Customer Balances
     function generateCustomerBalances(f) {
-        const cust = customers.filter(c => {
-            if (f.stationId && c.station_id && String(c.station_id) !== String(f.stationId)) return false;
-            return true;
-        });
-        const headers = ['Name', 'Phone', 'Station', 'Opening Balance', 'Current Balance', 'Status'];
-        const rows = cust.map(c => {
-            const bal = c.current_balance || 0;
-            const status = bal > 0 ? 'Owes Company' : (bal < 0 ? 'Company Owes' : 'Settled');
-            const station = c.station_id ? stationName(c.station_id) : 'All';
-            return [
-                c.name,
-                c.phone || '—',
-                station,
-                formatMoney(c.opening_balance || 0),
-                formatMoney(bal),
-                status
-            ];
-        });
-        let body = '<div class="mb-3"><h5>Customer Balance List</h5></div>';
-        body += generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'CustomerBalances' };
+        return generateARAging(f);
     }
-
-    // 6. Supplier Balances
     function generateSupplierBalances(f) {
-        const supp = suppliers;
-        const headers = ['Name', 'Phone', 'Opening Balance', 'Current Balance', 'Status'];
-        const rows = supp.map(s => {
-            const bal = s.current_balance || 0;
-            const status = bal > 0 ? 'Company Owes' : (bal < 0 ? 'Supplier Owes' : 'Settled');
-            return [
-                s.name,
-                s.phone || '—',
-                formatMoney(s.opening_balance || 0),
-                formatMoney(bal),
-                status
-            ];
-        });
-        let body = '<div class="mb-3"><h5>Supplier Balance List</h5></div>';
-        body += generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'SupplierBalances' };
+        return generateAPAging(f);
     }
 
-    // 7. Customer Statement (uses customer_transactions)
     function generateCustomerStatement(f) {
-        const customerId = f.entityId;
-        if (!customerId) return { html: '<div class="alert alert-warning">Please select a customer from the dropdown.</div>', headers: [], rows: [], filename: 'CustomerStatement' };
-        const customer = customers.find(c => c.id === customerId);
+        if (!f.entityId) return { html: '<div class="alert alert-warning">Select a customer.</div>', headers: [], rows: [], filename: 'CustomerStatement' };
+        const customer = customers.find(c => c.id === f.entityId);
         if (!customer) return { html: '<div class="alert alert-danger">Customer not found.</div>', headers: [], rows: [], filename: 'CustomerStatement' };
-
-        // Statement lines: all fuel sales + payments (no double-count of sale ledgers)
         const transactions = [];
-        const custSales = sales.filter(s =>
-            String(s.customer_id) === String(customerId) &&
-            s.status !== 'reversed' && s.reversed !== true &&
-            s.type !== 'payment' &&
-            String(s.product_type || '') !== 'Customer Payment'
-        );
-        custSales.forEach(s => {
-            const qty = Number(s.quantity) || 0;
-            const amt = Number(s.amount) || 0;
-            const pay = String(s.payment_method || 'cash').toLowerCase();
-            const isCredit = pay === 'credit';
-            const plate = (s.vehicle_plate || s.number_plate || '').trim();
-            let desc = `${s.product_type || 'Fuel'} ${qty.toFixed(2)}L`;
-            if (plate) desc += ` · ${plate}`;
-            desc += ` · ${pay}`;
-            transactions.push({
-                date: s.sale_date || s.created_at,
-                type: isCredit ? 'Credit sale' : 'Sale',
-                description: desc,
-                displayAmount: amt,
-                balanceDelta: isCredit ? amt : 0
-            });
+        sales.filter(s => String(s.customer_id) === String(f.entityId) && isFuelSale(s)).forEach(s => {
+            if (f.from || f.to) {
+                if (!dateInBusinessRange(recordBusinessDate(s), f.from, f.to)) return;
+            }
+            transactions.push({ date: recordBusinessDate(s), type: 'Sale', description: (s.product_type || 'Fuel') + ' ' + (s.quantity || '') + 'L', amount: Number(s.amount) || 0 });
         });
-        // Payments: customer_transactions credits only (skip sale-source rows — already listed)
-        const custTrans = (customerTransactions || []).filter(t => String(t.customer_id) === String(customerId));
-        custTrans.forEach(t => {
-            const amt = Number(t.amount) || 0;
-            const src = String(t.source || '').toLowerCase();
-            if (src === 'sale' || src === 'credit_sale') return; // avoid double with sales
-            if (amt >= 0 && src !== 'payment' && src !== 'sale_reversal') return;
-            const delta = amt > 0 ? -Math.abs(amt) : amt; // payments reduce balance
-            transactions.push({
-                date: t.timestamp || t.date || t.created_at,
-                type: src === 'sale_reversal' ? 'Reversal' : 'Payment',
-                description: t.note || t.source || 'Customer payment',
-                displayAmount: delta,
-                balanceDelta: delta
-            });
+        (customerTransactions || []).filter(t => String(t.customer_id) === String(f.entityId)).forEach(t => {
+            if (f.from || f.to) {
+                if (!dateInBusinessRange(recordBusinessDate(t), f.from, f.to)) return;
+            }
+            transactions.push({ date: recordBusinessDate(t), type: t.type || 'Txn', description: t.note || t.source || '—', amount: Number(t.amount) || 0 });
         });
-        // Payments already taken from customer_transactions (negative amounts / source=payment)
-        transactions.sort((a, b) => {
-            const da = a.date && a.date.toDate ? a.date.toDate() : new Date(a.date || 0);
-            const db = b.date && b.date.toDate ? b.date.toDate() : new Date(b.date || 0);
-            return da - db;
-        });
-
+        transactions.sort((a, b) => (a.date || 0) - (b.date || 0));
         let balance = Number(customer.opening_balance) || 0;
         const rows = [];
         transactions.forEach(t => {
-            const delta = Number(t.balanceDelta) || 0;
-            balance += delta;
-            const debit = delta > 0 ? formatMoney(delta) : '—';
-            const credit = delta < 0 ? formatMoney(Math.abs(delta)) : (delta === 0 && Number(t.displayAmount) > 0 ? formatMoney(t.displayAmount) + ' (paid)' : '—');
-            rows.push([
-                formatDate(t.date),
-                t.type,
-                t.description,
-                debit,
-                credit,
-                formatMoney(balance)
-            ]);
+            balance += Number(t.amount) || 0;
+            rows.push([formatDate(t.date), t.type, t.description, formatMoney(t.amount), formatMoney(balance)]);
         });
-        if (rows.length === 0) rows.push(['No transactions found', '', '', '—', '—', '—']);
-        const balNow = Number(customer.current_balance || 0);
-        const shareText = encodeURIComponent(
-            'Account statement — ' + (customer.name || '') +
-            '\nBalance due: ' + formatMoney(balNow) +
-            '\nPlease settle at your earliest convenience. — ' + ((state.companyCache && state.companyCache.name) || 'PetroManager')
-        );
-        const phone = String(customer.phone || '').replace(/[^\d+]/g, '');
-        const waUrl = phone
-            ? 'https://wa.me/' + phone.replace(/^\+/, '') + '?text=' + shareText
-            : 'https://wa.me/?text=' + shareText;
-        const mailUrl = 'mailto:' + encodeURIComponent(customer.email || '') +
-            '?subject=' + encodeURIComponent('Account statement') +
-            '&body=' + shareText;
-        let body = `<div class="mb-3"><h5>Statement for ${esc(customer.name)}</h5>
-            <p>Opening Balance: ${formatMoney(customer.opening_balance || 0)}</p>
-            <p>Current Balance: <strong>${formatMoney(balNow)}</strong></p>
-            <div class="d-flex flex-wrap gap-2 mt-2">
-              <a class="btn btn-sm btn-success" href="${waUrl}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i> WhatsApp</a>
-              <a class="btn btn-sm btn-outline-primary" href="${mailUrl}"><i class="bi bi-envelope"></i> Email</a>
-              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="navigator.clipboard.writeText(decodeURIComponent('${shareText.replace(/'/g, "\\'")}'))"><i class="bi bi-clipboard"></i> Copy text</button>
-            </div>
-            </div>`;
-        body += generateTable(['Date', 'Type', 'Description', 'Debit', 'Credit', 'Balance'], rows);
-        return { html: body, headers: ['Date', 'Type', 'Description', 'Debit', 'Credit', 'Balance'], rows, filename: 'CustomerStatement_' + customer.name };
+        let body = periodBanner('Customer statement · ' + (customer.name || ''), f, 'Opening ' + formatMoney(customer.opening_balance || 0) + ' · Current ' + formatMoney(customer.current_balance || 0));
+        body += generateTable(['Date', 'Type', 'Description', 'Amount', 'Balance'], rows);
+        return { html: body, headers: ['Date', 'Type', 'Description', 'Amount', 'Balance'], rows, filename: 'CustomerStatement' };
     }
 
-    // 8. Supplier Statement (uses supplier_transactions and offloads)
     function generateSupplierStatement(f) {
-        const supplierId = f.entityId;
-        if (!supplierId) return { html: '<div class="alert alert-warning">Please select a supplier from the dropdown.</div>', headers: [], rows: [], filename: 'SupplierStatement' };
-        const supplier = suppliers.find(s => s.id === supplierId);
+        if (!f.entityId) return { html: '<div class="alert alert-warning">Select a supplier.</div>', headers: [], rows: [], filename: 'SupplierStatement' };
+        const supplier = suppliers.find(s => s.id === f.entityId);
         if (!supplier) return { html: '<div class="alert alert-danger">Supplier not found.</div>', headers: [], rows: [], filename: 'SupplierStatement' };
-
-        // Combine offloads (debit) and supplier_transactions (credit)
         const transactions = [];
-        // Offloads (increase balance, positive amount)
-        const offloads = stock.filter(s => s.supplier_id === supplierId);
-        offloads.forEach(o => {
-            const total = o.total_cost || (o.items || []).reduce((sum, it) => sum + it.quantity * it.cost_price, 0);
-            transactions.push({
-                date: o.received_date || o.created_at,
-                type: 'Offload',
-                description: o.invoice_number || 'Goods received',
-                amount: total,
-                balance: 0
-            });
+        stock.filter(o => String(o.supplier_id) === String(f.entityId) && o.status !== 'reversed' && o.reversed !== true).forEach(o => {
+            if (f.from || f.to) {
+                if (!dateInBusinessRange(recordBusinessDate(o), f.from, f.to)) return;
+            }
+            transactions.push({ date: recordBusinessDate(o), type: 'Offload', description: o.invoice_number || 'Goods received', amount: Number(o.total_cost) || 0 });
         });
-        // Supplier transactions (payments/prepayments: negative amount)
-        const suppTrans = supplierTransactions.filter(t => t.supplier_id === supplierId);
-        suppTrans.forEach(t => {
-            const amt = Number(t.amount) || 0; // already negative for payments
-            transactions.push({
-                date: t.timestamp,
-                type: t.source === 'prepayment' ? 'Prepayment' : 'Payment',
-                description: t.source || 'Payment',
-                amount: amt,
-                balance: 0
-            });
+        supplierPayments.filter(p => String(p.supplier_id) === String(f.entityId) && p.status !== 'reversed').forEach(p => {
+            if (f.from || f.to) {
+                if (!dateInBusinessRange(recordBusinessDate(p), f.from, f.to)) return;
+            }
+            transactions.push({ date: recordBusinessDate(p), type: p.is_prepayment ? 'Prepayment' : 'Payment', description: p.reference || 'Payment', amount: -(Number(p.amount) || 0) });
         });
-        // Also include payments from supplier_payments collection (duplicate? but safe)
-        const payments = supplierPayments.filter(p => p.supplier_id === supplierId);
-        payments.forEach(p => {
-            transactions.push({
-                date: p.created_at,
-                type: p.is_prepayment ? 'Prepayment' : 'Payment',
-                description: p.reference || 'Payment',
-                amount: -Number(p.amount),
-                balance: 0
-            });
-        });
-
-        // Sort by date
-        transactions.sort((a, b) => (a.date?.toDate ? a.date.toDate() : new Date(a.date)) -
-            (b.date?.toDate ? b.date.toDate() : new Date(b.date)));
-
-        let balance = supplier.opening_balance || 0;
+        transactions.sort((a, b) => (a.date || 0) - (b.date || 0));
+        let balance = Number(supplier.opening_balance) || 0;
         const rows = [];
         transactions.forEach(t => {
-            balance += Number(t.amount);
-            rows.push([
-                formatDate(t.date),
-                t.type,
-                t.description,
-                formatMoney(t.amount),
-                formatMoney(balance)
-            ]);
+            balance += Number(t.amount) || 0;
+            rows.push([formatDate(t.date), t.type, t.description, formatMoney(t.amount), formatMoney(balance)]);
         });
-        if (rows.length === 0) rows.push(['No transactions found', '', '', '', '']);
-        let body = `<div class="mb-3"><h5>Statement for ${supplier.name}</h5>
-            <p>Opening Balance: ${formatMoney(supplier.opening_balance || 0)}</p>
-            <p>Current Balance: ${formatMoney(supplier.current_balance || 0)}</p></div>`;
+        let body = periodBanner('Supplier statement · ' + (supplier.name || ''), f, 'Opening ' + formatMoney(supplier.opening_balance || 0) + ' · Current ' + formatMoney(supplier.current_balance || 0));
         body += generateTable(['Date', 'Type', 'Description', 'Amount', 'Balance'], rows);
-        return { html: body, headers: ['Date', 'Type', 'Description', 'Amount', 'Balance'], rows, filename: 'SupplierStatement_' + supplier.name };
+        return { html: body, headers: ['Date', 'Type', 'Description', 'Amount', 'Balance'], rows, filename: 'SupplierStatement' };
     }
 
-    // 9. Inventory Snapshot
     function generateInventorySnapshot(f) {
-        const data = inv.filter(i => {
-            if (f.stationId && String(i.station_id) !== String(f.stationId)) return false;
-            if (f.product && i.product_type !== f.product) return false;
-            return true;
-        });
-        let totalLitres = 0,
-            totalValue = 0;
-        const headers = ['Station', 'Product', 'Quantity (L)', 'Cost/L', 'Sell/L', 'Stock Value'];
+        const data = inv.filter(i => !f.stationId || String(i.station_id) === String(f.stationId));
         const rows = data.map(i => {
             const qty = Number(i.quantity) || 0;
             const cost = Number(i.cost_price) || 0;
-            totalLitres += qty;
-            totalValue += qty * cost;
-            return [
-                stationName(i.station_id),
-                i.product_type,
-                qty.toFixed(2),
-                formatMoney(cost),
-                formatMoney(i.selling_price || 0),
-                formatMoney(qty * cost)
-            ];
+            const sell = Number(i.selling_price) || 0;
+            return [stationName(i.station_id), i.product_type || '—', qty.toFixed(2), formatMoney(cost), formatMoney(sell), formatMoney(qty * cost)];
         });
-        let body = `<div class="d-flex justify-content-between mb-3"><h5 class="mb-0">Inventory Snapshot</h5><div><strong>Total: ${totalLitres.toFixed(2)} L</strong> | Value: ${formatMoney(totalValue)}</div></div>`;
-        body += generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'InventorySnapshot' };
+        const body = periodBanner('Inventory snapshot', f, 'Current levels (not historical by date).') +
+            generateTable(['Station', 'Product', 'Qty (L)', 'Cost/L', 'Sell/L', 'Stock value'], rows);
+        return { html: body, headers: ['Station', 'Product', 'Qty (L)', 'Cost/L', 'Sell/L', 'Stock value'], rows, filename: 'InventorySnapshot' };
     }
 
-    // 10. Cashier Performance
     function generateCashierPerformance(f) {
-        const recons = filterByCommon(reconciliations, f);
-        const grouped = {};
-        recons.forEach(r => {
-            const cid = r.cashier_id;
-            if (!grouped[cid]) grouped[cid] = { totalShortage: 0, totalExcess: 0, count: 0 };
-            const diff = Number(r.difference) || 0;
-            if (diff < 0) grouped[cid].totalShortage += diff;
-            else grouped[cid].totalExcess += diff;
-            grouped[cid].count += 1;
+        const byCashier = {};
+        sales.forEach(s => {
+            if (!isFuelSale(s)) return;
+            if (f.stationId && String(s.station_id) !== String(f.stationId)) return;
+            if (!dateInBusinessRange(recordBusinessDate(s), f.from, f.to)) return;
+            const cid = s.recorded_by || 'unknown';
+            if (!byCashier[cid]) byCashier[cid] = { count: 0, amount: 0, qty: 0 };
+            byCashier[cid].count += 1;
+            byCashier[cid].amount += Number(s.amount) || 0;
+            byCashier[cid].qty += Number(s.quantity) || 0;
         });
-        const headers = ['Cashier', 'Total Shortage', 'Total Excess', 'Net Difference', 'Reconciliations', 'Status'];
-        const rows = Object.keys(grouped).map(cid => {
-            const g = grouped[cid];
-            const net = g.totalShortage + g.totalExcess;
-            const user = users.find(u => u.id === cid);
-            const name = user ? (user.name || user.username) : 'Unknown';
-            let status = 'Balanced';
-            if (net < 0) status = '⚠️ Shortage';
-            else if (net > 0) status = '✅ Excess';
-            else status = '✅ Accurate';
-            return [
-                name,
-                formatMoney(Math.abs(g.totalShortage)),
-                formatMoney(g.totalExcess),
-                formatMoney(net),
-                g.count,
-                status
-            ];
+        const rows = Object.keys(byCashier).map(cid => {
+            const u = users.find(x => x.id === cid);
+            const d = byCashier[cid];
+            return [u ? (u.name || u.username) : cid, d.count, d.qty.toFixed(2), formatMoney(d.amount)];
         });
-        if (rows.length === 0) rows.push(['No reconciliations found', '', '', '', '', '']);
-        let body = '<div class="d-flex justify-content-between mb-3"><h5 class="mb-0">Cashier Performance</h5></div>';
-        body += generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'CashierPerformance' };
+        const body = periodBanner('Cashier performance', f, '') +
+            generateTable(['Cashier', 'Sales #', 'Volume (L)', 'Revenue'], rows);
+        return { html: body, headers: ['Cashier', 'Sales #', 'Volume (L)', 'Revenue'], rows, filename: 'CashierPerformance' };
     }
 
-    // 11. Bank Reconciliation
     function generateBankReconciliation(f) {
-        const filteredBankings = filterByCommon(bankings, f);
-        const totalDeposits = filteredBankings.reduce((sum, b) => sum + Number(b.amount || 0), 0);
-        const totalWithdrawals = filterByCommon(expenses, f).reduce((sum, e) => sum + Number(e.amount || 0), 0);
-        let body = `<div class="row g-3 mb-3">
-            <div class="col-md-4"><strong>Total Deposits:</strong> ${formatMoney(totalDeposits)}</div>
-            <div class="col-md-4"><strong>Total Withdrawals:</strong> ${formatMoney(totalWithdrawals)}</div>
-            <div class="col-md-4"><strong>Net Flow:</strong> ${formatMoney(totalDeposits - totalWithdrawals)}</div>
-        </div>`;
-        let bankRows = accounts.map(a => {
-            const bal = a.balance || 0;
-            return [a.bank_name, a.account_number, formatMoney(bal)];
+        const accRows = accounts.filter(a => !f.stationId || a.company_wide || !a.station_id || String(a.station_id) === String(f.stationId))
+            .map(a => {
+                const st = (a.company_wide || !a.station_id) ? 'All stations' : stationName(a.station_id);
+                const kind = a.system_kind || (a.is_system ? 'System' : 'Bank');
+                return [a.account_name || a.bank_name || 'Account', kind, st, formatMoney(a.balance)];
+            });
+        const depRows = [];
+        bankings.forEach(b => {
+            if (b.status === 'reversed' || b.reversed === true || b.status === 'reversal') return;
+            if (f.stationId && String(b.station_id) !== String(f.stationId)) return;
+            if (!dateInBusinessRange(recordBusinessDate(b), f.from, f.to)) return;
+            depRows.push([formatDate(recordBusinessDate(b)), stationName(b.station_id), b.note || b.reference || 'Deposit/transfer', formatMoney(b.amount)]);
         });
-        body += generateTable(['Bank', 'Account', 'Balance'], bankRows, 'Bank Account Balances');
-        return { html: body, headers: ['Bank', 'Account', 'Balance'], rows: bankRows, filename: 'BankReconciliation' };
+        let body = periodBanner('Bank & cash position', f, 'Balances are live. Movement list uses the date range.') +
+            generateTable(['Account', 'Type', 'Station', 'Balance'], accRows, 'Accounts') +
+            '<div class="mt-3"></div>' +
+            generateTable(['Date', 'Station', 'Note', 'Amount'], depRows, 'Deposits / transfers in range');
+        return { html: body, headers: ['Account', 'Type', 'Station', 'Balance'], rows: accRows, filename: 'BankPosition' };
     }
 
-    // ---- Main report execution (async) ----
-    let lastReport = null;
-
-    async function runReport() {
+    function runReport() {
         const f = getFilters();
         let result;
         switch (f.type) {
-            case 'ar_aging':
-                result = generateARAging(f);
-                break;
-            case 'ap_aging':
-                result = generateAPAging(f);
-                break;
-            case 'end_of_day':
-                result = generateEndOfDay(f);
-                break;
-            case 'profit_loss':
-                result = generateProfitLoss(f);
-                break;
-            case 'sales_summary':
-                result = generateSalesSummary(f);
-                break;
-            case 'expense_summary':
-                result = generateExpenseSummary(f);
-                break;
-            case 'customer_balances':
-                result = generateCustomerBalances(f);
-                break;
-            case 'supplier_balances':
-                result = generateSupplierBalances(f);
-                break;
-            case 'customer_statement':
-                result = generateCustomerStatement(f);
-                break;
-            case 'supplier_statement':
-                result = generateSupplierStatement(f);
-                break;
-            case 'inventory_snapshot':
-                result = generateInventorySnapshot(f);
-                break;
-            case 'cashier_performance':
-                result = generateCashierPerformance(f);
-                break;
-            case 'bank_reconciliation':
-                result = generateBankReconciliation(f);
-                break;
-            default:
-                result = { html: '<div class="alert alert-info">Report type not implemented yet.</div>', headers: [], rows: [], filename: 'report' };
+            case 'end_of_day': result = generateEndOfDay(f); break;
+            case 'profit_loss': result = generateProfitLoss(f); break;
+            case 'sales_summary': result = generateSalesSummary(f); break;
+            case 'expense_summary': result = generateExpenseSummary(f); break;
+            case 'ar_aging': result = generateARAging(f); break;
+            case 'ap_aging': result = generateAPAging(f); break;
+            case 'customer_balances': result = generateCustomerBalances(f); break;
+            case 'supplier_balances': result = generateSupplierBalances(f); break;
+            case 'customer_statement': result = generateCustomerStatement(f); break;
+            case 'supplier_statement': result = generateSupplierStatement(f); break;
+            case 'inventory_snapshot': result = generateInventorySnapshot(f); break;
+            case 'cashier_performance': result = generateCashierPerformance(f); break;
+            case 'bank_reconciliation': result = generateBankReconciliation(f); break;
+            default: result = { html: '<div class="alert alert-info">Report not implemented.</div>', headers: [], rows: [], filename: 'report' };
         }
         lastReport = result;
         document.getElementById('rptResult').innerHTML = result.html;
     }
 
-    // ---- Event listeners ----
+    function syncUiForType() {
+        const type = document.getElementById('rptType').value;
+        const help = document.getElementById('rptHelpText');
+        if (help) help.textContent = HELP[type] || 'Select filters and Generate.';
+        const entityWrap = document.getElementById('entitySelector');
+        const entitySel = document.getElementById('rptEntity');
+        const needsEntity = type === 'customer_statement' || type === 'supplier_statement';
+        if (entityWrap) entityWrap.style.display = needsEntity ? '' : 'none';
+        if (needsEntity && entitySel) {
+            entitySel.innerHTML = type === 'customer_statement' ? customerOpts : supplierOpts;
+        }
+        const prodWrap = document.getElementById('rptProductWrap');
+        const needsProduct = ['end_of_day', 'profit_loss', 'sales_summary'].includes(type);
+        if (prodWrap) prodWrap.style.display = needsProduct ? '' : 'none';
+        // EOD: keep To in sync with From for single-day clarity
+        if (type === 'end_of_day') {
+            const from = document.getElementById('rptFrom');
+            const to = document.getElementById('rptTo');
+            if (from && to) to.value = from.value;
+        }
+    }
+
+    document.getElementById('rptType').addEventListener('change', function() {
+        syncUiForType();
+    });
+    document.getElementById('rptFrom').addEventListener('change', function() {
+        if (document.getElementById('rptType').value === 'end_of_day') {
+            document.getElementById('rptTo').value = this.value;
+        }
+    });
     document.getElementById('rptGenerate').onclick = runReport;
     document.getElementById('rptReset').onclick = function() {
-        const today = new Date();
-        const thirtyDaysAgo = new Date(today);
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         document.getElementById('rptFrom').value = toISO(thirtyDaysAgo);
         document.getElementById('rptTo').value = toISO(today);
-        document.getElementById('rptStation').value = '';
+        document.getElementById('rptStation').value = state.currentStationId || '';
         document.getElementById('rptProduct').value = '';
         document.getElementById('rptType').value = 'end_of_day';
-        document.getElementById('rptEntity').value = '';
-        toast('Filters reset', 'info');
+        syncUiForType();
         runReport();
     };
-
     document.getElementById('rptExportExcel').onclick = function() {
-        if (!lastReport || !lastReport.rows || lastReport.rows.length === 0) {
-            toast('Generate a report with data first', 'warning');
-            return;
-        }
-        exportExcel(lastReport.headers, lastReport.rows, lastReport.filename + '.xlsx');
-        toast('Excel exported', 'success');
+        if (!lastReport.rows || !lastReport.rows.length) { toast('Generate a report with rows first', 'warning'); return; }
+        if (typeof exportExcel === 'function') {
+            exportExcel(lastReport.headers, lastReport.rows, (lastReport.filename || 'report') + '.xlsx');
+            toast('Exported', 'success');
+        } else toast('Excel export not available', 'warning');
     };
-
-    document.getElementById('rptExportPDF').onclick = function() {
-        if (!lastReport || !lastReport.rows || lastReport.rows.length === 0) {
-            toast('Generate a report with data first', 'warning');
-            return;
-        }
-        exportPDF(lastReport.headers, lastReport.rows, lastReport.filename + '.pdf');
-        toast('PDF generated', 'success');
-    };
-
     document.getElementById('rptPrint').onclick = function() {
         const content = document.getElementById('rptResult');
-        if (!content || content.textContent.trim() === 'Select a report type and click Generate.') {
+        if (!content || content.textContent.indexOf('Select a report') >= 0) {
             toast('Generate a report first', 'warning');
             return;
         }
-        const win = window.open('', '_blank', 'width=800,height=600');
-        if (!win) { toast('Please allow popups', 'warning'); return; }
-        const title = document.querySelector('#rptType option:checked').text;
-        win.document.write(`
-            <html><head><title>${title}</title>
-            <style>${document.querySelector('style').innerHTML}</style>
-            <style>body { padding: 20px; } .no-print { display: none; } table { font-size: 12px; }</style>
-            </head>
-            <body>
-                <div class="header"><h2>PetroManager Pro</h2><p>${title} - ${new Date().toLocaleString()}</p></div>
-                ${content.innerHTML}
-                <div class="footer"><p>Generated by PetroManager Pro</p></div>
-                <div class="no-print" style="text-align:center;margin-top:20px;">
-                    <button onclick="window.print()" style="padding:8px 30px;background:#0b1a33;color:#fff;border:none;border-radius:4px;cursor:pointer;">🖨️ Print</button>
-                    <button onclick="window.close()" style="padding:8px 30px;background:#dc3545;color:#fff;border:none;border-radius:4px;cursor:pointer;margin-left:10px;">Close</button>
-                </div>
-                <script>setTimeout(() => { window.print(); }, 500);<\/script>
-            </body></html>
-        `);
-        win.document.close();
+        const title = (document.querySelector('#rptType option:checked') || {}).text || 'Report';
+        const body = `<div id="printDocRoot">
+            <div style="margin-bottom:12px;"><strong style="font-size:1.2em;">PetroManager Pro</strong>
+            <div class="muted">${esc(title)} · ${new Date().toLocaleString()}</div></div>
+            ${content.innerHTML}
+            <div class="muted" style="margin-top:16px;font-size:0.8em;">Operational management report · PetroManager Pro</div>
+        </div>`;
+        openSizedPrintWindow(title, body, 'A4');
     };
 
-    // ---- Auto-run on load ----
+    syncUiForType();
     runReport();
 }
 
