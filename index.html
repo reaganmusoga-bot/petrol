@@ -3932,24 +3932,95 @@ function _stripSecrets(col, row) {
 
 async function downloadCompanyBackup() {
     if (!state.user || !state.user.companyId) throw new Error('No company selected');
-    const companyId = state.user.companyId;
-    const company = await getCompany(companyId);
-    const payload = { version: 1, exported_at: new Date().toISOString(), companyId, company, collections: {} };
-    for (const col of BACKUP_COLLECTIONS) {
-        const rows = await getAll(col);
-        payload.collections[col] = rows.map(r => _stripSecrets(col, r));
+
+    // Show a spinner while we build the backup
+    showLoading(true);
+
+    let payload;
+    try {
+        const companyId = state.user.companyId;
+        const company = await getCompany(companyId);
+        payload = {
+            version: 1,
+            exported_at: new Date().toISOString(),
+            companyId,
+            company,
+            collections: {}
+        };
+
+        // Read every collection; tolerate individual failures so one bad read
+        // doesn't kill the whole backup.
+        for (const col of BACKUP_COLLECTIONS) {
+            try {
+                const rows = await getAll(col);
+                payload.collections[col] = rows.map(r => _stripSecrets(col, r));
+            } catch (e) {
+                console.warn('Backup: failed to read', col, e);
+                payload.collections[col] = { __error: String(e && e.message || e) };
+            }
+        }
+    } finally {
+        showLoading(false);
     }
+
+    // Build the JSON and filename
     const json = JSON.stringify(payload, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
-    const safeName = (company && company.name) ? company.name.replace(/[^a-z0-9]/gi, '_') : companyId;
-    const name = 'petromanager_backup_' + safeName + '_' + new Date().toISOString().slice(0, 10) + '.json';
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = name;
-    link.click();
-    URL.revokeObjectURL(link.href);
-    await logAudit('backup_download', { collections: BACKUP_COLLECTIONS.length });
-    toast('Backup downloaded', 'success');
+    const safeName = (payload.company && payload.company.name)
+        ? payload.company.name.replace(/[^a-z0-9]/gi, '_')
+        : payload.companyId;
+    const filename = 'petromanager_backup_' + safeName + '_' + new Date().toISOString().slice(0, 10) + '.json';
+
+    // Show a modal with a "Download" button — this re-establishes the
+    // user gesture so the browser will allow the download.
+    let modalEl = document.getElementById('backupReadyModal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'backupReadyModal';
+        modalEl.className = 'modal fade';
+        modalEl.tabIndex = -1;
+        document.body.appendChild(modalEl);
+    }
+    const sizeKb = Math.round(json.length / 1024);
+    modalEl.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius:14px;border:none;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-check-circle-fill text-success"></i> Backup ready</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <p class="mb-2">Your backup is ready. Size: <strong>${sizeKb.toLocaleString()} KB</strong></p>
+                    <p class="small text-muted mb-3">Contains ${Object.keys(payload.collections).length} collections.
+                        Passwords and auth IDs are stripped from the users collection.</p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary" id="doBackupDownloadBtn">
+                            <i class="bi bi-download"></i> Download backup file
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+
+    const downloadBtn = document.getElementById('doBackupDownloadBtn');
+    downloadBtn.onclick = function() {
+        // Fresh click = fresh user gesture = browser allows download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // Revoke lazily — Safari needs extra time
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+        logAudit('backup_download', { collections: Object.keys(payload.collections).length }).catch(() => {});
+        toast('Backup downloaded', 'success');
+        setTimeout(() => modal.hide(), 800);
+    };
 }
 
 async function importCompanyBackup(jsonText) {
