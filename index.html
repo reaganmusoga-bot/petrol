@@ -16323,5 +16323,384 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 
 console.log('Part 12 loaded – Final page registry active');
 </script>
+	<script>
+// ============================================================
+// PART 13: PATCH — Supplier page, modal crash guard, login safety
+// Paste this as the LAST script block, before </body>
+// ============================================================
+
+// ----- 1. Render Suppliers (was never pasted) -----
+async function renderSuppliers() {
+    if (!state.stations || !state.stations.length) {
+        try { await loadStations(); } catch (_) {}
+    }
+    const suppliers = await getAll('suppliers') || [];
+    const supplierPayments = await getAll('supplier_payments') || [];
+    const stock = await getAll('stock') || [];
+
+    let totalPayable = 0, totalPrepaid = 0, totalOffloadValue = 0, totalPaid = 0;
+    const rowsData = suppliers.map(s => {
+        const offloads = stock.filter(o => String(o.supplier_id) === String(s.id) && o.status !== 'reversed' && o.reversed !== true);
+        const totalOffloads = offloads.reduce((sum, o) => sum + (Number(o.total_cost) || 0), 0);
+        const payments = supplierPayments.filter(p => String(p.supplier_id) === String(s.id) && p.status !== 'reversed' && p.reversed !== true);
+        const totalPayments = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const balance = Number(s.current_balance) || 0;
+        const prepayTotal = payments.filter(p => p.is_prepayment).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+        const prepaidCredit = balance < 0 ? Math.abs(balance) : 0;
+        if (balance > 0) totalPayable += balance;
+        if (prepaidCredit > 0) totalPrepaid += prepaidCredit;
+        totalOffloadValue += totalOffloads;
+        totalPaid += totalPayments;
+        return { s, totalOffloads, totalPayments, balance, prepayTotal, prepaidCredit };
+    }).sort((a, b) => String(a.s.name || '').localeCompare(String(b.s.name || '')));
+
+    function supplierRowsHtml(list) {
+        if (!list.length) {
+            return '<tr><td colspan="7"><div class="intl-empty"><i class="bi bi-truck"></i>No suppliers match</div></td></tr>';
+        }
+        let rows = '';
+        list.forEach(({ s, totalOffloads, totalPayments, balance, prepayTotal, prepaidCredit }, idx) => {
+            const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+            const balCls = balance > 0 ? 'amt-out' : (balance < 0 ? 'amt-in' : '');
+            const initials = String(s.name || '?').trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+            rows += `<tr style="background:${rowBg};" data-name="${esc((s.name || '').toLowerCase())}" data-phone="${esc((s.phone || '').toLowerCase())}">
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="intl-avatar" style="width:32px;height:32px;font-size:0.7rem;border-radius:10px;">${esc(initials)}</span>
+                        <div>
+                            <div class="fw-semibold text-truncate" style="max-width:160px;" title="${esc(s.name)}">${esc(s.name)}</div>
+                            <div class="small text-muted text-truncate" style="max-width:160px;">${esc(s.address || s.phone || '')}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="small text-nowrap">${esc(s.phone || '—')}</td>
+                <td class="text-end"><span class="amt">${formatMoney(s.opening_balance || 0)}</span></td>
+                <td class="text-end"><span class="amt">${formatMoney(totalOffloads)}</span></td>
+                <td class="text-end">
+                    <span class="amt amt-in">${formatMoney(totalPayments)}</span>
+                    ${prepayTotal > 0 ? `<div class="small text-warning">Prepay ${formatMoney(prepayTotal)}</div>` : ''}
+                </td>
+                <td class="text-end">
+                    <span class="amt fw-bold ${balCls}">${formatMoney(balance)}</span>
+                    ${prepaidCredit > 0 ? `<div><span class="intl-chip pay">Credit ${formatMoney(prepaidCredit)}</span></div>` : ''}
+                </td>
+                <td class="text-end text-nowrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary statement-btn py-0 px-1" data-id="${esc(s.id)}" data-name="${esc(s.name)}" data-type="supplier" title="Statement"><i class="bi bi-receipt"></i></button>
+                    <button type="button" class="btn btn-sm btn-outline-danger delete-supplier-btn py-0 px-1" data-id="${esc(s.id)}" data-balance="${balance}" data-name="${esc(s.name)}" title="Delete"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`;
+        });
+        return rows;
+    }
+
+    const html = `
+        <div class="fin-workspace">
+            <div class="fin-header">
+                <div class="fin-title-row">
+                    <div>
+                        <h4><i class="bi bi-truck"></i> Suppliers</h4>
+                        <div class="fin-sub">Payables, prepayments &amp; delivery partners</div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-light" id="supExportBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </button>
+                </div>
+                <div class="fin-kpi-row" style="grid-template-columns:repeat(4,1fr);">
+                    <div class="fin-kpi">
+                        <div class="k-label">Suppliers</div>
+                        <div class="k-value">${suppliers.length}</div>
+                        <div class="k-hint">Registered partners</div>
+                    </div>
+                    <div class="fin-kpi warn">
+                        <div class="k-label">Amount payable</div>
+                        <div class="k-value">${formatCompactMoney(totalPayable)}</div>
+                        <div class="k-hint">You owe suppliers</div>
+                    </div>
+                    <div class="fin-kpi in">
+                        <div class="k-label">Prepaid credit</div>
+                        <div class="k-value">${formatCompactMoney(totalPrepaid)}</div>
+                        <div class="k-hint">Advances on account</div>
+                    </div>
+                    <div class="fin-kpi">
+                        <div class="k-label">Paid (all time)</div>
+                        <div class="k-value">${formatCompactMoney(totalPaid)}</div>
+                        <div class="k-hint">Offloads ${formatCompactMoney(totalOffloadValue)}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-lg-4">
+                    <div class="fin-action-card">
+                        <h6><i class="bi bi-person-plus text-primary"></i> Add Supplier</h6>
+                        <form id="supplierForm" class="intl-form">
+                            <div class="form-section">
+                                <div class="form-section-title">Identity</div>
+                                <div class="form-field">
+                                    <label class="form-label" for="supName">Name *</label>
+                                    <input type="text" id="supName" class="form-control" placeholder="e.g. Vivo Energy" required>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-field">
+                                        <label class="form-label" for="supPhone">Phone</label>
+                                        <input type="text" id="supPhone" class="form-control" placeholder="Optional">
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="supOpening">Opening balance</label>
+                                        <input type="number" id="supOpening" class="form-control" step="1" min="0" value="0">
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="supAddress">Address</label>
+                                    <input type="text" id="supAddress" class="form-control" placeholder="Optional">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-intl btn-intl-primary"><i class="bi bi-plus-lg"></i> Add Supplier</button>
+                        </form>
+                        <div class="fin-note mt-2"><i class="bi bi-info-circle"></i> Opening balance is what you already owed this supplier.</div>
+                        <div id="supplierResult" class="mt-2 small"></div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="fin-ledger-card">
+                        <div class="intl-section-head">
+                            <h6><i class="bi bi-building"></i> Supplier ledger</h6>
+                            <span class="meta" id="supMetaCount">${suppliers.length}</span>
+                        </div>
+                        <div class="fin-filter-bar">
+                            <input type="search" class="form-control fin-q" id="supFilterQ" placeholder="Search name or phone…">
+                        </div>
+                        <div class="table-responsive intl-table-wrap" style="max-height:480px;overflow:auto;">
+                            <table class="table table-sm mb-0 align-middle" style="min-width:720px;width:100%;">
+                                <thead style="position:sticky;top:0;z-index:2;">
+                                    <tr>
+                                        <th>Supplier</th>
+                                        <th>Phone</th>
+                                        <th class="text-end">Opening</th>
+                                        <th class="text-end">Offloads</th>
+                                        <th class="text-end">Payments</th>
+                                        <th class="text-end">Balance</th>
+                                        <th class="text-end"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="supLedgerBody">${supplierRowsHtml(rowsData)}</tbody>
+                            </table>
+                        </div>
+                        <div class="fin-ledger-foot">
+                            <span>Showing <strong id="supFootCount">${suppliers.length}</strong></span>
+                            <span>Payable <strong id="supFootPayable">${formatMoney(totalPayable)}</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    document.getElementById('pageContent').innerHTML = html;
+
+    function bindSupplierActions() {
+        const fq = document.getElementById('supFilterQ');
+        if (fq) {
+            fq.oninput = function () {
+                const q = (this.value || '').toLowerCase().trim();
+                let n = 0;
+                document.querySelectorAll('#supLedgerBody tr[data-name]').forEach(tr => {
+                    const show = !q || (tr.dataset.name || '').indexOf(q) !== -1 || (tr.dataset.phone || '').indexOf(q) !== -1;
+                    tr.style.display = show ? '' : 'none';
+                    if (show) n++;
+                });
+                const c = document.getElementById('supFootCount');
+                const m = document.getElementById('supMetaCount');
+                if (c) c.textContent = n;
+                if (m) m.textContent = n;
+            };
+        }
+        const expBtn = document.getElementById('supExportBtn');
+        if (expBtn) {
+            expBtn.onclick = function () {
+                const headers = ['Name', 'Phone', 'Address', 'Opening', 'Offloads', 'Payments', 'Balance'];
+                const rows = rowsData.map(({ s, totalOffloads, totalPayments, balance }) => [
+                    s.name || '', s.phone || '', s.address || '',
+                    Number(s.opening_balance) || 0, totalOffloads, totalPayments, balance
+                ]);
+                if (!rows.length) { toast('No suppliers to export', 'warning'); return; }
+                exportExcel(headers, rows, 'suppliers_' + new Date().toISOString().slice(0, 10) + '.xlsx');
+                toast('Suppliers exported', 'success');
+            };
+        }
+        document.querySelectorAll('.delete-supplier-btn').forEach(btn => {
+            btn.onclick = async function () {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+                const balance = parseFloat(this.dataset.balance) || 0;
+                if (balance > 0) { toast('Cannot delete a supplier with outstanding balance.', 'warning'); return; }
+                if (!confirm('Delete supplier "' + name + '"?')) return;
+                try {
+                    await deleteDoc('suppliers', id);
+                    await logAudit('delete_supplier', { id, name });
+                    toast('Supplier deleted');
+                    renderSuppliers();
+                } catch (err) { toast('Error: ' + err.message, 'danger'); }
+            };
+        });
+        document.querySelectorAll('.statement-btn[data-type="supplier"]').forEach(btn => {
+            btn.onclick = async function () {
+                const id = this.dataset.id;
+                const name = this.dataset.name;
+                const modalEl = document.getElementById('statementModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                const body = document.getElementById('statementModalBody');
+                body.innerHTML = '<div class="text-center py-3"><div class="spinner"></div></div>';
+                modal.show();
+                try {
+                    const transList = await loadLedgerRows('supplier_transactions', 'supplier_id', id, 100);
+                    let rows = '';
+                    if (!transList.length) {
+                        rows = '<tr><td colspan="4" class="text-muted text-center">No transactions</td></tr>';
+                    } else {
+                        transList.forEach(t => {
+                            const amount = Number(t.amount) || 0;
+                            const cls = amount > 0 ? 'debit' : 'credit';
+                            rows += '<tr><td>' + formatDateTime(t.timestamp) + '</td><td>' + esc(t.source || '—') + '</td><td class="' + cls + '">' + formatMoney(amount) + '</td><td>' + formatMoney(t.balance_after || 0) + '</td></tr>';
+                        });
+                    }
+                    const supDoc = await getDoc('suppliers', id);
+                    const opening = supDoc ? (Number(supDoc.opening_balance) || 0) : 0;
+                    const currentBal = supDoc ? (Number(supDoc.current_balance) || 0) : 0;
+                    body.innerHTML = '<div class="mb-3"><h6 class="fw-bold">' + esc(name) + '</h6><p class="small text-muted mb-0">Opening ' + formatMoney(opening) + ' · Current ' + formatMoney(currentBal) + '</p></div>' +
+                        '<div class="table-responsive intl-table-wrap"><table class="table table-sm mb-0 align-middle statement-table">' +
+                        '<thead><tr><th>Date</th><th>Source</th><th>Amount</th><th>Balance after</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+                } catch (err) {
+                    body.innerHTML = '<div class="alert alert-danger">Error loading statement: ' + esc(err.message) + '</div>';
+                }
+            };
+        });
+    }
+    bindSupplierActions();
+
+    const supplierForm = document.getElementById('supplierForm');
+    if (supplierForm) {
+        supplierForm.onsubmit = async function (e) {
+            e.preventDefault();
+            const name = document.getElementById('supName').value.trim();
+            if (!name) { toast('Supplier name is required', 'warning'); return; }
+            try {
+                const opening = parseFloat(document.getElementById('supOpening').value) || 0;
+                await addDoc('suppliers', {
+                    name: name,
+                    phone: document.getElementById('supPhone').value.trim() || null,
+                    address: document.getElementById('supAddress').value.trim() || null,
+                    opening_balance: opening,
+                    current_balance: opening,
+                    created_by: state.user.id
+                });
+                await logAudit('add_supplier', { name });
+                toast('Supplier added');
+                renderSuppliers();
+            } catch (err) { toast('Error: ' + err.message, 'danger'); }
+        };
+    }
+}
+
+// Register now that it exists
+if (typeof registerPageRenderer === 'function') {
+    registerPageRenderer('suppliers', renderSuppliers);
+} else {
+    window.pageRenderers = window.pageRenderers || {};
+    window.pageRenderers.suppliers = renderSuppliers;
+}
+console.log('✅ Part 13: renderSuppliers registered');
+
+
+// ============================================================
+// 2. Neutralise Bootstrap modal crash on boot
+// ============================================================
+// Bootstrap's Modal.show() throws if the target element is missing.
+// We patch the constructor so a bad call becomes a no-op with a warning
+// instead of a hard crash that breaks the rest of the page.
+(function patchBootstrapModalSafety() {
+    if (typeof bootstrap === 'undefined' || !bootstrap.Modal) return;
+    var origShow = bootstrap.Modal.prototype.show;
+    bootstrap.Modal.prototype.show = function () {
+        try {
+            var el = (this && this._element) ? this._element : null;
+            if (!el || !el.isConnected) {
+                console.warn('[Modal safety] Skipped show() — modal element missing or detached.');
+                return;
+            }
+            return origShow.apply(this, arguments);
+        } catch (err) {
+            console.warn('[Modal safety] Caught error in Modal.show:', err && err.message);
+            try {
+                document.querySelectorAll('.modal-backdrop').forEach(function (b) { b.remove(); });
+                document.body.classList.remove('modal-open');
+                document.body.style.removeProperty('overflow');
+                document.body.style.removeProperty('padding-right');
+            } catch (_) {}
+        }
+    };
+    console.log('✅ Bootstrap Modal.show() guarded');
+})();
+
+
+// ============================================================
+// 3. Login form safety net — runs last
+// ============================================================
+(function ensureLoginUsable() {
+    function wire() {
+        var userInput = document.getElementById('loginUsername');
+        var passInput = document.getElementById('loginPassword');
+        var loginForm = document.getElementById('loginForm');
+        if (!userInput || !passInput || !loginForm) return;
+
+        [userInput, passInput].forEach(function (el) {
+            el.disabled = false;
+            el.removeAttribute('disabled');
+            el.removeAttribute('readonly');
+            el.style.pointerEvents = 'auto';
+            el.style.visibility = 'visible';
+            el.style.display = '';
+        });
+
+        // Kill any stray overlay that could block clicks on the login screen
+        if (!state.user) {
+            document.querySelectorAll('.modal-backdrop, .loading-overlay').forEach(function (o) { o.remove(); });
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }
+
+        loginForm.onsubmit = async function (e) {
+            e.preventDefault();
+            var username = userInput.value.trim();
+            var password = passInput.value;
+            if (typeof doLogin === 'function') {
+                await doLogin(username, password);
+            } else {
+                alert('Login unavailable — Parts 2/3 failed to load.');
+            }
+        };
+
+        var toggleBtn = document.getElementById('togglePassword');
+        if (toggleBtn && !toggleBtn._bound) {
+            toggleBtn._bound = true;
+            toggleBtn.addEventListener('click', function () {
+                var type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passInput.setAttribute('type', type);
+                var i = this.querySelector('i');
+                if (i) { i.classList.toggle('bi-eye'); i.classList.toggle('bi-eye-slash'); }
+            });
+        }
+        console.log('[Login safety] Login form ready.');
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', wire);
+    } else {
+        setTimeout(wire, 0);
+    }
+    window.addEventListener('load', function () { setTimeout(wire, 100); });
+})();
+
+console.log('Part 13 loaded – Suppliers + Modal guard + Login safety');
+</script>
 </body>
 </html>
