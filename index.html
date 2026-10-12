@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PetroManager Pro</title>
+    <title>PetroManager Pro — Musoga Reagan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
@@ -2285,522 +2285,6 @@
         .balance-zero { color: #6c757d; }
         .statement-table .debit { color: #dc3545; }
         .statement-table .credit { color: #198754; }
-
-        /* ============================================================
-           DESIGN SYSTEM v1.4.7 — unified layout & visual order
-           ============================================================ */
-        :root {
-            --pm-radius: 12px;
-            --pm-radius-sm: 8px;
-            --pm-gap: 16px;
-            --pm-gap-sm: 10px;
-            --pm-page-pad: 20px 24px 40px;
-            --pm-ink: #0b1a33;
-            --pm-muted: #64748b;
-            --pm-line: #e8eef5;
-            --pm-soft: #f8fafc;
-            --pm-accent: #ffc107;
-            --pm-focus: rgba(11, 26, 51, 0.12);
-        }
-        [data-theme="dark"] {
-            --pm-ink: #e8eaed;
-            --pm-muted: #94a3b8;
-            --pm-line: #2a2a35;
-            --pm-soft: #1a1a24;
-            --pm-focus: rgba(255, 193, 7, 0.15);
-        }
-
-        /* --- Page shell --- */
-        .page-content {
-            padding: var(--pm-page-pad) !important;
-            max-width: 1360px;
-            margin: 0 auto;
-        }
-        .main-content {
-            min-height: 100vh;
-            min-height: 100dvh;
-        }
-        .top-header {
-            backdrop-filter: blur(8px);
-            background: color-mix(in srgb, var(--card-bg) 92%, transparent) !important;
-            padding: 0 20px !important;
-            gap: 12px;
-        }
-        .page-title {
-            font-size: 1.05rem !important;
-            font-weight: 750 !important;
-            letter-spacing: -0.02em;
-        }
-
-        /* --- Sidebar clarity --- */
-        .sidebar-brand {
-            letter-spacing: -0.02em;
-        }
-        #sidebarNav {
-            padding: 10px 8px 16px !important;
-        }
-        .sidebar .nav-link {
-            border-radius: 8px;
-            margin: 1px 6px;
-            border-left: none !important;
-            padding: 9px 14px !important;
-        }
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            border-left: none !important;
-            background: var(--nav-hover-bg) !important;
-            color: #fff !important;
-        }
-        .sidebar .nav-link.active {
-            background: rgba(255, 193, 7, 0.14) !important;
-            color: #fff !important;
-            box-shadow: inset 3px 0 0 #ffc107;
-        }
-        .sidebar .sub-menu {
-            margin: 0 6px 6px;
-            border-radius: 8px;
-            padding: 4px 0;
-        }
-        .sidebar .sub-menu .nav-link {
-            padding-left: 42px !important;
-            font-size: 0.82rem !important;
-            margin: 0 4px;
-        }
-        .sidebar-footer {
-            padding: 12px 16px !important;
-        }
-
-        /* --- Cards & surfaces (one language) --- */
-        .page-content .card-box,
-        .page-content .fin-action-card,
-        .page-content .fin-ledger-card,
-        .page-content .ms-form-card,
-        .page-content .ms-history-card,
-        .page-content .dash-cc-panel,
-        .page-content .dash-cc-chart-card,
-        .page-content .tank-card {
-            border-radius: var(--pm-radius) !important;
-            border: 1px solid var(--border-color) !important;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
-            background: var(--card-bg) !important;
-        }
-        .page-content .fin-action-card,
-        .page-content .fin-ledger-card,
-        .page-content .card-box {
-            padding: 18px 20px !important;
-        }
-        .page-content .fin-workspace,
-        .page-content .make-sales-page,
-        .page-content .dash-cc {
-            gap: var(--pm-gap) !important;
-        }
-        .page-content .row.g-3,
-        .page-content .row.g-4 {
-            --bs-gutter-x: 1rem;
-            --bs-gutter-y: 1rem;
-        }
-
-        /* --- Headers & titles --- */
-        .page-content h4,
-        .page-content h5,
-        .page-content .fin-title-row h4,
-        .page-content .ms-header h4,
-        .page-content .dash-cc-top h3 {
-            font-weight: 800 !important;
-            letter-spacing: -0.03em !important;
-            line-height: 1.2 !important;
-            margin-bottom: 0.15rem !important;
-        }
-        .page-content .fin-sub,
-        .page-content .ms-sub,
-        .page-content .dash-cc-meta {
-            color: var(--pm-muted) !important;
-            font-size: 0.84rem !important;
-            font-weight: 500 !important;
-        }
-        .page-content .intl-section-head {
-            margin-bottom: 12px !important;
-            align-items: center !important;
-        }
-        .page-content .intl-section-head h6,
-        .page-content .ms-form-head h6,
-        .page-content .ms-hist-head h6,
-        .page-content .fin-action-card > h6,
-        .page-content .card-box > h5,
-        .page-content .card-box > h6 {
-            font-size: 0.92rem !important;
-            font-weight: 750 !important;
-            margin: 0 0 12px 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            gap: 8px !important;
-        }
-        .page-content .intl-section-head .meta,
-        .page-content .ms-count {
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            background: var(--pm-soft) !important;
-            color: var(--pm-muted) !important;
-            border: 1px solid var(--pm-line);
-            padding: 3px 10px !important;
-            border-radius: 999px !important;
-        }
-
-        /* --- Finance header strip --- */
-        .fin-header {
-            border-radius: 14px !important;
-            padding: 18px 20px 16px !important;
-            margin-bottom: 4px;
-        }
-        .fin-kpi-row {
-            gap: 10px !important;
-        }
-        .fin-kpi {
-            border-radius: 10px !important;
-            padding: 11px 13px !important;
-            min-height: 72px;
-        }
-        .fin-kpi .k-label {
-            font-size: 0.65rem !important;
-            letter-spacing: 0.06em !important;
-        }
-        .fin-kpi .k-value {
-            font-size: clamp(1rem, 2vw, 1.2rem) !important;
-            word-break: break-word;
-        }
-
-        /* --- Forms --- */
-        .page-content .form-label,
-        .page-content .intl-form .form-label {
-            font-size: 0.72rem !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.04em !important;
-            color: var(--pm-muted) !important;
-            margin-bottom: 5px !important;
-        }
-        .page-content .form-control,
-        .page-content .form-select,
-        .page-content .intl-form .form-control,
-        .page-content .intl-form .form-select {
-            min-height: 40px !important;
-            border-radius: 9px !important;
-            border-color: #e2e8f0 !important;
-            font-size: 0.9rem !important;
-            background: var(--card-bg) !important;
-            color: var(--text-color) !important;
-        }
-        .page-content .form-control:focus,
-        .page-content .form-select:focus {
-            border-color: var(--pm-ink) !important;
-            box-shadow: 0 0 0 3px var(--pm-focus) !important;
-        }
-        .page-content .form-section,
-        .page-content .ms-block,
-        .page-content .intl-form .form-section {
-            margin-bottom: 12px !important;
-            padding-bottom: 12px !important;
-            border-bottom: 1px solid var(--pm-line) !important;
-        }
-        .page-content .form-section:last-child,
-        .page-content .form-section:last-of-type,
-        .page-content .ms-block:last-of-type {
-            border-bottom: none !important;
-            margin-bottom: 6px !important;
-            padding-bottom: 0 !important;
-        }
-        .page-content .form-section-title,
-        .page-content .ms-block-title,
-        .page-content .intl-form .form-section-title {
-            font-size: 0.68rem !important;
-            font-weight: 800 !important;
-            letter-spacing: 0.07em !important;
-            color: #94a3b8 !important;
-            margin-bottom: 10px !important;
-        }
-        .page-content .form-field { margin-bottom: 10px !important; }
-        .page-content .form-row-2,
-        .page-content .intl-form .form-row-2 {
-            gap: 10px !important;
-            margin-bottom: 2px;
-        }
-
-        /* --- Buttons --- */
-        .page-content .btn {
-            border-radius: 9px !important;
-            font-weight: 650 !important;
-            font-size: 0.85rem !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 6px !important;
-        }
-        .page-content .btn-primary,
-        .page-content .btn-intl-primary {
-            background: linear-gradient(135deg, #0b1a33, #1a3a6a) !important;
-            border-color: transparent !important;
-            color: #fff !important;
-        }
-        .page-content .btn-intl {
-            min-height: 42px !important;
-            width: 100%;
-        }
-        .page-content .btn-sm {
-            font-size: 0.78rem !important;
-            padding: 5px 10px !important;
-            min-height: 0 !important;
-            width: auto !important;
-        }
-
-        /* --- Tables --- */
-        .page-content .table-responsive,
-        .page-content .intl-table-wrap,
-        .page-content .sales-history-wrap {
-            border: 1px solid var(--pm-line) !important;
-            border-radius: 12px !important;
-            overflow: auto !important;
-            background: var(--card-bg) !important;
-        }
-        .page-content table.table thead th,
-        .page-content .sales-history-table thead th,
-        .page-content .intl-table-wrap thead th {
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%) !important;
-            color: #f8fafc !important;
-            font-size: 0.68rem !important;
-            font-weight: 700 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.05em !important;
-            padding: 11px 14px !important;
-            border: none !important;
-            white-space: nowrap !important;
-            position: sticky;
-            top: 0;
-            z-index: 2;
-        }
-        .page-content table.table tbody td,
-        .page-content .sales-history-table tbody td,
-        .page-content .intl-table-wrap tbody td {
-            padding: 11px 14px !important;
-            vertical-align: middle !important;
-            border-bottom: 1px solid var(--pm-line) !important;
-            border-top: none !important;
-            font-size: 0.875rem !important;
-        }
-        .page-content table.table tbody tr:last-child td,
-        .page-content .intl-table-wrap tbody tr:last-child td {
-            border-bottom: none !important;
-        }
-        .page-content table.table tbody tr:hover td,
-        .page-content .intl-table-wrap tbody tr:hover td {
-            background: var(--pm-soft) !important;
-        }
-        .page-content .num,
-        .page-content .amt {
-            font-variant-numeric: tabular-nums !important;
-            font-weight: 650 !important;
-        }
-
-        /* --- Filters --- */
-        .page-content .fin-filter-bar,
-        .page-content .ms-filters {
-            background: var(--pm-soft) !important;
-            border: 1px solid var(--pm-line) !important;
-            border-radius: 10px !important;
-            padding: 8px 10px !important;
-            margin-bottom: 12px !important;
-            gap: 8px !important;
-        }
-
-        /* --- Empty states --- */
-        .page-content .intl-empty,
-        .page-content .empty-sales,
-        .page-content .empty-state {
-            text-align: center !important;
-            padding: 36px 16px !important;
-            color: #94a3b8 !important;
-            font-weight: 500 !important;
-        }
-        .page-content .intl-empty i,
-        .page-content .empty-state i {
-            font-size: 2rem !important;
-            opacity: 0.35 !important;
-            display: block !important;
-            margin-bottom: 8px !important;
-        }
-
-        /* --- Dashboard grid order --- */
-        .dash-cc { gap: 18px !important; }
-        .dash-cc-heroes { gap: 14px !important; }
-        .dash-cc-hero {
-            border-radius: 14px !important;
-            padding: 18px 20px !important;
-        }
-        .dash-cc-panel,
-        .dash-cc-chart-card {
-            border-radius: 14px !important;
-            padding: 16px 18px !important;
-        }
-
-        /* --- Make Sales layout --- */
-        .ms-layout { gap: 16px !important; }
-        .ms-kpis { gap: 12px !important; margin-bottom: 4px; }
-        .ms-kpi {
-            border-radius: 12px !important;
-            padding: 12px 14px !important;
-        }
-        .ms-form-body { padding: 16px 18px 18px !important; }
-        .ms-complete-btn {
-            min-height: 46px !important;
-            border-radius: 10px !important;
-        }
-
-        /* --- Pills / tabs --- */
-        .fin-pills {
-            border-radius: 12px !important;
-            padding: 5px !important;
-            gap: 4px !important;
-            margin-bottom: 4px;
-        }
-        .fin-pills .nav-link {
-            border-radius: 9px !important;
-            padding: 8px 12px !important;
-            font-size: 0.8rem !important;
-        }
-
-        /* --- Notes & hints --- */
-        .page-content .fin-note,
-        .page-content .form-hint {
-            font-size: 0.75rem !important;
-            color: var(--pm-muted) !important;
-            line-height: 1.45 !important;
-        }
-        .page-content .fin-note {
-            background: var(--pm-soft) !important;
-            border: 1px dashed var(--pm-line) !important;
-            border-radius: 8px !important;
-            padding: 8px 12px !important;
-        }
-        .page-content .fin-bal-hint {
-            font-size: 0.75rem !important;
-            margin-top: 4px !important;
-            min-height: 1.1em;
-        }
-
-        /* --- Ledger foot --- */
-        .fin-ledger-foot {
-            padding: 10px 2px 0 !important;
-            margin-top: 10px !important;
-            border-top: 1px solid var(--pm-line) !important;
-            font-size: 0.8rem !important;
-            color: var(--pm-muted) !important;
-        }
-
-        /* --- Modals --- */
-        .modal-content {
-            border: none !important;
-            border-radius: 14px !important;
-            overflow: hidden;
-            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18) !important;
-        }
-        .modal-header {
-            padding: 14px 18px !important;
-        }
-        .modal-body { padding: 18px 20px !important; }
-        .modal-footer {
-            border-top: 1px solid var(--pm-line) !important;
-            padding: 12px 18px !important;
-            gap: 8px;
-        }
-
-        /* --- Account menu --- */
-        .account-menu {
-            border-radius: 12px !important;
-            border: 1px solid var(--pm-line) !important;
-            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1) !important;
-        }
-
-        /* --- Alerts --- */
-        .page-content .alert {
-            border-radius: 12px !important;
-            border: none !important;
-            font-size: 0.9rem !important;
-        }
-
-        /* --- Station selector in header --- */
-        #stationSelector {
-            border-radius: 9px !important;
-            border-color: var(--pm-line) !important;
-            font-size: 0.82rem !important;
-            min-height: 36px;
-        }
-
-        /* --- Toast --- */
-        .toast-container { z-index: 99999 !important; }
-
-        /* --- Mobile organisation --- */
-        @media (max-width: 768px) {
-            .page-content {
-                padding: 14px 12px 28px !important;
-            }
-            .top-header {
-                padding: 0 12px !important;
-            }
-            .fin-header {
-                padding: 14px 14px 12px !important;
-            }
-            .fin-kpi-row {
-                grid-template-columns: 1fr 1fr !important;
-            }
-            .page-content .fin-action-card,
-            .page-content .fin-ledger-card,
-            .page-content .card-box {
-                padding: 14px 14px !important;
-            }
-            .page-title {
-                font-size: 0.95rem !important;
-            }
-            .account-trigger .account-name { display: none !important; }
-            #stationSelector { max-width: 120px !important; }
-        }
-        @media (max-width: 480px) {
-            .fin-kpi-row {
-                grid-template-columns: 1fr !important;
-            }
-            .dash-cc-heroes {
-                grid-template-columns: 1fr !important;
-            }
-        }
-
-        /* --- Reduce visual noise: consistent icon colour in section heads --- */
-        .page-content .fin-action-card > h6 i,
-        .page-content .intl-section-head h6 i,
-        .page-content .card-box > h5 i,
-        .page-content .card-box > h6 i {
-            opacity: 0.9;
-        }
-
-        /* --- Shift list in balancing --- */
-        #balShiftListWrap .intl-table-wrap {
-            max-height: 220px;
-        }
-        #balShiftDetail {
-            margin-top: 12px;
-        }
-
-        /* --- Column picker --- */
-        .col-picker {
-            background: var(--pm-soft);
-            border: 1px solid var(--pm-line);
-            border-radius: 10px;
-            padding: 10px 12px !important;
-            gap: 6px 4px !important;
-        }
-        .col-picker .form-check-label {
-            font-size: 0.8rem;
-            color: var(--pm-muted);
-            font-weight: 600;
-        }
-
     </style>
 </head>
 <body>
@@ -2871,7 +2355,7 @@
                         <div id="createCompanyResult" class="text-center mt-3 small"></div>
                     </div>
                     <div class="login-panel-foot">
-                        PetroManager Pro · <strong>v1.4.7</strong> · Musoga Reagan © 2026
+                        PetroManager Pro · <strong>v1.4.6</strong> · Musoga Reagan © 2026
                     </div>
                 </div>
             </div>
@@ -2912,7 +2396,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.4.7</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.4.6</div>
             </div>
         </nav>
         <div class="main-content">
@@ -5319,8 +4803,7 @@ function buildSidebar() {
             icon: 'bi-wallet2',
             children: [
                 { label: 'Financials', page: 'financials' },
-                { label: 'Payroll', page: 'payroll' },
-                { label: 'Advances', page: 'advances' }
+                { label: 'Payroll', page: 'payroll' }
             ]
         });
 
@@ -7994,39 +7477,6 @@ async function renderBalancing() {
 
             unreconciledShifts.sort((a, b) => b._createdAt - a._createdAt);
             currentIndex = 0;
-            // Show selectable list of ALL unreconciled shifts (multi-pump / concurrent shifts)
-            const listWrap = document.createElement('div');
-            listWrap.id = 'balShiftListWrap';
-            listWrap.className = 'mb-3';
-            let listHtml = '<div class="intl-section-head"><h6 class="mb-0"><i class="bi bi-list-check"></i> Unreconciled shifts (' + unreconciledShifts.length + ')</h6></div>';
-            listHtml += '<div class="table-responsive intl-table-wrap mb-2"><table class="table table-sm mb-0 align-middle"><thead><tr><th>#</th><th>Opened</th><th>Closed</th><th>Pump / Note</th><th></th></tr></thead><tbody>';
-            unreconciledShifts.forEach((s, i) => {
-                const opened = s._createdAt ? s._createdAt.toLocaleString() : '—';
-                let closed = '—';
-                try {
-                    const c = s.closed_at;
-                    if (c && typeof c.toDate === 'function') closed = c.toDate().toLocaleString();
-                    else if (c && c.seconds != null) closed = new Date(Number(c.seconds) * 1000).toLocaleString();
-                    else if (s.ended_at) closed = (typeof s.ended_at.toDate === 'function' ? s.ended_at.toDate() : new Date(s.ended_at)).toLocaleString();
-                } catch (_) {}
-                const note = esc(s.pump || s.pump_name || s.note || s.shift_label || 'Shift');
-                listHtml += '<tr data-shift-idx="' + i + '"' + (i === 0 ? ' style="background:#eef2ff;"' : '') + '>' +
-                    '<td>' + (i + 1) + '</td><td class="small">' + esc(opened) + '</td><td class="small">' + esc(closed) + '</td><td>' + note + '</td>' +
-                    '<td class="text-end"><button type="button" class="btn btn-sm btn-outline-primary bal-pick-shift" data-idx="' + i + '">Balance</button></td></tr>';
-            });
-            listHtml += '</tbody></table></div><div id="balShiftDetail"></div>';
-            // Replace balancingResult content structure: list + detail
-            const resultEl = document.getElementById('balancingResult');
-            resultEl.innerHTML = listHtml;
-            resultEl.querySelectorAll('.bal-pick-shift').forEach(btn => {
-                btn.onclick = function() {
-                    currentIndex = parseInt(this.dataset.idx, 10) || 0;
-                    resultEl.querySelectorAll('tbody tr').forEach((tr, j) => {
-                        tr.style.background = j === currentIndex ? '#eef2ff' : '';
-                    });
-                    displayShift(stationId, cashierId, unreconciledShifts[currentIndex], unreconciledShifts.length);
-                };
-            });
             await displayShift(stationId, cashierId, unreconciledShifts[currentIndex], unreconciledShifts.length);
         } catch (err) {
             console.error('Balancing error:', err);
@@ -8239,9 +7689,8 @@ async function renderBalancing() {
                         </div>
                     </div>
                     <div class="shift-nav">
-                        <span class="counter">Shift ${currentIndex + 1} of ${totalUnreconciled} unreconciled</span>
-                        ${totalUnreconciled > 1 ? `<button class="btn btn-sm btn-outline-secondary" id="prevUnreconciledBtn"><i class="bi bi-arrow-left"></i> Prev</button>
-                        <button class="btn btn-sm btn-outline-secondary" id="nextUnreconciledBtn"><i class="bi bi-arrow-right"></i> Next</button>` : ''}
+                        <span class="counter">${totalUnreconciled} unreconciled shift${totalUnreconciled > 1 ? 'es' : ''}</span>
+                        ${totalUnreconciled > 1 ? `<button class="btn btn-sm btn-outline-secondary" id="nextUnreconciledBtn"><i class="bi bi-arrow-right"></i> Next</button>` : ''}
                     </div>
                 </div>
 
@@ -8299,13 +7748,7 @@ async function renderBalancing() {
             </div>
         `;
 
-        document.getElementById('balancingResult');
-        const detailHost = document.getElementById('balShiftDetail');
-        if (detailHost) {
-            detailHost.innerHTML = resultHtml;
-        } else {
-            document.getElementById('balancingResult').innerHTML = resultHtml;
-        }
+        document.getElementById('balancingResult').innerHTML = resultHtml;
 
         function getLiveGross() {
             let gross = 0;
@@ -8532,26 +7975,9 @@ async function renderBalancing() {
             nextBtn.onclick = function() {
                 if (currentIndex + 1 < unreconciledShifts.length) {
                     currentIndex++;
-                    const wrap = document.getElementById('balancingResult');
-                    if (wrap) wrap.querySelectorAll('tbody tr[data-shift-idx]').forEach((tr, j) => {
-                        tr.style.background = j === currentIndex ? '#eef2ff' : '';
-                    });
                     displayShift(stationId, cashierId, unreconciledShifts[currentIndex], unreconciledShifts.length);
                 } else {
                     toast('All shifts have been displayed', 'info');
-                }
-            };
-        }
-        const prevBtn = document.getElementById('prevUnreconciledBtn');
-        if (prevBtn) {
-            prevBtn.onclick = function() {
-                if (currentIndex > 0) {
-                    currentIndex--;
-                    const wrap = document.getElementById('balancingResult');
-                    if (wrap) wrap.querySelectorAll('tbody tr[data-shift-idx]').forEach((tr, j) => {
-                        tr.style.background = j === currentIndex ? '#eef2ff' : '';
-                    });
-                    displayShift(stationId, cashierId, unreconciledShifts[currentIndex], unreconciledShifts.length);
                 }
             };
         }
@@ -13712,23 +13138,12 @@ async function renderCustomers() {
                 const tillRef = tillId ? db.collection('bank_accounts').doc(tillId) : null;
 
                 await db.runTransaction(async (tx) => {
-                    // ---- ALL READS FIRST (Firestore rule) ----
+                    // Re-read customer inside transaction
                     const custDoc = await tx.get(custRef);
                     if (!custDoc.exists) throw new Error('Customer no longer exists');
                     const currentBal = Number(custDoc.data().current_balance) || 0;
                     const finalBal = currentBal - amount;
 
-                    const m = String(method || 'cash').toLowerCase();
-                    let tillDoc = null;
-                    let tillBal = 0;
-                    let tillExists = false;
-                    if (m !== 'credit' && tillRef) {
-                        tillDoc = await tx.get(tillRef);
-                        tillExists = tillDoc.exists;
-                        tillBal = tillExists ? (Number(tillDoc.data().balance) || 0) : 0;
-                    }
-
-                    // ---- ALL WRITES AFTER READS ----
                     tx.update(custRef, { current_balance: finalBal, last_updated: firebase.firestore.FieldValue.serverTimestamp() });
 
                     const saleRef = db.collection('sales').doc();
@@ -13768,9 +13183,12 @@ async function renderCustomers() {
                     });
 
                     // Deposit into Cash Till for non-credit methods
+                    const m = String(method || 'cash').toLowerCase();
                     if (m !== 'credit' && tillRef) {
-                        if (tillExists) {
-                            tx.update(tillRef, { balance: tillBal + amount });
+                        const tillDoc = await tx.get(tillRef);
+                        if (tillDoc.exists) {
+                            const bal = Number(tillDoc.data().balance) || 0;
+                            tx.update(tillRef, { balance: bal + amount });
                         } else {
                             tx.set(tillRef, {
                                 bank_name: 'Cash Till · ' + stationName(stationId),
@@ -13871,7 +13289,6 @@ async function renderReports() {
             items: [
                 { value: 'end_of_day', label: 'End of day summary' },
                 { value: 'sales_summary', label: 'Sales summary' },
-                { value: 'customer_sales', label: 'Customer sales (plates & cashiers)' },
                 { value: 'cashier_performance', label: 'Cashier performance' }
             ]
         },
@@ -13957,22 +13374,6 @@ async function renderReports() {
                             <select id="rptEntity" class="form-select"></select>
                         </div>
                     </div>
-                    <div class="row g-2 mt-2" id="rptColPickerWrap" style="display:none;">
-                        <div class="col-12">
-                            <label class="form-label mb-1">Columns (customer / sales reports)</label>
-                            <div class="col-picker" id="rptColPicker">
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="date" id="rc_date" checked><label class="form-check-label" for="rc_date">Date</label></div>
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="station" id="rc_station" checked><label class="form-check-label" for="rc_station">Station</label></div>
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="customer" id="rc_customer" checked><label class="form-check-label" for="rc_customer">Customer</label></div>
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="plate" id="rc_plate" checked><label class="form-check-label" for="rc_plate">Number plate</label></div>
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="cashier" id="rc_cashier" checked><label class="form-check-label" for="rc_cashier">Cashier</label></div>
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="product" id="rc_product" checked><label class="form-check-label" for="rc_product">Product</label></div>
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="qty" id="rc_qty" checked><label class="form-check-label" for="rc_qty">Qty</label></div>
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="amount" id="rc_amount" checked><label class="form-check-label" for="rc_amount">Amount</label></div>
-                                <div class="form-check form-check-inline"><input class="form-check-input rpt-col" type="checkbox" value="payment" id="rc_payment" checked><label class="form-check-label" for="rc_payment">Payment</label></div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="fin-note mt-3" id="rptHelp">
                         <i class="bi bi-info-circle"></i> <span id="rptHelpText">Select a report and date range, then Generate.</span>
                     </div>
@@ -14002,8 +13403,6 @@ async function renderReports() {
         customer_balances: 'All customer balances.',
         supplier_balances: 'All supplier balances.',
         customer_statement: 'Pick a customer. Movement history in range when dates set.',
-        customer_sales: 'Fuel sales with number plate & cashier. Columns are customisable.',
-        sales_summary: 'Sales lines with optional columns (plate, cashier, customer…).',
         supplier_statement: 'Pick a supplier. Movement history in range when dates set.',
         inventory_snapshot: 'Current stock levels (not historical). Station filter applies.',
         cashier_performance: 'Sales by cashier in the date range.',
@@ -14148,59 +13547,27 @@ async function renderReports() {
         };
     }
 
-    function getSelectedReportCols() {
-        const boxes = document.querySelectorAll('#rptColPicker .rpt-col:checked');
-        if (!boxes.length) return ['date','station','customer','plate','cashier','product','qty','amount','payment'];
-        return Array.from(boxes).map(b => b.value);
-    }
-    const REPORT_COL_LABELS = {
-        date: 'Date', station: 'Station', customer: 'Customer', plate: 'Number plate',
-        cashier: 'Cashier', product: 'Product', qty: 'Qty (L)', amount: 'Amount', payment: 'Payment'
-    };
-    function buildSaleRowCells(s, cols) {
-        const cashier = users.find(u => String(u.id) === String(s.recorded_by || s.cashier_id));
-        const cashierName = cashier ? (cashier.name || cashier.username) : (s.cashier_name || s.recorded_by || '—');
-        const map = {
-            date: formatDate(recordBusinessDate(s)),
-            station: esc(stationName(s.station_id)),
-            customer: esc(s.customer_name || 'Walk-in'),
-            plate: esc(s.vehicle_plate || s.number_plate || '—'),
-            cashier: esc(cashierName),
-            product: esc(s.product_type || '—'),
-            qty: (Number(s.quantity) || 0).toFixed(2),
-            amount: formatMoney(s.amount),
-            payment: esc(s.payment_method || '—')
-        };
-        return cols.map(c => map[c] != null ? map[c] : '—');
-    }
     function generateSalesSummary(f) {
-        const cols = getSelectedReportCols();
-        const headers = cols.map(c => REPORT_COL_LABELS[c] || c);
         const rows = [];
         sales.forEach(s => {
             if (!isFuelSale(s)) return;
             if (f.stationId && String(s.station_id) !== String(f.stationId)) return;
             if (f.product && String(s.product_type) !== String(f.product)) return;
             if (!dateInBusinessRange(recordBusinessDate(s), f.from, f.to)) return;
-            rows.push(buildSaleRowCells(s, cols));
+            const cashier = users.find(u => String(u.id) === String(s.recorded_by));
+            rows.push([
+                esc(stationName(s.station_id)),
+                esc(cashier ? (cashier.name || cashier.username) : (s.recorded_by || '—')),
+                esc(s.product_type || '—'),
+                (Number(s.quantity) || 0).toFixed(2),
+                formatMoney(s.amount),
+                esc(s.payment_method || '—'),
+                formatDate(recordBusinessDate(s))
+            ]);
         });
-        let body = periodBanner('Sales summary', f, 'Toggle columns above (includes number plate & cashier).') + generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'SalesSummary' };
-    }
-    function generateCustomerSales(f) {
-        const cols = getSelectedReportCols();
-        const headers = cols.map(c => REPORT_COL_LABELS[c] || c);
-        const rows = [];
-        sales.forEach(s => {
-            if (!isFuelSale(s)) return;
-            if (f.stationId && String(s.station_id) !== String(f.stationId)) return;
-            if (f.product && String(s.product_type) !== String(f.product)) return;
-            if (f.entityId && String(s.customer_id) !== String(f.entityId)) return;
-            if (!dateInBusinessRange(recordBusinessDate(s), f.from, f.to)) return;
-            rows.push(buildSaleRowCells(s, cols));
-        });
-        let body = periodBanner('Customer sales', f, 'Vehicle number plate and cashier name included. Columns customisable above.') + generateTable(headers, rows);
-        return { html: body, headers, rows, filename: 'CustomerSales' };
+        let body = periodBanner('Sales summary', f, '') + generateTable(
+            ['Station', 'Cashier', 'Product', 'Qty (L)', 'Amount', 'Payment', 'Date'], rows);
+        return { html: body, headers: ['Station', 'Cashier', 'Product', 'Qty (L)', 'Amount', 'Payment', 'Date'], rows, filename: 'SalesSummary' };
     }
 
     function generateExpenseSummary(f) {
@@ -14427,7 +13794,6 @@ async function renderReports() {
                 case 'end_of_day': result = generateEndOfDay(f); break;
                 case 'profit_loss': result = generateProfitLoss(f); break;
                 case 'sales_summary': result = generateSalesSummary(f); break;
-                case 'customer_sales': result = generateCustomerSales(f); break;
                 case 'expense_summary': result = generateExpenseSummary(f); break;
                 case 'ar_aging': result = generateARAging(f); break;
                 case 'ap_aging': result = generateAPAging(f); break;
@@ -14457,15 +13823,11 @@ async function renderReports() {
         if (help) help.textContent = HELP[type] || 'Select filters and Generate.';
         const entityWrap = document.getElementById('entitySelector');
         const entitySel = document.getElementById('rptEntity');
-        const needsEntity = type === 'customer_statement' || type === 'supplier_statement' || type === 'customer_sales';
+        const needsEntity = type === 'customer_statement' || type === 'supplier_statement';
         if (entityWrap) entityWrap.style.display = needsEntity ? '' : 'none';
         if (needsEntity && entitySel) {
-            if (type === 'supplier_statement') entitySel.innerHTML = supplierOpts;
-            else if (type === 'customer_sales') entitySel.innerHTML = '<option value="">All customers</option>' + (customerOpts || '').replace('>Select customer<', '>All customers<');
-            else entitySel.innerHTML = customerOpts;
+            entitySel.innerHTML = type === 'customer_statement' ? customerOpts : supplierOpts;
         }
-        const colWrap = document.getElementById('rptColPickerWrap');
-        if (colWrap) colWrap.style.display = (type === 'sales_summary' || type === 'customer_sales') ? '' : 'none';
         const prodWrap = document.getElementById('rptProductWrap');
         const needsProduct = ['end_of_day', 'profit_loss', 'sales_summary'].includes(type);
         if (prodWrap) prodWrap.style.display = needsProduct ? '' : 'none';
@@ -15343,7 +14705,7 @@ async function renderPayroll() {
                 <div class="fin-title-row">
                     <div>
                         <h4><i class="bi bi-people"></i> Payroll</h4>
-                        <div class="fin-sub">Salaries & shortage recovery · Advances on separate page</div>
+                        <div class="fin-sub">Salaries, advances, shortage recovery</div>
                     </div>
                     <button type="button" class="btn btn-sm btn-light" id="payrollExportBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
                         <i class="bi bi-file-earmark-excel"></i> Excel
@@ -15447,10 +14809,46 @@ async function renderPayroll() {
                     </div>
 
                     <div class="fin-action-card">
-                        <h6><i class="bi bi-lightning-charge text-warning"></i> Salary advances</h6>
-                        <p class="small text-muted mb-2">Advances have their own page with full history, station selection, and payment accounts.</p>
-                        <button type="button" class="btn btn-intl btn-intl-warning" onclick="navigate('advances')"><i class="bi bi-lightning-charge"></i> Open Advances</button>
-                        <div class="fin-note mt-2"><i class="bi bi-info-circle"></i> Outstanding advances still appear as deductions when you post salary.</div>
+                        <h6><i class="bi bi-lightning-charge text-warning"></i> Salary Advance</h6>
+                        <form id="advanceForm" class="intl-form">
+                            <div class="form-section">
+                                <div class="form-section-title">Advance</div>
+                                <div class="form-field">
+                                    <label class="form-label" for="advEmployee">Employee *</label>
+                                    <select id="advEmployee" class="form-select" required><option value="" disabled selected>Select employee</option>${userOpts}</select>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="advSource">Pay from *</label>
+                                    <select id="advSource" class="form-select" required>${salaryAccountOpts}</select>
+                                    <div class="fin-bal-hint empty" id="advSourceBal"></div>
+                                </div>
+                                <div class="form-row-2">
+                                    <div class="form-field">
+                                        <label class="form-label" for="advAmount">Amount *</label>
+                                        <input type="number" id="advAmount" class="form-control" step="1" min="1" required placeholder="e.g. 100000">
+                                    </div>
+                                    <div class="form-field">
+                                        <label class="form-label" for="advDate">Date *</label>
+                                        <input type="date" id="advDate" class="form-control" value="${(typeof _localIsoDate === 'function') ? _localIsoDate(new Date()) : new Date().toISOString().slice(0,10)}" required>
+                                    </div>
+                                </div>
+                                <div class="form-field">
+                                    <label class="form-label" for="advNote">Reason</label>
+                                    <input type="text" id="advNote" class="form-control" placeholder="e.g. Medical emergency">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-intl btn-intl-warning"><i class="bi bi-lightning-charge"></i> Record Advance</button>
+                        </form>
+                        <div id="advanceResult" class="mt-2 small"></div>
+                        <div class="intl-section-head mt-3">
+                            <h6 class="mb-0" style="font-size:0.9rem;">Recent advances</h6>
+                        </div>
+                        <div class="table-responsive intl-table-wrap" style="max-height:200px;overflow:auto;">
+                            <table class="table table-sm mb-0 align-middle">
+                                <thead style="position:sticky;top:0;z-index:2;"><tr><th>Employee</th><th class="text-end">Amount</th><th>Date</th><th>Note</th></tr></thead>
+                                <tbody id="advanceHistoryBody">${advanceHistoryRows}</tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -15622,7 +15020,7 @@ async function renderPayroll() {
     function calculateNet() {
         const base = parseFloat(document.getElementById('salaryBase').value) || 0;
         const bonus = parseFloat(document.getElementById('salaryBonus').value) || 0;
-        let shortage = parseFloat(document.getElementById('salaryShortage').value) || 0;
+        const shortage = parseFloat(document.getElementById('salaryShortage').value) || 0;
         const otherDed = parseFloat(document.getElementById('salaryOtherDeductions').value) || 0;
         const advanceDed = parseFloat(document.getElementById('salaryAdvanceDeduct') ? document.getElementById('salaryAdvanceDeduct').value : 0) || 0;
         const gross = base + bonus;
@@ -15646,28 +15044,18 @@ async function renderPayroll() {
         const period = document.getElementById('salaryPeriod').value;
         const base = parseFloat(document.getElementById('salaryBase').value) || 0;
         const bonus = parseFloat(document.getElementById('salaryBonus').value) || 0;
-        let shortage = parseFloat(document.getElementById('salaryShortage').value) || 0;
+        const shortage = parseFloat(document.getElementById('salaryShortage').value) || 0;
         const otherDed = parseFloat(document.getElementById('salaryOtherDeductions').value) || 0;
         const advanceDed = parseFloat(document.getElementById('salaryAdvanceDeduct') ? document.getElementById('salaryAdvanceDeduct').value : 0) || 0;
         const outstandingAdv = parseFloat(salaryEmployee.options[salaryEmployee.selectedIndex] ? salaryEmployee.options[salaryEmployee.selectedIndex].dataset.advance : 0) || 0;
         if (advanceDed > outstandingAdv + 0.01) { unlockSubmit(this); toast('Advance recovery cannot exceed outstanding advance', 'warning'); return; }
         const gross = base + bonus;
+        const net = gross - shortage - otherDed - advanceDed;
         if (!employeeId) { unlockSubmit(this); toast('Select an employee', 'warning'); return; }
         if (!stationId) { unlockSubmit(this); toast('Select the employee station', 'warning'); return; }
         if (!source) { unlockSubmit(this); toast('Select the account to pay salary from', 'warning'); return; }
         if (!period) { unlockSubmit(this); toast('Select a period', 'warning'); return; }
         if (base <= 0) { unlockSubmit(this); toast('Enter a valid base salary', 'warning'); return; }
-        // Auto-enforce outstanding shortage from balancing (per cashier)
-        const selOpt = salaryEmployee.options[salaryEmployee.selectedIndex];
-        const outstandingShortage = parseFloat(selOpt && selOpt.dataset.shortage) || 0;
-        if (outstandingShortage > 0 && shortage < outstandingShortage - 0.01) {
-            if (!confirm('This cashier has outstanding shortage of ' + formatMoney(outstandingShortage) + '.\n\nShortages are deducted automatically from salary.\nClick OK to deduct the full amount, or Cancel to review.')) {
-                unlockSubmit(this); return;
-            }
-            document.getElementById('salaryShortage').value = outstandingShortage;
-            shortage = outstandingShortage;
-        }
-        const net = gross - shortage - otherDed - advanceDed;
         if (net < 0) { unlockSubmit(this); toast('Net pay cannot be negative. Reduce deductions.', 'warning'); return; }
         const employee = allUsers.find(u => String(u.id) === String(employeeId));
         const empName = employee ? (employee.name || employee.username) : 'Unknown';
@@ -16329,361 +15717,7 @@ async function renderMaintenance() {
 registerPageRenderer('users', renderUsers);
 registerPageRenderer('company', renderCompanyProfile);
 registerPageRenderer('companies', renderAllCompanies);
-
-// ----- SALARY ADVANCES (dedicated page) -----
-async function renderAdvances() {
-    if (!isAdmin(state.user.role)) {
-        document.getElementById('pageContent').innerHTML = '<div class="alert alert-danger">Access denied. Only managers and admins can manage advances.</div>';
-        return;
-    }
-    const allUsers = await getAll('users');
-    const salaryAdvances = await getAll('salary_advances') || [];
-    const bankAccounts = await getAll('bank_accounts') || [];
-    if (!state.stations || !state.stations.length) {
-        try { await loadStations(); } catch (_) {}
-    }
-
-    let salaryAccountOpts = '<option value="" disabled selected>Select account</option>';
-    salaryAccountOpts += '<option value="petty_cash">💰 Petty Cash (selected station)</option>';
-    salaryAccountOpts += '<option value="cash_till">💵 Cash Till (selected station)</option>';
-    [...bankAccounts].sort((a, b) => String(a.bank_name || a.account_name || '').localeCompare(String(b.bank_name || b.account_name || ''))).forEach(a => {
-        const stLabel = (a.company_wide || !a.station_id) ? 'All stations' : stationName(a.station_id);
-        const bal = formatMoney(Number(a.balance) || 0);
-        const isCashTill = a.system_kind === 'cash_till' || (a.is_system && /cash\s*till/i.test(String(a.account_name || '') + String(a.bank_name || '')));
-        const isPetty = a.system_kind === 'petty_cash' || (a.is_system && /petty/i.test(String(a.account_name || '') + String(a.bank_name || '')));
-        let label;
-        if (isCashTill) label = `💵 Cash Till · ${stLabel} · ${bal}`;
-        else if (isPetty) label = `💰 Petty Cash · ${stLabel} · ${bal}`;
-        else {
-            const name = a.account_name || a.bank_name || 'Account';
-            const num = a.account_number ? ` · ${a.account_number}` : '';
-            label = `🏦 ${name}${num} · ${stLabel} · ${bal}`;
-        }
-        salaryAccountOpts += `<option value="${esc(a.id)}">${esc(label)}</option>`;
-    });
-
-    let stationOpts = '<option value="" disabled selected>Select station</option>';
-    (state.stations || []).forEach(s => {
-        stationOpts += `<option value="${esc(s.id)}">${esc(s.name)}</option>`;
-    });
-
-    // Outstanding advances per employee
-    const outstandingByEmp = {};
-    salaryAdvances.forEach(a => {
-        if (a.status === 'recovered' || a.status === 'cancelled') return;
-        const cid = String(a.employee_id || '');
-        outstandingByEmp[cid] = (outstandingByEmp[cid] || 0) + (Number(a.amount) || 0);
-    });
-    // Reduce by recovered amounts on salaries
-    const salaries = await getAll('salaries') || [];
-    salaries.forEach(s => {
-        const cid = String(s.employee_id || '');
-        if (s.deducted_advance) outstandingByEmp[cid] = Math.max(0, (outstandingByEmp[cid] || 0) - (Number(s.deducted_advance) || 0));
-    });
-
-    let userOpts = '';
-    allUsers.filter(u => u.active !== false).forEach(u => {
-        const st = u.station_id || '';
-        const out = outstandingByEmp[String(u.id)] || 0;
-        userOpts += `<option value="${esc(u.id)}" data-station="${esc(st)}" data-advance="${out}">${esc(u.name || u.username)}${out > 0 ? ' · outstanding ' + formatMoney(out) : ''}</option>`;
-    });
-
-    const sorted = [...salaryAdvances].sort((a, b) => tsMillis(b.created_at || b.advance_date) - tsMillis(a.created_at || a.advance_date));
-    const totalOutstanding = Object.values(outstandingByEmp).reduce((s, v) => s + v, 0);
-    const mtd = sorted.filter(a => {
-        const d = a.advance_date || '';
-        const now = new Date();
-        const key = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
-        return String(d).startsWith(key);
-    });
-    const mtdTotal = mtd.reduce((s, a) => s + (Number(a.amount) || 0), 0);
-
-    function rowsHtml(list) {
-        if (!list.length) return '<tr><td colspan="7"><div class="intl-empty"><i class="bi bi-lightning-charge"></i>No advances recorded</div></td></tr>';
-        return list.map((a, idx) => {
-            const emp = allUsers.find(u => String(u.id) === String(a.employee_id));
-            const name = emp ? (emp.name || emp.username) : (a.employee_name || 'Unknown');
-            const st = a.station_id ? stationName(a.station_id) : '—';
-            const status = a.status || 'outstanding';
-            const badge = status === 'outstanding' ? 'bg-warning text-dark' : (status === 'recovered' ? 'bg-success' : 'bg-secondary');
-            const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-            return `<tr style="background:${bg};">
-                <td class="fw-semibold">${esc(name)}</td>
-                <td class="small">${esc(st)}</td>
-                <td class="text-end"><span class="amt amt-warn">${formatMoney(a.amount)}</span></td>
-                <td class="small text-nowrap">${esc(a.advance_date || formatDate(a.created_at) || '—')}</td>
-                <td class="small">${esc(a.note || '—')}</td>
-                <td><span class="badge ${badge}">${esc(status)}</span></td>
-                <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 delete-adv-btn" data-id="${esc(a.id)}" title="Delete"><i class="bi bi-trash"></i></button></td>
-            </tr>`;
-        }).join('');
-    }
-
-    const html = `
-        <div class="fin-workspace">
-            <div class="fin-header">
-                <div class="fin-title-row">
-                    <div>
-                        <h4><i class="bi bi-lightning-charge"></i> Salary Advances</h4>
-                        <div class="fin-sub">Staff advances · recovered on next payroll</div>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-light" id="advExportBtn" style="border-radius:999px;font-weight:600;font-size:0.75rem;">
-                        <i class="bi bi-file-earmark-excel"></i> Excel
-                    </button>
-                </div>
-                <div class="fin-kpi-row" style="grid-template-columns:repeat(3,1fr);">
-                    <div class="fin-kpi warn">
-                        <div class="k-label">Outstanding</div>
-                        <div class="k-value">${formatCompactMoney(totalOutstanding)}</div>
-                        <div class="k-hint">To recover on salary</div>
-                    </div>
-                    <div class="fin-kpi">
-                        <div class="k-label">This month</div>
-                        <div class="k-value">${formatCompactMoney(mtdTotal)}</div>
-                        <div class="k-hint">${mtd.length} advance${mtd.length === 1 ? '' : 's'}</div>
-                    </div>
-                    <div class="fin-kpi">
-                        <div class="k-label">All records</div>
-                        <div class="k-value">${sorted.length}</div>
-                        <div class="k-hint">History</div>
-                    </div>
-                </div>
-            </div>
-            <div class="row g-3">
-                <div class="col-lg-4">
-                    <div class="fin-action-card">
-                        <h6><i class="bi bi-lightning-charge text-warning"></i> Record advance</h6>
-                        <form id="advanceForm" class="intl-form">
-                            <div class="form-section">
-                                <div class="form-section-title">Employee &amp; station</div>
-                                <div class="form-field">
-                                    <label class="form-label" for="advEmployee">Employee *</label>
-                                    <select id="advEmployee" class="form-select" required><option value="" disabled selected>Select employee</option>${userOpts}</select>
-                                </div>
-                                <div class="form-field">
-                                    <label class="form-label" for="advStation">Station *</label>
-                                    <select id="advStation" class="form-select" required>${stationOpts}</select>
-                                    <div class="form-hint">Required for Petty Cash / Cash Till accounts</div>
-                                </div>
-                                <div class="form-field">
-                                    <label class="form-label" for="advSource">Pay from *</label>
-                                    <select id="advSource" class="form-select" required>${salaryAccountOpts}</select>
-                                    <div class="fin-bal-hint empty" id="advSourceBal"></div>
-                                </div>
-                            </div>
-                            <div class="form-section">
-                                <div class="form-section-title">Amount</div>
-                                <div class="form-row-2">
-                                    <div class="form-field">
-                                        <label class="form-label" for="advAmount">Amount *</label>
-                                        <input type="number" id="advAmount" class="form-control" step="1" min="1" required placeholder="e.g. 100000">
-                                    </div>
-                                    <div class="form-field">
-                                        <label class="form-label" for="advDate">Date *</label>
-                                        <input type="date" id="advDate" class="form-control" value="${(typeof _localIsoDate === 'function') ? _localIsoDate(new Date()) : new Date().toISOString().slice(0,10)}" required>
-                                    </div>
-                                </div>
-                                <div class="form-field">
-                                    <label class="form-label" for="advNote">Reason</label>
-                                    <input type="text" id="advNote" class="form-control" placeholder="e.g. Medical emergency">
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-intl btn-intl-warning"><i class="bi bi-lightning-charge"></i> Record Advance</button>
-                        </form>
-                        <div id="advanceResult" class="mt-2 small"></div>
-                    </div>
-                </div>
-                <div class="col-lg-8">
-                    <div class="fin-ledger-card">
-                        <div class="intl-section-head">
-                            <h6><i class="bi bi-clock-history"></i> Advance history</h6>
-                            <span class="meta" id="advMetaCount">${sorted.length}</span>
-                        </div>
-                        <div class="fin-filter-bar">
-                            <input type="search" class="form-control fin-q" id="advFilterQ" placeholder="Search employee or note…">
-                        </div>
-                        <div class="table-responsive intl-table-wrap" style="max-height:560px;overflow:auto;">
-                            <table class="table table-sm mb-0 align-middle" style="min-width:640px;width:100%;">
-                                <thead style="position:sticky;top:0;z-index:2;">
-                                    <tr>
-                                        <th>Employee</th>
-                                        <th>Station</th>
-                                        <th class="text-end">Amount</th>
-                                        <th>Date</th>
-                                        <th>Note</th>
-                                        <th>Status</th>
-                                        <th class="text-end"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="advLedgerBody">${rowsHtml(sorted)}</tbody>
-                            </table>
-                        </div>
-                        <div class="fin-ledger-foot">
-                            <span>Showing <strong id="advFootCount">${sorted.length}</strong></span>
-                            <span>Total <strong>${formatMoney(sorted.reduce((s,a)=>s+(Number(a.amount)||0),0))}</strong></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>`;
-    document.getElementById('pageContent').innerHTML = html;
-
-    // Balance hint
-    (function() {
-        const sel = document.getElementById('advSource');
-        const h = document.getElementById('advSourceBal');
-        const stSel = document.getElementById('advStation');
-        if (!sel || !h) return;
-        const run = () => {
-            const val = sel.value;
-            if (!val) { h.textContent = ''; h.className = 'fin-bal-hint empty'; return; }
-            let bal = null;
-            if (val === 'petty_cash' || val === 'cash_till') {
-                const st = (stSel && stSel.value) || state.currentStationId;
-                if (!st) { h.textContent = 'Select a station first'; h.className = 'fin-bal-hint warn'; return; }
-                try {
-                    const id = resolveAccountRefId(val, st);
-                    const acc = bankAccounts.find(a => String(a.id) === String(id));
-                    bal = acc ? Number(acc.balance) || 0 : 0;
-                } catch (_) { bal = 0; }
-            } else {
-                const acc = bankAccounts.find(a => String(a.id) === String(val));
-                bal = acc ? Number(acc.balance) || 0 : null;
-            }
-            if (bal == null) { h.textContent = ''; return; }
-            h.textContent = 'Balance: ' + formatMoney(bal);
-            h.className = 'fin-bal-hint' + (bal <= 0 ? ' warn' : '');
-        };
-        sel.addEventListener('change', run);
-        if (stSel) stSel.addEventListener('change', run);
-        run();
-    })();
-
-    document.getElementById('advEmployee').onchange = function() {
-        const selected = this.options[this.selectedIndex];
-        const empStation = (selected && selected.dataset.station) || '';
-        const stEl = document.getElementById('advStation');
-        if (stEl && empStation) stEl.value = empStation;
-        document.getElementById('advSource').dispatchEvent(new Event('change'));
-    };
-
-    const advFilter = document.getElementById('advFilterQ');
-    if (advFilter) {
-        advFilter.oninput = function() {
-            const q = (this.value || '').toLowerCase().trim();
-            const filtered = !q ? sorted : sorted.filter(a => {
-                const emp = allUsers.find(u => String(u.id) === String(a.employee_id));
-                const name = emp ? (emp.name || emp.username || '') : (a.employee_name || '');
-                return name.toLowerCase().includes(q) || String(a.note || '').toLowerCase().includes(q);
-            });
-            document.getElementById('advLedgerBody').innerHTML = rowsHtml(filtered);
-            document.getElementById('advFootCount').textContent = filtered.length;
-            document.getElementById('advMetaCount').textContent = filtered.length;
-            bindDelete();
-        };
-    }
-
-    document.getElementById('advExportBtn').onclick = function() {
-        const headers = ['Employee', 'Station', 'Amount', 'Date', 'Note', 'Status'];
-        const rows = sorted.map(a => {
-            const emp = allUsers.find(u => String(u.id) === String(a.employee_id));
-            return [
-                emp ? (emp.name || emp.username) : (a.employee_name || ''),
-                a.station_id ? stationName(a.station_id) : '',
-                Number(a.amount) || 0,
-                a.advance_date || '',
-                a.note || '',
-                a.status || 'outstanding'
-            ];
-        });
-        if (!rows.length) { toast('No advances to export', 'warning'); return; }
-        exportExcel(headers, rows, 'salary_advances_' + new Date().toISOString().slice(0, 10) + '.xlsx');
-        toast('Advances exported', 'success');
-    };
-
-    function bindDelete() {
-        document.querySelectorAll('.delete-adv-btn').forEach(btn => {
-            if (btn._bound) return;
-            btn._bound = true;
-            btn.onclick = async function() {
-                if (!confirm('Delete this advance record? Account balance will NOT be refunded automatically.')) return;
-                try {
-                    await deleteDoc('salary_advances', this.dataset.id);
-                    await logAudit('delete_salary_advance', { id: this.dataset.id });
-                    toast('Advance deleted');
-                    renderAdvances();
-                } catch (err) { toast('Error: ' + err.message, 'danger'); }
-            };
-        });
-    }
-    bindDelete();
-
-    document.getElementById('advanceForm').onsubmit = async function(e) {
-        e.preventDefault();
-        if (lockSubmit(this, '<span class="spinner-border spinner-border-sm"></span> Saving...')) return;
-        const employeeId = document.getElementById('advEmployee').value;
-        const stationId = (document.getElementById('advStation') && document.getElementById('advStation').value) || '';
-        const source = (document.getElementById('advSource') && document.getElementById('advSource').value) || '';
-        const amount = parseFloat(document.getElementById('advAmount').value) || 0;
-        const advDate = document.getElementById('advDate').value;
-        const note = (document.getElementById('advNote').value || '').trim();
-        const resultEl = document.getElementById('advanceResult');
-        if (!employeeId) { unlockSubmit(this); toast('Select an employee', 'warning'); return; }
-        if (!stationId) { unlockSubmit(this); toast('Select a station', 'warning'); return; }
-        if (!source) { unlockSubmit(this); toast('Select the account', 'warning'); return; }
-        if (amount <= 0) { unlockSubmit(this); toast('Enter a valid advance amount', 'warning'); return; }
-        if (!advDate) { unlockSubmit(this); toast('Select a date', 'warning'); return; }
-
-        const employee = allUsers.find(u => String(u.id) === String(employeeId));
-        const empName = employee ? (employee.name || employee.username) : 'Unknown';
-        try {
-            await ensureSystemCashAccounts(stationId);
-            const resolved = resolveAccountRefId(source, stationId) || source;
-            const accPre = await getDoc('bank_accounts', resolved);
-            if (!accPre) { unlockSubmit(this); toast('Payment account not found', 'danger'); return; }
-            const accBal = Number(accPre.balance) || 0;
-            if (accBal < amount) {
-                unlockSubmit(this);
-                toast('Insufficient funds. Balance: ' + formatMoney(accBal), 'danger');
-                return;
-            }
-            const advRef = db.collection('salary_advances').doc();
-            const accRef = db.collection('bank_accounts').doc(String(resolved));
-            await db.runTransaction(async (tx) => {
-                const accDoc = await tx.get(accRef);
-                if (!accDoc.exists) throw new Error('Payment account not found');
-                const bal = Number(accDoc.data().balance) || 0;
-                if (bal < amount) throw new Error('Insufficient funds');
-                tx.set(advRef, {
-                    employee_id: employeeId,
-                    employee_name: empName,
-                    station_id: String(stationId),
-                    source_account: source,
-                    amount: amount,
-                    advance_date: advDate,
-                    note: note || null,
-                    paid_by: state.user.id,
-                    status: 'outstanding',
-                    companyId: state.user.companyId,
-                    created_at: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                tx.update(accRef, { balance: bal - amount });
-            });
-            await logAudit('salary_advance', { employee_id: employeeId, amount, station_id: stationId });
-            toast('Advance of ' + formatMoney(amount) + ' paid to ' + empName, 'success');
-            resultEl.innerHTML = '<span class="text-success">✅ Advance recorded. It will be deducted on next salary.</span>';
-            renderAdvances();
-        } catch (err) {
-            unlockSubmit(this);
-            toast('Error: ' + err.message, 'danger');
-            resultEl.innerHTML = '<span class="text-danger">' + esc(err.message) + '</span>';
-        }
-    };
-}
-
-
 registerPageRenderer('payroll', renderPayroll);
-registerPageRenderer('advances', renderAdvances);
 registerPageRenderer('messages', renderMessages);
 registerPageRenderer('invoices', renderInvoices);
 registerPageRenderer('staff', renderStaff);
@@ -17226,7 +16260,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 </script>
 <script>
 // ============================================================
-// PETROMANAGER PRO v1.4.7 — FINAL PAGE REGISTRY (LAUNCH)
+// PETROMANAGER PRO v1.4.6 — FINAL PAGE REGISTRY (LAUNCH)
 // ============================================================
 // Runs after all other parts. Ensures every menu page has a renderer
 // registered, even if a part failed to load or was reordered.
@@ -17267,7 +16301,6 @@ console.log('Part 11 loaded – License Manager for Super Admin');
             ['company',           'renderCompanyProfile'],
             ['companies',         'renderAllCompanies'],
             ['payroll',           'renderPayroll'],
-            ['advances',          'renderAdvances'],
             ['messages',          'renderMessages'],
             ['invoices',          'renderInvoices'],
             ['staff',             'renderStaff'],
