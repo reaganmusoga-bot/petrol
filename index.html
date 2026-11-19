@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PetroManager Pro — Musoga Reagan</title>
+    <title>PetroManager Pro v1.5 — Musoga Reagan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
@@ -2285,6 +2285,275 @@
         .balance-zero { color: #6c757d; }
         .statement-table .debit { color: #dc3545; }
         .statement-table .credit { color: #198754; }
+
+
+        /* ============================================================
+           v1.5 — QuickBooks POS inspired Dashboard + Login polish
+           ============================================================ */
+        :root {
+            --qb-navy: #0b1a33;
+            --qb-navy-2: #152a4a;
+            --qb-gold: #f5a623;
+            --qb-green: #0d9488;
+            --qb-blue: #2563eb;
+            --qb-slate: #64748b;
+            --qb-bg: #f1f5f9;
+            --qb-card: #ffffff;
+            --qb-border: #e2e8f0;
+            --qb-shadow: 0 1px 3px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04);
+            --qb-radius: 14px;
+        }
+        [data-theme="dark"] {
+            --qb-bg: #0f172a;
+            --qb-card: #1e293b;
+            --qb-border: #334155;
+        }
+
+        /* ---- Login refinements ---- */
+        .login-wrap { background: #0a1220; }
+        .login-hero h2 span {
+            background: linear-gradient(90deg, #f5a623, #fde68a);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .login-card .btn-login {
+            background: linear-gradient(135deg, #f5a623 0%, #e09000 100%);
+            box-shadow: 0 8px 22px rgba(245,166,35,0.35);
+        }
+        .login-mark {
+            background: linear-gradient(145deg, #0b1a33, #1e3a5f);
+            box-shadow: 0 12px 28px rgba(11,26,51,0.3);
+        }
+
+        /* ---- Dashboard Home (QB POS style) ---- */
+        .qb-home {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            max-width: 1180px;
+            margin: 0 auto;
+            min-height: calc(100vh - var(--header-h) - 48px);
+        }
+        .qb-topbar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 4px 0 2px;
+        }
+        .qb-welcome h2 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--qb-navy);
+        }
+        [data-theme="dark"] .qb-welcome h2 { color: #f1f5f9; }
+        .qb-welcome .sub {
+            font-size: 0.84rem;
+            color: var(--qb-slate);
+            margin-top: 2px;
+            font-weight: 500;
+        }
+        .qb-quick-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .qb-quick-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 650;
+            border: 1px solid var(--qb-border);
+            background: var(--qb-card);
+            color: #334155;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 1px 2px rgba(15,23,42,0.04);
+        }
+        .qb-quick-btn:hover {
+            background: var(--qb-navy);
+            color: #fff;
+            border-color: var(--qb-navy);
+            transform: translateY(-1px);
+        }
+        .qb-quick-btn i { font-size: 1rem; }
+        .qb-quick-btn.primary {
+            background: var(--qb-navy);
+            color: #fff;
+            border-color: var(--qb-navy);
+        }
+        .qb-quick-btn.primary:hover { filter: brightness(1.1); }
+
+        /* Main layout: side links + icon grid */
+        .qb-body {
+            display: grid;
+            grid-template-columns: 72px 1fr 72px;
+            gap: 16px;
+            flex: 1;
+            align-items: stretch;
+        }
+        @media (max-width: 900px) {
+            .qb-body { grid-template-columns: 1fr; }
+            .qb-side { display: none !important; }
+        }
+
+        .qb-side {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            padding-top: 8px;
+        }
+        .qb-side-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            border: 1px solid var(--qb-border);
+            background: var(--qb-card);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: var(--qb-shadow);
+            color: #475569;
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-align: center;
+            line-height: 1.15;
+            padding: 6px 4px;
+        }
+        .qb-side-btn i { font-size: 1.25rem; color: var(--qb-navy); }
+        [data-theme="dark"] .qb-side-btn i { color: #94a3b8; }
+        .qb-side-btn:hover {
+            background: var(--qb-navy);
+            color: #fff;
+            border-color: var(--qb-navy);
+            transform: translateY(-2px);
+        }
+        .qb-side-btn:hover i { color: #f5a623; }
+
+        /* Icon grid — the heart of the home screen */
+        .qb-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            align-content: start;
+        }
+        @media (max-width: 1100px) {
+            .qb-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 700px) {
+            .qb-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        }
+        @media (max-width: 420px) {
+            .qb-grid { grid-template-columns: 1fr; }
+        }
+
+        .qb-tile {
+            background: var(--qb-card);
+            border: 1px solid var(--qb-border);
+            border-radius: var(--qb-radius);
+            padding: 22px 14px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.18s cubic-bezier(.2,.8,.2,1);
+            box-shadow: var(--qb-shadow);
+            min-height: 128px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .qb-tile::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(145deg, transparent 40%, rgba(11,26,51,0.03));
+            pointer-events: none;
+        }
+        .qb-tile:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 28px rgba(15,23,42,0.12);
+            border-color: #cbd5e1;
+        }
+        .qb-tile .icon-wrap {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.55rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .qb-tile .label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+            line-height: 1.25;
+        }
+        [data-theme="dark"] .qb-tile .label { color: #f1f5f9; }
+        .qb-tile .hint {
+            font-size: 0.7rem;
+            color: var(--qb-slate);
+            font-weight: 500;
+            margin-top: -6px;
+        }
+
+        /* Colour variants for tiles */
+        .qb-tile.c-sales .icon-wrap { background: linear-gradient(135deg, #0b1a33, #1e3a5f); }
+        .qb-tile.c-shift .icon-wrap { background: linear-gradient(135deg, #0d9488, #14b8a6); }
+        .qb-tile.c-inv .icon-wrap { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+        .qb-tile.c-fin .icon-wrap { background: linear-gradient(135deg, #059669, #10b981); }
+        .qb-tile.c-people .icon-wrap { background: linear-gradient(135deg, #7c3aed, #8b5cf6); }
+        .qb-tile.c-report .icon-wrap { background: linear-gradient(135deg, #d97706, #f59e0b); }
+        .qb-tile.c-support .icon-wrap { background: linear-gradient(135deg, #475569, #64748b); }
+        .qb-tile.c-admin .icon-wrap { background: linear-gradient(135deg, #be123c, #e11d48); }
+
+        /* Footer strip on home */
+        .qb-home-foot {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 4px 0;
+            font-size: 0.75rem;
+            color: var(--qb-slate);
+            border-top: 1px solid var(--qb-border);
+            margin-top: auto;
+        }
+        .qb-home-foot strong { color: #334155; }
+        [data-theme="dark"] .qb-home-foot strong { color: #cbd5e1; }
+
+        /* Slightly tighter page content on dashboard */
+        .page-content:has(.qb-home) {
+            padding-top: 16px;
+            padding-bottom: 20px;
+        }
+
+        /* Improve tables globally a bit */
+        .page-content table.table thead th {
+            font-size: 0.7rem !important;
+            letter-spacing: 0.04em;
+        }
+        .page-content .btn {
+            border-radius: 9px !important;
+        }
+
     </style>
 </head>
 <body>
@@ -2355,7 +2624,7 @@
                         <div id="createCompanyResult" class="text-center mt-3 small"></div>
                     </div>
                     <div class="login-panel-foot">
-                        PetroManager Pro · <strong>v1.4.6</strong> · Musoga Reagan © 2026
+                        PetroManager Pro · <strong>v1.5.0</strong> · QB-style navigator · Musoga Reagan © 2026
                     </div>
                 </div>
             </div>
@@ -2396,7 +2665,7 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.4.6</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.5.0 · QB navigator</div>
             </div>
         </nav>
         <div class="main-content">
@@ -5244,512 +5513,167 @@ async function _countLowStock(invList) {
 }
 
 async function renderDashboard() {
-    const company = await getCompany(state.user.companyId);
-    const companyData = company || {
-        name: 'PetroManager',
-        tagline: 'Fuel Management System',
-        address: 'Kampala, Uganda',
-        phone: '+256 700 000 000',
-        email: 'info@petromanager.ug',
-        tax_id: 'UG-1234567',
-        website: 'www.petromanager.ug',
-        logo_url: ''
-    };
+    // ============================================================
+    // v1.5 — QuickBooks POS style Home / Navigator
+    // No company statistics. Pure icon navigator + quick actions.
+    // Designed to fit on one screen without scrolling on desktop.
+    // ============================================================
+    const user = state.user || {};
+    const company = (await getCompany(user.companyId).catch(() => null)) || {};
+    const companyName = company.name || 'PetroManager';
+    const stationLabel = state.currentStationId
+        ? (typeof stationName === 'function' ? stationName(state.currentStationId) : 'Station')
+        : 'All Stations';
+    const role = (typeof roleNorm === 'function' ? roleNorm(user.role) : (user.role || '')).toLowerCase();
+    const isCashier = role === 'cashier';
+    const isAdminRole = typeof isAdmin === 'function' ? isAdmin(role) : (role === 'admin' || role === 'super_admin');
+    const isSuper = typeof isSuperAdmin === 'function' ? isSuperAdmin(role) : role === 'super_admin';
 
-    const inv = await getAll('inventory');
-    const sales = await getAll('sales');
-    const shifts = await getAll('shifts');
-    const expenses = await getAll('expenses');
-    const adjustments = await getAll('adjustments');
-    const customers = await getAll('customers');
-    const suppliers = await getAll('suppliers');
-    const salaries = await getAll('salaries') || [];
-    const salaryAdvances = await getAll('salary_advances') || [];
-    const recons = await getAll('reconciliations') || [];
-    const shortageRecoveries = await getAll('shortage_recoveries') || [];
-
-    const fInv = inv.filter(i => !state.currentStationId || String(i.station_id) === String(state.currentStationId));
-    const fSales = sales.filter(s =>
-        s.status !== 'reversed' && s.reversed !== true && s.type !== 'payment' &&
-        (!state.currentStationId || String(s.station_id) === String(state.currentStationId))
-    );
-    const fPayments = sales.filter(s =>
-        s.status !== 'reversed' && s.type === 'payment' &&
-        (!state.currentStationId || String(s.station_id) === String(state.currentStationId))
-    );
-    const fShifts = shifts.filter(s => !state.currentStationId || String(s.station_id) === String(state.currentStationId));
-
-    // Stock by product
-    const productTypes = [...new Set(fInv.map(i => i.product_type).filter(Boolean))];
-    const stockByProduct = {};
-    productTypes.forEach(p => stockByProduct[p] = 0);
-    fInv.forEach(i => {
-        const p = i.product_type;
-        if (!p) return;
-        stockByProduct[p] = (stockByProduct[p] || 0) + (Number(i.quantity) || 0);
-    });
-    const totalLitres = Object.values(stockByProduct).reduce((a, b) => a + b, 0);
-
-    // ===== Period filter (uses LOCAL calendar days) =====
-    let period = state.dashPeriod || safeStorage.get('petro_dash_period') || 'mtd';
-    if (!['today', '7d', 'mtd', 'ytd', 'all'].includes(period)) period = 'mtd';
-    state.dashPeriod = period;
-
-    const _nowLocal = new Date();
-    const periodBounds = (() => {
-        const start = new Date(_nowLocal.getFullYear(), _nowLocal.getMonth(), _nowLocal.getDate(), 0, 0, 0, 0);
-        const end = new Date(_nowLocal.getFullYear(), _nowLocal.getMonth(), _nowLocal.getDate(), 23, 59, 59, 999);
-        if (period === 'today') return { start, end };
-        if (period === '7d') {
-            const s = new Date(start);
-            s.setDate(s.getDate() - 6);
-            return { start: s, end };
-        }
-        if (period === 'mtd') {
-            const s = new Date(_nowLocal.getFullYear(), _nowLocal.getMonth(), 1, 0, 0, 0, 0);
-            return { start: s, end };
-        }
-        if (period === 'ytd') {
-            const s = new Date(_nowLocal.getFullYear(), 0, 1, 0, 0, 0, 0);
-            return { start: s, end };
-        }
-        return { start: null, end: null };
-    })();
-
-    // Business date for a record (used consistently across the whole dashboard)
-    function recordDate(s) {
-        const candidates = [
-            s.sale_date, s.expense_date, s.payment_date, s.date, s.adj_date,
-            s.date_from, s.paid_date, s.received_date, s.created_at, s.timestamp
-        ];
-        for (const c of candidates) {
-            if (c == null || c === '') continue;
-            let dt = null;
-            if (typeof c.toDate === 'function') dt = c.toDate();
-            else if (c.seconds != null) dt = new Date(Number(c.seconds) * 1000);
-            else if (typeof c === 'string' && /^\d{4}-\d{2}-\d{2}/.test(c)) {
-                const parts = c.slice(0, 10).split('-').map(Number);
-                dt = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0, 0);
-            } else dt = new Date(c);
-            if (dt && !isNaN(dt.getTime())) return dt;
-        }
-        return null;
-    }
-    const inPeriod = (s) => {
-        if (!periodBounds.start) return true;
-        const dt = recordDate(s);
-        if (!dt) return false;
-        return dt >= periodBounds.start && dt <= periodBounds.end;
-    };
-
-    const pSales = fSales.filter(inPeriod);
-
-    // ===== Operational P&L (uses local ISO dates — no UTC shift) =====
-    const dashPnL = computeOperationalPnL({
-        sales,
-        expenses,
-        adjustments,
-        salaries,
-        advances: salaryAdvances,
-        stationId: state.currentStationId || null,
-        from: periodBounds.start ? _localIsoDate(periodBounds.start) : null,
-        to: periodBounds.end ? _localIsoDate(periodBounds.end) : null,
-        includePayroll: true
-    });
-    const totalRevenue = dashPnL.totalRevenue;
-    const totalCOGS = dashPnL.totalCOGS;
-    const grossProfit = dashPnL.grossProfit;
-    const totalExpenses = dashPnL.totalExpenses;
-    const totalLosses = dashPnL.totalLosses;
-    const totalPayroll = dashPnL.totalPayroll;
-    const netProfit = dashPnL.netProfit;
-
-    const periodLabelBase = ({
-        today: 'Today', '7d': 'Last 7 days', mtd: 'This month', ytd: 'This year', all: 'All time'
-    })[period] || 'Period';
-    const periodRangeText = (() => {
-        if (!periodBounds.start) return '';
-        const fmt = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-        if (period === 'today') return fmt(periodBounds.start);
-        if (period === 'mtd') return periodBounds.start.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-        if (period === 'ytd') return String(periodBounds.start.getFullYear());
-        return fmt(periodBounds.start) + ' – ' + fmt(periodBounds.end);
-    })();
-    const periodLabel = periodRangeText ? (periodLabelBase + ' · ' + periodRangeText) : periodLabelBase;
-
-    // ===== Today vs yesterday =====
-    const now = new Date();
-    const todayStr = now.toDateString();
-    const yest = new Date(now); yest.setDate(yest.getDate() - 1);
-    const yestStr = yest.toDateString();
-    const saleDate = (s) => {
-        const dt = recordDate(s);
-        return dt || new Date(0);
-    };
-    const todaySales = fSales.filter(s => {
-        const d = saleDate(s);
-        return d && !isNaN(d.getTime()) && d.toDateString() === todayStr;
-    }).reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
-    const yesterdaySales = fSales.filter(s => {
-        const d = saleDate(s);
-        return d && !isNaN(d.getTime()) && d.toDateString() === yestStr;
-    }).reduce((sum, x) => sum + (Number(x.amount) || 0), 0);
-    const todayDeltaPct = yesterdaySales > 0
-        ? ((todaySales - yesterdaySales) / yesterdaySales * 100)
-        : (todaySales > 0 ? 100 : 0);
-
-    const activeShifts = fShifts.filter(s => s.status === 'active').length;
-    const stationLabel = state.currentStationId ? stationName(state.currentStationId) : 'All Stations';
-
-    // ===== Low stock — computed locally, does NOT toast =====
-    const lowCount = await _countLowStock(fInv);
-
-    const totalCustomers = customers.length;
-    const totalSuppliers = suppliers.length;
-
-    // ===== Unreconciled shifts (station-scoped) =====
-    const fRecons = recons.filter(r => !state.currentStationId || String(r.station_id) === String(state.currentStationId));
-    const reconciledShiftIds = new Set(fRecons.map(r => r.shift_id).filter(Boolean));
-    const unreconciledCount = fShifts.filter(s => s.status === 'closed' && !reconciledShiftIds.has(s.id)).length;
-
-    // ===== Open shortage — per-cashier math, station-scoped (matches Payroll) =====
-    const _shortageByCashier = {};
-    fRecons.forEach(r => {
-        const cid = r.cashier_id || 'unknown';
-        const diff = Number(r.difference) || 0;
-        if (!_shortageByCashier[cid]) _shortageByCashier[cid] = { shortage: 0, paid: 0, forgiven: 0, salaryDeducted: 0 };
-        if (diff < 0) _shortageByCashier[cid].shortage += Math.abs(diff);
-    });
-    shortageRecoveries.forEach(r => {
-        if (state.currentStationId && r.station_id && String(r.station_id) !== String(state.currentStationId)) return;
-        const cid = r.cashier_id || 'unknown';
-        if (!_shortageByCashier[cid]) _shortageByCashier[cid] = { shortage: 0, paid: 0, forgiven: 0, salaryDeducted: 0 };
-        const amt = Number(r.amount) || 0;
-        if (r.type === 'forgiveness') _shortageByCashier[cid].forgiven += amt;
-        else _shortageByCashier[cid].paid += amt;
-    });
-    salaries.forEach(s => {
-        if (!s.deducted_shortage) return;
-        if (state.currentStationId && s.station_id && String(s.station_id) !== String(state.currentStationId)) return;
-        const cid = s.employee_id || 'unknown';
-        if (!_shortageByCashier[cid]) _shortageByCashier[cid] = { shortage: 0, paid: 0, forgiven: 0, salaryDeducted: 0 };
-        _shortageByCashier[cid].salaryDeducted += Number(s.deducted_shortage) || 0;
-    });
-    let openShortage = 0;
-    Object.keys(_shortageByCashier).forEach(cid => {
-        const b = _shortageByCashier[cid];
-        openShortage += Math.max(0, b.shortage - b.paid - b.forgiven - b.salaryDeducted);
-    });
-
-    const creditOverdue = customers.filter(c => Number(c.current_balance || 0) > 0).length;
-    const marginPct = totalRevenue > 0 ? (grossProfit / totalRevenue * 100) : 0;
-
-    function deltaClass(pct) {
-        if (Math.abs(pct) < 0.5) return 'flat';
-        return pct >= 0 ? 'up' : 'down';
-    }
-    function deltaLabel(pct) {
-        if (Math.abs(pct) < 0.5) return 'vs yesterday · flat';
-        const arrow = pct >= 0 ? '↑' : '↓';
-        return arrow + ' ' + Math.abs(pct).toFixed(1) + '% vs yesterday';
+    // Build the tile list according to role (mirrors sidebar permissions)
+    const tiles = [];
+    function add(page, label, icon, colorClass, hint) {
+        tiles.push({ page, label, icon, colorClass, hint: hint || '' });
     }
 
-    // ===== Insight line =====
-    let insightText = '';
-    if (Math.abs(todayDeltaPct) >= 0.5) {
-        const dir = todayDeltaPct >= 0 ? 'up' : 'down';
-        insightText = `Today's fuel sales are <strong>${dir} ${Math.abs(todayDeltaPct).toFixed(1)}%</strong> versus yesterday (${formatCompactMoney(yesterdaySales)}).`;
+    if (isCashier) {
+        add('sales', 'Make Sales', 'bi-cart-check', 'c-sales', 'Point of sale');
+        add('shifts', 'My Shifts', 'bi-clock-history', 'c-shift', 'Clock in / out');
+        add('meters', 'Meter Readings', 'bi-speedometer2', 'c-inv', 'Pump readings');
+        add('messages', 'Messages', 'bi-chat-dots', 'c-support', 'Company chat');
     } else {
-        insightText = `Today's fuel sales are <strong>in line with yesterday</strong> (${formatCompactMoney(yesterdaySales)}).`;
-    }
-    if (unreconciledCount > 0) {
-        insightText += ` <strong>${unreconciledCount}</strong> closed shift${unreconciledCount === 1 ? '' : 's'} still need balancing.`;
-    } else if (lowCount > 0) {
-        insightText += ` <strong>${lowCount}</strong> product${lowCount === 1 ? '' : 's'} are below stock threshold.`;
-    }
-
-    const stockChips = Object.keys(stockByProduct).length
-        ? Object.keys(stockByProduct).map(p =>
-            `<span>${esc(p)} · ${Number(stockByProduct[p]).toFixed(0)} L</span>`
-        ).join('')
-        : '<span class="text-muted">No inventory yet</span>';
-
-    // ===== Attention items =====
-    const attnItems = [];
-    if (unreconciledCount > 0) {
-        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot warn"></span><span><strong>${unreconciledCount}</strong> shift${unreconciledCount === 1 ? '' : 's'} not balanced</span></div><button type="button" class="btn btn-outline-warning btn-sm" onclick="navigate('balancing')">Balance</button></div>`);
-    } else {
-        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot ok"></span><span class="text-muted">All closed shifts balanced</span></div><span class="text-success small fw-semibold">OK</span></div>`);
-    }
-    if (activeShifts > 0) {
-        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot info"></span><span><strong>${activeShifts}</strong> active shift${activeShifts === 1 ? '' : 's'}</span></div><button type="button" class="btn btn-outline-primary btn-sm" onclick="navigate('shifts')">View</button></div>`);
-    }
-    if (lowCount > 0) {
-        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot danger"></span><span><strong>${lowCount}</strong> low stock item${lowCount === 1 ? '' : 's'}</span></div><button type="button" class="btn btn-outline-danger btn-sm" onclick="navigate('inventory')">Inventory</button></div>`);
-    } else {
-        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot ok"></span><span class="text-muted">Stock levels healthy</span></div><span class="text-success small fw-semibold">OK</span></div>`);
-    }
-    if (openShortage > 0) {
-        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot warn"></span><span>Cashier shortages · <strong>${formatCompactMoney(openShortage)}</strong></span></div><button type="button" class="btn btn-outline-secondary btn-sm" onclick="navigate('payroll')">Payroll</button></div>`);
-    }
-    if (creditOverdue > 0) {
-        attnItems.push(`<div class="dash-attn-item"><div class="attn-left"><span class="dash-attn-dot warn"></span><span><strong>${creditOverdue}</strong> customer${creditOverdue === 1 ? '' : 's'} with balance due</span></div><button type="button" class="btn btn-outline-secondary btn-sm" onclick="navigate('customers')">Customers</button></div>`);
+        add('sales', 'Make Sales', 'bi-cart-check', 'c-sales', 'Point of sale');
+        add('shifts', 'Shifts', 'bi-clock-history', 'c-shift', 'Open & close');
+        add('meters', 'Meter Readings', 'bi-speedometer2', 'c-inv', 'Pump meters');
+        add('balancing', 'Balancing', 'bi-calculator', 'c-fin', 'Shift balance');
+        add('shortage_recovery', 'Shortage Recovery', 'bi-cash-coin', 'c-fin', 'Recover short');
+        add('inventory', 'Inventory', 'bi-box-seam', 'c-inv', 'Stock overview');
+        add('stock', 'Offloading', 'bi-truck', 'c-inv', 'Receive stock');
+        add('tank_levels', 'Tank Levels', 'bi-droplet-half', 'c-inv', 'Live levels');
+        add('customers', 'Customers', 'bi-people', 'c-people', 'Credit & accounts');
+        add('suppliers', 'Suppliers', 'bi-building', 'c-people', 'Payables');
+        add('financials', 'Financials', 'bi-wallet2', 'c-fin', 'Cash & banks');
+        add('payroll', 'Payroll', 'bi-person-badge', 'c-fin', 'Salaries');
+        add('reports', 'Reports', 'bi-bar-chart-line', 'c-report', 'All reports');
+        add('invoices', 'Invoices', 'bi-receipt', 'c-report', 'Sales invoices');
+        add('staff', 'Staff', 'bi-person-vcard', 'c-people', 'Directory');
+        add('maintenance', 'Maintenance', 'bi-tools', 'c-support', 'Assets & repairs');
+        if (isAdminRole) {
+            add('users', 'Users', 'bi-person-gear', 'c-admin', 'Logins & roles');
+            add('company', 'Company', 'bi-buildings', 'c-admin', 'Profile & settings');
+        }
+        if (isSuper) {
+            add('companies', 'All Companies', 'bi-globe2', 'c-admin', 'Multi-tenant');
+            add('licenses', 'Licenses', 'bi-key', 'c-admin', 'Subscriptions');
+        }
     }
 
-    const profitSubtitle = (() => {
-        const parts = [];
-        parts.push('Expenses ' + formatCompactMoney(totalExpenses));
-        if (totalPayroll > 0) parts.push('payroll ' + formatCompactMoney(totalPayroll));
-        parts.push('losses ' + formatCompactMoney(totalLosses));
-        return parts.join(' · ');
-    })();
+    // Side quick links (left & right columns)
+    const leftSide = [
+        { page: 'sales', icon: 'bi-cart', label: 'Sale' },
+        { page: 'shifts', icon: 'bi-clock', label: 'Shift' },
+        { page: 'inventory', icon: 'bi-box', label: 'Stock' },
+        { page: 'financials', icon: 'bi-wallet', label: 'Cash' }
+    ];
+    const rightSide = [
+        { page: 'reports', icon: 'bi-graph-up', label: 'Reports' },
+        { page: 'customers', icon: 'bi-people', label: 'Cust' },
+        { page: 'messages', icon: 'bi-chat', label: 'Chat' },
+        { page: 'meters', icon: 'bi-speedometer', label: 'Meters' }
+    ];
 
-    let html = `
-        <div class="dash-cc">
-            <div class="dash-cc-top">
-                <div>
-                    <h3>${esc(companyData.name || 'PetroManager')}</h3>
-                    <div class="dash-cc-meta">
-                        <span><i class="bi bi-geo-alt"></i> ${esc(stationLabel)}</span>
-                        <span class="sep">·</span>
-                        <span>${esc(_roleLabel(state.user.role))}</span>
-                        <span class="sep">·</span>
-                        <span>${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                    </div>
-                </div>
-                <div class="dash-cc-actions">
-                    <div class="dash-cc-period" id="dashPeriodBtns">
-                        <button type="button" data-period="today" class="${period === 'today' ? 'active' : ''}">Today</button>
-                        <button type="button" data-period="7d" class="${period === '7d' ? 'active' : ''}">7D</button>
-                        <button type="button" data-period="mtd" class="${period === 'mtd' ? 'active' : ''}">MTD</button>
-                        <button type="button" data-period="ytd" class="${period === 'ytd' ? 'active' : ''}">YTD</button>
-                        <button type="button" data-period="all" class="${period === 'all' ? 'active' : ''}">All</button>
-                    </div>
-                    ${canManageCompany(state.user.role) ? `<button type="button" class="dash-cc-btn" id="editCompanyBtn"><i class="bi bi-building"></i> Company</button>` : ''}
-                    <button type="button" class="dash-cc-btn" id="dailyReportBtn"><i class="bi bi-envelope"></i> Report</button>
-                    <button type="button" class="dash-cc-btn" id="lowStockAlertBtn"><i class="bi bi-bell"></i> Stock</button>
-                </div>
+    // Top horizontal quick buttons
+    const topQuick = isCashier
+        ? [
+            { page: 'sales', label: 'Make Sale', icon: 'bi-cart-check', primary: true },
+            { page: 'shifts', label: 'My Shifts', icon: 'bi-clock-history' },
+            { page: 'meters', label: 'Meters', icon: 'bi-speedometer2' },
+            { page: 'messages', label: 'Messages', icon: 'bi-chat-dots' }
+          ]
+        : [
+            { page: 'sales', label: 'Make Sale', icon: 'bi-cart-check', primary: true },
+            { page: 'shifts', label: 'Shifts', icon: 'bi-clock-history' },
+            { page: 'inventory', label: 'Inventory', icon: 'bi-box-seam' },
+            { page: 'financials', label: 'Financials', icon: 'bi-wallet2' },
+            { page: 'reports', label: 'Reports', icon: 'bi-bar-chart-line' }
+          ];
+
+    function sideHtml(list) {
+        return list.map(b => `
+            <button type="button" class="qb-side-btn" data-page="${esc(b.page)}" title="${esc(b.label)}">
+                <i class="bi ${esc(b.icon)}"></i>
+                <span>${esc(b.label)}</span>
+            </button>`).join('');
+    }
+
+    const tilesHtml = tiles.map(t => `
+        <div class="qb-tile ${esc(t.colorClass)}" data-page="${esc(t.page)}" role="button" tabindex="0">
+            <div class="icon-wrap"><i class="bi ${esc(t.icon)}"></i></div>
+            <div class="label">${esc(t.label)}</div>
+            ${t.hint ? `<div class="hint">${esc(t.hint)}</div>` : ''}
+        </div>`).join('');
+
+    const topHtml = topQuick.map(b => `
+        <button type="button" class="qb-quick-btn${b.primary ? ' primary' : ''}" data-page="${esc(b.page)}">
+            <i class="bi ${esc(b.icon)}"></i> ${esc(b.label)}
+        </button>`).join('');
+
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : (hour < 17 ? 'Good afternoon' : 'Good evening');
+    const userName = user.name || user.username || 'User';
+
+    const html = `
+    <div class="qb-home">
+        <div class="qb-topbar">
+            <div class="qb-welcome">
+                <h2>${esc(greeting)}, ${esc(userName)}</h2>
+                <div class="sub">${esc(companyName)} · ${esc(stationLabel)}</div>
+            </div>
+            <div class="qb-quick-row">
+                ${topHtml}
+            </div>
+        </div>
+
+        <div class="qb-body">
+            <div class="qb-side qb-side-left">
+                ${sideHtml(leftSide)}
             </div>
 
-            <div class="dash-cc-insight">${insightText}</div>
-
-            <div class="dash-cc-heroes">
-                <div class="dash-cc-hero primary" title="${formatMoney(todaySales)}">
-                    <div class="lbl">Today's fuel sales</div>
-                    <div class="val">${formatCompactMoney(todaySales)}</div>
-                    <div class="sub ${deltaClass(todayDeltaPct)}">${deltaLabel(todayDeltaPct)} · yesterday ${formatCompactMoney(yesterdaySales)}</div>
-                </div>
-                <div class="dash-cc-hero revenue" title="${formatMoney(totalRevenue)}">
-                    <div class="lbl">Fuel revenue · ${esc(periodLabel)}</div>
-                    <div class="val">${formatCompactMoney(totalRevenue)}</div>
-                    <div class="sub">Margin ${marginPct.toFixed(1)}% · GP ${formatCompactMoney(grossProfit)}</div>
-                </div>
-                <div class="dash-cc-hero profit" title="${formatMoney(netProfit)}">
-                    <div class="lbl">Net profit · ${esc(periodLabel)}</div>
-                    <div class="val">${formatCompactMoney(netProfit)}</div>
-                    <div class="sub">${profitSubtitle}</div>
-                </div>
+            <div class="qb-grid">
+                ${tilesHtml}
             </div>
 
-            <div class="dash-cc-grid">
-                <div class="dash-cc-panel attn">
-                    <h6><i class="bi bi-lightning-charge-fill" style="color:#f59e0b"></i> Needs attention <span class="tag">Live</span></h6>
-                    ${attnItems.join('')}
-                </div>
-                <div class="dash-cc-panel ops">
-                    <h6><i class="bi bi-grid-1x2" style="color:#0ea5e9"></i> Snapshot <span class="tag">${esc(periodLabel)}</span></h6>
-                    <div class="dash-cc-stats">
-                        <div class="dash-cc-stat" title="${formatMoney(totalExpenses)}"><div class="v">${formatCompactMoney(totalExpenses)}</div><div class="l">Expenses</div></div>
-                        <div class="dash-cc-stat"><div class="v">${totalLitres >= 1000 ? (totalLitres/1000).toFixed(1) + 'k' : totalLitres.toFixed(0)} L</div><div class="l">Stock</div></div>
-                        <div class="dash-cc-stat"><div class="v">${activeShifts}</div><div class="l">Open shifts</div></div>
-                        <div class="dash-cc-stat"><div class="v">${totalCustomers}</div><div class="l">Customers</div></div>
-                        <div class="dash-cc-stat"><div class="v">${totalSuppliers}</div><div class="l">Suppliers</div></div>
-                        <div class="dash-cc-stat" title="${formatMoney(totalLosses)}"><div class="v" style="color:${totalLosses > 0 ? '#dc2626' : '#0b1a33'}">${formatCompactMoney(totalLosses)}</div><div class="l">Losses</div></div>
-                    </div>
-                    <div class="dash-cc-stock">${stockChips}</div>
-                </div>
+            <div class="qb-side qb-side-right">
+                ${sideHtml(rightSide)}
             </div>
+        </div>
 
-            <div class="dash-cc-actions-row">
-                <div class="dash-cc-qa" onclick="navigate('sales')"><i class="bi bi-cart-plus"></i><div>Make Sales</div></div>
-                <div class="dash-cc-qa" onclick="navigate('balancing')"><i class="bi bi-balance-scale"></i><div>Balance</div></div>
-                <div class="dash-cc-qa" onclick="navigate('inventory')"><i class="bi bi-box-seam"></i><div>Inventory</div></div>
-                <div class="dash-cc-qa" onclick="navigate('stock')"><i class="bi bi-truck"></i><div>Offload</div></div>
-                <div class="dash-cc-qa" onclick="navigate('financials')"><i class="bi bi-wallet2"></i><div>Finance</div></div>
-                <div class="dash-cc-qa" onclick="navigate('payroll')"><i class="bi bi-people"></i><div>Payroll</div></div>
-            </div>
-
-            <div class="dash-cc-analytics">
-                <div class="label">Analytics</div>
-                <div class="dash-cc-charts">
-                    <div class="dash-cc-chart-card">
-                        <h6>Sales by product</h6>
-                        <canvas id="productChart" height="180"></canvas>
-                    </div>
-                    <div class="dash-cc-chart-card">
-                        <h6>Last 7 days</h6>
-                        <canvas id="trendChart" height="180"></canvas>
-                    </div>
-                </div>
-                <div class="dash-cc-chart-card" style="margin-top:14px;">
-                    <h6>P&amp;L overview · ${esc(periodLabel)}</h6>
-                    <canvas id="pnlChart" height="70"></canvas>
-                </div>
-            </div>
-        </div>`;
+        <div class="qb-home-foot">
+            <span>PetroManager Pro <strong>v1.5.0</strong> · QuickBooks-style navigator</span>
+            <span>Musoga Reagan © 2026</span>
+        </div>
+    </div>`;
 
     const pageEl = document.getElementById('pageContent');
     if (pageEl) pageEl.innerHTML = html;
 
-    // Buttons
-    const editBtn = document.getElementById('editCompanyBtn');
-    if (editBtn) editBtn.onclick = function() { navigate('company'); };
-    const dailyBtn = document.getElementById('dailyReportBtn');
-    if (dailyBtn) dailyBtn.onclick = sendDailyReportEmail;
-    const stockBtn = document.getElementById('lowStockAlertBtn');
-    if (stockBtn) stockBtn.onclick = function() { checkLowStock(); };
-    document.querySelectorAll('#dashPeriodBtns button').forEach(btn => {
-        btn.onclick = function() {
-            state.dashPeriod = this.dataset.period || 'mtd';
-            safeStorage.set('petro_dash_period', state.dashPeriod);
-            renderDashboard();
-        };
-    });
-
-    // Day-change watcher (rolled over while on dashboard). Cleared on every render,
-    // guarded on !state.user so it does nothing after logout.
-    if (window._dashDayWatch) { clearInterval(window._dashDayWatch); window._dashDayWatch = null; }
-    const dashDayKey = _localIsoDate(_nowLocal);
-    window._dashDayKey = dashDayKey;
-    window._dashDayWatch = setInterval(function() {
-        if (!state.user || state.currentPage !== 'dashboard') return;
-        const key = _localIsoDate(new Date());
-        if (key !== window._dashDayKey) {
-            window._dashDayKey = key;
-            renderDashboard();
-        }
-    }, 30000);
-
-    // ===== Charts (destroy previous instances; use sale_date; no fixed timeout) =====
-    function _renderDashCharts() {
-        if (window._dashCharts) {
-            Object.keys(window._dashCharts).forEach(k => {
-                try { window._dashCharts[k].destroy(); } catch (_) {}
+    // Wire all navigation clicks
+    function wire(sel) {
+        document.querySelectorAll(sel).forEach(el => {
+            el.addEventListener('click', function() {
+                const page = this.dataset.page;
+                if (page && typeof navigate === 'function') navigate(page);
             });
-        }
-        window._dashCharts = {};
-
-        const salesData = pSales;
-        const byProduct = {};
-        salesData.forEach(s => {
-            const p = s.product_type || 'Unknown';
-            byProduct[p] = (byProduct[p] || 0) + (Number(s.amount) || 0);
-        });
-
-        const byDate = {};
-        const d = new Date();
-        for (let i = 6; i >= 0; i--) {
-            const dt = new Date(d);
-            dt.setDate(dt.getDate() - i);
-            byDate[dt.toLocaleDateString('en-GB')] = 0;
-        }
-        salesData.forEach(s => {
-            const dt = recordDate(s) || new Date();
-            const key = dt.toLocaleDateString('en-GB');
-            if (byDate[key] !== undefined) byDate[key] += Number(s.amount) || 0;
-        });
-
-        const ctx1 = document.getElementById('productChart');
-        if (ctx1 && typeof Chart !== 'undefined') {
-            window._dashCharts.product = new Chart(ctx1.getContext('2d'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(byProduct),
-                    datasets: [{
-                        data: Object.values(byProduct),
-                        backgroundColor: ['#0d6efd', '#ffc107', '#dc3545', '#198754', '#6f42c1', '#fd7e14', '#20c997']
-                    }]
-                },
-                options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-            });
-        }
-        const ctx2 = document.getElementById('trendChart');
-        if (ctx2 && typeof Chart !== 'undefined') {
-            window._dashCharts.trend = new Chart(ctx2.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: Object.keys(byDate),
-                    datasets: [{
-                        label: 'Daily Sales',
-                        data: Object.values(byDate),
-                        borderColor: '#0d6efd',
-                        backgroundColor: 'rgba(13,110,253,0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) } } }
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
                 }
             });
-        }
-        const ctx3 = document.getElementById('pnlChart');
-        if (ctx3 && typeof Chart !== 'undefined') {
-            window._dashCharts.pnl = new Chart(ctx3.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels: ['Revenue', 'COGS', 'Gross Profit', 'Expenses', 'Losses', 'Net Profit'],
-                    datasets: [{
-                        label: 'Amount',
-                        data: [totalRevenue, totalCOGS, grossProfit, totalExpenses, totalLosses, netProfit],
-                        backgroundColor: ['#198754', '#0d6efd', '#ffc107', '#dc3545', '#dc3545', '#6f42c1']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, ticks: { callback: v => formatMoney(v) } } }
-                }
-            });
-        }
+        });
     }
-
-    if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(() => setTimeout(_renderDashCharts, 0));
-    } else {
-        setTimeout(_renderDashCharts, 50);
-    }
-}
-
-// ===== Register the dashboard renderer =====
-registerPageRenderer('dashboard', renderDashboard);
-
-console.log('Part 5 loaded – Dashboard with P&L, charts, and quick actions');
-</script>
-<script>
-// ============================================================
-// PART 6: SALES (CORRECTED)
-// ============================================================
-
-// Global, single-bound hotkey handler for the Sales page.
-// Referenced by renderSales; not re-attached on each render.
-if (!window._pmSalesHotkeyBound) {
-    window._pmSalesHotkeyBound = true;
-    document.addEventListener('keydown', function _pmSalesHotkey(e) {
-        if (!state.user || state.currentPage !== 'sales') return;
-        if (e.key === 'F9') {
-            e.preventDefault();
-            const btn = document.getElementById('completeSaleBtn');
-            if (btn && !btn.disabled && btn.dataset.submitting !== '1') btn.click();
-        }
-        if (e.key === 'F2') {
-            e.preventDefault();
-            const q = document.getElementById('saleQty');
-            if (q) q.focus();
-        }
-    });
+    wire('.qb-tile');
+    wire('.qb-quick-btn');
+    wire('.qb-side-btn');
 }
 
 async function renderSales() {
@@ -16260,7 +16184,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 </script>
 <script>
 // ============================================================
-// PETROMANAGER PRO v1.4.6 — FINAL PAGE REGISTRY (LAUNCH)
+// PETROMANAGER PRO v1.5.0 — FINAL PAGE REGISTRY (LAUNCH)
 // ============================================================
 // Runs after all other parts. Ensures every menu page has a renderer
 // registered, even if a part failed to load or was reordered.
