@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PetroManager Pro v1.6 — Musoga Reagan</title>
+    <title>PetroManager Pro v1.7 — Musoga Reagan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
@@ -2558,14 +2558,19 @@
         /* ============================================================
            v1.6 — Teal desk. Top menus. One-screen home. New login.
            ============================================================ */
+        /* ===== v1.7 Lions-style shell (navy + gold, left rail + icon grid) ===== */
         body.pm-v16 {
-            --bg: #f3efe6;
-            --text-color: #1c2b2a;
-            --card-bg: #fffdf8;
-            --border-color: #e4dccd;
-            --sidebar-bg: #123c3a;
-            --hero-gradient: linear-gradient(135deg, #123c3a, #1f6f66);
-            --shadow: 0 8px 24px rgba(18, 60, 58, 0.06);
+            --bg: #eef2f7;
+            --text-color: #1a2744;
+            --card-bg: #ffffff;
+            --border-color: #d7e0ec;
+            --sidebar-bg: #0b2c6b;
+            --hero-gradient: linear-gradient(135deg, #0b2c6b, #1347a0);
+            --shadow: 0 6px 18px rgba(11, 44, 107, 0.08);
+            --navy: #0b2c6b;
+            --navy-deep: #08245a;
+            --gold: #d4a017;
+            --gold-soft: #f0c14b;
             font-family: "Segoe UI", "Avenir Next", system-ui, sans-serif;
             background: var(--bg);
         }
@@ -2577,218 +2582,305 @@
             flex-direction: column;
             align-items: stretch;
             padding: 0;
-            background: #fffdf8;
-            border-bottom: 1px solid #e4dccd;
+            background: #ffffff;
+            border-bottom: 0;
+            box-shadow: 0 1px 0 rgba(11,44,107,0.06);
         }
         body.pm-v16 .pm-shell-top {
-            height: 58px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 18px;
-            gap: 12px;
+            padding: 0 20px;
+            gap: 16px;
+            background: #fff;
         }
         body.pm-v16 .pm-wordmark {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            color: #123c3a;
-            font-size: 1.05rem;
+            gap: 10px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--navy);
+            font-size: 1.15rem;
+            white-space: nowrap;
+        }
+        body.pm-v16 .pm-wordmark .pm-brand-sub {
+            display: block;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #6b7c99;
+            margin-top: 1px;
         }
         body.pm-v16 .pm-wordmark i {
-            width: 28px; height: 28px; border-radius: 9px;
+            width: 40px; height: 40px; border-radius: 50%;
             display: inline-flex; align-items: center; justify-content: center;
-            background: #123c3a; color: #f3c15b; font-size: 0.95rem;
+            background: linear-gradient(145deg, #0b2c6b, #1a4f9c);
+            color: var(--gold-soft); font-size: 1.15rem;
+            border: 2px solid var(--gold);
+            flex-shrink: 0;
         }
-        body.pm-v16 .page-title { color: #3d524f; font-weight: 650; }
+        body.pm-v16 .page-title { display: none !important; }
+        body.pm-v16 .pm-search {
+            flex: 1;
+            max-width: 420px;
+            margin: 0 auto;
+            position: relative;
+        }
+        body.pm-v16 .pm-search input {
+            width: 100%;
+            border: 1px solid #d5deeb;
+            background: #f7f9fc;
+            border-radius: 999px;
+            padding: 9px 16px 9px 40px;
+            font-size: 0.88rem;
+            color: #1a2744;
+            outline: none;
+        }
+        body.pm-v16 .pm-search input:focus {
+            border-color: #8aa4d4;
+            box-shadow: 0 0 0 3px rgba(11,44,107,0.1);
+            background: #fff;
+        }
+        body.pm-v16 .pm-search i {
+            position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            color: #8a9bb5; font-size: 0.95rem;
+        }
+        body.pm-v16 .account-trigger {
+            background: #f4efe3;
+            border-radius: 999px;
+            padding: 6px 12px 6px 6px;
+            border: 1px solid #e8dfc8;
+        }
+        body.pm-v16 .account-avatar {
+            background: var(--navy) !important;
+            color: #fff !important;
+        }
+
+        /* Navy top nav bar — hospital style */
         body.pm-v16 .pm-topmenu {
             display: flex;
             flex-wrap: nowrap;
-            gap: 8px;
-            align-items: center;
-            padding: 8px 16px 12px;
+            gap: 0;
+            align-items: stretch;
+            padding: 0;
             overflow-x: auto;
-            background: linear-gradient(180deg, #fffdf8 0%, #f6f1e6 100%);
-            border-top: 1px solid #efe7d8;
+            background: var(--navy);
+            border-top: 0;
+            min-height: 46px;
         }
         body.pm-v16 .pm-topmenu::-webkit-scrollbar { height: 0; }
         body.pm-v16 .tm-link {
             border: 0;
-            border-radius: 999px;
-            padding: 8px 14px;
+            border-radius: 0;
+            padding: 12px 20px;
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            font-weight: 700;
-            font-size: 0.82rem;
-            color: #fff;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #ffffff;
             white-space: nowrap;
             cursor: pointer;
-            box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset;
+            background: transparent;
+            box-shadow: none;
+            transition: background 0.15s ease;
         }
-        body.pm-v16 .tm-link.active { outline: 2px solid #1c2b2a; outline-offset: 2px; }
+        body.pm-v16 .tm-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        body.pm-v16 .tm-link.active,
+        body.pm-v16 .tm-link.tm-home.active,
+        body.pm-v16.on-home .tm-home {
+            background: var(--gold) !important;
+            color: #1a1400 !important;
+            font-weight: 700;
+        }
         body.pm-v16 .tm-caret { font-size: 0.65rem; opacity: 0.85; }
-        body.pm-v16 .tm-home { background: #123c3a; }
-        body.pm-v16 .tm-sale { background: #c45c26; }
-        body.pm-v16 .tm-shift { background: #0f6e6b; }
-        body.pm-v16 .tm-stock { background: #1d4e89; }
-        body.pm-v16 .tm-people { background: #6d3fa0; }
-        body.pm-v16 .tm-money { background: #1b7a45; }
-        body.pm-v16 .tm-report { background: #b5811a; }
-        body.pm-v16 .tm-care { background: #3e5560; }
-        body.pm-v16 .tm-admin { background: #9a3450; }
+        body.pm-v16 .tm-home,
+        body.pm-v16 .tm-sale,
+        body.pm-v16 .tm-shift,
+        body.pm-v16 .tm-stock,
+        body.pm-v16 .tm-people,
+        body.pm-v16 .tm-money,
+        body.pm-v16 .tm-report,
+        body.pm-v16 .tm-care,
+        body.pm-v16 .tm-admin { background: transparent; }
         body.pm-v16 .tm-menu {
             border: 0;
-            border-radius: 14px;
+            border-radius: 10px;
             padding: 6px;
             min-width: 210px;
-            box-shadow: 0 16px 40px rgba(18, 60, 58, 0.16);
+            box-shadow: 0 16px 40px rgba(11, 44, 107, 0.2);
+            margin-top: 0 !important;
         }
         body.pm-v16 .tm-menu .dropdown-item {
-            border-radius: 9px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 0.86rem;
             padding: 8px 12px;
-            color: #1c2b2a;
+            color: #1a2744;
         }
         body.pm-v16 .tm-menu .dropdown-item:hover,
-        body.pm-v16 .tm-menu .dropdown-item.active { background: #e7f3f1; color: #123c3a; }
+        body.pm-v16 .tm-menu .dropdown-item.active { background: #e8eef8; color: var(--navy); }
 
+        /* Home layout: left rail + tile grid (no page scroll) */
         body.pm-v16.on-home .page-content,
         body.pm-v16.on-home #pageContent {
-            height: calc(100dvh - 118px);
-            max-height: calc(100dvh - 118px);
+            height: calc(100dvh - 110px);
+            max-height: calc(100dvh - 110px);
             overflow: hidden !important;
-            padding: 10px 22px 12px !important;
+            padding: 14px 14px 12px !important;
             max-width: none !important;
+            background: #eef2f7;
         }
-        body.pm-v16 .home-stage {
+        body.pm-v16 .hs-home {
             height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 18px;
-            max-width: 1180px;
-            margin: 0 auto;
-        }
-        body.pm-v16 .home-hello {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            gap: 12px;
-        }
-        body.pm-v16 .home-greet {
-            margin: 0;
-            font-size: 0.78rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            font-weight: 750;
-            color: #8a7360;
-        }
-        body.pm-v16 .home-hello h2 {
-            margin: 2px 0 0;
-            font-size: clamp(1.5rem, 2.4vw, 2rem);
-            font-weight: 800;
-            letter-spacing: -0.04em;
-            color: #123c3a !important;
-        }
-        body.pm-v16 .home-chip {
-            background: #fff;
-            border: 1px solid #e4dccd;
-            border-radius: 999px;
-            padding: 7px 12px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: #3d524f;
-        }
-        body.pm-v16 .home-five {
             display: grid;
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 14px;
-        }
-        body.pm-v16 .home-tile {
-            border: 0;
-            background: #fffdf8;
-            border-radius: 22px;
+            grid-template-columns: 200px 1fr;
+            gap: 12px;
             min-height: 0;
-            padding: 22px 14px 18px;
+        }
+        body.pm-v16 .hs-rail {
             display: flex;
             flex-direction: column;
-            align-items: flex-start;
             gap: 8px;
+            min-height: 0;
+            overflow: hidden;
+        }
+        body.pm-v16 .hs-rail-btn {
+            border: 0;
+            background: var(--navy);
+            color: #fff;
             text-align: left;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.88rem;
             cursor: pointer;
-            box-shadow: 0 10px 28px rgba(18, 60, 58, 0.07);
-            border: 1px solid #efe6d6;
-            transition: transform 0.15s ease;
+            transition: background 0.12s ease, transform 0.12s ease;
+            flex: 0 0 auto;
         }
-        body.pm-v16 .home-tile:hover { transform: translateY(-3px); }
-        body.pm-v16 .home-ico {
-            width: 48px; height: 48px; border-radius: 16px;
+        body.pm-v16 .hs-rail-btn:hover { background: var(--navy-deep); transform: translateX(2px); }
+        body.pm-v16 .hs-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-rows: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            min-height: 0;
+            height: 100%;
+        }
+        body.pm-v16 .hs-tile {
+            border: 1px solid #e2e8f2;
+            background: #ffffff;
+            border-radius: 12px;
+            min-height: 0;
+            padding: 10px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(11, 44, 107, 0.04);
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+        }
+        body.pm-v16 .hs-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(11, 44, 107, 0.1);
+            border-color: #b8c9e6;
+        }
+        body.pm-v16 .hs-tile .hs-ico {
+            width: 52px; height: 52px;
             display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 1.3rem;
+            font-size: 1.85rem;
+            color: #3b6db5;
+            line-height: 1;
         }
-        body.pm-v16 .t-sale .home-ico { background: #c45c26; }
-        body.pm-v16 .t-shift .home-ico { background: #0f6e6b; }
-        body.pm-v16 .t-stock .home-ico { background: #1d4e89; }
-        body.pm-v16 .t-money .home-ico { background: #1b7a45; }
-        body.pm-v16 .t-report .home-ico { background: #b5811a; }
-        body.pm-v16 .t-people .home-ico { background: #6d3fa0; }
-        body.pm-v16 .home-label { font-weight: 800; font-size: 1.02rem; color: #16302e; letter-spacing: -0.02em; }
-        body.pm-v16 .home-hint { font-size: 0.78rem; color: #7d7064; font-weight: 550; }
-        body.pm-v16 .home-note { margin: 0; font-size: 0.8rem; color: #8d8074; }
-        @media (max-width: 980px) {
-            body.pm-v16 .home-five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-            body.pm-v16 .home-tile { padding: 14px 12px; }
-            body.pm-v16 .home-ico { width: 40px; height: 40px; font-size: 1.1rem; }
+        body.pm-v16 .hs-tile .hs-ico i { filter: drop-shadow(0 2px 0 rgba(11,44,107,0.06)); }
+        body.pm-v16 .hs-tile .hs-label {
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: #243456;
+            letter-spacing: -0.01em;
         }
-        @media (max-width: 640px) {
+        body.pm-v16 .hs-tile.tone-sale .hs-ico { color: #c45c26; }
+        body.pm-v16 .hs-tile.tone-shift .hs-ico { color: #0f6e6b; }
+        body.pm-v16 .hs-tile.tone-stock .hs-ico { color: #2563eb; }
+        body.pm-v16 .hs-tile.tone-money .hs-ico { color: #15803d; }
+        body.pm-v16 .hs-tile.tone-report .hs-ico { color: #b5811a; }
+        body.pm-v16 .hs-tile.tone-people .hs-ico { color: #7c3aed; }
+        body.pm-v16 .hs-tile.tone-care .hs-ico { color: #475569; }
+        body.pm-v16 .hs-tile.tone-admin .hs-ico { color: #be123c; }
+        @media (max-width: 1100px) {
+            body.pm-v16 .hs-home { grid-template-columns: 170px 1fr; }
+            body.pm-v16 .hs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+        }
+        @media (max-width: 800px) {
+            body.pm-v16 .hs-home { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+            body.pm-v16 .hs-rail {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            body.pm-v16 .hs-rail-btn { padding: 8px 12px; font-size: 0.8rem; }
+            body.pm-v16 .hs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            body.pm-v16 .pm-search { display: none; }
+        }
+        @media (max-width: 560px) {
             body.pm-v16.on-home .page-content,
-            body.pm-v16.on-home #pageContent { height: auto; max-height: none; overflow: auto !important; }
-            body.pm-v16 .home-five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            body.pm-v16 .pm-wordmark span, body.pm-v16 .page-title { display: none; }
+            body.pm-v16.on-home #pageContent {
+                height: auto;
+                max-height: none;
+                overflow: auto !important;
+            }
+            body.pm-v16 .hs-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-rows: auto;
+                height: auto;
+            }
+            body.pm-v16 .hs-tile { min-height: 110px; }
         }
 
-        /* Tables, cards, forms — one standard */
+        /* Tables, cards, forms — navy standard */
         body.pm-v16 .page-content h4,
         body.pm-v16 .page-content h5,
         body.pm-v16 .page-content .fin-title-row h4,
-        body.pm-v16 .page-content .ms-header h4 { color: #123c3a !important; }
+        body.pm-v16 .page-content .ms-header h4 { color: #0b2c6b !important; }
         body.pm-v16 .page-content .card-box,
         body.pm-v16 .page-content .fin-action-card,
         body.pm-v16 .page-content .fin-ledger-card,
         body.pm-v16 .page-content .ms-form-card,
         body.pm-v16 .page-content .ms-history-card {
-            background: #fffdf8 !important;
-            border: 1px solid #e7decd !important;
-            border-radius: 18px !important;
-            box-shadow: 0 8px 24px rgba(18,60,58,0.05) !important;
+            background: #ffffff !important;
+            border: 1px solid #d7e0ec !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 16px rgba(11,44,107,0.05) !important;
         }
         body.pm-v16 .page-content table.table thead th,
         body.pm-v16 .page-content .sales-history-table thead th,
         body.pm-v16 .intl-table-wrap thead th {
-            background: #123c3a !important;
-            color: #f6f1e6 !important;
+            background: #0b2c6b !important;
+            color: #f5f8ff !important;
             font-size: 0.68rem !important;
             letter-spacing: 0.06em !important;
         }
-        body.pm-v16 .page-content table.table tbody tr:nth-child(even) td { background: #faf6ee; }
+        body.pm-v16 .page-content table.table tbody tr:nth-child(even) td { background: #f4f7fb; }
         body.pm-v16 .page-content .btn-primary,
         body.pm-v16 .intl-form .btn-intl-primary {
-            background: #123c3a !important;
-            border-color: #123c3a !important;
+            background: #0b2c6b !important;
+            border-color: #0b2c6b !important;
         }
         body.pm-v16 .fin-header {
-            background: linear-gradient(120deg, #123c3a 0%, #1f6f66 55%, #c45c26 140%) !important;
-            border-radius: 18px !important;
+            background: linear-gradient(120deg, #0b2c6b 0%, #1347a0 55%, #d4a017 140%) !important;
+            border-radius: 12px !important;
         }
-        body.pm-v16 .modal-header { background: #123c3a !important; }
+        body.pm-v16 .modal-header { background: #0b2c6b !important; }
         body.pm-v16 .form-control:focus,
         body.pm-v16 .form-select:focus {
-            border-color: #1f6f66 !important;
-            box-shadow: 0 0 0 3px rgba(31, 111, 102, 0.15) !important;
+            border-color: #3b6db5 !important;
+            box-shadow: 0 0 0 3px rgba(11, 44, 107, 0.15) !important;
         }
 
         /* Login gate */
@@ -2945,7 +3037,7 @@
                     <button type="button" id="cancelCreateCompanyBtn" class="gate-setup">Back to sign in</button>
                     <div id="createCompanyResult" class="text-center mt-3 small"></div>
                 </div>
-                <div class="login-panel-foot">PetroManager Pro · <strong>v1.6.0</strong> · Musoga Reagan © 2026</div>
+                <div class="login-panel-foot">PetroManager Pro · <strong>v1.7.0</strong> · Musoga Reagan © 2026</div>
             </section>
         </div>
     </div>
@@ -2984,22 +3076,32 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.6.0 · QB navigator</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.7.0 · Lions-style home</div>
             </div>
         </nav>
         <div class="main-content">
             <header class="top-header pm-shell">
                 <div class="pm-shell-top">
-                <div class="d-flex align-items-center gap-3">
-                    <span class="pm-wordmark"><i class="bi bi-droplet-half"></i> Petro</span>
-                    <button class="btn btn-light sidebar-toggle p-1" id="sidebarToggle" type="button">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="pm-wordmark">
+                        <i class="bi bi-fuel-pump-fill"></i>
+                        <span>
+                            <span id="headerBrandName">PetroManager</span>
+                            <span class="pm-brand-sub">STATION SYSTEM</span>
+                        </span>
+                    </span>
+                    <button class="btn btn-light sidebar-toggle p-1 d-none" id="sidebarToggle" type="button" aria-hidden="true">
                         <i class="bi bi-list fs-4"></i>
                     </button>
                     <span class="page-title" id="pageTitle">Dashboard</span>
                 </div>
-                <div class="d-flex align-items-center gap-3">
+                <div class="pm-search d-none d-md-block">
+                    <i class="bi bi-search"></i>
+                    <input type="search" id="globalSearch" placeholder="Find sale, customer, tank, or report" autocomplete="off">
+                </div>
+                <div class="d-flex align-items-center gap-2">
                     <button class="theme-toggle" id="themeToggle" title="Toggle Dark Mode"><i class="bi bi-moon-fill"></i></button>
-                    <select id="stationSelector" class="form-select form-select-sm" style="max-width:180px;">
+                    <select id="stationSelector" class="form-select form-select-sm" style="max-width:160px;">
                         <option value="">All Stations</option>
                     </select>
                     <div class="dropdown">
@@ -5841,54 +5943,90 @@ async function renderDashboard() {
     const user = state.user || {};
     const company = (await getCompany(user.companyId).catch(() => null)) || {};
     const companyName = company.name || 'PetroManager';
-    const stationLabel = state.currentStationId
-        ? (typeof stationName === 'function' ? stationName(state.currentStationId) : 'Station')
-        : 'All stations';
+    const brandEl = document.getElementById('headerBrandName');
+    if (brandEl) brandEl.textContent = companyName;
+
     const role = (typeof roleNorm === 'function' ? roleNorm(user.role) : (user.role || '')).toLowerCase();
     const isCashier = role === 'cashier';
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good morning' : (hour < 17 ? 'Good afternoon' : 'Good evening');
-    const userName = user.name || user.username || 'there';
+    const isAdminRole = typeof isAdmin === 'function' ? isAdmin(role) : (role === 'admin' || role === 'super_admin');
 
-    const tiles = isCashier
+    // Left rail quick links (solid buttons, no dropdowns)
+    const rail = isCashier
         ? [
-            { page: 'sales', label: 'Make a sale', icon: 'bi-cart-check', tone: 't-sale', hint: 'Open the till' },
-            { page: 'shifts', label: 'My shift', icon: 'bi-clock-history', tone: 't-shift', hint: 'Open or close' },
-            { page: 'meters', label: 'Meters', icon: 'bi-speedometer2', tone: 't-stock', hint: 'Pump readings' },
-            { page: 'messages', label: 'Messages', icon: 'bi-chat-dots', tone: 't-people', hint: 'Station chat' },
-            { page: 'invoices', label: 'Invoices', icon: 'bi-receipt', tone: 't-report', hint: 'Reprint a slip' }
+            { page: 'sales', label: 'Make a sale' },
+            { page: 'shifts', label: 'My shifts' },
+            { page: 'meters', label: 'Meter readings' },
+            { page: 'messages', label: 'Messages' },
+            { page: 'invoices', label: 'Invoices' }
           ]
         : [
-            { page: 'sales', label: 'Make a sale', icon: 'bi-cart-check', tone: 't-sale', hint: 'Open the till' },
-            { page: 'shifts', label: 'Shifts', icon: 'bi-clock-history', tone: 't-shift', hint: 'Open, close, balance' },
-            { page: 'inventory', label: 'Stock', icon: 'bi-box-seam', tone: 't-stock', hint: 'Tanks and products' },
-            { page: 'financials', label: 'Money', icon: 'bi-wallet2', tone: 't-money', hint: 'Cash, banks, expenses' },
-            { page: 'reports', label: 'Reports', icon: 'bi-bar-chart-line', tone: 't-report', hint: 'Day, week, month' }
+            { page: 'sales', label: 'Make a sale' },
+            { page: 'shifts', label: 'Open / close shift' },
+            { page: 'inventory', label: 'Inventory' },
+            { page: 'financials', label: 'Collect a payment' },
+            { page: 'stock', label: 'Receive fuel' },
+            { page: 'customers', label: 'Customers' },
+            { page: 'reports', label: 'Reports' }
           ];
 
-    const tilesHtml = tiles.map(t => `
-        <button type="button" class="home-tile ${t.tone}" data-page="${esc(t.page)}">
-            <span class="home-ico"><i class="bi ${esc(t.icon)}"></i></span>
-            <span class="home-label">${esc(t.label)}</span>
-            <span class="home-hint">${esc(t.hint)}</span>
+    // Main icon grid — 4 columns (hospital-style tiles)
+    const tiles = isCashier
+        ? [
+            { page: 'sales', label: 'Make a sale', icon: 'bi-cart-check-fill', tone: 'tone-sale' },
+            { page: 'shifts', label: 'My shifts', icon: 'bi-clock-history', tone: 'tone-shift' },
+            { page: 'meters', label: 'Meters', icon: 'bi-speedometer2', tone: 'tone-stock' },
+            { page: 'invoices', label: 'Invoices', icon: 'bi-receipt', tone: 'tone-report' },
+            { page: 'messages', label: 'Messages', icon: 'bi-chat-dots-fill', tone: 'tone-people' },
+            { page: 'customers', label: 'Customers', icon: 'bi-people-fill', tone: 'tone-people' }
+          ]
+        : [
+            { page: 'sales', label: 'Make a sale', icon: 'bi-cart-check-fill', tone: 'tone-sale' },
+            { page: 'shifts', label: 'Shifts', icon: 'bi-clock-history', tone: 'tone-shift' },
+            { page: 'meters', label: 'Meter readings', icon: 'bi-speedometer2', tone: 'tone-stock' },
+            { page: 'balancing', label: 'Balancing', icon: 'bi-scales', tone: 'tone-money' },
+            { page: 'inventory', label: 'Inventory', icon: 'bi-box-seam-fill', tone: 'tone-stock' },
+            { page: 'stock', label: 'Offloading', icon: 'bi-truck', tone: 'tone-stock' },
+            { page: 'tank_levels', label: 'Tank levels', icon: 'bi-droplet-half', tone: 'tone-stock' },
+            { page: 'fuel_prices', label: 'Fuel prices', icon: 'bi-tags-fill', tone: 'tone-report' },
+            { page: 'customers', label: 'Customers', icon: 'bi-people-fill', tone: 'tone-people' },
+            { page: 'suppliers', label: 'Suppliers', icon: 'bi-building', tone: 'tone-people' },
+            { page: 'staff', label: 'Staff', icon: 'bi-person-badge-fill', tone: 'tone-people' },
+            { page: 'financials', label: 'Financials', icon: 'bi-wallet2', tone: 'tone-money' },
+            { page: 'payroll', label: 'Payroll', icon: 'bi-cash-stack', tone: 'tone-money' },
+            { page: 'reports', label: 'Reports', icon: 'bi-bar-chart-fill', tone: 'tone-report' },
+            { page: 'maintenance', label: 'Maintenance', icon: 'bi-tools', tone: 'tone-care' },
+            { page: 'messages', label: 'Messages', icon: 'bi-chat-dots-fill', tone: 'tone-people' }
+          ];
+
+    if (!isCashier && isAdminRole) {
+        tiles.push(
+            { page: 'users', label: 'Users', icon: 'bi-person-gear', tone: 'tone-admin' },
+            { page: 'company', label: 'Company', icon: 'bi-buildings', tone: 'tone-admin' }
+        );
+    }
+
+    // Cap at 16 tiles (4x4) so the home screen does not scroll
+    const gridTiles = tiles.slice(0, 16);
+
+    const railHtml = rail.map(r =>
+        `<button type="button" class="hs-rail-btn" data-page="${esc(r.page)}">${esc(r.label)}</button>`
+    ).join('');
+
+    const tilesHtml = gridTiles.map(t => `
+        <button type="button" class="hs-tile ${esc(t.tone)}" data-page="${esc(t.page)}">
+            <span class="hs-ico"><i class="bi ${esc(t.icon)}"></i></span>
+            <span class="hs-label">${esc(t.label)}</span>
         </button>`).join('');
 
     const pageEl = document.getElementById('pageContent');
     if (pageEl) {
         pageEl.innerHTML = `
-        <div class="home-stage">
-            <div class="home-hello">
-                <div>
-                    <p class="home-greet">${esc(greeting)}, ${esc(userName)}</p>
-                    <h2>${esc(companyName)}</h2>
-                </div>
-                <span class="home-chip"><i class="bi bi-geo-alt"></i> ${esc(stationLabel)}</span>
-            </div>
-            <div class="home-five">${tilesHtml}</div>
-            <p class="home-note">Everything else lives in the coloured menus above. This desk stays on one screen.</p>
+        <div class="hs-home">
+            <aside class="hs-rail" aria-label="Quick links">${railHtml}</aside>
+            <div class="hs-grid" aria-label="Navigator">${tilesHtml}</div>
         </div>`;
     }
-    document.querySelectorAll('.home-tile').forEach(el => {
+    document.querySelectorAll('.hs-rail-btn, .hs-tile').forEach(el => {
         el.addEventListener('click', function () {
             const page = this.dataset.page;
             if (page && typeof navigate === 'function') navigate(page);
@@ -15885,9 +16023,9 @@ buildSidebar = function() {
 
     if (role === 'cashier') {
         menuStructure.push({ label: 'Sell', icon: 'bi-cart-check', page: 'sales', isLeaf: true, tone: 'tm-sale' });
-        menuStructure.push({ label: 'Shift', icon: 'bi-clock-history', page: 'shifts', isLeaf: true, tone: 'tm-shift' });
+        menuStructure.push({ label: 'Shifts', icon: 'bi-clock-history', page: 'shifts', isLeaf: true, tone: 'tm-shift' });
         menuStructure.push({ label: 'Meters', icon: 'bi-speedometer2', page: 'meters', isLeaf: true, tone: 'tm-stock' });
-        menuStructure.push({ label: 'Chat', icon: 'bi-chat-dots', page: 'messages', isLeaf: true, tone: 'tm-people' });
+        menuStructure.push({ label: 'Messages', icon: 'bi-chat-dots', page: 'messages', isLeaf: true, tone: 'tm-people' });
     } else {
         menuStructure.push({
             label: 'Sell', icon: 'bi-cart-check', tone: 'tm-sale',
@@ -15901,7 +16039,7 @@ buildSidebar = function() {
             ]
         });
         menuStructure.push({
-            label: 'Stock', icon: 'bi-box-seam', tone: 'tm-stock',
+            label: 'Inventory', icon: 'bi-box-seam', tone: 'tm-stock',
             children: [
                 { label: 'Overview', page: 'inventory' },
                 { label: 'Offloading', page: 'stock' },
@@ -15919,17 +16057,20 @@ buildSidebar = function() {
             ]
         });
         menuStructure.push({
-            label: 'Money', icon: 'bi-wallet2', tone: 'tm-money',
+            label: 'Financials', icon: 'bi-wallet2', tone: 'tm-money',
             children: [
                 { label: 'Financials', page: 'financials' },
                 { label: 'Payroll', page: 'payroll' }
             ]
         });
         menuStructure.push({
-            label: 'Reports', icon: 'bi-bar-chart-line', tone: 'tm-report', page: 'reports', isLeaf: true
+            label: 'Reports', icon: 'bi-bar-chart-line', tone: 'tm-report',
+            children: [
+                { label: 'Reports center', page: 'reports' }
+            ]
         });
         menuStructure.push({
-            label: 'Care', icon: 'bi-tools', tone: 'tm-care',
+            label: 'Support', icon: 'bi-tools', tone: 'tm-care',
             children: [
                 { label: 'Maintenance', page: 'maintenance' },
                 { label: 'Messages', page: 'messages' }
@@ -15937,7 +16078,7 @@ buildSidebar = function() {
         });
         if (isAdminRole) {
             menuStructure.push({
-                label: 'Admin', icon: 'bi-gear', tone: 'tm-admin',
+                label: 'Settings', icon: 'bi-gear', tone: 'tm-admin',
                 children: [
                     { label: 'Users', page: 'users' },
                     { label: 'Company profile', page: 'company' }
@@ -15962,12 +16103,12 @@ buildSidebar = function() {
     let html = '';
     menuStructure.forEach((item, idx) => {
         if (item.isLeaf) {
-            html += `<button type="button" class="tm-link ${item.tone || ''}" data-page="${esc(item.page)}"><i class="bi ${esc(item.icon)}"></i><span>${esc(item.label)}</span></button>`;
+            html += `<button type="button" class="tm-link ${item.tone || ''}" data-page="${esc(item.page)}"><span>${esc(item.label)}</span></button>`;
         } else if (item.children) {
             const id = 'tmDrop' + idx;
             html += `<div class="dropdown tm-drop">
                 <button type="button" class="tm-link ${item.tone || ''}" data-bs-toggle="dropdown" aria-expanded="false" id="${id}">
-                    <i class="bi ${esc(item.icon)}"></i><span>${esc(item.label)}</span><i class="bi bi-chevron-down tm-caret"></i>
+                    <span>${esc(item.label)}</span><i class="bi bi-chevron-down tm-caret"></i>
                 </button>
                 <ul class="dropdown-menu tm-menu" aria-labelledby="${id}">`;
             item.children.forEach(child => {
@@ -16357,7 +16498,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 </script>
 <script>
 // ============================================================
-// PETROMANAGER PRO v1.6.0 — FINAL PAGE REGISTRY (LAUNCH)
+// PETROMANAGER PRO v1.7.0 — FINAL PAGE REGISTRY (LAUNCH)
 // ============================================================
 // Runs after all other parts. Ensures every menu page has a renderer
 // registered, even if a part failed to load or was reordered.
