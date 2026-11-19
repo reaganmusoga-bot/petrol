@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PetroManager Pro v1.5 — Musoga Reagan</title>
+    <title>PetroManager Pro v1.6 — Musoga Reagan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
@@ -2554,80 +2554,399 @@
             border-radius: 9px !important;
         }
 
+
+        /* ============================================================
+           v1.6 — Teal desk. Top menus. One-screen home. New login.
+           ============================================================ */
+        body.pm-v16 {
+            --bg: #f3efe6;
+            --text-color: #1c2b2a;
+            --card-bg: #fffdf8;
+            --border-color: #e4dccd;
+            --sidebar-bg: #123c3a;
+            --hero-gradient: linear-gradient(135deg, #123c3a, #1f6f66);
+            --shadow: 0 8px 24px rgba(18, 60, 58, 0.06);
+            font-family: "Segoe UI", "Avenir Next", system-ui, sans-serif;
+            background: var(--bg);
+        }
+        body.pm-v16 .sidebar { display: none !important; }
+        body.pm-v16 .main-content { margin-left: 0 !important; }
+        body.pm-v16 .top-header.pm-shell {
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 0;
+            background: #fffdf8;
+            border-bottom: 1px solid #e4dccd;
+        }
+        body.pm-v16 .pm-shell-top {
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            gap: 12px;
+        }
+        body.pm-v16 .pm-wordmark {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #123c3a;
+            font-size: 1.05rem;
+        }
+        body.pm-v16 .pm-wordmark i {
+            width: 28px; height: 28px; border-radius: 9px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #123c3a; color: #f3c15b; font-size: 0.95rem;
+        }
+        body.pm-v16 .page-title { color: #3d524f; font-weight: 650; }
+        body.pm-v16 .pm-topmenu {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 8px;
+            align-items: center;
+            padding: 8px 16px 12px;
+            overflow-x: auto;
+            background: linear-gradient(180deg, #fffdf8 0%, #f6f1e6 100%);
+            border-top: 1px solid #efe7d8;
+        }
+        body.pm-v16 .pm-topmenu::-webkit-scrollbar { height: 0; }
+        body.pm-v16 .tm-link {
+            border: 0;
+            border-radius: 999px;
+            padding: 8px 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-weight: 700;
+            font-size: 0.82rem;
+            color: #fff;
+            white-space: nowrap;
+            cursor: pointer;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.25) inset;
+        }
+        body.pm-v16 .tm-link.active { outline: 2px solid #1c2b2a; outline-offset: 2px; }
+        body.pm-v16 .tm-caret { font-size: 0.65rem; opacity: 0.85; }
+        body.pm-v16 .tm-home { background: #123c3a; }
+        body.pm-v16 .tm-sale { background: #c45c26; }
+        body.pm-v16 .tm-shift { background: #0f6e6b; }
+        body.pm-v16 .tm-stock { background: #1d4e89; }
+        body.pm-v16 .tm-people { background: #6d3fa0; }
+        body.pm-v16 .tm-money { background: #1b7a45; }
+        body.pm-v16 .tm-report { background: #b5811a; }
+        body.pm-v16 .tm-care { background: #3e5560; }
+        body.pm-v16 .tm-admin { background: #9a3450; }
+        body.pm-v16 .tm-menu {
+            border: 0;
+            border-radius: 14px;
+            padding: 6px;
+            min-width: 210px;
+            box-shadow: 0 16px 40px rgba(18, 60, 58, 0.16);
+        }
+        body.pm-v16 .tm-menu .dropdown-item {
+            border-radius: 9px;
+            font-weight: 600;
+            font-size: 0.86rem;
+            padding: 8px 12px;
+            color: #1c2b2a;
+        }
+        body.pm-v16 .tm-menu .dropdown-item:hover,
+        body.pm-v16 .tm-menu .dropdown-item.active { background: #e7f3f1; color: #123c3a; }
+
+        body.pm-v16.on-home .page-content,
+        body.pm-v16.on-home #pageContent {
+            height: calc(100dvh - 118px);
+            max-height: calc(100dvh - 118px);
+            overflow: hidden !important;
+            padding: 10px 22px 12px !important;
+            max-width: none !important;
+        }
+        body.pm-v16 .home-stage {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 18px;
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+        body.pm-v16 .home-hello {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 12px;
+        }
+        body.pm-v16 .home-greet {
+            margin: 0;
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 750;
+            color: #8a7360;
+        }
+        body.pm-v16 .home-hello h2 {
+            margin: 2px 0 0;
+            font-size: clamp(1.5rem, 2.4vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            color: #123c3a !important;
+        }
+        body.pm-v16 .home-chip {
+            background: #fff;
+            border: 1px solid #e4dccd;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #3d524f;
+        }
+        body.pm-v16 .home-five {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 14px;
+        }
+        body.pm-v16 .home-tile {
+            border: 0;
+            background: #fffdf8;
+            border-radius: 22px;
+            min-height: 0;
+            padding: 22px 14px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+            text-align: left;
+            cursor: pointer;
+            box-shadow: 0 10px 28px rgba(18, 60, 58, 0.07);
+            border: 1px solid #efe6d6;
+            transition: transform 0.15s ease;
+        }
+        body.pm-v16 .home-tile:hover { transform: translateY(-3px); }
+        body.pm-v16 .home-ico {
+            width: 48px; height: 48px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 1.3rem;
+        }
+        body.pm-v16 .t-sale .home-ico { background: #c45c26; }
+        body.pm-v16 .t-shift .home-ico { background: #0f6e6b; }
+        body.pm-v16 .t-stock .home-ico { background: #1d4e89; }
+        body.pm-v16 .t-money .home-ico { background: #1b7a45; }
+        body.pm-v16 .t-report .home-ico { background: #b5811a; }
+        body.pm-v16 .t-people .home-ico { background: #6d3fa0; }
+        body.pm-v16 .home-label { font-weight: 800; font-size: 1.02rem; color: #16302e; letter-spacing: -0.02em; }
+        body.pm-v16 .home-hint { font-size: 0.78rem; color: #7d7064; font-weight: 550; }
+        body.pm-v16 .home-note { margin: 0; font-size: 0.8rem; color: #8d8074; }
+        @media (max-width: 980px) {
+            body.pm-v16 .home-five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            body.pm-v16 .home-tile { padding: 14px 12px; }
+            body.pm-v16 .home-ico { width: 40px; height: 40px; font-size: 1.1rem; }
+        }
+        @media (max-width: 640px) {
+            body.pm-v16.on-home .page-content,
+            body.pm-v16.on-home #pageContent { height: auto; max-height: none; overflow: auto !important; }
+            body.pm-v16 .home-five { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            body.pm-v16 .pm-wordmark span, body.pm-v16 .page-title { display: none; }
+        }
+
+        /* Tables, cards, forms — one standard */
+        body.pm-v16 .page-content h4,
+        body.pm-v16 .page-content h5,
+        body.pm-v16 .page-content .fin-title-row h4,
+        body.pm-v16 .page-content .ms-header h4 { color: #123c3a !important; }
+        body.pm-v16 .page-content .card-box,
+        body.pm-v16 .page-content .fin-action-card,
+        body.pm-v16 .page-content .fin-ledger-card,
+        body.pm-v16 .page-content .ms-form-card,
+        body.pm-v16 .page-content .ms-history-card {
+            background: #fffdf8 !important;
+            border: 1px solid #e7decd !important;
+            border-radius: 18px !important;
+            box-shadow: 0 8px 24px rgba(18,60,58,0.05) !important;
+        }
+        body.pm-v16 .page-content table.table thead th,
+        body.pm-v16 .page-content .sales-history-table thead th,
+        body.pm-v16 .intl-table-wrap thead th {
+            background: #123c3a !important;
+            color: #f6f1e6 !important;
+            font-size: 0.68rem !important;
+            letter-spacing: 0.06em !important;
+        }
+        body.pm-v16 .page-content table.table tbody tr:nth-child(even) td { background: #faf6ee; }
+        body.pm-v16 .page-content .btn-primary,
+        body.pm-v16 .intl-form .btn-intl-primary {
+            background: #123c3a !important;
+            border-color: #123c3a !important;
+        }
+        body.pm-v16 .fin-header {
+            background: linear-gradient(120deg, #123c3a 0%, #1f6f66 55%, #c45c26 140%) !important;
+            border-radius: 18px !important;
+        }
+        body.pm-v16 .modal-header { background: #123c3a !important; }
+        body.pm-v16 .form-control:focus,
+        body.pm-v16 .form-select:focus {
+            border-color: #1f6f66 !important;
+            box-shadow: 0 0 0 3px rgba(31, 111, 102, 0.15) !important;
+        }
+
+        /* Login gate */
+        body.pm-v16 .gate {
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: #10211f;
+            padding: 28px 18px;
+        }
+        body.pm-v16 .gate-bg { position: absolute; inset: 0; pointer-events: none; }
+        body.pm-v16 .gate-orb { position: absolute; border-radius: 50%; filter: blur(2px); }
+        body.pm-v16 .gate-orb.o1 { width: 420px; height: 420px; background: radial-gradient(circle, #1f6f66 0%, transparent 70%); left: -80px; top: -60px; }
+        body.pm-v16 .gate-orb.o2 { width: 380px; height: 380px; background: radial-gradient(circle, rgba(196,92,38,0.55) 0%, transparent 70%); right: -40px; bottom: -80px; }
+        body.pm-v16 .gate-grid {
+            position: absolute; inset: 0; opacity: 0.25;
+            background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+        body.pm-v16 .gate-layout {
+            position: relative;
+            z-index: 1;
+            width: min(980px, 100%);
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 28px;
+            align-items: center;
+        }
+        body.pm-v16 .gate-story { color: #f6f1e6; padding: 12px 8px; }
+        body.pm-v16 .gate-kicker {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
+            font-size: 0.75rem; color: #f3c15b;
+        }
+        body.pm-v16 .gate-story h2 {
+            margin: 14px 0 10px;
+            font-size: clamp(2rem, 4vw, 3.1rem);
+            font-weight: 800;
+            letter-spacing: -0.045em;
+            line-height: 1.02;
+            color: #fff;
+        }
+        body.pm-v16 .gate-story p { margin: 0 0 18px; max-width: 36ch; color: rgba(246,241,230,0.78); font-size: 1.02rem; }
+        body.pm-v16 .gate-points { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+        body.pm-v16 .gate-points li { display: flex; gap: 8px; align-items: center; font-weight: 650; color: #f6f1e6; }
+        body.pm-v16 .gate-points i { color: #7dcec4; }
+        body.pm-v16 .gate-card {
+            background: #fffdf8;
+            border-radius: 28px;
+            padding: 28px 26px 18px;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.28);
+        }
+        body.pm-v16 .gate-brand { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; }
+        body.pm-v16 .gate-mark {
+            width: 52px; height: 52px; border-radius: 16px;
+            background: #123c3a; color: #f3c15b;
+            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+        }
+        body.pm-v16 .gate-brand h1 { margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -0.03em; color: #123c3a; }
+        body.pm-v16 .gate-brand p { margin: 0; color: #7d7064; font-size: 0.88rem; }
+        body.pm-v16 .gate-label {
+            display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em;
+            text-transform: uppercase; color: #7d7064; margin: 8px 0 6px;
+        }
+        body.pm-v16 .gate-field { margin-bottom: 4px; }
+        body.pm-v16 .gate-card .form-control {
+            min-height: 48px; border-radius: 12px; border: 1.5px solid #e4dccd; background: #fff;
+        }
+        body.pm-v16 .gate-card .btn-login {
+            width: 100%; min-height: 48px; margin-top: 16px; border: 0; border-radius: 14px;
+            font-weight: 800; background: #c45c26; color: #fff;
+            box-shadow: 0 10px 22px rgba(196,92,38,0.28);
+        }
+        body.pm-v16 .gate-card .btn-login:hover { filter: brightness(1.05); color: #fff; }
+        body.pm-v16 .gate-card .password-toggle {
+            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            border: 0; background: transparent; color: #8d8074;
+        }
+        body.pm-v16 .gate-setup {
+            display: block; width: 100%; margin-top: 12px; border: 0; background: transparent;
+            color: #1f6f66; font-weight: 700; font-size: 0.86rem; cursor: pointer;
+        }
+        body.pm-v16 .gate-card .login-panel-foot { margin-top: 16px; text-align: center; color: #a89888; font-size: 0.72rem; }
+        @media (max-width: 860px) {
+            body.pm-v16 .gate-layout { grid-template-columns: 1fr; }
+            body.pm-v16 .gate-story { display: none; }
+        }
+
     </style>
 </head>
-<body>
+<body class="pm-v16">
     <div id="offlineBanner"><i class="bi bi-wifi-off"></i> You are offline – showing cached data only</div>
 
     <!-- ============================================================
     LOGIN SCREEN
     ============================================================ -->
-    <div id="loginScreen" class="login-wrap">
-        <div class="login-shell">
-            <aside class="login-hero">
-                <div class="login-hero-top">
-                    <span class="login-hero-badge"><i class="bi bi-shield-check"></i> Trusted station ops</span>
-                    <h2>Run every litre<br><span>with clarity</span></h2>
-                    <p class="login-hero-lead">Sales, stock, shifts, payroll and financials — one control room for modern fuel networks.</p>
-                    <div class="login-pills">
-                        <span class="login-pill"><i class="bi bi-speedometer2"></i> Live meters</span>
-                        <span class="login-pill"><i class="bi bi-wallet2"></i> Finance</span>
-                        <span class="login-pill"><i class="bi bi-graph-up-arrow"></i> Reports</span>
-                        <span class="login-pill"><i class="bi bi-buildings"></i> Multi-station</span>
-                    </div>
-                    <div class="login-hero-cta">
-                        <div class="hint">First-time setup</div>
-                        <button type="button" id="showCreateCompanyBtn" class="btn-create-company">
-                            <i class="bi bi-building-add"></i> Create company
-                        </button>
-                    </div>
-                </div>
-                <div class="login-hero-bot">
-                    Built for operators who measure every drop · <strong>PetroManager Pro</strong>
-                </div>
-            </aside>
-            <div class="login-panel">
-                <div class="login-card">
-                    <div class="login-brand">
-                        <div class="login-mark"><i class="bi bi-fuel-pump-fill"></i></div>
-                        <h1>PetroManager Pro</h1>
-                        <p class="tagline">Sign in to your station network</p>
-                    </div>
-                    <div id="normalLogin">
-                        <form id="loginForm" autocomplete="off">
-                            <div class="form-floating autocomplete-wrapper">
-                                <input type="text" id="loginUsername" class="form-control" required placeholder=" " autocomplete="off" autocapitalize="off" spellcheck="false" />
-                                <label for="loginUsername">Username</label>
-                                <div id="usernameSuggestions" class="autocomplete-dropdown" style="display:none;"></div>
-                            </div>
-                            <div class="form-floating position-relative">
-                                <input type="password" id="loginPassword" class="form-control" required placeholder=" " autocomplete="current-password" />
-                                <label for="loginPassword">Password</label>
-                                <button type="button" class="password-toggle" id="togglePassword" tabindex="-1" aria-label="Show password">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            <button type="submit" class="btn btn-login" id="loginBtn">Sign in</button>
-                            <div id="loginError" class="text-danger text-center mt-3 small" style="display:none;"></div>
-                        </form>
-                    </div>
-                    <div id="createCompanyForm" style="display:none;">
-                        <h5 class="mb-1">Create company</h5>
-                        <p class="text-muted small mb-3">First organisation and admin account</p>
-                        <div class="mb-2"><label class="form-label">Company name</label><input type="text" id="newCompName" class="form-control" placeholder="e.g. GIMIX Fuel"></div>
-                        <div class="mb-2"><label class="form-label">Tagline</label><input type="text" id="newCompTagline" class="form-control" placeholder="Optional"></div>
-                        <div class="mb-2"><label class="form-label">Address</label><input type="text" id="newCompAddress" class="form-control" placeholder="Optional"></div>
-                        <div class="mb-2"><label class="form-label">Admin username</label><input type="text" id="newCompAdminUser" class="form-control" placeholder="admin"></div>
-                        <div class="mb-3"><label class="form-label">Admin password</label><input type="password" id="newCompAdminPass" class="form-control" placeholder="Min 4 characters"></div>
-                        <button type="button" id="createCompanyBtn" class="btn btn-warning w-100" style="border-radius:12px;min-height:44px;font-weight:700;">Create company &amp; admin</button>
-                        <button type="button" id="cancelCreateCompanyBtn" class="btn btn-outline-secondary w-100 mt-2" style="border-radius:12px;min-height:42px;">Back to sign in</button>
-                        <div id="createCompanyResult" class="text-center mt-3 small"></div>
-                    </div>
-                    <div class="login-panel-foot">
-                        PetroManager Pro · <strong>v1.5.0</strong> · QB-style navigator · Musoga Reagan © 2026
+    <div id="loginScreen" class="gate">
+        <div class="gate-bg" aria-hidden="true">
+            <span class="gate-orb o1"></span>
+            <span class="gate-orb o2"></span>
+            <span class="gate-grid"></span>
+        </div>
+        <div class="gate-layout">
+            <section class="gate-story">
+                <div class="gate-kicker"><i class="bi bi-fuel-pump-fill"></i> PetroManager</div>
+                <h2>Station control,<br>without the noise.</h2>
+                <p>Sell, shift, stock and pay from one calm desk. Your books stay exactly where they are.</p>
+                <ul class="gate-points">
+                    <li><i class="bi bi-check2-circle"></i> One screen for the till</li>
+                    <li><i class="bi bi-check2-circle"></i> Shifts, meters and shortages</li>
+                    <li><i class="bi bi-check2-circle"></i> Payroll, banks and reports</li>
+                </ul>
+            </section>
+            <section class="gate-card">
+                <div class="gate-brand">
+                    <div class="gate-mark"><i class="bi bi-droplet-half"></i></div>
+                    <div>
+                        <h1>Sign in</h1>
+                        <p>Your station network</p>
                     </div>
                 </div>
-            </div>
+                <div id="normalLogin">
+                    <form id="loginForm" autocomplete="off">
+                        <label class="gate-label" for="loginUsername">Username</label>
+                        <div class="form-floating autocomplete-wrapper gate-field">
+                            <input type="text" id="loginUsername" class="form-control" required placeholder="Username" autocomplete="off" autocapitalize="off" spellcheck="false" />
+                            <div id="usernameSuggestions" class="autocomplete-dropdown" style="display:none;"></div>
+                        </div>
+                        <label class="gate-label" for="loginPassword">Password</label>
+                        <div class="form-floating position-relative gate-field">
+                            <input type="password" id="loginPassword" class="form-control" required placeholder="Password" autocomplete="current-password" />
+                            <button type="button" class="password-toggle" id="togglePassword" tabindex="-1" aria-label="Show password">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <button type="submit" class="btn btn-login" id="loginBtn">Enter station</button>
+                        <div id="loginError" class="text-danger text-center mt-3 small" style="display:none;"></div>
+                    </form>
+                    <button type="button" id="showCreateCompanyBtn" class="gate-setup">First time? Create a company</button>
+                </div>
+                <div id="createCompanyForm" style="display:none;">
+                    <h5 class="mb-1">Create company</h5>
+                    <p class="text-muted small mb-3">First organisation and admin account</p>
+                    <div class="mb-2"><label class="form-label">Company name</label><input type="text" id="newCompName" class="form-control" placeholder="e.g. GIMIX Fuel"></div>
+                    <div class="mb-2"><label class="form-label">Tagline</label><input type="text" id="newCompTagline" class="form-control" placeholder="Optional"></div>
+                    <div class="mb-2"><label class="form-label">Address</label><input type="text" id="newCompAddress" class="form-control" placeholder="Optional"></div>
+                    <div class="mb-2"><label class="form-label">Admin username</label><input type="text" id="newCompAdminUser" class="form-control" placeholder="admin"></div>
+                    <div class="mb-3"><label class="form-label">Admin password</label><input type="password" id="newCompAdminPass" class="form-control" placeholder="Min 4 characters"></div>
+                    <button type="button" id="createCompanyBtn" class="btn btn-login">Create company & admin</button>
+                    <button type="button" id="cancelCreateCompanyBtn" class="gate-setup">Back to sign in</button>
+                    <div id="createCompanyResult" class="text-center mt-3 small"></div>
+                </div>
+                <div class="login-panel-foot">PetroManager Pro · <strong>v1.6.0</strong> · Musoga Reagan © 2026</div>
+            </section>
         </div>
     </div>
 
@@ -2665,13 +2984,15 @@
                     <span id="sidebarUser">—</span>
                     <span class="ms-auto badge bg-secondary" id="sidebarRole">—</span>
                 </div>
-                <div class="signature">⚡ Musoga Reagan © 2026 · v1.5.0 · QB navigator</div>
+                <div class="signature">⚡ Musoga Reagan © 2026 · v1.6.0 · QB navigator</div>
             </div>
         </nav>
         <div class="main-content">
-            <header class="top-header">
+            <header class="top-header pm-shell">
+                <div class="pm-shell-top">
                 <div class="d-flex align-items-center gap-3">
-                    <button class="btn btn-light sidebar-toggle p-1" id="sidebarToggle">
+                    <span class="pm-wordmark"><i class="bi bi-droplet-half"></i> Petro</span>
+                    <button class="btn btn-light sidebar-toggle p-1" id="sidebarToggle" type="button">
                         <i class="bi bi-list fs-4"></i>
                     </button>
                     <span class="page-title" id="pageTitle">Dashboard</span>
@@ -2698,6 +3019,8 @@
                         <span id="headerUserFull" class="d-none"></span>
                     </div>
                 </div>
+                </div>
+                <nav id="topMenu" class="pm-topmenu" aria-label="Sections"></nav>
             </header>
             <div class="page-content" id="pageContent">
                 <div class="text-center py-5"><div class="spinner text-primary"></div><p class="mt-3 text-muted">Loading...</p></div>
@@ -5204,7 +5527,8 @@ function navigate(page) {
     }
 
     state.currentPage = page;
-    document.querySelectorAll('#sidebarNav .nav-link').forEach(a => {
+    document.body.classList.toggle('on-home', page === 'dashboard');
+    document.querySelectorAll('#sidebarNav .nav-link, #topMenu [data-page]').forEach(a => {
         a.classList.toggle('active', a.dataset.page === page);
     });
     const titles = {
@@ -5513,167 +5837,63 @@ async function _countLowStock(invList) {
 }
 
 async function renderDashboard() {
-    // ============================================================
-    // v1.5 — QuickBooks POS style Home / Navigator
-    // No company statistics. Pure icon navigator + quick actions.
-    // Designed to fit on one screen without scrolling on desktop.
-    // ============================================================
+    document.body.classList.add('on-home');
     const user = state.user || {};
     const company = (await getCompany(user.companyId).catch(() => null)) || {};
     const companyName = company.name || 'PetroManager';
     const stationLabel = state.currentStationId
         ? (typeof stationName === 'function' ? stationName(state.currentStationId) : 'Station')
-        : 'All Stations';
+        : 'All stations';
     const role = (typeof roleNorm === 'function' ? roleNorm(user.role) : (user.role || '')).toLowerCase();
     const isCashier = role === 'cashier';
-    const isAdminRole = typeof isAdmin === 'function' ? isAdmin(role) : (role === 'admin' || role === 'super_admin');
-    const isSuper = typeof isSuperAdmin === 'function' ? isSuperAdmin(role) : role === 'super_admin';
-
-    // Build the tile list according to role (mirrors sidebar permissions)
-    const tiles = [];
-    function add(page, label, icon, colorClass, hint) {
-        tiles.push({ page, label, icon, colorClass, hint: hint || '' });
-    }
-
-    if (isCashier) {
-        add('sales', 'Make Sales', 'bi-cart-check', 'c-sales', 'Point of sale');
-        add('shifts', 'My Shifts', 'bi-clock-history', 'c-shift', 'Clock in / out');
-        add('meters', 'Meter Readings', 'bi-speedometer2', 'c-inv', 'Pump readings');
-        add('messages', 'Messages', 'bi-chat-dots', 'c-support', 'Company chat');
-    } else {
-        add('sales', 'Make Sales', 'bi-cart-check', 'c-sales', 'Point of sale');
-        add('shifts', 'Shifts', 'bi-clock-history', 'c-shift', 'Open & close');
-        add('meters', 'Meter Readings', 'bi-speedometer2', 'c-inv', 'Pump meters');
-        add('balancing', 'Balancing', 'bi-calculator', 'c-fin', 'Shift balance');
-        add('shortage_recovery', 'Shortage Recovery', 'bi-cash-coin', 'c-fin', 'Recover short');
-        add('inventory', 'Inventory', 'bi-box-seam', 'c-inv', 'Stock overview');
-        add('stock', 'Offloading', 'bi-truck', 'c-inv', 'Receive stock');
-        add('tank_levels', 'Tank Levels', 'bi-droplet-half', 'c-inv', 'Live levels');
-        add('customers', 'Customers', 'bi-people', 'c-people', 'Credit & accounts');
-        add('suppliers', 'Suppliers', 'bi-building', 'c-people', 'Payables');
-        add('financials', 'Financials', 'bi-wallet2', 'c-fin', 'Cash & banks');
-        add('payroll', 'Payroll', 'bi-person-badge', 'c-fin', 'Salaries');
-        add('reports', 'Reports', 'bi-bar-chart-line', 'c-report', 'All reports');
-        add('invoices', 'Invoices', 'bi-receipt', 'c-report', 'Sales invoices');
-        add('staff', 'Staff', 'bi-person-vcard', 'c-people', 'Directory');
-        add('maintenance', 'Maintenance', 'bi-tools', 'c-support', 'Assets & repairs');
-        if (isAdminRole) {
-            add('users', 'Users', 'bi-person-gear', 'c-admin', 'Logins & roles');
-            add('company', 'Company', 'bi-buildings', 'c-admin', 'Profile & settings');
-        }
-        if (isSuper) {
-            add('companies', 'All Companies', 'bi-globe2', 'c-admin', 'Multi-tenant');
-            add('licenses', 'Licenses', 'bi-key', 'c-admin', 'Subscriptions');
-        }
-    }
-
-    // Side quick links (left & right columns)
-    const leftSide = [
-        { page: 'sales', icon: 'bi-cart', label: 'Sale' },
-        { page: 'shifts', icon: 'bi-clock', label: 'Shift' },
-        { page: 'inventory', icon: 'bi-box', label: 'Stock' },
-        { page: 'financials', icon: 'bi-wallet', label: 'Cash' }
-    ];
-    const rightSide = [
-        { page: 'reports', icon: 'bi-graph-up', label: 'Reports' },
-        { page: 'customers', icon: 'bi-people', label: 'Cust' },
-        { page: 'messages', icon: 'bi-chat', label: 'Chat' },
-        { page: 'meters', icon: 'bi-speedometer', label: 'Meters' }
-    ];
-
-    // Top horizontal quick buttons
-    const topQuick = isCashier
-        ? [
-            { page: 'sales', label: 'Make Sale', icon: 'bi-cart-check', primary: true },
-            { page: 'shifts', label: 'My Shifts', icon: 'bi-clock-history' },
-            { page: 'meters', label: 'Meters', icon: 'bi-speedometer2' },
-            { page: 'messages', label: 'Messages', icon: 'bi-chat-dots' }
-          ]
-        : [
-            { page: 'sales', label: 'Make Sale', icon: 'bi-cart-check', primary: true },
-            { page: 'shifts', label: 'Shifts', icon: 'bi-clock-history' },
-            { page: 'inventory', label: 'Inventory', icon: 'bi-box-seam' },
-            { page: 'financials', label: 'Financials', icon: 'bi-wallet2' },
-            { page: 'reports', label: 'Reports', icon: 'bi-bar-chart-line' }
-          ];
-
-    function sideHtml(list) {
-        return list.map(b => `
-            <button type="button" class="qb-side-btn" data-page="${esc(b.page)}" title="${esc(b.label)}">
-                <i class="bi ${esc(b.icon)}"></i>
-                <span>${esc(b.label)}</span>
-            </button>`).join('');
-    }
-
-    const tilesHtml = tiles.map(t => `
-        <div class="qb-tile ${esc(t.colorClass)}" data-page="${esc(t.page)}" role="button" tabindex="0">
-            <div class="icon-wrap"><i class="bi ${esc(t.icon)}"></i></div>
-            <div class="label">${esc(t.label)}</div>
-            ${t.hint ? `<div class="hint">${esc(t.hint)}</div>` : ''}
-        </div>`).join('');
-
-    const topHtml = topQuick.map(b => `
-        <button type="button" class="qb-quick-btn${b.primary ? ' primary' : ''}" data-page="${esc(b.page)}">
-            <i class="bi ${esc(b.icon)}"></i> ${esc(b.label)}
-        </button>`).join('');
-
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : (hour < 17 ? 'Good afternoon' : 'Good evening');
-    const userName = user.name || user.username || 'User';
+    const userName = user.name || user.username || 'there';
 
-    const html = `
-    <div class="qb-home">
-        <div class="qb-topbar">
-            <div class="qb-welcome">
-                <h2>${esc(greeting)}, ${esc(userName)}</h2>
-                <div class="sub">${esc(companyName)} · ${esc(stationLabel)}</div>
-            </div>
-            <div class="qb-quick-row">
-                ${topHtml}
-            </div>
-        </div>
+    const tiles = isCashier
+        ? [
+            { page: 'sales', label: 'Make a sale', icon: 'bi-cart-check', tone: 't-sale', hint: 'Open the till' },
+            { page: 'shifts', label: 'My shift', icon: 'bi-clock-history', tone: 't-shift', hint: 'Open or close' },
+            { page: 'meters', label: 'Meters', icon: 'bi-speedometer2', tone: 't-stock', hint: 'Pump readings' },
+            { page: 'messages', label: 'Messages', icon: 'bi-chat-dots', tone: 't-people', hint: 'Station chat' },
+            { page: 'invoices', label: 'Invoices', icon: 'bi-receipt', tone: 't-report', hint: 'Reprint a slip' }
+          ]
+        : [
+            { page: 'sales', label: 'Make a sale', icon: 'bi-cart-check', tone: 't-sale', hint: 'Open the till' },
+            { page: 'shifts', label: 'Shifts', icon: 'bi-clock-history', tone: 't-shift', hint: 'Open, close, balance' },
+            { page: 'inventory', label: 'Stock', icon: 'bi-box-seam', tone: 't-stock', hint: 'Tanks and products' },
+            { page: 'financials', label: 'Money', icon: 'bi-wallet2', tone: 't-money', hint: 'Cash, banks, expenses' },
+            { page: 'reports', label: 'Reports', icon: 'bi-bar-chart-line', tone: 't-report', hint: 'Day, week, month' }
+          ];
 
-        <div class="qb-body">
-            <div class="qb-side qb-side-left">
-                ${sideHtml(leftSide)}
-            </div>
-
-            <div class="qb-grid">
-                ${tilesHtml}
-            </div>
-
-            <div class="qb-side qb-side-right">
-                ${sideHtml(rightSide)}
-            </div>
-        </div>
-
-        <div class="qb-home-foot">
-            <span>PetroManager Pro <strong>v1.5.0</strong> · QuickBooks-style navigator</span>
-            <span>Musoga Reagan © 2026</span>
-        </div>
-    </div>`;
+    const tilesHtml = tiles.map(t => `
+        <button type="button" class="home-tile ${t.tone}" data-page="${esc(t.page)}">
+            <span class="home-ico"><i class="bi ${esc(t.icon)}"></i></span>
+            <span class="home-label">${esc(t.label)}</span>
+            <span class="home-hint">${esc(t.hint)}</span>
+        </button>`).join('');
 
     const pageEl = document.getElementById('pageContent');
-    if (pageEl) pageEl.innerHTML = html;
-
-    // Wire all navigation clicks
-    function wire(sel) {
-        document.querySelectorAll(sel).forEach(el => {
-            el.addEventListener('click', function() {
-                const page = this.dataset.page;
-                if (page && typeof navigate === 'function') navigate(page);
-            });
-            el.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    this.click();
-                }
-            });
-        });
+    if (pageEl) {
+        pageEl.innerHTML = `
+        <div class="home-stage">
+            <div class="home-hello">
+                <div>
+                    <p class="home-greet">${esc(greeting)}, ${esc(userName)}</p>
+                    <h2>${esc(companyName)}</h2>
+                </div>
+                <span class="home-chip"><i class="bi bi-geo-alt"></i> ${esc(stationLabel)}</span>
+            </div>
+            <div class="home-five">${tilesHtml}</div>
+            <p class="home-note">Everything else lives in the coloured menus above. This desk stays on one screen.</p>
+        </div>`;
     }
-    wire('.qb-tile');
-    wire('.qb-quick-btn');
-    wire('.qb-side-btn');
+    document.querySelectorAll('.home-tile').forEach(el => {
+        el.addEventListener('click', function () {
+            const page = this.dataset.page;
+            if (page && typeof navigate === 'function') navigate(page);
+        });
+    });
 }
 
 async function renderSales() {
@@ -15654,48 +15874,44 @@ console.log('Part 10 loaded – Users, Company, Payroll, Messages, Invoices, Sta
 // PART 11: LICENSE MANAGER (SUPER ADMIN) + SIDEBAR OVERRIDE
 // ============================================================
 
-// ----- Sidebar override — single definitive layout -----
-// Replaces the Part 3 buildSidebar. Adds the System > Licenses entry for super admins.
+// ----- Top menu — coloured dropdowns. Left rail is retired. -----
 buildSidebar = function() {
     if (!state.user) return;
     const role = roleNorm(state.user.role);
     const isAdminRole = isAdmin(role);
     const menuStructure = [];
 
-    menuStructure.push({ label: 'Dashboard', icon: 'bi-grid-1x2-fill', page: 'dashboard', isLeaf: true });
+    menuStructure.push({ label: 'Home', icon: 'bi-house-door', page: 'dashboard', isLeaf: true, tone: 'tm-home' });
 
     if (role === 'cashier') {
-        menuStructure.push({ label: 'Make Sales', icon: 'bi-cart-check', page: 'sales', isLeaf: true });
-        menuStructure.push({ label: 'My Shifts', icon: 'bi-clock-history', page: 'shifts', isLeaf: true });
-        menuStructure.push({ label: 'Meter Readings', icon: 'bi-speedometer2', page: 'meters', isLeaf: true });
-        menuStructure.push({ label: 'Messages', icon: 'bi-chat-dots', page: 'messages', isLeaf: true });
+        menuStructure.push({ label: 'Sell', icon: 'bi-cart-check', page: 'sales', isLeaf: true, tone: 'tm-sale' });
+        menuStructure.push({ label: 'Shift', icon: 'bi-clock-history', page: 'shifts', isLeaf: true, tone: 'tm-shift' });
+        menuStructure.push({ label: 'Meters', icon: 'bi-speedometer2', page: 'meters', isLeaf: true, tone: 'tm-stock' });
+        menuStructure.push({ label: 'Chat', icon: 'bi-chat-dots', page: 'messages', isLeaf: true, tone: 'tm-people' });
     } else {
         menuStructure.push({
-            label: 'Sales & shifts',
-            icon: 'bi-cart-check',
+            label: 'Sell', icon: 'bi-cart-check', tone: 'tm-sale',
             children: [
-                { label: 'Make Sales', page: 'sales' },
+                { label: 'Make a sale', page: 'sales' },
                 { label: 'Shifts', page: 'shifts' },
-                { label: 'Meter Readings', page: 'meters' },
+                { label: 'Meter readings', page: 'meters' },
                 { label: 'Balancing', page: 'balancing' },
-                { label: 'Shortage Recovery', page: 'shortage_recovery' },
+                { label: 'Shortage recovery', page: 'shortage_recovery' },
                 { label: 'Invoices', page: 'invoices' }
             ]
         });
         menuStructure.push({
-            label: 'Inventory',
-            icon: 'bi-box-seam',
+            label: 'Stock', icon: 'bi-box-seam', tone: 'tm-stock',
             children: [
                 { label: 'Overview', page: 'inventory' },
                 { label: 'Offloading', page: 'stock' },
                 { label: 'Adjustments', page: 'adjustments' },
-                { label: 'Fuel Prices', page: 'fuel_prices' },
-                { label: 'Tank Levels', page: 'tank_levels' }
+                { label: 'Fuel prices', page: 'fuel_prices' },
+                { label: 'Tank levels', page: 'tank_levels' }
             ]
         });
         menuStructure.push({
-            label: 'Parties',
-            icon: 'bi-people',
+            label: 'People', icon: 'bi-people', tone: 'tm-people',
             children: [
                 { label: 'Customers', page: 'customers' },
                 { label: 'Suppliers', page: 'suppliers' },
@@ -15703,23 +15919,17 @@ buildSidebar = function() {
             ]
         });
         menuStructure.push({
-            label: 'Finance',
-            icon: 'bi-wallet2',
+            label: 'Money', icon: 'bi-wallet2', tone: 'tm-money',
             children: [
                 { label: 'Financials', page: 'financials' },
                 { label: 'Payroll', page: 'payroll' }
             ]
         });
         menuStructure.push({
-            label: 'Reports',
-            icon: 'bi-bar-chart-line',
-            children: [
-                { label: 'Reports Center', page: 'reports' }
-            ]
+            label: 'Reports', icon: 'bi-bar-chart-line', tone: 'tm-report', page: 'reports', isLeaf: true
         });
         menuStructure.push({
-            label: 'Support',
-            icon: 'bi-tools',
+            label: 'Care', icon: 'bi-tools', tone: 'tm-care',
             children: [
                 { label: 'Maintenance', page: 'maintenance' },
                 { label: 'Messages', page: 'messages' }
@@ -15727,93 +15937,56 @@ buildSidebar = function() {
         });
         if (isAdminRole) {
             menuStructure.push({
-                label: 'Administration',
-                icon: 'bi-gear',
+                label: 'Admin', icon: 'bi-gear', tone: 'tm-admin',
                 children: [
                     { label: 'Users', page: 'users' },
-                    { label: 'Company Profile', page: 'company' }
+                    { label: 'Company profile', page: 'company' }
                 ]
             });
         }
         if (role === 'super_admin') {
             menuStructure.push({
-                label: 'System',
-                icon: 'bi-buildings',
+                label: 'System', icon: 'bi-buildings', tone: 'tm-admin',
                 children: [
-                    { label: 'All Companies', page: 'companies' },
+                    { label: 'All companies', page: 'companies' },
                     { label: 'Licenses', page: 'licenses' }
                 ]
             });
         }
     }
 
-    const nav = document.getElementById('sidebarNav');
+    const nav = document.getElementById('topMenu') || document.getElementById('sidebarNav');
+    const legacy = document.getElementById('sidebarNav');
     if (!nav) return;
 
     let html = '';
-    menuStructure.forEach(item => {
+    menuStructure.forEach((item, idx) => {
         if (item.isLeaf) {
-            html += `<a class="nav-link" data-page="${esc(item.page)}" href="#"><i class="bi ${esc(item.icon)}"></i> ${esc(item.label)}</a>`;
+            html += `<button type="button" class="tm-link ${item.tone || ''}" data-page="${esc(item.page)}"><i class="bi ${esc(item.icon)}"></i><span>${esc(item.label)}</span></button>`;
         } else if (item.children) {
-            const collapseId = 'subMenu' + item.label.replace(/\s/g, '');
-            html += `
-                <a class="nav-link" data-bs-toggle="collapse" href="#${collapseId}" role="button" aria-expanded="false" aria-controls="${collapseId}">
-                  <i class="bi ${esc(item.icon)}"></i> ${esc(item.label)}
-                  <span class="chevron"><i class="bi bi-chevron-right"></i></span>
-                </a>
-                <div class="collapse sub-menu" id="${collapseId}">
-            `;
+            const id = 'tmDrop' + idx;
+            html += `<div class="dropdown tm-drop">
+                <button type="button" class="tm-link ${item.tone || ''}" data-bs-toggle="dropdown" aria-expanded="false" id="${id}">
+                    <i class="bi ${esc(item.icon)}"></i><span>${esc(item.label)}</span><i class="bi bi-chevron-down tm-caret"></i>
+                </button>
+                <ul class="dropdown-menu tm-menu" aria-labelledby="${id}">`;
             item.children.forEach(child => {
-                html += `<a class="nav-link" data-page="${esc(child.page)}" href="#"><i class="bi bi-circle"></i> ${esc(child.label)}</a>`;
+                html += `<li><button type="button" class="dropdown-item" data-page="${esc(child.page)}">${esc(child.label)}</button></li>`;
             });
-            html += `</div>`;
+            html += `</ul></div>`;
         }
     });
     nav.innerHTML = html;
+    if (legacy && legacy !== nav) legacy.innerHTML = '';
 
-    nav.querySelectorAll('.nav-link').forEach(a => {
-        const page = a.dataset.page;
-        if (page === state.currentPage) a.classList.add('active');
-        a.onclick = function(e) {
+    nav.querySelectorAll('[data-page]').forEach(a => {
+        if (a.dataset.page === state.currentPage) a.classList.add('active');
+        a.addEventListener('click', function (e) {
             const targetPage = this.dataset.page;
-            if (targetPage) {
-                e.preventDefault();
-                navigate(targetPage);
-                if (window.innerWidth < 769) {
-                    const sidebar = document.getElementById('sidebar');
-                    if (sidebar) sidebar.classList.remove('open');
-                }
-            }
-        };
-    });
-    nav.querySelectorAll('.collapse').forEach(collapseEl => {
-        collapseEl.addEventListener('show.bs.collapse', function() {
-            const parentLink = this.previousElementSibling;
-            if (parentLink) {
-                const chevron = parentLink.querySelector('.chevron');
-                if (chevron) chevron.classList.add('open');
-            }
+            if (!targetPage) return;
+            e.preventDefault();
+            navigate(targetPage);
         });
-        collapseEl.addEventListener('hide.bs.collapse', function() {
-            const parentLink = this.previousElementSibling;
-            if (parentLink) {
-                const chevron = parentLink.querySelector('.chevron');
-                if (chevron) chevron.classList.remove('open');
-            }
-        });
-    });
-    nav.querySelectorAll('.nav-link[data-page]').forEach(a => {
-        if (a.classList.contains('active')) {
-            const parentCollapse = a.closest('.collapse');
-            if (parentCollapse) {
-                const parentLink = parentCollapse.previousElementSibling;
-                if (parentLink) {
-                    parentLink.click();
-                    const ch = parentLink.querySelector('.chevron');
-                    if (ch) ch.classList.add('open');
-                }
-            }
-        }
     });
 };
 
@@ -16184,7 +16357,7 @@ console.log('Part 11 loaded – License Manager for Super Admin');
 </script>
 <script>
 // ============================================================
-// PETROMANAGER PRO v1.5.0 — FINAL PAGE REGISTRY (LAUNCH)
+// PETROMANAGER PRO v1.6.0 — FINAL PAGE REGISTRY (LAUNCH)
 // ============================================================
 // Runs after all other parts. Ensures every menu page has a renderer
 // registered, even if a part failed to load or was reordered.
