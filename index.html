@@ -442,54 +442,70 @@
         .page-content .table-responsive,
         .page-content .intl-table-wrap,
         .page-content .sales-history-wrap {
-            border: 1px solid #e8eef5;
-            border-radius: 12px;
+            border: 1px solid #d6e0ec;
+            border-radius: 14px;
             overflow: auto;
-            background: var(--card-bg);
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(11, 26, 51, 0.04);
         }
         .page-content table.table,
         .page-content .sales-history-table {
             margin-bottom: 0 !important;
             font-size: 0.875rem;
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
         }
         .page-content table.table thead th,
         .page-content .sales-history-table thead th {
-            background: #0b1a33 !important;
+            background: linear-gradient(180deg, #0b1a33 0%, #132a4a 100%) !important;
             color: #f8fafc !important;
-            font-size: 0.7rem !important;
-            font-weight: 700 !important;
+            font-size: 0.68rem !important;
+            font-weight: 750 !important;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            padding: 12px 14px !important;
+            letter-spacing: 0.06em;
+            padding: 13px 14px !important;
             border: none !important;
+            border-bottom: 2px solid #ffc107 !important;
             white-space: nowrap;
             vertical-align: middle;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
         .page-content table.table tbody td,
         .page-content .sales-history-table tbody td {
             padding: 12px 14px !important;
             vertical-align: middle !important;
-            border-bottom: 1px solid #f1f5f9 !important;
+            border-bottom: 1px solid #edf2f7 !important;
             border-top: none !important;
             color: #1e293b;
+            background: #fff;
+        }
+        .page-content table.table tbody tr:nth-child(even) td,
+        .page-content .sales-history-table tbody tr:nth-child(even) td {
+            background: #f7fafc !important;
         }
         [data-theme="dark"] .page-content table.table tbody td,
         [data-theme="dark"] .page-content .sales-history-table tbody td {
             color: #e0e0e0;
             border-bottom-color: #333 !important;
+            background: #1e1e1e;
         }
         .page-content table.table tbody tr:last-child td {
             border-bottom: none !important;
         }
-        .page-content table.table tbody tr:hover td {
-            background: #f8fafc !important;
+        .page-content table.table tbody tr:hover td,
+        .page-content .sales-history-table tbody tr:hover td {
+            background: #eef6ff !important;
         }
         [data-theme="dark"] .page-content table.table tbody tr:hover td {
             background: #2a2a2a !important;
         }
         .page-content .num {
             font-variant-numeric: tabular-nums;
-            font-weight: 600;
+            font-weight: 650;
+            font-feature-settings: "tnum";
         }
 
         .page-content .btn {
@@ -617,11 +633,11 @@
         .product-badge {
             padding: 2px 10px; border-radius: 12px; font-size: .72rem; font-weight: 600;
         }
-        .product-badge.petrol { background: #cfe2ff; color: #084298; }
-        .product-badge.diesel { background: #f8d7da; color: #58151c; }
-        .product-badge.gas { background: #d1ecf1; color: #0c5460; }
-        .product-badge.paraffin { background: #e2d9f3; color: #4a2d7a; }
-        .product-badge.custom { background: #e9ecef; color: #1a2a4a; }
+        .product-badge.petrol { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .product-badge.diesel { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .product-badge.gas { background: #ccfbf1; color: #115e59; border: 1px solid #5eead4; }
+        .product-badge.paraffin { background: #ede9fe; color: #5b21b6; border: 1px solid #c4b5fd; }
+        .product-badge.custom { background: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; }
         .recurring-badge { background: #e2d9f3; color: #4a2d7a; font-size: 0.65rem; padding: 2px 8px; border-radius: 12px; font-weight: 600; }
         .shortage-badge { background: #dc3545; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
         .excess-badge { background: #198754; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
@@ -1683,22 +1699,25 @@
         }
         .intl-table-wrap .table { margin: 0; font-size: 0.84rem; border-collapse: separate; border-spacing: 0; }
         .intl-table-wrap thead th {
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            background: linear-gradient(180deg, #0b1a33 0%, #132a4a 100%);
             color: #f8fafc;
             font-size: 0.68rem;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            padding: 11px 14px;
+            padding: 12px 14px;
             border: none;
+            border-bottom: 2px solid #ffc107;
             white-space: nowrap;
         }
         .intl-table-wrap tbody td {
             padding: 12px 14px;
             vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9;
-            color: #334155;
+            border-bottom: 1px solid #edf2f7;
+            color: #1e293b;
         }
+        .intl-table-wrap tbody tr:nth-child(even) td { background: #f7fafc; }
+        .intl-table-wrap tbody tr:hover td { background: #eef6ff !important; }
         [data-theme="dark"] .intl-table-wrap tbody td {
             color: #e0e0e0;
             border-bottom-color: #333;
@@ -1916,12 +1935,13 @@
             position: sticky;
             top: 0;
             z-index: 3;
-            background: #0f172a;
+            background: linear-gradient(180deg, #0b1a33 0%, #132a4a 100%);
             color: #f8fafc;
             font-size: 0.72rem;
-            font-weight: 650;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            border-bottom: 2px solid #ffc107;
             padding: 14px 16px;
             border: none;
             white-space: nowrap;
@@ -2894,93 +2914,98 @@
             opacity: 0.85;
         }
         body.pm-v16 .hs-tile {
-            border: 1px solid transparent;
-            background: #ffffff;
-            border-radius: 16px;
+            border: 1px solid var(--tile-border, rgba(15,23,42,0.06));
+            background: var(--tile-bg, #ffffff);
+            border-radius: 18px;
             min-height: 0;
-            padding: 16px 12px;
+            padding: 18px 14px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             text-align: center;
             cursor: pointer;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 4px 14px rgba(15, 23, 42, 0.04);
-            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            box-shadow: 0 2px 8px rgba(11, 26, 51, 0.05);
+            transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
             position: relative;
             overflow: hidden;
         }
-        body.pm-v16 .hs-tile::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            opacity: 0.12;
-            pointer-events: none;
-            background: var(--tile-tint, transparent);
-        }
         body.pm-v16 .hs-tile:hover {
             transform: translateY(-3px);
-            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
-            border-color: rgba(15, 23, 42, 0.06);
+            box-shadow: 0 12px 28px rgba(11, 26, 51, 0.12);
+            border-color: var(--tile-border-hover, rgba(15,23,42,0.1));
         }
         body.pm-v16 .hs-tile .hs-ico {
-            width: 54px; height: 54px;
+            width: 56px; height: 56px;
             display: flex; align-items: center; justify-content: center;
             font-size: 1.55rem;
             line-height: 1;
-            border-radius: 14px;
+            border-radius: 16px;
             background: var(--tile-icon-bg, #eef2ff);
             color: var(--tile-icon, #3b6db5);
-            position: relative;
-            z-index: 1;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5);
         }
         body.pm-v16 .hs-tile .hs-label {
-            font-weight: 700;
+            font-weight: 750;
             font-size: 0.9rem;
-            color: #1e293b;
-            letter-spacing: -0.015em;
-            position: relative;
-            z-index: 1;
+            color: #0f172a;
+            letter-spacing: -0.02em;
         }
         body.pm-v16 .hs-tile.tone-sale {
-            --tile-tint: linear-gradient(145deg, #ffedd5, #fff7ed);
-            --tile-icon-bg: #ffedd5;
+            --tile-bg: linear-gradient(160deg, #fff7ed 0%, #ffedd5 100%);
+            --tile-border: #fed7aa;
+            --tile-border-hover: #fdba74;
+            --tile-icon-bg: #fff;
             --tile-icon: #c2410c;
         }
         body.pm-v16 .hs-tile.tone-shift {
-            --tile-tint: linear-gradient(145deg, #ccfbf1, #f0fdfa);
-            --tile-icon-bg: #ccfbf1;
+            --tile-bg: linear-gradient(160deg, #f0fdfa 0%, #ccfbf1 100%);
+            --tile-border: #99f6e4;
+            --tile-border-hover: #5eead4;
+            --tile-icon-bg: #fff;
             --tile-icon: #0f766e;
         }
         body.pm-v16 .hs-tile.tone-stock {
-            --tile-tint: linear-gradient(145deg, #dbeafe, #eff6ff);
-            --tile-icon-bg: #dbeafe;
+            --tile-bg: linear-gradient(160deg, #eff6ff 0%, #dbeafe 100%);
+            --tile-border: #bfdbfe;
+            --tile-border-hover: #93c5fd;
+            --tile-icon-bg: #fff;
             --tile-icon: #1d4ed8;
         }
         body.pm-v16 .hs-tile.tone-money {
-            --tile-tint: linear-gradient(145deg, #dcfce7, #f0fdf4);
-            --tile-icon-bg: #dcfce7;
+            --tile-bg: linear-gradient(160deg, #f0fdf4 0%, #dcfce7 100%);
+            --tile-border: #bbf7d0;
+            --tile-border-hover: #86efac;
+            --tile-icon-bg: #fff;
             --tile-icon: #15803d;
         }
         body.pm-v16 .hs-tile.tone-report {
-            --tile-tint: linear-gradient(145deg, #fef3c7, #fffbeb);
-            --tile-icon-bg: #fef3c7;
+            --tile-bg: linear-gradient(160deg, #fffbeb 0%, #fef3c7 100%);
+            --tile-border: #fde68a;
+            --tile-border-hover: #fcd34d;
+            --tile-icon-bg: #fff;
             --tile-icon: #b45309;
         }
         body.pm-v16 .hs-tile.tone-people {
-            --tile-tint: linear-gradient(145deg, #ede9fe, #f5f3ff);
-            --tile-icon-bg: #ede9fe;
+            --tile-bg: linear-gradient(160deg, #f5f3ff 0%, #ede9fe 100%);
+            --tile-border: #ddd6fe;
+            --tile-border-hover: #c4b5fd;
+            --tile-icon-bg: #fff;
             --tile-icon: #6d28d9;
         }
         body.pm-v16 .hs-tile.tone-care {
-            --tile-tint: linear-gradient(145deg, #e2e8f0, #f8fafc);
-            --tile-icon-bg: #e2e8f0;
+            --tile-bg: linear-gradient(160deg, #f8fafc 0%, #e2e8f0 100%);
+            --tile-border: #cbd5e1;
+            --tile-border-hover: #94a3b8;
+            --tile-icon-bg: #fff;
             --tile-icon: #475569;
         }
         body.pm-v16 .hs-tile.tone-admin {
-            --tile-tint: linear-gradient(145deg, #fce7f3, #fdf2f8);
-            --tile-icon-bg: #fce7f3;
+            --tile-bg: linear-gradient(160deg, #fdf2f8 0%, #fce7f3 100%);
+            --tile-border: #fbcfe8;
+            --tile-border-hover: #f9a8d4;
+            --tile-icon-bg: #fff;
             --tile-icon: #be123c;
         }
         @media (max-width: 1200px) {
@@ -3037,13 +3062,50 @@
         }
         body.pm-v16 .page-content table.table thead th,
         body.pm-v16 .page-content .sales-history-table thead th,
-        body.pm-v16 .intl-table-wrap thead th {
-            background: #0b2c6b !important;
+        body.pm-v16 .intl-table-wrap thead th,
+        body.pm-v16 .sales-history-table thead th {
+            background: linear-gradient(180deg, #0b1a33 0%, #132a4a 100%) !important;
             color: #f5f8ff !important;
             font-size: 0.68rem !important;
             letter-spacing: 0.06em !important;
+            border-bottom: 2px solid #ffc107 !important;
         }
-        body.pm-v16 .page-content table.table tbody tr:nth-child(even) td { background: #f4f7fb; }
+        body.pm-v16 .page-content table.table tbody tr:nth-child(even) td,
+        body.pm-v16 .intl-table-wrap tbody tr:nth-child(even) td,
+        body.pm-v16 .sales-history-table tbody tr:nth-child(even) td {
+            background: #f4f7fb !important;
+        }
+        body.pm-v16 .page-content table.table tbody tr:hover td,
+        body.pm-v16 .intl-table-wrap tbody tr:hover td,
+        body.pm-v16 .sales-history-table tbody tr:hover td {
+            background: #e8f1fc !important;
+        }
+        body.pm-v16 .intl-table-wrap,
+        body.pm-v16 .sales-history-wrap,
+        body.pm-v16 .page-content .table-responsive {
+            border-radius: 14px !important;
+            border-color: #d6e0ec !important;
+            box-shadow: 0 1px 3px rgba(11, 26, 51, 0.04);
+        }
+        body.pm-v16 .page-content .form-control,
+        body.pm-v16 .page-content .form-select {
+            border-radius: 10px !important;
+            border-color: #d5dee9 !important;
+            min-height: 40px;
+        }
+        body.pm-v16 .page-content .form-label {
+            font-size: 0.72rem !important;
+            font-weight: 750 !important;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #64748b !important;
+        }
+        body.pm-v16 .page-content .card-box,
+        body.pm-v16 .page-content .fin-action-card,
+        body.pm-v16 .page-content .fin-ledger-card,
+        body.pm-v16 .page-content .ms-form-card {
+            border-radius: 14px !important;
+        }
         body.pm-v16 .page-content .btn-primary,
         body.pm-v16 .intl-form .btn-intl-primary {
             background: #0b2c6b !important;
@@ -3406,7 +3468,7 @@
                     </div>
                     <div class="mb-2">
                         <label class="form-label" for="payAmount">Amount *</label>
-                        <input type="number" id="payAmount" class="form-control" step="1" min="1" placeholder="Amount received">
+                        <input type="number" id="payAmount" class="form-control" step="1" min="0" placeholder="Amount received">
                     </div>
                     <div class="mb-2">
                         <label class="form-label" for="payMethod">Method</label>
@@ -8687,7 +8749,7 @@ async function renderShortageRecovery() {
                         <div class="mb-2"><label class="form-label">Station *</label>
                             <select id="spStation" class="form-select" required>${stationOpts}</select></div>
                         <div class="mb-2"><label class="form-label">Amount received *</label>
-                            <input type="number" id="spAmount" class="form-control" step="1" min="1" required placeholder="e.g. 50000">
+                            <input type="number" id="spAmount" class="form-control" step="1" min="0" required placeholder="e.g. 50000">
                             <div class="form-text" id="spRemainingHint">Select a cashier to see outstanding balance</div>
                         </div>
                         <div class="mb-2"><label class="form-label">Deposit into *</label>
@@ -8710,7 +8772,7 @@ async function renderShortageRecovery() {
                         <div class="mb-2"><label class="form-label">Station</label>
                             <select id="sfStation" class="form-select">${stationOpts}</select></div>
                         <div class="mb-2"><label class="form-label">Amount to forgive *</label>
-                            <input type="number" id="sfAmount" class="form-control" step="1" min="1" required placeholder="e.g. 20000">
+                            <input type="number" id="sfAmount" class="form-control" step="1" min="0" required placeholder="e.g. 20000">
                             <div class="form-text" id="sfRemainingHint">Select a cashier to see outstanding balance</div>
                         </div>
                         <div class="mb-2"><label class="form-label">Explanation from cashier *</label>
@@ -9095,8 +9157,8 @@ async function renderInventory() {
             '</select></td>' +
             '<td><input type="text" id="invAddProduct" class="form-control form-control-sm" placeholder="Product name" list="productList"></td>' +
             '<td><input type="number" id="invAddQty" class="form-control form-control-sm text-end" step="0.01" min="0" placeholder="0"></td>' +
-            '<td><input type="number" id="invAddCost" class="form-control form-control-sm text-end" step="10" min="0" placeholder="Cost"></td>' +
-            '<td><input type="number" id="invAddSell" class="form-control form-control-sm text-end" step="10" min="0" placeholder="Sell"></td>' +
+            '<td><input type="number" id="invAddCost" class="form-control form-control-sm text-end" step="1" min="0" placeholder="Cost"></td>' +
+            '<td><input type="number" id="invAddSell" class="form-control form-control-sm text-end" step="1" min="0" placeholder="Sell"></td>' +
             '<td class="text-muted small text-center">—</td>' +
             '<td><button type="button" class="btn btn-sm btn-success w-100" id="invAddBtn"><i class="bi bi-plus-lg"></i> Add</button></td>' +
             '</tr>';
@@ -9254,8 +9316,8 @@ async function renderInventory() {
                 <td><select class="form-select form-select-sm edit-station">${stationOptsEdit}</select></td>
                 <td><input type="text" class="form-control form-control-sm edit-product" value="${esc(productText)}"></td>
                 <td><input type="number" class="form-control form-control-sm edit-qty text-end" step="0.01" min="0" value="${qtyText}"></td>
-                <td><input type="number" class="form-control form-control-sm edit-cost text-end" step="10" min="0" value="${costText}"></td>
-                <td><input type="number" class="form-control form-control-sm edit-sell text-end" step="10" min="0" value="${sellText}"></td>
+                <td><input type="number" class="form-control form-control-sm edit-cost text-end" step="1" min="0" value="${costText}"></td>
+                <td><input type="number" class="form-control form-control-sm edit-sell text-end" step="1" min="0" value="${sellText}"></td>
                 <td class="text-end text-nowrap">
                     <button class="btn btn-sm btn-success save-edit-btn me-1"><i class="bi bi-check"></i></button>
                     <button class="btn btn-sm btn-secondary cancel-edit-btn"><i class="bi bi-x"></i></button>
@@ -9560,7 +9622,7 @@ async function renderStock() {
                 <input type="number" class="form-control offload-qty text-end" step="0.01" min="0.01" value="${qty}" placeholder="0.00" style="min-height:38px;border-radius:8px;">
             </td>
             <td>
-                <input type="number" class="form-control offload-cost text-end" step="10" min="0" value="${cost}" placeholder="0" style="min-height:38px;border-radius:8px;">
+                <input type="number" class="form-control offload-cost text-end" step="1" min="0" value="${cost}" placeholder="0" style="min-height:38px;border-radius:8px;">
             </td>
             <td class="text-end">
                 <span class="offload-line-total fw-bold" style="font-variant-numeric:tabular-nums;">0</span>
@@ -10172,13 +10234,13 @@ async function renderAdjustments() {
                         <div id="adjCostSection" style="display:none;">
                             <div class="form-field">
                                 <label class="form-label" for="adjCost">New cost price *</label>
-                                <input type="number" id="adjCost" class="form-control" step="10" min="0" placeholder="e.g. 3800">
+                                <input type="number" id="adjCost" class="form-control" step="1" min="0" placeholder="e.g. 3800">
                             </div>
                         </div>
                         <div id="adjSellSection" style="display:none;">
                             <div class="form-field">
                                 <label class="form-label" for="adjSell">New selling price *</label>
-                                <input type="number" id="adjSell" class="form-control" step="10" min="0" placeholder="e.g. 4200">
+                                <input type="number" id="adjSell" class="form-control" step="1" min="0" placeholder="e.g. 4200">
                             </div>
                         </div>
                         <div class="form-field">
@@ -10645,10 +10707,10 @@ async function renderFuelPrices() {
                     <td><span class="inv-product-chip ${esc(pKey)}">${esc(item.product_type || '—')}</span></td>
                     <td class="text-end"><span class="inv-qty-cell${qty < LOW_STOCK_THRESHOLD ? ' low' : ''}">${qty.toFixed(0)}</span></td>
                     <td class="text-end" style="min-width:110px;">
-                        <input type="number" class="form-control form-control-sm text-end price-cost" value="${cost}" step="10" min="0" style="min-height:36px;border-radius:8px;">
+                        <input type="number" class="form-control form-control-sm text-end price-cost" value="${cost}" step="1" min="0" style="min-height:36px;border-radius:8px;">
                     </td>
                     <td class="text-end" style="min-width:110px;">
-                        <input type="number" class="form-control form-control-sm text-end price-sell" value="${sell}" step="10" min="0" style="min-height:36px;border-radius:8px;">
+                        <input type="number" class="form-control form-control-sm text-end price-sell" value="${sell}" step="1" min="0" style="min-height:36px;border-radius:8px;">
                     </td>
                     <td class="text-end"><span class="${margin >= 0 ? 'inv-margin-pos' : 'inv-margin-neg'}">${margin >= 0 ? '+' : ''}${formatMoney(margin)} <span class="small">(${pct.toFixed(0)}%)</span></span></td>
                     <td class="text-end">
@@ -15344,7 +15406,7 @@ async function renderPayroll() {
                                 <div class="form-row-2">
                                     <div class="form-field">
                                         <label class="form-label" for="advAmount">Amount *</label>
-                                        <input type="number" id="advAmount" class="form-control" step="1" min="1" required placeholder="e.g. 100000">
+                                        <input type="number" id="advAmount" class="form-control" step="1" min="0" required placeholder="e.g. 100000">
                                     </div>
                                     <div class="form-field">
                                         <label class="form-label" for="advDate">Date *</label>
