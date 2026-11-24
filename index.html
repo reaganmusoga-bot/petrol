@@ -3122,7 +3122,7 @@
             box-shadow: 0 0 0 3px rgba(11, 44, 107, 0.15) !important;
         }
 
-        /* Login gate */
+        /* Login gate — clean centered form, navy/gold fuel theme */
         body.pm-v16 .gate {
             min-height: 100vh;
             min-height: 100dvh;
@@ -3131,85 +3131,137 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
-            background: #10211f;
-            padding: 28px 18px;
+            background: linear-gradient(165deg, #07111f 0%, #0b1a33 42%, #132a4a 100%);
+            padding: 24px 16px;
         }
         body.pm-v16 .gate-bg { position: absolute; inset: 0; pointer-events: none; }
         body.pm-v16 .gate-orb { position: absolute; border-radius: 50%; filter: blur(2px); }
-        body.pm-v16 .gate-orb.o1 { width: 420px; height: 420px; background: radial-gradient(circle, #1f6f66 0%, transparent 70%); left: -80px; top: -60px; }
-        body.pm-v16 .gate-orb.o2 { width: 380px; height: 380px; background: radial-gradient(circle, rgba(196,92,38,0.55) 0%, transparent 70%); right: -40px; bottom: -80px; }
+        body.pm-v16 .gate-orb.o1 {
+            width: 480px; height: 480px;
+            background: radial-gradient(circle, rgba(255,193,7,0.18) 0%, transparent 68%);
+            left: -120px; top: -100px;
+        }
+        body.pm-v16 .gate-orb.o2 {
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, rgba(56,189,248,0.12) 0%, transparent 70%);
+            right: -80px; bottom: -90px;
+        }
         body.pm-v16 .gate-grid {
-            position: absolute; inset: 0; opacity: 0.25;
-            background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
-            background-size: 48px 48px;
+            position: absolute; inset: 0; opacity: 0.2;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+            background-size: 44px 44px;
         }
         body.pm-v16 .gate-layout {
             position: relative;
             z-index: 1;
-            width: min(980px, 100%);
-            display: grid;
-            grid-template-columns: 1.05fr 0.95fr;
-            gap: 28px;
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            justify-content: center;
             align-items: center;
         }
-        body.pm-v16 .gate-story { color: #f6f1e6; padding: 12px 8px; }
-        body.pm-v16 .gate-kicker {
-            display: inline-flex; align-items: center; gap: 8px;
-            font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase;
-            font-size: 0.75rem; color: #f3c15b;
-        }
-        body.pm-v16 .gate-story h2 {
-            margin: 14px 0 10px;
-            font-size: clamp(2rem, 4vw, 3.1rem);
-            font-weight: 800;
-            letter-spacing: -0.045em;
-            line-height: 1.02;
-            color: #fff;
-        }
-        body.pm-v16 .gate-story p { margin: 0 0 18px; max-width: 36ch; color: rgba(246,241,230,0.78); font-size: 1.02rem; }
-        body.pm-v16 .gate-points { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-        body.pm-v16 .gate-points li { display: flex; gap: 8px; align-items: center; font-weight: 650; color: #f6f1e6; }
-        body.pm-v16 .gate-points i { color: #7dcec4; }
+        body.pm-v16 .gate-story { display: none !important; }
         body.pm-v16 .gate-card {
-            background: #fffdf8;
-            border-radius: 28px;
-            padding: 28px 26px 18px;
-            box-shadow: 0 30px 70px rgba(0,0,0,0.28);
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 36px 32px 24px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+            border: 1px solid rgba(255,255,255,0.08);
         }
-        body.pm-v16 .gate-brand { display: flex; gap: 12px; align-items: center; margin-bottom: 18px; }
+        body.pm-v16 .gate-brand {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 10px;
+            margin-bottom: 28px;
+        }
         body.pm-v16 .gate-mark {
-            width: 52px; height: 52px; border-radius: 16px;
-            background: #123c3a; color: #f3c15b;
-            display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+            width: 64px; height: 64px; border-radius: 18px;
+            background: linear-gradient(145deg, #0b1a33, #1a3a6a);
+            color: #ffc107;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.7rem;
+            box-shadow: 0 10px 24px rgba(11,26,51,0.28);
         }
-        body.pm-v16 .gate-brand h1 { margin: 0; font-size: 1.45rem; font-weight: 800; letter-spacing: -0.03em; color: #123c3a; }
-        body.pm-v16 .gate-brand p { margin: 0; color: #7d7064; font-size: 0.88rem; }
+        body.pm-v16 .gate-brand h1 {
+            margin: 0;
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #0b1a33;
+        }
+        body.pm-v16 .gate-brand p { display: none; }
         body.pm-v16 .gate-label {
-            display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em;
-            text-transform: uppercase; color: #7d7064; margin: 8px 0 6px;
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 750;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin: 0 0 6px;
         }
-        body.pm-v16 .gate-field { margin-bottom: 4px; }
+        body.pm-v16 .gate-field { margin-bottom: 14px; }
         body.pm-v16 .gate-card .form-control {
-            min-height: 48px; border-radius: 12px; border: 1.5px solid #e4dccd; background: #fff;
+            min-height: 50px;
+            border-radius: 12px;
+            border: 1.5px solid #e2e8f0;
+            background: #fff;
+            font-size: 0.95rem;
+            color: #0f172a;
+            box-shadow: none;
+        }
+        body.pm-v16 .gate-card .form-control:focus {
+            border-color: #0b1a33;
+            box-shadow: 0 0 0 3px rgba(11, 26, 51, 0.12);
         }
         body.pm-v16 .gate-card .btn-login {
-            width: 100%; min-height: 48px; margin-top: 16px; border: 0; border-radius: 14px;
-            font-weight: 800; background: #c45c26; color: #fff;
-            box-shadow: 0 10px 22px rgba(196,92,38,0.28);
+            width: 100%;
+            min-height: 50px;
+            margin-top: 8px;
+            border: 0;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            letter-spacing: 0.02em;
+            background: linear-gradient(135deg, #ffc107 0%, #f59e0b 100%);
+            color: #0b1a33;
+            box-shadow: 0 10px 22px rgba(245, 158, 11, 0.32);
         }
-        body.pm-v16 .gate-card .btn-login:hover { filter: brightness(1.05); color: #fff; }
+        body.pm-v16 .gate-card .btn-login:hover {
+            filter: brightness(1.03);
+            color: #0b1a33;
+            transform: translateY(-1px);
+        }
         body.pm-v16 .gate-card .password-toggle {
-            position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-            border: 0; background: transparent; color: #8d8074;
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            border: 0; background: transparent; color: #94a3b8;
+            padding: 6px; border-radius: 8px; cursor: pointer;
         }
+        body.pm-v16 .gate-card .password-toggle:hover { color: #0b1a33; background: #f1f5f9; }
         body.pm-v16 .gate-setup {
-            display: block; width: 100%; margin-top: 12px; border: 0; background: transparent;
-            color: #1f6f66; font-weight: 700; font-size: 0.86rem; cursor: pointer;
+            display: block; width: 100%; margin-top: 14px; border: 0; background: transparent;
+            color: #64748b; font-weight: 600; font-size: 0.84rem; cursor: pointer;
         }
-        body.pm-v16 .gate-card .login-panel-foot { margin-top: 16px; text-align: center; color: #a89888; font-size: 0.72rem; }
-        @media (max-width: 860px) {
-            body.pm-v16 .gate-layout { grid-template-columns: 1fr; }
-            body.pm-v16 .gate-story { display: none; }
+        body.pm-v16 .gate-setup:hover { color: #0b1a33; }
+        body.pm-v16 .gate-card .login-panel-foot {
+            margin-top: 18px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.72rem;
+            font-weight: 500;
+        }
+        body.pm-v16 .gate-card .login-panel-foot strong { color: #64748b; }
+        body.pm-v16 #createCompanyForm h5 {
+            font-weight: 800;
+            color: #0b1a33;
+            letter-spacing: -0.02em;
+        }
+        @media (max-width: 480px) {
+            body.pm-v16 .gate-card { padding: 28px 20px 20px; border-radius: 16px; }
         }
 
     </style>
@@ -3227,23 +3279,10 @@
             <span class="gate-grid"></span>
         </div>
         <div class="gate-layout">
-            <section class="gate-story">
-                <div class="gate-kicker"><i class="bi bi-fuel-pump-fill"></i> PetroManager</div>
-                <h2>Station control,<br>without the noise.</h2>
-                <p>Sell, shift, stock and pay from one calm desk. Your books stay exactly where they are.</p>
-                <ul class="gate-points">
-                    <li><i class="bi bi-check2-circle"></i> One screen for the till</li>
-                    <li><i class="bi bi-check2-circle"></i> Shifts, meters and shortages</li>
-                    <li><i class="bi bi-check2-circle"></i> Payroll, banks and reports</li>
-                </ul>
-            </section>
             <section class="gate-card">
                 <div class="gate-brand">
-                    <div class="gate-mark"><i class="bi bi-droplet-half"></i></div>
-                    <div>
-                        <h1>Sign in</h1>
-                        <p>Your station network</p>
-                    </div>
+                    <div class="gate-mark"><i class="bi bi-fuel-pump-fill"></i></div>
+                    <h1>PetroManager</h1>
                 </div>
                 <div id="normalLogin">
                     <form id="loginForm" autocomplete="off">
