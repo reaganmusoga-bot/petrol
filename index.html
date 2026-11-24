@@ -2670,6 +2670,14 @@
             background: var(--navy);
             border-top: 0;
             min-height: 46px;
+            position: relative;
+            z-index: 1030;
+            pointer-events: auto;
+        }
+        body.pm-v16 .pm-topmenu .tm-link,
+        body.pm-v16 .pm-topmenu .dropdown-item {
+            pointer-events: auto;
+            cursor: pointer;
         }
         body.pm-v16 .pm-topmenu::-webkit-scrollbar { height: 0; }
         body.pm-v16 .tm-link {
@@ -2737,7 +2745,7 @@
         body.pm-v16 .hs-home {
             height: 100%;
             display: grid;
-            grid-template-columns: 200px 1fr;
+            grid-template-columns: 200px 1fr 260px;
             gap: 12px;
             min-height: 0;
         }
@@ -2747,6 +2755,7 @@
             gap: 8px;
             min-height: 0;
             overflow: hidden;
+            height: 100%;
         }
         body.pm-v16 .hs-rail-btn {
             border: 0;
@@ -2759,16 +2768,105 @@
             font-size: 0.88rem;
             cursor: pointer;
             transition: background 0.12s ease, transform 0.12s ease;
-            flex: 0 0 auto;
+            flex: 1 1 0;
+            min-height: 0;
+            display: flex;
+            align-items: center;
         }
         body.pm-v16 .hs-rail-btn:hover { background: var(--navy-deep); transform: translateX(2px); }
         body.pm-v16 .hs-grid {
             display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             grid-template-rows: repeat(4, minmax(0, 1fr));
             gap: 12px;
             min-height: 0;
             height: 100%;
+        }
+        body.pm-v16 .hs-right {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        body.pm-v16 .hs-qa-card {
+            background: #fff;
+            border: 1px solid #e2e8f2;
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 2px 8px rgba(11, 44, 107, 0.04);
+            flex: 0 0 auto;
+        }
+        body.pm-v16 .hs-qa-card h6 {
+            margin: 0 0 10px;
+            font-size: 0.78rem;
+            font-weight: 750;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+        }
+        body.pm-v16 .hs-qa-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: #0b1a33;
+            text-align: left;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-bottom: 8px;
+            transition: background 0.12s, border-color 0.12s;
+        }
+        body.pm-v16 .hs-qa-btn:last-child { margin-bottom: 0; }
+        body.pm-v16 .hs-qa-btn:hover {
+            background: #eef2ff;
+            border-color: #c7d2fe;
+        }
+        body.pm-v16 .hs-qa-btn i { color: #0b1a33; font-size: 1.1rem; width: 20px; text-align: center; }
+        body.pm-v16 .hs-ad-slot {
+            flex: 1 1 0;
+            min-height: 120px;
+            background: linear-gradient(160deg, #0b1a33 0%, #1e3a5f 100%);
+            border-radius: 12px;
+            color: #fff;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            position: relative;
+            overflow: hidden;
+        }
+        body.pm-v16 .hs-ad-slot::before {
+            content: '';
+            position: absolute;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            right: -40px; top: -40px;
+            background: radial-gradient(circle, rgba(255,193,7,0.25) 0%, transparent 70%);
+        }
+        body.pm-v16 .hs-ad-slot .ad-label {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 6px;
+        }
+        body.pm-v16 .hs-ad-slot .ad-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 4px;
+        }
+        body.pm-v16 .hs-ad-slot .ad-sub {
+            font-size: 0.8rem;
+            opacity: 0.85;
         }
         body.pm-v16 .hs-tile {
             border: 1px solid #e2e8f2;
@@ -2813,9 +2911,14 @@
         body.pm-v16 .hs-tile.tone-people .hs-ico { color: #7c3aed; }
         body.pm-v16 .hs-tile.tone-care .hs-ico { color: #475569; }
         body.pm-v16 .hs-tile.tone-admin .hs-ico { color: #be123c; }
-        @media (max-width: 1100px) {
-            body.pm-v16 .hs-home { grid-template-columns: 170px 1fr; }
+        @media (max-width: 1200px) {
+            body.pm-v16 .hs-home { grid-template-columns: 170px 1fr 220px; }
             body.pm-v16 .hs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+        }
+        @media (max-width: 960px) {
+            body.pm-v16 .hs-home { grid-template-columns: 160px 1fr; }
+            body.pm-v16 .hs-right { display: none; }
+            body.pm-v16 .hs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         }
         @media (max-width: 800px) {
             body.pm-v16 .hs-home { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
@@ -2823,9 +2926,11 @@
                 flex-direction: row;
                 flex-wrap: wrap;
                 gap: 6px;
+                height: auto;
             }
-            body.pm-v16 .hs-rail-btn { padding: 8px 12px; font-size: 0.8rem; }
+            body.pm-v16 .hs-rail-btn { padding: 8px 12px; font-size: 0.8rem; flex: 0 0 auto; }
             body.pm-v16 .hs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+            body.pm-v16 .hs-right { display: none; }
             body.pm-v16 .pm-search { display: none; }
         }
         @media (max-width: 560px) {
@@ -6018,15 +6123,44 @@ async function renderDashboard() {
             <span class="hs-label">${esc(t.label)}</span>
         </button>`).join('');
 
+    // Right panel — QuickBooks POS style: quick actions + ad/promo slot
+    const qaItems = isCashier
+        ? [
+            { page: 'sales', label: 'New sale', icon: 'bi-cart-plus' },
+            { page: 'shifts', label: 'Open / close shift', icon: 'bi-clock' },
+            { page: 'messages', label: 'Messages', icon: 'bi-chat-dots' }
+          ]
+        : [
+            { page: 'sales', label: 'New sale', icon: 'bi-cart-plus' },
+            { page: 'balancing', label: 'Balance a shift', icon: 'bi-balance-scale' },
+            { page: 'stock', label: 'Receive fuel', icon: 'bi-truck' },
+            { page: 'financials', label: 'Collect payment', icon: 'bi-cash-stack' },
+            { page: 'reports', label: 'Reports', icon: 'bi-bar-chart' }
+          ];
+    const qaHtml = qaItems.map(q =>
+        `<button type="button" class="hs-qa-btn" data-page="${esc(q.page)}"><i class="bi ${esc(q.icon)}"></i><span>${esc(q.label)}</span></button>`
+    ).join('');
+
     const pageEl = document.getElementById('pageContent');
     if (pageEl) {
         pageEl.innerHTML = `
         <div class="hs-home">
             <aside class="hs-rail" aria-label="Quick links">${railHtml}</aside>
             <div class="hs-grid" aria-label="Navigator">${tilesHtml}</div>
+            <aside class="hs-right" aria-label="Quick actions">
+                <div class="hs-qa-card">
+                    <h6>Quick actions</h6>
+                    ${qaHtml}
+                </div>
+                <div class="hs-ad-slot">
+                    <div class="ad-label">PetroManager Pro</div>
+                    <div class="ad-title">Run your station smarter</div>
+                    <div class="ad-sub">Meters · shifts · payables · reports in one place</div>
+                </div>
+            </aside>
         </div>`;
     }
-    document.querySelectorAll('.hs-rail-btn, .hs-tile').forEach(el => {
+    document.querySelectorAll('.hs-rail-btn, .hs-tile, .hs-qa-btn').forEach(el => {
         el.addEventListener('click', function () {
             const page = this.dataset.page;
             if (page && typeof navigate === 'function') navigate(page);
@@ -6654,22 +6788,18 @@ async function renderSales() {
                         custExists = true;
                         currentBal = Number(custDoc.data().current_balance) || 0;
                     }
-                    // Credit-limit check INSIDE transaction (prevents race)
+                    // Credit-limit check INSIDE transaction (all reads via tx)
+                    // Prefer deterministic doc id; do NOT run a free query inside the transaction
+                    // (Firestore requires all reads before writes; non-tx queries are unsafe here)
                     const limitId = 'cl_' + companyId + '_' + customerId;
                     const limitRef = db.collection('credit_limits').doc(limitId);
                     const limitDoc = await tx.get(limitRef);
                     let limitVal = 0;
                     if (limitDoc.exists) {
                         limitVal = Number(limitDoc.data().limit) || 0;
-                    } else {
-                        // Fallback: query the legacy random-id documents once
-                        try {
-                            const snap = await db.collection('credit_limits')
-                                .where('customer_id', '==', String(customerId))
-                                .limit(1).get();
-                            if (!snap.empty) limitVal = Number(snap.docs[0].data().limit) || 0;
-                        } catch (_) { /* index may not exist; ignore */ }
                     }
+                    // Note: legacy random-id credit_limits are not read inside the tx.
+                    // Migrate them to cl_{companyId}_{customerId} outside the sale path if needed.
                     if (limitVal > 0 && (currentBal + grandTotal) > limitVal) {
                         throw new Error(
                             'Credit limit exceeded. Limit: ' + formatMoney(limitVal) +
@@ -7181,7 +7311,9 @@ async function renderShifts() {
     const displayProducts = productTypes.length > 0 ? productTypes : ['Petrol', 'Diesel', 'Gas', 'Paraffin'];
 
     const isCashier = roleNorm(state.user.role) === 'cashier';
-    const myActive = shifts.find(s => String(s.cashier_id) === String(state.user.id) && s.status === 'active');
+    // Support multiple concurrent active shifts (day/night or multi-station)
+    const myActiveShifts = shifts.filter(s => String(s.cashier_id) === String(state.user.id) && s.status === 'active');
+    const myActive = myActiveShifts[0] || null;
 
     let startFields = '';
     displayProducts.forEach(p => {
@@ -7336,16 +7468,17 @@ async function renderShifts() {
             e.preventDefault();
             const openingFloat = parseFloat(document.getElementById('shiftOpeningFloat').value) || 0;
             const shiftType = document.getElementById('shiftType').value;
-            const stationId = String(state.user.station_id);
-            // Deterministic doc id prevents two tabs opening two active shifts
+            const stationId = String(state.user.station_id || state.currentStationId || '');
+            // One active shift per (station + cashier + day + shift_type).
+            // Allows day + night (or multiple stations) independently.
             const today = (typeof _localIsoDate === 'function')
                 ? _localIsoDate(new Date())
                 : new Date().toISOString().slice(0, 10);
-            const shiftDocId = 'active_' + stationId + '_' + state.user.id + '_' + today;
+            const shiftDocId = 'active_' + stationId + '_' + state.user.id + '_' + today + '_' + String(shiftType || 'day');
             try {
                 const existing = await getDoc('shifts', shiftDocId);
                 if (existing && existing.status === 'active') {
-                    toast('You already have an active shift for today', 'warning');
+                    toast('You already have an active ' + (shiftType || 'day') + ' shift for today on this station', 'warning');
                     return;
                 }
                 const data = {
@@ -7363,7 +7496,7 @@ async function renderShifts() {
                     data['start_' + String(p).toLowerCase()] = el ? (parseFloat(el.value) || 0) : 0;
                 });
                 await db.collection('shifts').doc(shiftDocId).set(data);
-                await logAudit('start_shift', { opening_float: openingFloat, shift_id: shiftDocId });
+                await logAudit('start_shift', { opening_float: openingFloat, shift_id: shiftDocId, shift_type: shiftType });
                 toast('Shift started · float ' + formatMoney(openingFloat));
                 renderShifts();
             } catch (err) {
@@ -7759,7 +7892,50 @@ async function renderBalancing() {
 
             unreconciledShifts.sort((a, b) => b._createdAt - a._createdAt);
             currentIndex = 0;
-            await displayShift(stationId, cashierId, unreconciledShifts[currentIndex], unreconciledShifts.length);
+
+            // Show ALL unreconciled shifts as independent cards so each can be balanced separately
+            if (unreconciledShifts.length === 1) {
+                await displayShift(stationId, cashierId, unreconciledShifts[0], 1);
+            } else {
+                let listHtml = `
+                    <div class="card-box mb-3">
+                        <h6 class="mb-2"><i class="bi bi-list-check"></i> ${unreconciledShifts.length} unreconciled shifts — pick one to balance</h6>
+                        <p class="small text-muted mb-3">Each shift is independent. Balance them one by one; already-reconciled shifts stay hidden.</p>
+                        <div class="row g-2">`;
+                unreconciledShifts.forEach((s, idx) => {
+                    const when = s._createdAt ? s._createdAt.toLocaleString() : '—';
+                    const stype = (s.shift_type || 'day').toString();
+                    listHtml += `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="border rounded-3 p-3 h-100" style="background:#f8fafc;">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge ${stype === 'night' ? 'badge-night' : 'badge-day'}">${esc(stype)}</span>
+                                    <span class="small text-muted">#${idx + 1}</span>
+                                </div>
+                                <div class="fw-semibold mb-1">${esc(when)}</div>
+                                <div class="small text-muted mb-2">Float ${formatMoney(s.opening_float || 0)} · Closing cash ${formatMoney(s.closing_cash || 0)}</div>
+                                <button type="button" class="btn btn-sm btn-primary bal-pick-shift-btn" data-idx="${idx}">
+                                    <i class="bi bi-balance-scale"></i> Balance this shift
+                                </button>
+                            </div>
+                        </div>`;
+                });
+                listHtml += `</div></div><div id="balancingDetailSlot"></div>`;
+                document.getElementById('balancingResult').innerHTML = listHtml;
+                document.querySelectorAll('.bal-pick-shift-btn').forEach(btn => {
+                    btn.onclick = async function () {
+                        const i = parseInt(this.dataset.idx, 10);
+                        if (isNaN(i) || !unreconciledShifts[i]) return;
+                        currentIndex = i;
+                        showLoading(true);
+                        try {
+                            await displayShift(stationId, cashierId, unreconciledShifts[i], unreconciledShifts.length);
+                        } finally {
+                            showLoading(false);
+                        }
+                    };
+                });
+            }
         } catch (err) {
             console.error('Balancing error:', err);
             document.getElementById('balancingResult').innerHTML = `<div class="alert alert-danger">Error: ${esc(err.message)}</div>`;
@@ -16120,14 +16296,28 @@ buildSidebar = function() {
     nav.innerHTML = html;
     if (legacy && legacy !== nav) legacy.innerHTML = '';
 
+    // Reliable navigation for top links + dropdown items
+    // (Bootstrap dropdowns can swallow clicks; use capture + stopPropagation)
     nav.querySelectorAll('[data-page]').forEach(a => {
         if (a.dataset.page === state.currentPage) a.classList.add('active');
         a.addEventListener('click', function (e) {
             const targetPage = this.dataset.page;
             if (!targetPage) return;
             e.preventDefault();
-            navigate(targetPage);
-        });
+            e.stopPropagation();
+            // Close any open Bootstrap dropdown
+            try {
+                const dd = this.closest('.dropdown');
+                if (dd) {
+                    const toggle = dd.querySelector('[data-bs-toggle="dropdown"]');
+                    if (toggle && typeof bootstrap !== 'undefined') {
+                        const inst = bootstrap.Dropdown.getInstance(toggle);
+                        if (inst) inst.hide();
+                    }
+                }
+            } catch (_) {}
+            if (typeof navigate === 'function') navigate(targetPage);
+        }, true);
     });
 };
 
