@@ -3140,13 +3140,9 @@
 
         /* Login gate — immersive full-bleed design (no card demarcation) */
         body.pm-v16 .gate {
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
+            min-height: 100vh; min-height: 100dvh;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
             background: #060d1a;
             background-image:
                 radial-gradient(ellipse 90% 70% at 15% 10%, rgba(255, 193, 7, 0.12) 0%, transparent 50%),
@@ -3161,14 +3157,12 @@
         body.pm-v16 .gate-orb.o1 {
             width: 560px; height: 560px;
             background: radial-gradient(circle, rgba(255, 193, 7, 0.18) 0%, rgba(255, 193, 7, 0.04) 40%, transparent 70%);
-            left: -180px; top: -160px;
-            animation: gateFloat 18s ease-in-out infinite;
+            left: -180px; top: -160px; animation: gateFloat 18s ease-in-out infinite;
         }
         body.pm-v16 .gate-orb.o2 {
             width: 480px; height: 480px;
             background: radial-gradient(circle, rgba(56, 189, 248, 0.14) 0%, rgba(14, 165, 233, 0.03) 45%, transparent 72%);
-            right: -140px; bottom: -120px;
-            animation: gateFloat 22s ease-in-out infinite reverse;
+            right: -140px; bottom: -120px; animation: gateFloat 22s ease-in-out infinite reverse;
         }
         body.pm-v16 .gate-grid {
             position: absolute; inset: 0;
@@ -3180,195 +3174,109 @@
             -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, black 20%, transparent 75%);
         }
         body.pm-v16 .gate-bg::after {
-            content: '';
-            position: absolute;
-            width: 320px; height: 320px;
-            border-radius: 50%;
+            content: ''; position: absolute; width: 320px; height: 320px; border-radius: 50%;
             border: 1px solid rgba(255, 193, 7, 0.12);
             box-shadow: 0 0 0 40px rgba(255, 193, 7, 0.03), 0 0 0 80px rgba(255, 193, 7, 0.015);
-            top: 8%;
-            right: 6%;
-            animation: gatePulse 12s ease-in-out infinite;
+            top: 8%; right: 6%; animation: gatePulse 12s ease-in-out infinite;
         }
         body.pm-v16 .gate-bg::before {
-            content: '';
-            position: absolute;
-            width: 220px; height: 220px;
-            border-radius: 50%;
+            content: ''; position: absolute; width: 220px; height: 220px; border-radius: 50%;
             border: 1px solid rgba(56, 189, 248, 0.1);
             box-shadow: 0 0 0 32px rgba(56, 189, 248, 0.03);
-            bottom: 8%;
-            left: 5%;
-            animation: gatePulse 15s ease-in-out infinite reverse;
+            bottom: 8%; left: 5%; animation: gatePulse 15s ease-in-out infinite reverse;
         }
-        @keyframes gateFloat {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(12px, -18px); }
-        }
-        @keyframes gatePulse {
-            0%, 100% { opacity: 0.7; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.04); }
-        }
+        @keyframes gateFloat { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(12px, -18px); } }
+        @keyframes gatePulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
         body.pm-v16 .gate-layout {
-            position: relative;
-            z-index: 1;
-            width: 100%;
-            max-width: 400px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            position: relative; z-index: 1; width: 100%; max-width: 400px;
+            display: flex; justify-content: center; align-items: center;
         }
         body.pm-v16 .gate-story { display: none !important; }
-        /* No solid card — form sits directly on the designed background */
         body.pm-v16 .gate-card {
-            width: 100%;
-            background: transparent !important;
-            border-radius: 0 !important;
-            padding: 12px 8px 8px !important;
-            box-shadow: none !important;
-            border: none !important;
+            width: 100%; background: transparent !important; border-radius: 0 !important;
+            padding: 12px 8px 8px !important; box-shadow: none !important; border: none !important;
         }
         body.pm-v16 .gate-brand {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 14px;
-            margin-bottom: 36px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            gap: 14px; margin-bottom: 36px;
         }
         body.pm-v16 .gate-mark {
             width: 72px; height: 72px; border-radius: 22px;
             background: linear-gradient(145deg, rgba(255, 193, 7, 0.95), #f59e0b);
-            color: #0b1a33;
-            display: flex; align-items: center; justify-content: center;
+            color: #0b1a33; display: flex; align-items: center; justify-content: center;
             font-size: 1.85rem;
-            box-shadow:
-                0 12px 32px rgba(245, 158, 11, 0.35),
-                0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+            box-shadow: 0 12px 32px rgba(245, 158, 11, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
         }
         body.pm-v16 .gate-brand h1 {
-            margin: 0;
-            font-family: 'Outfit', system-ui, sans-serif;
-            font-size: 1.7rem;
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            color: #ffffff !important;
-            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
+            margin: 0; font-family: 'Outfit', system-ui, sans-serif;
+            font-size: 1.7rem; font-weight: 700; letter-spacing: -0.03em;
+            color: #ffffff !important; text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
         }
         body.pm-v16 .gate-brand p { display: none; }
         body.pm-v16 .gate-label {
-            display: block;
-            font-family: 'Outfit', system-ui, sans-serif;
-            font-size: 0.72rem;
-            font-weight: 600;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: rgba(226, 232, 240, 0.7) !important;
-            margin: 0 0 8px;
+            display: block; font-family: 'Outfit', system-ui, sans-serif;
+            font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em;
+            text-transform: uppercase; color: rgba(226, 232, 240, 0.7) !important; margin: 0 0 8px;
         }
         body.pm-v16 .gate-field { margin-bottom: 18px; }
         body.pm-v16 .gate-card .form-floating > .form-control {
-            padding-top: 0.85rem;
-            padding-bottom: 0.85rem;
-            height: auto;
-            min-height: 52px;
-            line-height: 1.4;
+            padding-top: 0.85rem; padding-bottom: 0.85rem; height: auto; min-height: 52px; line-height: 1.4;
         }
-        body.pm-v16 .gate-card .form-floating > label {
-            display: none;
-        }
+        body.pm-v16 .gate-card .form-floating > label { display: none; }
         body.pm-v16 .gate-card .form-control {
-            min-height: 52px !important;
-            border-radius: 14px !important;
+            min-height: 52px !important; border-radius: 14px !important;
             border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
             background: rgba(255, 255, 255, 0.06) !important;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             font-family: 'Outfit', system-ui, sans-serif !important;
-            font-size: 0.98rem !important;
-            font-weight: 500;
-            color: #f8fafc !important;
+            font-size: 0.98rem !important; font-weight: 500; color: #f8fafc !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
-            padding-left: 16px;
-            padding-right: 16px;
+            padding-left: 16px; padding-right: 16px;
             transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
         }
-        body.pm-v16 .gate-card .form-control::placeholder {
-            color: rgba(226, 232, 240, 0.4) !important;
-            font-weight: 400;
-        }
+        body.pm-v16 .gate-card .form-control::placeholder { color: rgba(226, 232, 240, 0.4) !important; font-weight: 400; }
         body.pm-v16 .gate-card .form-control:focus {
             border-color: rgba(255, 193, 7, 0.55) !important;
             background: rgba(255, 255, 255, 0.1) !important;
             box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.15), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
-            color: #fff !important;
-            outline: none;
+            color: #fff !important; outline: none;
         }
         body.pm-v16 .gate-card .btn-login {
-            width: 100%;
-            min-height: 52px;
-            margin-top: 10px;
-            border: 0;
-            border-radius: 14px !important;
-            font-family: 'Outfit', system-ui, sans-serif !important;
-            font-weight: 700 !important;
-            font-size: 1rem !important;
-            letter-spacing: 0.03em;
+            width: 100%; min-height: 52px; margin-top: 10px; border: 0; border-radius: 14px !important;
+            font-family: 'Outfit', system-ui, sans-serif !important; font-weight: 700 !important;
+            font-size: 1rem !important; letter-spacing: 0.03em;
             background: linear-gradient(135deg, #ffc107 0%, #f59e0b 100%) !important;
-            color: #0b1a33 !important;
-            box-shadow: 0 10px 28px rgba(245, 158, 11, 0.4) !important;
+            color: #0b1a33 !important; box-shadow: 0 10px 28px rgba(245, 158, 11, 0.4) !important;
             transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
         }
         body.pm-v16 .gate-card .btn-login:hover {
-            filter: brightness(1.06);
-            color: #0b1a33 !important;
-            transform: translateY(-2px);
+            filter: brightness(1.06); color: #0b1a33 !important; transform: translateY(-2px);
             box-shadow: 0 14px 32px rgba(245, 158, 11, 0.5) !important;
         }
-        body.pm-v16 .gate-card .btn-login:active {
-            transform: translateY(0);
-        }
+        body.pm-v16 .gate-card .btn-login:active { transform: translateY(0); }
         body.pm-v16 .gate-card .password-toggle {
             position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
             border: 0; background: transparent; color: rgba(226, 232, 240, 0.55);
             padding: 6px; border-radius: 8px; cursor: pointer;
-            transition: color 0.15s, background 0.15s;
         }
-        body.pm-v16 .gate-card .password-toggle:hover {
-            color: #ffc107;
-            background: rgba(255, 255, 255, 0.08);
-        }
+        body.pm-v16 .gate-card .password-toggle:hover { color: #ffc107; background: rgba(255, 255, 255, 0.08); }
         body.pm-v16 .gate-setup {
             display: block; width: 100%; margin-top: 18px; border: 0; background: transparent;
             color: rgba(226, 232, 240, 0.55) !important; font-family: 'Outfit', system-ui, sans-serif;
             font-weight: 500; font-size: 0.88rem; cursor: pointer;
-            transition: color 0.15s;
         }
         body.pm-v16 .gate-setup:hover { color: #ffc107 !important; }
         body.pm-v16 .gate-card .login-panel-foot {
-            margin-top: 28px;
-            text-align: center;
-            color: rgba(148, 163, 184, 0.55) !important;
-            font-size: 0.72rem;
-            font-weight: 500;
-            font-family: 'Outfit', system-ui, sans-serif;
+            margin-top: 28px; text-align: center; color: rgba(148, 163, 184, 0.55) !important;
+            font-size: 0.72rem; font-weight: 500; font-family: 'Outfit', system-ui, sans-serif;
         }
         body.pm-v16 .gate-card .login-panel-foot strong { color: rgba(226, 232, 240, 0.65) !important; }
         body.pm-v16 #createCompanyForm h5 {
-            font-family: 'Outfit', system-ui, sans-serif;
-            font-weight: 700;
-            color: #ffffff !important;
-            letter-spacing: -0.02em;
+            font-family: 'Outfit', system-ui, sans-serif; font-weight: 700; color: #ffffff !important;
         }
-        body.pm-v16 #createCompanyForm .text-muted {
-            color: rgba(226, 232, 240, 0.55) !important;
-        }
-        body.pm-v16 #createCompanyForm .form-label {
-            color: rgba(226, 232, 240, 0.7) !important;
-        }
-        body.pm-v16 #loginError {
-            color: #fca5a5 !important;
-        }
+        body.pm-v16 #createCompanyForm .text-muted { color: rgba(226, 232, 240, 0.55) !important; }
+        body.pm-v16 #createCompanyForm .form-label { color: rgba(226, 232, 240, 0.7) !important; }
+        body.pm-v16 #loginError { color: #fca5a5 !important; }
         @media (max-width: 480px) {
             body.pm-v16 .gate-card { padding: 8px 4px !important; }
             body.pm-v16 .gate-brand h1 { font-size: 1.45rem; }
@@ -3609,20 +3517,20 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <input type="hidden" id="payCustomerId">
-                    <input type="hidden" id="payCustomerStation">
+                    <input type="hidden" id="custPayCustomerId">
+                    <input type="hidden" id="custPayCustomerStation">
                     <div class="mb-3">
                         <div class="small text-muted text-uppercase" style="font-size:0.68rem;letter-spacing:0.04em;font-weight:700;">Customer</div>
-                        <div class="fw-bold" id="payCustomerName">—</div>
-                        <div class="small">Balance: <strong id="payCustomerBalance">0</strong></div>
+                        <div class="fw-bold" id="custPayCustomerName">—</div>
+                        <div class="small">Balance: <strong id="custPayCustomerBalance">0</strong></div>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label" for="payAmount">Amount *</label>
-                        <input type="number" id="payAmount" class="form-control" step="1" min="0" placeholder="Amount received">
+                        <label class="form-label" for="custPayAmount">Amount *</label>
+                        <input type="number" id="custPayAmount" class="form-control" step="1" min="0" placeholder="Amount received">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label" for="payMethod">Method</label>
-                        <select id="payMethod" class="form-select">
+                        <label class="form-label" for="custPayMethod">Method</label>
+                        <select id="custPayMethod" class="form-select">
                             <option value="cash">Cash</option>
                             <option value="mobile_money">Mobile money</option>
                             <option value="bank">Bank transfer</option>
@@ -3630,18 +3538,18 @@
                         </select>
                     </div>
                     <div class="mb-2">
-                        <label class="form-label" for="payDate">Date</label>
-                        <input type="date" id="payDate" class="form-control">
+                        <label class="form-label" for="custPayDate">Date</label>
+                        <input type="date" id="custPayDate" class="form-control">
                     </div>
                     <div class="mb-2">
-                        <label class="form-label" for="payNote">Note</label>
-                        <input type="text" id="payNote" class="form-control" placeholder="Optional">
+                        <label class="form-label" for="custPayNote">Note</label>
+                        <input type="text" id="custPayNote" class="form-control" placeholder="Optional">
                     </div>
-                    <div id="paymentResult" class="small mt-2"></div>
+                    <div id="custPaymentResult" class="small mt-2"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" id="savePaymentBtn"><i class="bi bi-check2"></i> Save payment</button>
+                    <button type="button" class="btn btn-success" id="custSavePaymentBtn"><i class="bi bi-check2"></i> Save payment</button>
                 </div>
             </div>
         </div>
@@ -4319,7 +4227,11 @@ async function queryByField(col, field, value, opts) {
         return rows;
     };
     try {
-        const snap = await db.collection(col).where(field, '==', value).get();
+        let q = db.collection(col).where(field, '==', value);
+        // Tenant isolation: always scope by company when logged in
+        const cid = getCompanyFilter();
+        if (cid) q = q.where('companyId', '==', cid);
+        const snap = await q.get();
         return apply(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) {
         console.warn('queryByField failed, client fallback:', col, field, err && err.message);
@@ -4358,7 +4270,15 @@ async function loadLedgerRows(col, idField, entityId, limit) {
 async function getDoc(col, id) {
     if (id == null) return null;
     const d = await db.collection(col).doc(String(id)).get();
-    return d.exists ? Object.assign({ id: d.id }, d.data()) : null;
+    if (!d.exists) return null;
+    const data = Object.assign({ id: d.id }, d.data());
+    // Soft tenant check: if doc has companyId and user is logged in, require match
+    const cid = getCompanyFilter();
+    if (cid && data.companyId != null && String(data.companyId) !== String(cid)) {
+        console.warn('getDoc blocked cross-tenant read:', col, id);
+        return null;
+    }
+    return data;
 }
 
 async function addDoc(col, data) {
@@ -7298,39 +7218,116 @@ async function renderSales() {
 
             try {
                 showLoading(true);
-                await adjustInventory(stationId, product, qty, null, 'Sale reversal', 'reversal');
-
-                await updateDoc('sales', id, {
-                    status: 'reversed',
-                    reversed: true,
-                    reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
-                    reversed_by: state.user.id
-                });
-
-                if (payment === 'credit' && customerId && amount > 0) {
-                    await updateCustomerBalance(customerId, -amount, 'sale_reversal', id);
-                } else if (payment !== 'credit' && amount > 0) {
-                    try {
-                        await ensureSystemCashAccounts(stationId);
-                        const tillId = systemCashAccountId('cash_till', stationId);
-                        if (tillId) {
-                            const tillRef = db.collection('bank_accounts').doc(tillId);
-                            await db.runTransaction(async (tx) => {
-                                const tillDoc = await tx.get(tillRef);
-                                if (tillDoc.exists) {
-                                    const bal = Number(tillDoc.data().balance) || 0;
-                                    tx.update(tillRef, {
-                                        balance: bal - amount,
-                                        last_reversal_at: firebase.firestore.FieldValue.serverTimestamp()
-                                    });
-                                }
-                            });
-                        }
-                    } catch (tillErr) {
-                        console.warn('Till reversal failed:', tillErr);
-                        toast('Sale reversed but till balance could not be updated: ' + tillErr.message, 'warning');
-                    }
+                if (payment !== 'credit') {
+                    await ensureSystemCashAccounts(stationId);
                 }
+                const companyId = state.user ? state.user.companyId : null;
+                const preferredId = inventoryDocId(stationId, product, companyId);
+                const legacyId = inventoryLegacyDocId(stationId, product);
+                const preferredRef = db.collection('inventory').doc(preferredId);
+                const legacyRef = preferredId !== legacyId ? db.collection('inventory').doc(legacyId) : null;
+                const saleRef = db.collection('sales').doc(String(id));
+                const tillId = (payment !== 'credit') ? systemCashAccountId('cash_till', stationId) : null;
+                const tillRef = tillId ? db.collection('bank_accounts').doc(tillId) : null;
+                const custRef = (payment === 'credit' && customerId) ? db.collection('customers').doc(String(customerId)) : null;
+
+                await db.runTransaction(async (tx) => {
+                    // ---- ALL READS ----
+                    const saleDoc = await tx.get(saleRef);
+                    if (!saleDoc.exists) throw new Error('Sale not found');
+                    if (saleDoc.data().reversed === true || saleDoc.data().status === 'reversed') {
+                        throw new Error('Sale is already reversed');
+                    }
+                    const preferredDoc = await tx.get(preferredRef);
+                    let legacyDoc = null;
+                    if (legacyRef) legacyDoc = await tx.get(legacyRef);
+
+                    let currentQty = 0, currentCost = 0, currentSell = 0;
+                    if (preferredDoc.exists) {
+                        currentQty = Number(preferredDoc.data().quantity) || 0;
+                        currentCost = Number(preferredDoc.data().cost_price) || 0;
+                        currentSell = Number(preferredDoc.data().selling_price) || 0;
+                    } else if (legacyDoc && legacyDoc.exists) {
+                        currentQty = Number(legacyDoc.data().quantity) || 0;
+                        currentCost = Number(legacyDoc.data().cost_price) || 0;
+                        currentSell = Number(legacyDoc.data().selling_price) || 0;
+                    }
+                    const newQty = currentQty + qty;
+
+                    let custBal = 0;
+                    if (custRef && amount > 0) {
+                        const custDoc = await tx.get(custRef);
+                        if (!custDoc.exists) throw new Error('Customer not found');
+                        custBal = Number(custDoc.data().current_balance) || 0;
+                    }
+                    let tillBal = 0, tillExists = false;
+                    if (tillRef && amount > 0) {
+                        const tillDoc = await tx.get(tillRef);
+                        tillExists = tillDoc.exists;
+                        tillBal = tillExists ? (Number(tillDoc.data().balance) || 0) : 0;
+                    }
+
+                    // ---- ALL WRITES ----
+                    tx.set(preferredRef, {
+                        station_id: String(stationId),
+                        product_type: product,
+                        quantity: newQty,
+                        cost_price: currentCost,
+                        selling_price: currentSell,
+                        companyId: companyId,
+                        last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                    if (legacyRef && legacyDoc && legacyDoc.exists) tx.delete(legacyRef);
+
+                    const historyRef = db.collection('inventory_history').doc();
+                    tx.set(historyRef, {
+                        station_id: String(stationId),
+                        product_type: product,
+                        old_quantity: currentQty,
+                        new_quantity: newQty,
+                        change: qty,
+                        source: 'reversal',
+                        reason: 'Sale reversal',
+                        cost_price_at_change: currentCost,
+                        companyId: companyId,
+                        user_id: state.user ? state.user.id : 'system',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    tx.update(saleRef, {
+                        status: 'reversed',
+                        reversed: true,
+                        reversed_at: firebase.firestore.FieldValue.serverTimestamp(),
+                        reversed_by: state.user.id,
+                        till_reversal_applied: payment !== 'credit',
+                        till_reversal_at: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    if (custRef && amount > 0) {
+                        const newCustBal = custBal - amount;
+                        tx.update(custRef, {
+                            current_balance: newCustBal,
+                            last_updated: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        const logRef = db.collection('customer_transactions').doc();
+                        tx.set(logRef, {
+                            customer_id: String(customerId),
+                            amount: -amount,
+                            balance_after: newCustBal,
+                            source: 'sale_reversal',
+                            reference_id: id,
+                            user_id: state.user ? state.user.id : 'system',
+                            companyId: companyId,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    if (tillRef && amount > 0 && tillExists) {
+                        tx.update(tillRef, {
+                            balance: tillBal - amount,
+                            last_reversal_at: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                });
 
                 try {
                     const taxOnSale = calcTax(amount);
@@ -7346,13 +7343,6 @@ async function renderSales() {
                         ]
                     });
                 } catch (jErr) { console.warn('Reversal journal failed:', jErr); }
-
-                try {
-                    await updateDoc('sales', id, {
-                        till_reversal_applied: true,
-                        till_reversal_at: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                } catch (_) {}
 
                 await logAudit('reverse_sale', {
                     saleId: id, product, qty, amount, payment,
@@ -8694,6 +8684,7 @@ async function renderBalancing() {
                     Adjusted actual: ${formatMoney(adjusted)}<br>
                     <span class="${cls}">Difference: ${sign}${formatMoney(diff)} (${comment})</span></div>`;
                 toast('Reconciliation saved successfully', 'success');
+                unlockSubmit(document.getElementById('saveReconciliationBtn'));
                 setTimeout(() => { document.getElementById('balancingFilter').dispatchEvent(new Event('submit')); }, 1500);
             } catch (err) {
                 unlockSubmit(document.getElementById('saveReconciliationBtn'));
@@ -9079,26 +9070,33 @@ async function renderShortageRecovery() {
         const emp = allUsers.find(u => u.id === cashierId);
         const empName = emp ? (emp.name || emp.username) : 'Unknown';
         try {
-            // Ensure system cash accounts exist before resolving
             await ensureSystemCashAccounts(stationId);
             const resolved = resolveAccountRefId(account, stationId) || account;
             if (!resolved) throw new Error('Could not resolve deposit account');
-            const acc = await getDoc('bank_accounts', resolved);
-            if (!acc) throw new Error('Deposit account not found: ' + resolved);
-            await updateDoc('bank_accounts', resolved, {
-                balance: (Number(acc.balance) || 0) + amount
-            });
-            await addDoc('shortage_recoveries', {
-                cashier_id: cashierId,
-                cashier_name: empName,
-                station_id: String(stationId),
-                amount: amount,
-                type: 'payment',
-                reason: note || 'Cash shortage repayment',
-                deposit_account: account,
-                recovery_date: date,
-                received_by: state.user.id,
-                received_by_name: state.user.name || state.user.username || 'Admin'
+            const accRef = db.collection('bank_accounts').doc(String(resolved));
+            const companyId = state.user ? state.user.companyId : null;
+
+            await db.runTransaction(async (tx) => {
+                const accDoc = await tx.get(accRef);
+                if (!accDoc.exists) throw new Error('Deposit account not found: ' + resolved);
+                const bal = Number(accDoc.data().balance) || 0;
+                tx.update(accRef, { balance: bal + amount });
+                const recRef = db.collection('shortage_recoveries').doc();
+                tx.set(recRef, {
+                    cashier_id: cashierId,
+                    cashier_name: empName,
+                    station_id: String(stationId),
+                    amount: amount,
+                    type: 'payment',
+                    reason: note || 'Cash shortage repayment',
+                    deposit_account: account,
+                    recovery_date: date,
+                    received_by: state.user.id,
+                    received_by_name: state.user.name || state.user.username || 'Admin',
+                    companyId: companyId,
+                    created_at: firebase.firestore.FieldValue.serverTimestamp(),
+                    created_by: state.user.id
+                });
             });
             try {
                 await postJournal({
@@ -12686,6 +12684,7 @@ async function renderFinancials() {
                     });
                 });
                 toast('Transfer recorded');
+                unlockSubmit(this);
                 renderFinancials();
             } catch (err) {
                 unlockSubmit(this);
@@ -13067,6 +13066,7 @@ async function renderFinancials() {
                 } else {
                     toast('Expense recorded for ' + stationName(stationId), 'success');
                 }
+                unlockSubmit(this);
                 renderFinancials();
             } catch (err) {
                 unlockSubmit(this);
@@ -13145,6 +13145,7 @@ async function renderFinancials() {
                     stationId: (document.getElementById('payStation') && document.getElementById('payStation').value) || null
                 });
                 toast('Supplier payment recorded', 'success');
+                unlockSubmit(this);
                 renderFinancials();
             } catch (err) {
                 unlockSubmit(this);
@@ -13172,6 +13173,7 @@ async function renderFinancials() {
                     });
                     toast('Prepayment recorded — prepaid credit on supplier account: ' + formatMoney(amount), 'success');
                     await logAudit('supplier_prepayment', { supplier_id: supplierId, amount });
+                    unlockSubmit(this);
                     renderFinancials();
                 } catch (err) {
                     unlockSubmit(this);
@@ -13814,15 +13816,15 @@ async function renderCustomers() {
             const balance = parseFloat(this.dataset.balance) || 0;
             const station = this.dataset.station || '';
 
-            document.getElementById('payCustomerId').value = id;
-            document.getElementById('payCustomerName').textContent = name;
-            document.getElementById('payCustomerBalance').textContent = formatMoney(balance);
-            document.getElementById('payCustomerStation').value = station;
-            document.getElementById('payAmount').value = '';
-            document.getElementById('payMethod').value = 'cash';
-            document.getElementById('payNote').value = '';
-            document.getElementById('paymentResult').innerHTML = '';
-            document.getElementById('payDate').value = (typeof _localIsoDate === 'function') ? _localIsoDate(new Date()) : new Date().toISOString().slice(0, 10);
+            document.getElementById('custPayCustomerId').value = id;
+            document.getElementById('custPayCustomerName').textContent = name;
+            document.getElementById('custPayCustomerBalance').textContent = formatMoney(balance);
+            document.getElementById('custPayCustomerStation').value = station;
+            document.getElementById('custPayAmount').value = '';
+            document.getElementById('custPayMethod').value = 'cash';
+            document.getElementById('custPayNote').value = '';
+            document.getElementById('custPaymentResult').innerHTML = '';
+            document.getElementById('custPayDate').value = (typeof _localIsoDate === 'function') ? _localIsoDate(new Date()) : new Date().toISOString().slice(0, 10);
 
             const modalEl = document.getElementById('customerPaymentModal');
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -13830,18 +13832,18 @@ async function renderCustomers() {
     });
 
     // Save payment handler — bound once per render (was previously bound only inside renderCustomers, ok)
-    const savePaymentBtn = document.getElementById('savePaymentBtn');
+    const savePaymentBtn = document.getElementById('custSavePaymentBtn');
     if (savePaymentBtn) {
         // Avoid stacking listeners: replace with a new handler each render
         savePaymentBtn.onclick = async function() {
             if (lockSubmit(this, '<span class="spinner-border spinner-border-sm"></span> Processing...')) return;
-            const customerId = document.getElementById('payCustomerId').value;
-            const amount = parseFloat(document.getElementById('payAmount').value);
-            const method = document.getElementById('payMethod').value;
-            const dateVal = document.getElementById('payDate').value;
-            const note = document.getElementById('payNote').value.trim();
-            const customerStation = document.getElementById('payCustomerStation').value;
-            const resultEl = document.getElementById('paymentResult');
+            const customerId = document.getElementById('custPayCustomerId').value;
+            const amount = parseFloat(document.getElementById('custPayAmount').value);
+            const method = document.getElementById('custPayMethod').value;
+            const dateVal = document.getElementById('custPayDate').value;
+            const note = document.getElementById('custPayNote').value.trim();
+            const customerStation = document.getElementById('custPayCustomerStation').value;
+            const resultEl = document.getElementById('custPaymentResult');
             const btn = this;
 
             if (!customerId) { unlockSubmit(btn); resultEl.innerHTML = '<span class="text-danger">Customer not found.</span>'; return; }
@@ -13876,7 +13878,7 @@ async function renderCustomers() {
                     const finalBal = currentBal - amount;
 
                     const m = String(method || 'cash').toLowerCase();
-                    const depositsToTill = m !== 'credit' && !!tillRef;
+                    const depositsToTill = (m === 'cash') && !!tillRef; // bank/mm/cheque do not invent till cash
                     let tillExists = false;
                     let tillBal = 0;
                     if (depositsToTill) {
@@ -13947,12 +13949,13 @@ async function renderCustomers() {
                 await logAudit('customer_payment', { customer: customerName, amount, method, new_balance: newBalance, station: stationId });
                 toast(`✅ Payment of ${formatMoney(amount)} received`, 'success');
                 resultEl.innerHTML = '<span class="text-success">✅ Payment recorded.</span>';
+                unlockSubmit(btn); // CRITICAL: unlock before close so next payment works
                 setTimeout(() => {
                     const modalEl = document.getElementById('customerPaymentModal');
                     const inst = bootstrap.Modal.getInstance(modalEl);
                     if (inst) inst.hide();
                     renderCustomers();
-                }, 900);
+                }, 600);
             } catch (err) {
                 console.error(err);
                 resultEl.innerHTML = `<span class="text-danger">❌ ${esc(err.message)}</span>`;
@@ -13966,11 +13969,18 @@ async function renderCustomers() {
 
     // Reset modal on close
     const customerPaymentModalEl = document.getElementById('customerPaymentModal');
-    if (customerPaymentModalEl && !customerPaymentModalEl._resetBound) {
+        if (customerPaymentModalEl && !customerPaymentModalEl._resetBound) {
         customerPaymentModalEl._resetBound = true;
         customerPaymentModalEl.addEventListener('hidden.bs.modal', function() {
-            document.getElementById('paymentResult').innerHTML = '';
-            document.getElementById('payAmount').value = '';
+            const res = document.getElementById('custPaymentResult');
+            if (res) res.innerHTML = '';
+            const amt = document.getElementById('custPayAmount');
+            if (amt) amt.value = '';
+            const note = document.getElementById('custPayNote');
+            if (note) note.value = '';
+            // Always unlock the save button when modal closes (prevents stuck "Processing...")
+            const btn = document.getElementById('custSavePaymentBtn');
+            if (btn && typeof unlockSubmit === 'function') unlockSubmit(btn);
         });
     }
 }
@@ -15991,7 +16001,7 @@ function showVoucher(data) {
     const cur = (data.company && data.company.settings && data.company.settings.currency_symbol) || 'UGX';
 
     body.innerHTML = `
-        <div class="voucher-box" id="voucherContent">
+        <div class="voucher-box" id="voucherContentPayroll">
             <div class="header"><h4>${companyName}</h4><p>${companyAddress}</p><p><strong>SALARY VOUCHER</strong></p><p>${esc(data.date)}</p></div>
             <div class="row"><span class="label">Voucher #:</span> <span><strong>#${esc(String(data.id).slice(0,8).toUpperCase())}</strong></span></div>
             <div class="row"><span class="label">Employee:</span> <span><strong>${esc(data.employee)}</strong></span></div>
@@ -16014,7 +16024,7 @@ function showVoucher(data) {
     const printBtn = document.getElementById('voucherPrintBtn');
     if (printBtn) {
         printBtn.onclick = function() {
-            const content = document.getElementById('voucherContent');
+            const content = document.getElementById('voucherContentPayroll');
             if (!content) return;
             const win = window.open('', '_blank', 'width=600,height=800');
             if (!win || !win.document) { toast('Please allow popups', 'warning'); return; }
@@ -16033,7 +16043,7 @@ function showVoucher(data) {
     const dlBtn = document.getElementById('voucherDownloadBtn');
     if (dlBtn) {
         dlBtn.onclick = function() {
-            const content = document.getElementById('voucherContent');
+            const content = document.getElementById('voucherContentPayroll');
             if (!content) return;
             const win = window.open('', '_blank', 'width=600,height=800');
             if (!win || !win.document) { toast('Please allow popups', 'warning'); return; }
@@ -16781,7 +16791,7 @@ async function renderLicenses() {
         </div>
 
         <!-- Add/Extend License Modal -->
-        <div class="modal fade" id="licenseModal" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" id="licenseAdminModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
@@ -16845,7 +16855,7 @@ async function renderLicenses() {
         document.getElementById('licenseBilling').value = 'monthly';
         document.getElementById('licenseEditId').value = '';
         document.getElementById('licenseFormResult').innerHTML = '';
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('licenseModal')).show();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('licenseAdminModal')).show();
     }
 
     // Add button (top of page)
@@ -16874,7 +16884,7 @@ async function renderLicenses() {
             document.getElementById('licenseKey').value = '';
             document.getElementById('licenseEditId').value = licenseId;
             document.getElementById('licenseFormResult').innerHTML = '';
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('licenseModal')).show();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('licenseAdminModal')).show();
         };
     });
 
@@ -16960,7 +16970,7 @@ async function renderLicenses() {
                     await logAudit('create_license', { companyId, pkg, billing, expiry: expiryDate });
                     toast('License created successfully', 'success');
                 }
-                const inst = bootstrap.Modal.getInstance(document.getElementById('licenseModal'));
+                const inst = bootstrap.Modal.getInstance(document.getElementById('licenseAdminModal'));
                 if (inst) inst.hide();
                 renderLicenses();
             } catch (err) {
@@ -16972,7 +16982,7 @@ async function renderLicenses() {
     }
 
     // Reset modal on close
-    const modalEl = document.getElementById('licenseModal');
+    const modalEl = document.getElementById('licenseAdminModal');
     if (modalEl && !modalEl._resetBound) {
         modalEl._resetBound = true;
         modalEl.addEventListener('hidden.bs.modal', function() {
