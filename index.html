@@ -7,6 +7,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -3135,7 +3138,7 @@
             box-shadow: 0 0 0 3px rgba(11, 44, 107, 0.15) !important;
         }
 
-        /* Login gate — bright white with soft light designs */
+        /* Login gate — immersive full-bleed design (no card demarcation) */
         body.pm-v16 .gate {
             min-height: 100vh;
             min-height: 100dvh;
@@ -3144,155 +3147,232 @@
             justify-content: center;
             position: relative;
             overflow: hidden;
-            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 55%, #f1f5f9 100%);
-            padding: 24px 16px;
+            background: #060d1a;
+            background-image:
+                radial-gradient(ellipse 90% 70% at 15% 10%, rgba(255, 193, 7, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 60% at 85% 90%, rgba(56, 189, 248, 0.08) 0%, transparent 45%),
+                radial-gradient(ellipse 60% 50% at 50% 50%, rgba(11, 26, 51, 0.4) 0%, transparent 70%),
+                linear-gradient(165deg, #040a14 0%, #0b1a33 40%, #0f2744 75%, #0a1628 100%);
+            padding: 28px 18px;
+            font-family: 'Outfit', 'Segoe UI', system-ui, sans-serif;
         }
-        body.pm-v16 .gate-bg { position: absolute; inset: 0; pointer-events: none; }
-        body.pm-v16 .gate-orb { position: absolute; border-radius: 50%; filter: blur(2px); }
+        body.pm-v16 .gate-bg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        body.pm-v16 .gate-orb { position: absolute; border-radius: 50%; filter: blur(1px); }
         body.pm-v16 .gate-orb.o1 {
-            width: 520px; height: 520px;
-            background: radial-gradient(circle, rgba(11, 26, 51, 0.06) 0%, transparent 68%);
-            left: -140px; top: -120px;
+            width: 560px; height: 560px;
+            background: radial-gradient(circle, rgba(255, 193, 7, 0.18) 0%, rgba(255, 193, 7, 0.04) 40%, transparent 70%);
+            left: -180px; top: -160px;
+            animation: gateFloat 18s ease-in-out infinite;
         }
         body.pm-v16 .gate-orb.o2 {
-            width: 460px; height: 460px;
-            background: radial-gradient(circle, rgba(255, 193, 7, 0.1) 0%, transparent 70%);
-            right: -100px; bottom: -100px;
+            width: 480px; height: 480px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.14) 0%, rgba(14, 165, 233, 0.03) 45%, transparent 72%);
+            right: -140px; bottom: -120px;
+            animation: gateFloat 22s ease-in-out infinite reverse;
         }
         body.pm-v16 .gate-grid {
-            position: absolute; inset: 0; opacity: 1;
+            position: absolute; inset: 0;
             background-image:
-                linear-gradient(rgba(11, 26, 51, 0.035) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(11, 26, 51, 0.035) 1px, transparent 1px);
-            background-size: 48px 48px;
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 56px 56px;
+            mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, black 20%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 45%, black 20%, transparent 75%);
         }
         body.pm-v16 .gate-bg::after {
             content: '';
             position: absolute;
-            width: 280px; height: 280px;
+            width: 320px; height: 320px;
             border-radius: 50%;
-            border: 40px solid rgba(11, 26, 51, 0.03);
-            top: 12%;
-            right: 8%;
+            border: 1px solid rgba(255, 193, 7, 0.12);
+            box-shadow: 0 0 0 40px rgba(255, 193, 7, 0.03), 0 0 0 80px rgba(255, 193, 7, 0.015);
+            top: 8%;
+            right: 6%;
+            animation: gatePulse 12s ease-in-out infinite;
         }
         body.pm-v16 .gate-bg::before {
             content: '';
             position: absolute;
-            width: 200px; height: 200px;
+            width: 220px; height: 220px;
             border-radius: 50%;
-            border: 28px solid rgba(255, 193, 7, 0.06);
-            bottom: 10%;
-            left: 6%;
+            border: 1px solid rgba(56, 189, 248, 0.1);
+            box-shadow: 0 0 0 32px rgba(56, 189, 248, 0.03);
+            bottom: 8%;
+            left: 5%;
+            animation: gatePulse 15s ease-in-out infinite reverse;
+        }
+        @keyframes gateFloat {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(12px, -18px); }
+        }
+        @keyframes gatePulse {
+            0%, 100% { opacity: 0.7; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.04); }
         }
         body.pm-v16 .gate-layout {
             position: relative;
             z-index: 1;
             width: 100%;
-            max-width: 420px;
+            max-width: 400px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
         body.pm-v16 .gate-story { display: none !important; }
+        /* No solid card — form sits directly on the designed background */
         body.pm-v16 .gate-card {
             width: 100%;
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 36px 32px 24px;
-            box-shadow: 0 16px 48px rgba(11, 26, 51, 0.1), 0 2px 8px rgba(11, 26, 51, 0.04);
-            border: 1px solid #e8eef5;
+            background: transparent !important;
+            border-radius: 0 !important;
+            padding: 12px 8px 8px !important;
+            box-shadow: none !important;
+            border: none !important;
         }
         body.pm-v16 .gate-brand {
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            gap: 10px;
-            margin-bottom: 28px;
+            gap: 14px;
+            margin-bottom: 36px;
         }
         body.pm-v16 .gate-mark {
-            width: 64px; height: 64px; border-radius: 18px;
-            background: linear-gradient(145deg, #0b1a33, #1a3a6a);
-            color: #ffc107;
+            width: 72px; height: 72px; border-radius: 22px;
+            background: linear-gradient(145deg, rgba(255, 193, 7, 0.95), #f59e0b);
+            color: #0b1a33;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.7rem;
-            box-shadow: 0 10px 24px rgba(11,26,51,0.28);
+            font-size: 1.85rem;
+            box-shadow:
+                0 12px 32px rgba(245, 158, 11, 0.35),
+                0 0 0 1px rgba(255, 255, 255, 0.15) inset;
         }
         body.pm-v16 .gate-brand h1 {
             margin: 0;
-            font-size: 1.35rem;
-            font-weight: 800;
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-size: 1.7rem;
+            font-weight: 700;
             letter-spacing: -0.03em;
-            color: #0b1a33;
+            color: #ffffff !important;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.35);
         }
         body.pm-v16 .gate-brand p { display: none; }
         body.pm-v16 .gate-label {
             display: block;
-            font-size: 0.7rem;
-            font-weight: 750;
-            letter-spacing: 0.05em;
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
             text-transform: uppercase;
-            color: #64748b;
-            margin: 0 0 6px;
+            color: rgba(226, 232, 240, 0.7) !important;
+            margin: 0 0 8px;
         }
-        body.pm-v16 .gate-field { margin-bottom: 14px; }
+        body.pm-v16 .gate-field { margin-bottom: 18px; }
+        body.pm-v16 .gate-card .form-floating > .form-control {
+            padding-top: 0.85rem;
+            padding-bottom: 0.85rem;
+            height: auto;
+            min-height: 52px;
+            line-height: 1.4;
+        }
+        body.pm-v16 .gate-card .form-floating > label {
+            display: none;
+        }
         body.pm-v16 .gate-card .form-control {
-            min-height: 50px;
-            border-radius: 12px;
-            border: 1.5px solid #e2e8f0;
-            background: #fff;
-            font-size: 0.95rem;
-            color: #0f172a;
-            box-shadow: none;
+            min-height: 52px !important;
+            border-radius: 14px !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+            background: rgba(255, 255, 255, 0.06) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            font-family: 'Outfit', system-ui, sans-serif !important;
+            font-size: 0.98rem !important;
+            font-weight: 500;
+            color: #f8fafc !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+            padding-left: 16px;
+            padding-right: 16px;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+        }
+        body.pm-v16 .gate-card .form-control::placeholder {
+            color: rgba(226, 232, 240, 0.4) !important;
+            font-weight: 400;
         }
         body.pm-v16 .gate-card .form-control:focus {
-            border-color: #0b1a33;
-            box-shadow: 0 0 0 3px rgba(11, 26, 51, 0.12);
+            border-color: rgba(255, 193, 7, 0.55) !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.15), 0 8px 24px rgba(0, 0, 0, 0.2) !important;
+            color: #fff !important;
+            outline: none;
         }
         body.pm-v16 .gate-card .btn-login {
             width: 100%;
-            min-height: 50px;
-            margin-top: 8px;
+            min-height: 52px;
+            margin-top: 10px;
             border: 0;
-            border-radius: 12px;
-            font-weight: 800;
-            font-size: 0.95rem;
-            letter-spacing: 0.02em;
-            background: linear-gradient(135deg, #ffc107 0%, #f59e0b 100%);
-            color: #0b1a33;
-            box-shadow: 0 10px 22px rgba(245, 158, 11, 0.32);
+            border-radius: 14px !important;
+            font-family: 'Outfit', system-ui, sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 1rem !important;
+            letter-spacing: 0.03em;
+            background: linear-gradient(135deg, #ffc107 0%, #f59e0b 100%) !important;
+            color: #0b1a33 !important;
+            box-shadow: 0 10px 28px rgba(245, 158, 11, 0.4) !important;
+            transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
         }
         body.pm-v16 .gate-card .btn-login:hover {
-            filter: brightness(1.03);
-            color: #0b1a33;
-            transform: translateY(-1px);
+            filter: brightness(1.06);
+            color: #0b1a33 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 14px 32px rgba(245, 158, 11, 0.5) !important;
+        }
+        body.pm-v16 .gate-card .btn-login:active {
+            transform: translateY(0);
         }
         body.pm-v16 .gate-card .password-toggle {
-            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-            border: 0; background: transparent; color: #94a3b8;
+            position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+            border: 0; background: transparent; color: rgba(226, 232, 240, 0.55);
             padding: 6px; border-radius: 8px; cursor: pointer;
+            transition: color 0.15s, background 0.15s;
         }
-        body.pm-v16 .gate-card .password-toggle:hover { color: #0b1a33; background: #f1f5f9; }
+        body.pm-v16 .gate-card .password-toggle:hover {
+            color: #ffc107;
+            background: rgba(255, 255, 255, 0.08);
+        }
         body.pm-v16 .gate-setup {
-            display: block; width: 100%; margin-top: 14px; border: 0; background: transparent;
-            color: #64748b; font-weight: 600; font-size: 0.84rem; cursor: pointer;
+            display: block; width: 100%; margin-top: 18px; border: 0; background: transparent;
+            color: rgba(226, 232, 240, 0.55) !important; font-family: 'Outfit', system-ui, sans-serif;
+            font-weight: 500; font-size: 0.88rem; cursor: pointer;
+            transition: color 0.15s;
         }
-        body.pm-v16 .gate-setup:hover { color: #0b1a33; }
+        body.pm-v16 .gate-setup:hover { color: #ffc107 !important; }
         body.pm-v16 .gate-card .login-panel-foot {
-            margin-top: 18px;
+            margin-top: 28px;
             text-align: center;
-            color: #94a3b8;
+            color: rgba(148, 163, 184, 0.55) !important;
             font-size: 0.72rem;
             font-weight: 500;
+            font-family: 'Outfit', system-ui, sans-serif;
         }
-        body.pm-v16 .gate-card .login-panel-foot strong { color: #64748b; }
+        body.pm-v16 .gate-card .login-panel-foot strong { color: rgba(226, 232, 240, 0.65) !important; }
         body.pm-v16 #createCompanyForm h5 {
-            font-weight: 800;
-            color: #0b1a33;
+            font-family: 'Outfit', system-ui, sans-serif;
+            font-weight: 700;
+            color: #ffffff !important;
             letter-spacing: -0.02em;
         }
+        body.pm-v16 #createCompanyForm .text-muted {
+            color: rgba(226, 232, 240, 0.55) !important;
+        }
+        body.pm-v16 #createCompanyForm .form-label {
+            color: rgba(226, 232, 240, 0.7) !important;
+        }
+        body.pm-v16 #loginError {
+            color: #fca5a5 !important;
+        }
         @media (max-width: 480px) {
-            body.pm-v16 .gate-card { padding: 28px 20px 20px; border-radius: 16px; }
+            body.pm-v16 .gate-card { padding: 8px 4px !important; }
+            body.pm-v16 .gate-brand h1 { font-size: 1.45rem; }
+            body.pm-v16 .gate-mark { width: 64px; height: 64px; font-size: 1.6rem; }
         }
 
     </style>
