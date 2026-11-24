@@ -2585,6 +2585,8 @@
             background: #ffffff;
             border-bottom: 0;
             box-shadow: 0 1px 0 rgba(11,44,107,0.06);
+            overflow: visible;
+            z-index: 1040;
         }
         body.pm-v16 .pm-shell-top {
             height: 64px;
@@ -2663,13 +2665,14 @@
         body.pm-v16 .pm-topmenu {
             display: flex;
             flex-wrap: nowrap;
-            gap: 0;
-            align-items: stretch;
-            padding: 0;
-            overflow-x: auto;
+            gap: 4px;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            overflow: visible;
             background: var(--navy);
             border-top: 0;
-            min-height: 46px;
+            min-height: 52px;
             position: relative;
             z-index: 1030;
             pointer-events: auto;
@@ -2680,31 +2683,36 @@
             cursor: pointer;
         }
         body.pm-v16 .pm-topmenu::-webkit-scrollbar { height: 0; }
+        body.pm-v16 .tm-drop { position: relative; }
         body.pm-v16 .tm-link {
             border: 0;
-            border-radius: 0;
-            padding: 12px 20px;
+            border-radius: 10px;
+            padding: 9px 16px;
             display: inline-flex;
             align-items: center;
             gap: 7px;
             font-weight: 600;
-            font-size: 0.9rem;
-            color: #ffffff;
+            font-size: 0.86rem;
+            color: rgba(255,255,255,0.92);
             white-space: nowrap;
             cursor: pointer;
             background: transparent;
             box-shadow: none;
-            transition: background 0.15s ease;
+            transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
         }
-        body.pm-v16 .tm-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        body.pm-v16 .tm-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
         body.pm-v16 .tm-link.active,
         body.pm-v16 .tm-link.tm-home.active,
         body.pm-v16.on-home .tm-home {
             background: var(--gold) !important;
             color: #1a1400 !important;
             font-weight: 700;
+            box-shadow: 0 2px 10px rgba(255, 193, 7, 0.35);
         }
-        body.pm-v16 .tm-caret { font-size: 0.65rem; opacity: 0.85; }
+        body.pm-v16 .tm-caret { font-size: 0.62rem; opacity: 0.85; margin-left: 2px; }
         body.pm-v16 .tm-home,
         body.pm-v16 .tm-sale,
         body.pm-v16 .tm-shift,
@@ -2716,21 +2724,38 @@
         body.pm-v16 .tm-admin { background: transparent; }
         body.pm-v16 .tm-menu {
             border: 0;
-            border-radius: 10px;
-            padding: 6px;
-            min-width: 210px;
-            box-shadow: 0 16px 40px rgba(11, 44, 107, 0.2);
-            margin-top: 0 !important;
+            border-radius: 12px;
+            padding: 8px;
+            min-width: 220px;
+            box-shadow: 0 16px 40px rgba(11, 44, 107, 0.22);
+            margin-top: 6px !important;
+            z-index: 1080;
         }
         body.pm-v16 .tm-menu .dropdown-item {
             border-radius: 8px;
             font-weight: 600;
             font-size: 0.86rem;
-            padding: 8px 12px;
+            padding: 9px 12px;
             color: #1a2744;
+            width: 100%;
+            text-align: left;
+            background: transparent;
+            border: 0;
         }
         body.pm-v16 .tm-menu .dropdown-item:hover,
-        body.pm-v16 .tm-menu .dropdown-item.active { background: #e8eef8; color: var(--navy); }
+        body.pm-v16 .tm-menu .dropdown-item:focus,
+        body.pm-v16 .tm-menu .dropdown-item.active {
+            background: #eef2ff;
+            color: var(--navy);
+        }
+        @media (max-width: 900px) {
+            body.pm-v16 .pm-topmenu {
+                justify-content: flex-start;
+                overflow-x: auto;
+                overflow-y: visible;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
 
         /* Home layout: left rail + tile grid (no page scroll) */
         body.pm-v16.on-home .page-content,
@@ -2777,8 +2802,8 @@
         body.pm-v16 .hs-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            grid-template-rows: repeat(4, minmax(0, 1fr));
-            gap: 12px;
+            grid-template-rows: repeat(3, minmax(0, 1fr));
+            gap: 14px;
             min-height: 0;
             height: 100%;
         }
@@ -2869,51 +2894,98 @@
             opacity: 0.85;
         }
         body.pm-v16 .hs-tile {
-            border: 1px solid #e2e8f2;
+            border: 1px solid transparent;
             background: #ffffff;
-            border-radius: 12px;
+            border-radius: 16px;
             min-height: 0;
-            padding: 10px 8px;
+            padding: 16px 12px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             text-align: center;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(11, 44, 107, 0.04);
-            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05), 0 4px 14px rgba(15, 23, 42, 0.04);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        body.pm-v16 .hs-tile::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.12;
+            pointer-events: none;
+            background: var(--tile-tint, transparent);
         }
         body.pm-v16 .hs-tile:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(11, 44, 107, 0.1);
-            border-color: #b8c9e6;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
+            border-color: rgba(15, 23, 42, 0.06);
         }
         body.pm-v16 .hs-tile .hs-ico {
-            width: 52px; height: 52px;
+            width: 54px; height: 54px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.85rem;
-            color: #3b6db5;
+            font-size: 1.55rem;
             line-height: 1;
+            border-radius: 14px;
+            background: var(--tile-icon-bg, #eef2ff);
+            color: var(--tile-icon, #3b6db5);
+            position: relative;
+            z-index: 1;
         }
-        body.pm-v16 .hs-tile .hs-ico i { filter: drop-shadow(0 2px 0 rgba(11,44,107,0.06)); }
         body.pm-v16 .hs-tile .hs-label {
-            font-weight: 600;
-            font-size: 0.92rem;
-            color: #243456;
-            letter-spacing: -0.01em;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #1e293b;
+            letter-spacing: -0.015em;
+            position: relative;
+            z-index: 1;
         }
-        body.pm-v16 .hs-tile.tone-sale .hs-ico { color: #c45c26; }
-        body.pm-v16 .hs-tile.tone-shift .hs-ico { color: #0f6e6b; }
-        body.pm-v16 .hs-tile.tone-stock .hs-ico { color: #2563eb; }
-        body.pm-v16 .hs-tile.tone-money .hs-ico { color: #15803d; }
-        body.pm-v16 .hs-tile.tone-report .hs-ico { color: #b5811a; }
-        body.pm-v16 .hs-tile.tone-people .hs-ico { color: #7c3aed; }
-        body.pm-v16 .hs-tile.tone-care .hs-ico { color: #475569; }
-        body.pm-v16 .hs-tile.tone-admin .hs-ico { color: #be123c; }
+        body.pm-v16 .hs-tile.tone-sale {
+            --tile-tint: linear-gradient(145deg, #ffedd5, #fff7ed);
+            --tile-icon-bg: #ffedd5;
+            --tile-icon: #c2410c;
+        }
+        body.pm-v16 .hs-tile.tone-shift {
+            --tile-tint: linear-gradient(145deg, #ccfbf1, #f0fdfa);
+            --tile-icon-bg: #ccfbf1;
+            --tile-icon: #0f766e;
+        }
+        body.pm-v16 .hs-tile.tone-stock {
+            --tile-tint: linear-gradient(145deg, #dbeafe, #eff6ff);
+            --tile-icon-bg: #dbeafe;
+            --tile-icon: #1d4ed8;
+        }
+        body.pm-v16 .hs-tile.tone-money {
+            --tile-tint: linear-gradient(145deg, #dcfce7, #f0fdf4);
+            --tile-icon-bg: #dcfce7;
+            --tile-icon: #15803d;
+        }
+        body.pm-v16 .hs-tile.tone-report {
+            --tile-tint: linear-gradient(145deg, #fef3c7, #fffbeb);
+            --tile-icon-bg: #fef3c7;
+            --tile-icon: #b45309;
+        }
+        body.pm-v16 .hs-tile.tone-people {
+            --tile-tint: linear-gradient(145deg, #ede9fe, #f5f3ff);
+            --tile-icon-bg: #ede9fe;
+            --tile-icon: #6d28d9;
+        }
+        body.pm-v16 .hs-tile.tone-care {
+            --tile-tint: linear-gradient(145deg, #e2e8f0, #f8fafc);
+            --tile-icon-bg: #e2e8f0;
+            --tile-icon: #475569;
+        }
+        body.pm-v16 .hs-tile.tone-admin {
+            --tile-tint: linear-gradient(145deg, #fce7f3, #fdf2f8);
+            --tile-icon-bg: #fce7f3;
+            --tile-icon: #be123c;
+        }
         @media (max-width: 1200px) {
             body.pm-v16 .hs-home { grid-template-columns: 170px 1fr 220px; }
-            body.pm-v16 .hs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(4, minmax(0, 1fr)); }
+            body.pm-v16 .hs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(3, minmax(0, 1fr)); }
         }
         @media (max-width: 960px) {
             body.pm-v16 .hs-home { grid-template-columns: 160px 1fr; }
@@ -6074,44 +6146,33 @@ async function renderDashboard() {
             { page: 'reports', label: 'Reports' }
           ];
 
-    // Main icon grid — 4 columns (hospital-style tiles)
+    // Main navigator — 9 balanced tiles (3×3), soft colour accents
     const tiles = isCashier
         ? [
             { page: 'sales', label: 'Make a sale', icon: 'bi-cart-check-fill', tone: 'tone-sale' },
             { page: 'shifts', label: 'My shifts', icon: 'bi-clock-history', tone: 'tone-shift' },
             { page: 'meters', label: 'Meters', icon: 'bi-speedometer2', tone: 'tone-stock' },
             { page: 'invoices', label: 'Invoices', icon: 'bi-receipt', tone: 'tone-report' },
+            { page: 'customers', label: 'Customers', icon: 'bi-people-fill', tone: 'tone-people' },
             { page: 'messages', label: 'Messages', icon: 'bi-chat-dots-fill', tone: 'tone-people' },
-            { page: 'customers', label: 'Customers', icon: 'bi-people-fill', tone: 'tone-people' }
+            { page: 'financials', label: 'Payments', icon: 'bi-wallet2', tone: 'tone-money' },
+            { page: 'reports', label: 'Reports', icon: 'bi-bar-chart-fill', tone: 'tone-report' },
+            { page: 'inventory', label: 'Inventory', icon: 'bi-box-seam-fill', tone: 'tone-stock' }
           ]
         : [
             { page: 'sales', label: 'Make a sale', icon: 'bi-cart-check-fill', tone: 'tone-sale' },
             { page: 'shifts', label: 'Shifts', icon: 'bi-clock-history', tone: 'tone-shift' },
-            { page: 'meters', label: 'Meter readings', icon: 'bi-speedometer2', tone: 'tone-stock' },
-            { page: 'balancing', label: 'Balancing', icon: 'bi-scales', tone: 'tone-money' },
+            { page: 'balancing', label: 'Balancing', icon: 'bi-balance-scale', tone: 'tone-money' },
             { page: 'inventory', label: 'Inventory', icon: 'bi-box-seam-fill', tone: 'tone-stock' },
             { page: 'stock', label: 'Offloading', icon: 'bi-truck', tone: 'tone-stock' },
-            { page: 'tank_levels', label: 'Tank levels', icon: 'bi-droplet-half', tone: 'tone-stock' },
-            { page: 'fuel_prices', label: 'Fuel prices', icon: 'bi-tags-fill', tone: 'tone-report' },
             { page: 'customers', label: 'Customers', icon: 'bi-people-fill', tone: 'tone-people' },
-            { page: 'suppliers', label: 'Suppliers', icon: 'bi-building', tone: 'tone-people' },
-            { page: 'staff', label: 'Staff', icon: 'bi-person-badge-fill', tone: 'tone-people' },
             { page: 'financials', label: 'Financials', icon: 'bi-wallet2', tone: 'tone-money' },
-            { page: 'payroll', label: 'Payroll', icon: 'bi-cash-stack', tone: 'tone-money' },
             { page: 'reports', label: 'Reports', icon: 'bi-bar-chart-fill', tone: 'tone-report' },
-            { page: 'maintenance', label: 'Maintenance', icon: 'bi-tools', tone: 'tone-care' },
-            { page: 'messages', label: 'Messages', icon: 'bi-chat-dots-fill', tone: 'tone-people' }
+            { page: 'staff', label: 'Staff', icon: 'bi-person-badge-fill', tone: 'tone-people' }
           ];
 
-    if (!isCashier && isAdminRole) {
-        tiles.push(
-            { page: 'users', label: 'Users', icon: 'bi-person-gear', tone: 'tone-admin' },
-            { page: 'company', label: 'Company', icon: 'bi-buildings', tone: 'tone-admin' }
-        );
-    }
-
-    // Cap at 16 tiles (4x4) so the home screen does not scroll
-    const gridTiles = tiles.slice(0, 16);
+    // Exactly 9 tiles for a clean 3×3 navigator
+    const gridTiles = tiles.slice(0, 9);
 
     const railHtml = rail.map(r =>
         `<button type="button" class="hs-rail-btn" data-page="${esc(r.page)}">${esc(r.label)}</button>`
@@ -16283,12 +16344,12 @@ buildSidebar = function() {
         } else if (item.children) {
             const id = 'tmDrop' + idx;
             html += `<div class="dropdown tm-drop">
-                <button type="button" class="tm-link ${item.tone || ''}" data-bs-toggle="dropdown" aria-expanded="false" id="${id}">
+                <button type="button" class="tm-link ${item.tone || ''}" data-bs-toggle="dropdown" data-bs-auto-close="true" data-bs-display="static" aria-expanded="false" id="${id}">
                     <span>${esc(item.label)}</span><i class="bi bi-chevron-down tm-caret"></i>
                 </button>
                 <ul class="dropdown-menu tm-menu" aria-labelledby="${id}">`;
             item.children.forEach(child => {
-                html += `<li><button type="button" class="dropdown-item" data-page="${esc(child.page)}">${esc(child.label)}</button></li>`;
+                html += `<li><a class="dropdown-item" href="#" data-page="${esc(child.page)}">${esc(child.label)}</a></li>`;
             });
             html += `</ul></div>`;
         }
@@ -16296,28 +16357,51 @@ buildSidebar = function() {
     nav.innerHTML = html;
     if (legacy && legacy !== nav) legacy.innerHTML = '';
 
-    // Reliable navigation for top links + dropdown items
-    // (Bootstrap dropdowns can swallow clicks; use capture + stopPropagation)
-    nav.querySelectorAll('[data-page]').forEach(a => {
+    // Init Bootstrap dropdowns explicitly (works after dynamic HTML inject)
+    if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+        nav.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(function (toggle) {
+            try {
+                // dispose previous instance if any, then create fresh
+                var prev = bootstrap.Dropdown.getInstance(toggle);
+                if (prev) prev.dispose();
+                new bootstrap.Dropdown(toggle, { autoClose: true, boundary: 'viewport' });
+            } catch (err) {
+                console.warn('Dropdown init failed', err);
+            }
+        });
+    }
+
+    // Leaf top links (Home, etc.) — navigate on click
+    nav.querySelectorAll('.tm-link[data-page]').forEach(function (a) {
         if (a.dataset.page === state.currentPage) a.classList.add('active');
         a.addEventListener('click', function (e) {
-            const targetPage = this.dataset.page;
+            var targetPage = this.dataset.page;
+            if (!targetPage) return;
+            e.preventDefault();
+            if (typeof navigate === 'function') navigate(targetPage);
+        });
+    });
+
+    // Dropdown items — navigate and close menu
+    nav.querySelectorAll('.dropdown-item[data-page]').forEach(function (item) {
+        if (item.dataset.page === state.currentPage) item.classList.add('active');
+        item.addEventListener('click', function (e) {
+            var targetPage = this.dataset.page;
             if (!targetPage) return;
             e.preventDefault();
             e.stopPropagation();
-            // Close any open Bootstrap dropdown
             try {
-                const dd = this.closest('.dropdown');
+                var dd = this.closest('.dropdown');
                 if (dd) {
-                    const toggle = dd.querySelector('[data-bs-toggle="dropdown"]');
+                    var toggle = dd.querySelector('[data-bs-toggle="dropdown"]');
                     if (toggle && typeof bootstrap !== 'undefined') {
-                        const inst = bootstrap.Dropdown.getInstance(toggle);
+                        var inst = bootstrap.Dropdown.getInstance(toggle);
                         if (inst) inst.hide();
                     }
                 }
             } catch (_) {}
             if (typeof navigate === 'function') navigate(targetPage);
-        }, true);
+        });
     });
 };
 
