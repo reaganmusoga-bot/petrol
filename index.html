@@ -13789,12 +13789,23 @@ async function renderCustomers() {
                 const tillRef = tillId ? db.collection('bank_accounts').doc(tillId) : null;
 
                 await db.runTransaction(async (tx) => {
-                    // Re-read customer inside transaction
+                    // ---- ALL READS FIRST (Firestore rule) ----
                     const custDoc = await tx.get(custRef);
                     if (!custDoc.exists) throw new Error('Customer no longer exists');
                     const currentBal = Number(custDoc.data().current_balance) || 0;
                     const finalBal = currentBal - amount;
 
+                    const m = String(method || 'cash').toLowerCase();
+                    const depositsToTill = m !== 'credit' && !!tillRef;
+                    let tillExists = false;
+                    let tillBal = 0;
+                    if (depositsToTill) {
+                        const tillDoc = await tx.get(tillRef);
+                        tillExists = tillDoc.exists;
+                        tillBal = tillExists ? (Number(tillDoc.data().balance) || 0) : 0;
+                    }
+
+                    // ---- ALL WRITES AFTER READS ----
                     tx.update(custRef, { current_balance: finalBal, last_updated: firebase.firestore.FieldValue.serverTimestamp() });
 
                     const saleRef = db.collection('sales').doc();
@@ -13833,13 +13844,9 @@ async function renderCustomers() {
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
 
-                    // Deposit into Cash Till for non-credit methods
-                    const m = String(method || 'cash').toLowerCase();
-                    if (m !== 'credit' && tillRef) {
-                        const tillDoc = await tx.get(tillRef);
-                        if (tillDoc.exists) {
-                            const bal = Number(tillDoc.data().balance) || 0;
-                            tx.update(tillRef, { balance: bal + amount });
+                    if (depositsToTill) {
+                        if (tillExists) {
+                            tx.update(tillRef, { balance: tillBal + amount });
                         } else {
                             tx.set(tillRef, {
                                 bank_name: 'Cash Till · ' + stationName(stationId),
