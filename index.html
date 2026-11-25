@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PetroManager Pro v1.7 — Musoga Reagan</title>
+    <title>PetroManager Pro v1.8 — Musoga Reagan</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -3283,9 +3283,500 @@
             body.pm-v16 .gate-mark { width: 64px; height: 64px; font-size: 1.6rem; }
         }
 
+
+
+        /* ============================================================
+           v1.8 — VERDANT DESK visual system
+           Major look shift: sand canvas, emerald primary, copper accent,
+           soft floating cards, modern table headers (no heavy navy bars).
+           Logic untouched — presentation only.
+           ============================================================ */
+        body.pm-v18 {
+            --bg: #f3f0e9;
+            --text-color: #1c2421;
+            --card-bg: #fffcf7;
+            --border-color: #e4ddd0;
+            --shadow: 0 8px 28px rgba(28, 36, 33, 0.06);
+            --sidebar-bg: #0f3d32;
+            --hero-gradient: linear-gradient(135deg, #0f3d32 0%, #1a5c4a 55%, #2a7a62 100%);
+            --navy: #0f3d32;
+            --navy-deep: #0a2e26;
+            --gold: #c47b3b;
+            --gold-soft: #e8a86b;
+            --accent: #c47b3b;
+            --accent-soft: #f3e0cc;
+            --mint: #d8efe6;
+            --ink: #1c2421;
+            --muted: #6b756f;
+            --line: #e4ddd0;
+            --table-head: #143f35;
+            --row-alt: #faf7f1;
+            --row-hover: #eef7f3;
+            font-family: "DM Sans", "Outfit", "Segoe UI", system-ui, sans-serif;
+            background:
+                radial-gradient(1200px 500px at 10% -10%, rgba(42, 122, 98, 0.08), transparent 60%),
+                radial-gradient(900px 400px at 100% 0%, rgba(196, 123, 59, 0.07), transparent 55%),
+                var(--bg);
+            color: var(--ink);
+        }
+
+        /* ---- Shell: top bar ---- */
+        body.pm-v18 .top-header.pm-shell {
+            background: rgba(255, 252, 247, 0.92) !important;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(228, 221, 208, 0.9) !important;
+            box-shadow: 0 10px 30px rgba(15, 61, 50, 0.04) !important;
+        }
+        body.pm-v18 .pm-shell-top {
+            background: transparent !important;
+            height: 68px !important;
+            padding: 0 22px !important;
+        }
+        body.pm-v18 .pm-wordmark {
+            color: var(--navy) !important;
+            font-family: "Outfit", system-ui, sans-serif !important;
+            letter-spacing: -0.03em !important;
+        }
+        body.pm-v18 .pm-wordmark .pm-brand-sub {
+            color: #7a857e !important;
+            letter-spacing: 0.16em !important;
+        }
+        body.pm-v18 .pm-wordmark i {
+            background: linear-gradient(145deg, #0f3d32, #1f6b56) !important;
+            color: #f0d2b0 !important;
+            border: 2px solid #c47b3b !important;
+            box-shadow: 0 6px 16px rgba(15, 61, 50, 0.22);
+        }
+        body.pm-v18 .pm-search input {
+            background: #f7f3eb !important;
+            border: 1px solid #ddd4c4 !important;
+            border-radius: 999px !important;
+            color: var(--ink) !important;
+        }
+        body.pm-v18 .pm-search input:focus {
+            background: #fff !important;
+            border-color: #2a7a62 !important;
+            box-shadow: 0 0 0 3px rgba(42, 122, 98, 0.15) !important;
+        }
+        body.pm-v18 .pm-search i { color: #8a948d !important; }
+        body.pm-v18 .account-trigger {
+            background: #f3e8d8 !important;
+            border: 1px solid #e5d4bc !important;
+            border-radius: 999px !important;
+        }
+        body.pm-v18 .account-avatar {
+            background: linear-gradient(145deg, #0f3d32, #1a5c4a) !important;
+            color: #fff !important;
+        }
+
+        /* ---- Top menu: emerald bar, copper active ---- */
+        body.pm-v18 .pm-topmenu {
+            background: linear-gradient(90deg, #0c332a 0%, #0f3d32 40%, #155544 100%) !important;
+            min-height: 54px !important;
+            padding: 7px 14px !important;
+            gap: 6px !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        body.pm-v18 .tm-link {
+            border-radius: 999px !important;
+            padding: 9px 16px !important;
+            font-weight: 600 !important;
+            font-size: 0.84rem !important;
+            color: rgba(255,255,255,0.88) !important;
+            background: transparent !important;
+        }
+        body.pm-v18 .tm-link:hover {
+            background: rgba(255,255,255,0.1) !important;
+            color: #fff !important;
+        }
+        body.pm-v18 .tm-link.active,
+        body.pm-v18 .tm-link.tm-home.active,
+        body.pm-v18.on-home .tm-home {
+            background: linear-gradient(135deg, #c47b3b, #d49252) !important;
+            color: #1a1208 !important;
+            box-shadow: 0 6px 16px rgba(196, 123, 59, 0.35) !important;
+        }
+        body.pm-v18 .tm-menu {
+            border: 1px solid #e4ddd0 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 16px 40px rgba(15, 61, 50, 0.12) !important;
+            background: #fffcf7 !important;
+            padding: 8px !important;
+        }
+        body.pm-v18 .tm-menu .dropdown-item {
+            border-radius: 10px !important;
+            font-weight: 550 !important;
+            color: #1c2421 !important;
+            padding: 9px 12px !important;
+        }
+        body.pm-v18 .tm-menu .dropdown-item:hover,
+        body.pm-v18 .tm-menu .dropdown-item.active {
+            background: #eef7f3 !important;
+            color: #0f3d32 !important;
+        }
+
+        /* ---- Page canvas ---- */
+        body.pm-v18 .main-content { background: transparent !important; }
+        body.pm-v18 .page-content {
+            padding: 22px 24px 40px !important;
+        }
+        body.pm-v18 .page-content h4,
+        body.pm-v18 .page-content h5,
+        body.pm-v18 .page-content .fin-title-row h4,
+        body.pm-v18 .page-content .ms-header h4 {
+            color: #0f3d32 !important;
+            font-family: "Outfit", system-ui, sans-serif !important;
+            letter-spacing: -0.03em !important;
+        }
+        body.pm-v18 .page-content .fin-sub,
+        body.pm-v18 .page-content .ms-sub {
+            color: #6b756f !important;
+        }
+
+        /* ---- Cards: warm paper float ---- */
+        body.pm-v18 .card-box,
+        body.pm-v18 .fin-action-card,
+        body.pm-v18 .fin-ledger-card,
+        body.pm-v18 .ms-form-card,
+        body.pm-v18 .ms-history-card,
+        body.pm-v18 .dash-cc-panel,
+        body.pm-v18 .dash-cc-chart-card,
+        body.pm-v18 .qb-tile,
+        body.pm-v18 .hs-tile,
+        body.pm-v18 .hs-qa-card {
+            background: var(--card-bg) !important;
+            border: 1px solid rgba(228, 221, 208, 0.95) !important;
+            border-radius: 18px !important;
+            box-shadow: 0 10px 30px rgba(28, 36, 33, 0.05) !important;
+        }
+        body.pm-v18 .fin-action-card h6,
+        body.pm-v18 .fin-ledger-card .intl-section-head h6,
+        body.pm-v18 .ms-form-head h6,
+        body.pm-v18 .ms-hist-head h6,
+        body.pm-v18 .card-box > h5,
+        body.pm-v18 .card-box > h6 {
+            color: #0f3d32 !important;
+            font-family: "Outfit", system-ui, sans-serif !important;
+        }
+
+        /* ---- Financial header strip ---- */
+        body.pm-v18 .fin-header {
+            background: linear-gradient(135deg, #0c332a 0%, #145c4a 50%, #1f7a62 100%) !important;
+            border-radius: 20px !important;
+            box-shadow: 0 16px 40px rgba(15, 61, 50, 0.22) !important;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        body.pm-v18 .fin-header h4 { color: #fff !important; }
+        body.pm-v18 .fin-header .fin-sub { color: rgba(232, 245, 239, 0.75) !important; }
+        body.pm-v18 .fin-period-chip {
+            background: rgba(255,255,255,0.1) !important;
+            border-color: rgba(255,255,255,0.14) !important;
+            color: #f3e0cc !important;
+        }
+        body.pm-v18 .fin-kpi {
+            background: rgba(255,255,255,0.07) !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            border-radius: 14px !important;
+        }
+        body.pm-v18 .fin-kpi .k-label { color: rgba(232, 245, 239, 0.7) !important; }
+        body.pm-v18 .fin-kpi .k-value { color: #fff !important; }
+        body.pm-v18 .fin-kpi.in .k-value { color: #9ae6c5 !important; }
+        body.pm-v18 .fin-kpi.out .k-value { color: #f7b4a8 !important; }
+        body.pm-v18 .fin-kpi.warn .k-value { color: #f0c98a !important; }
+        body.pm-v18 .fin-kpi .k-hint { color: rgba(232, 245, 239, 0.55) !important; }
+
+        /* ---- TABLES: major visual shift ---- */
+        body.pm-v18 .page-content .table-responsive,
+        body.pm-v18 .page-content .intl-table-wrap,
+        body.pm-v18 .page-content .sales-history-wrap,
+        body.pm-v18 .intl-table-wrap {
+            border: 1px solid #e4ddd0 !important;
+            border-radius: 16px !important;
+            background: #fffcf7 !important;
+            box-shadow: 0 8px 24px rgba(28, 36, 33, 0.04) !important;
+            overflow: hidden;
+        }
+        body.pm-v18 .page-content table.table thead th,
+        body.pm-v18 .page-content .sales-history-table thead th,
+        body.pm-v18 .intl-table-wrap thead th,
+        body.pm-v18 .sales-history-table thead th {
+            background: linear-gradient(180deg, #143f35 0%, #0f3d32 100%) !important;
+            color: #f4faf7 !important;
+            font-size: 0.68rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.07em !important;
+            text-transform: uppercase !important;
+            border: none !important;
+            border-bottom: 3px solid #c47b3b !important;
+            padding: 13px 14px !important;
+        }
+        body.pm-v18 .page-content table.table tbody td,
+        body.pm-v18 .page-content .sales-history-table tbody td,
+        body.pm-v18 .intl-table-wrap tbody td,
+        body.pm-v18 .sales-history-table tbody td {
+            border-bottom: 1px solid #efe9de !important;
+            color: #1c2421 !important;
+            background: #fffcf7 !important;
+            padding: 12px 14px !important;
+        }
+        body.pm-v18 .page-content table.table tbody tr:nth-child(even) td,
+        body.pm-v18 .page-content .sales-history-table tbody tr:nth-child(even) td,
+        body.pm-v18 .intl-table-wrap tbody tr:nth-child(even) td {
+            background: #faf7f1 !important;
+        }
+        body.pm-v18 .page-content table.table tbody tr:hover td,
+        body.pm-v18 .page-content .sales-history-table tbody tr:hover td,
+        body.pm-v18 .intl-table-wrap tbody tr:hover td {
+            background: #eef7f3 !important;
+        }
+
+        /* ---- Forms ---- */
+        body.pm-v18 .page-content .form-label,
+        body.pm-v18 .intl-form .form-label,
+        body.pm-v18 .ms-form-body .form-label {
+            color: #5f6b64 !important;
+            letter-spacing: 0.05em !important;
+        }
+        body.pm-v18 .page-content .form-control,
+        body.pm-v18 .page-content .form-select,
+        body.pm-v18 .intl-form .form-control,
+        body.pm-v18 .intl-form .form-select,
+        body.pm-v18 .ms-form-body .form-control,
+        body.pm-v18 .ms-form-body .form-select {
+            border-radius: 12px !important;
+            border-color: #ddd4c4 !important;
+            background: #fffefb !important;
+            color: #1c2421 !important;
+            min-height: 42px;
+        }
+        body.pm-v18 .page-content .form-control:focus,
+        body.pm-v18 .page-content .form-select:focus,
+        body.pm-v18 .intl-form .form-control:focus,
+        body.pm-v18 .intl-form .form-select:focus {
+            border-color: #2a7a62 !important;
+            box-shadow: 0 0 0 3px rgba(42, 122, 98, 0.14) !important;
+        }
+        body.pm-v18 .form-section-title,
+        body.pm-v18 .ms-block-title,
+        body.pm-v18 .intl-form .form-section-title {
+            color: #8a948d !important;
+        }
+        body.pm-v18 .form-section,
+        body.pm-v18 .ms-block,
+        body.pm-v18 .intl-form .form-section {
+            border-bottom-color: #efe9de !important;
+        }
+
+        /* ---- Buttons ---- */
+        body.pm-v18 .page-content .btn-primary,
+        body.pm-v18 .intl-form .btn-intl-primary {
+            background: linear-gradient(135deg, #0f3d32, #1a5c4a) !important;
+            border-color: transparent !important;
+            color: #fff !important;
+            box-shadow: 0 8px 18px rgba(15, 61, 50, 0.2) !important;
+            border-radius: 12px !important;
+        }
+        body.pm-v18 .page-content .btn-primary:hover,
+        body.pm-v18 .intl-form .btn-intl-primary:hover {
+            filter: brightness(1.08);
+        }
+        body.pm-v18 .intl-form .btn-intl-success {
+            background: linear-gradient(135deg, #0f766e, #14b8a6) !important;
+            border: none !important;
+            color: #fff !important;
+            box-shadow: 0 8px 18px rgba(15, 118, 110, 0.22) !important;
+        }
+        body.pm-v18 .intl-form .btn-intl-warning {
+            background: linear-gradient(135deg, #b45309, #c47b3b) !important;
+            border: none !important;
+            color: #fff !important;
+            box-shadow: 0 8px 18px rgba(196, 123, 59, 0.25) !important;
+        }
+        body.pm-v18 .intl-form .btn-intl-danger {
+            background: linear-gradient(135deg, #b91c1c, #dc2626) !important;
+            border: none !important;
+            color: #fff !important;
+        }
+        body.pm-v18 .page-content .btn-outline-primary {
+            color: #0f3d32 !important;
+            border-color: #c9d5cf !important;
+            background: transparent !important;
+        }
+        body.pm-v18 .page-content .btn-outline-primary:hover {
+            background: #eef7f3 !important;
+            color: #0f3d32 !important;
+        }
+        body.pm-v18 .page-content .btn {
+            border-radius: 11px !important;
+            font-weight: 650 !important;
+        }
+
+        /* ---- Chips / badges ---- */
+        body.pm-v18 .intl-chip.pay { background: #d8efe6 !important; color: #0f3d32 !important; }
+        body.pm-v18 .intl-chip.forgive { background: #e0f2fe !important; color: #075985 !important; }
+        body.pm-v18 .sale-status.is-posted { background: #d8efe6 !important; color: #0f3d32 !important; }
+        body.pm-v18 .sale-pay.pay-credit { background: #f3e0cc !important; color: #8a4b16 !important; }
+        body.pm-v18 .intl-avatar {
+            background: linear-gradient(135deg, #0f3d32, #1a5c4a) !important;
+        }
+        body.pm-v18 .amt-in { color: #0f766e !important; }
+        body.pm-v18 .amt-out { color: #b91c1c !important; }
+        body.pm-v18 .amt-warn { color: #b45309 !important; }
+
+        /* ---- Filter bars ---- */
+        body.pm-v18 .fin-filter-bar,
+        body.pm-v18 .ms-filters {
+            background: #f7f3eb !important;
+            border: 1px solid #e4ddd0 !important;
+            border-radius: 12px !important;
+        }
+
+        /* ---- Home / dashboard tiles ---- */
+        body.pm-v18 .hs-home,
+        body.pm-v18 .qb-home {
+            max-width: 1200px;
+        }
+        body.pm-v18 .hs-tile,
+        body.pm-v18 .qb-tile {
+            border-radius: 20px !important;
+            transition: transform 0.18s ease, box-shadow 0.18s ease !important;
+        }
+        body.pm-v18 .hs-tile:hover,
+        body.pm-v18 .qb-tile:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 18px 36px rgba(15, 61, 50, 0.12) !important;
+            border-color: #c9d5cf !important;
+        }
+        body.pm-v18 .hs-tile .hs-label,
+        body.pm-v18 .qb-tile .label {
+            color: #0f3d32 !important;
+            font-family: "Outfit", system-ui, sans-serif !important;
+        }
+        body.pm-v18 .hs-rail-btn,
+        body.pm-v18 .hs-qa-btn {
+            border-radius: 12px !important;
+            border: 1px solid #e4ddd0 !important;
+            background: #fffcf7 !important;
+            color: #1c2421 !important;
+        }
+        body.pm-v18 .hs-rail-btn:hover,
+        body.pm-v18 .hs-qa-btn:hover {
+            background: #0f3d32 !important;
+            color: #fff !important;
+            border-color: #0f3d32 !important;
+        }
+        body.pm-v18 .hs-qa-card h6 {
+            color: #0f3d32 !important;
+            font-family: "Outfit", system-ui, sans-serif !important;
+        }
+
+        /* ---- Login gate polish ---- */
+        body.pm-v18 .login-wrap,
+        body.pm-v18 .gate-wrap {
+            background: #0a241f !important;
+        }
+        body.pm-v18 .login-hero {
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(196,123,59,0.22) 0%, transparent 55%),
+                radial-gradient(ellipse 60% 40% at 90% 90%, rgba(42,122,98,0.2) 0%, transparent 50%),
+                linear-gradient(165deg, #071a16 0%, #0f3d32 45%, #155544 100%) !important;
+        }
+        body.pm-v18 .login-hero h2 span,
+        body.pm-v18 .gate-brand h1 span {
+            background: linear-gradient(90deg, #e8a86b, #f3e0cc) !important;
+            -webkit-background-clip: text !important;
+            background-clip: text !important;
+            color: transparent !important;
+        }
+        body.pm-v18 .login-card .btn-login,
+        body.pm-v18 .gate-card .btn-login {
+            background: linear-gradient(135deg, #c47b3b 0%, #a8632a 100%) !important;
+            color: #1a1208 !important;
+            box-shadow: 0 10px 28px rgba(196, 123, 59, 0.35) !important;
+        }
+        body.pm-v18 .login-panel { background: #f7f3eb !important; }
+        body.pm-v18 .login-brand h1 { color: #0f3d32 !important; }
+
+        /* ---- Modals ---- */
+        body.pm-v18 .modal-header {
+            background: linear-gradient(135deg, #0f3d32, #1a5c4a) !important;
+            color: #fff !important;
+            border-radius: 14px 14px 0 0 !important;
+        }
+        body.pm-v18 .modal-content {
+            border: none !important;
+            border-radius: 16px !important;
+            background: #fffcf7 !important;
+            box-shadow: 0 24px 60px rgba(15, 61, 50, 0.2) !important;
+        }
+
+        /* ---- Dark mode adaptation for v1.8 ---- */
+        body.pm-v18[data-theme="dark"] {
+            --bg: #0d1412;
+            --text-color: #e6ebe8;
+            --card-bg: #15201c;
+            --border-color: #2a3a34;
+            --row-alt: #121a17;
+            --row-hover: #1a2e28;
+            background:
+                radial-gradient(1000px 400px at 0% 0%, rgba(42,122,98,0.12), transparent 55%),
+                #0d1412;
+        }
+        body.pm-v18[data-theme="dark"] .top-header.pm-shell {
+            background: rgba(21, 32, 28, 0.92) !important;
+            border-bottom-color: #2a3a34 !important;
+        }
+        body.pm-v18[data-theme="dark"] .pm-wordmark { color: #e6ebe8 !important; }
+        body.pm-v18[data-theme="dark"] .card-box,
+        body.pm-v18[data-theme="dark"] .fin-action-card,
+        body.pm-v18[data-theme="dark"] .fin-ledger-card,
+        body.pm-v18[data-theme="dark"] .ms-form-card,
+        body.pm-v18[data-theme="dark"] .ms-history-card {
+            background: #15201c !important;
+            border-color: #2a3a34 !important;
+        }
+        body.pm-v18[data-theme="dark"] .page-content table.table tbody td,
+        body.pm-v18[data-theme="dark"] .intl-table-wrap tbody td {
+            background: #15201c !important;
+            color: #e6ebe8 !important;
+            border-bottom-color: #2a3a34 !important;
+        }
+        body.pm-v18[data-theme="dark"] .page-content table.table tbody tr:nth-child(even) td,
+        body.pm-v18[data-theme="dark"] .intl-table-wrap tbody tr:nth-child(even) td {
+            background: #121a17 !important;
+        }
+        body.pm-v18[data-theme="dark"] .page-content table.table tbody tr:hover td,
+        body.pm-v18[data-theme="dark"] .intl-table-wrap tbody tr:hover td {
+            background: #1a2e28 !important;
+        }
+        body.pm-v18[data-theme="dark"] .page-content .form-control,
+        body.pm-v18[data-theme="dark"] .page-content .form-select,
+        body.pm-v18[data-theme="dark"] .intl-form .form-control,
+        body.pm-v18[data-theme="dark"] .intl-form .form-select {
+            background: #0f1815 !important;
+            border-color: #2a3a34 !important;
+            color: #e6ebe8 !important;
+        }
+        body.pm-v18[data-theme="dark"] .fin-filter-bar {
+            background: #121a17 !important;
+            border-color: #2a3a34 !important;
+        }
+        body.pm-v18[data-theme="dark"] .page-content h4,
+        body.pm-v18[data-theme="dark"] .page-content h5,
+        body.pm-v18[data-theme="dark"] .fin-action-card h6 {
+            color: #e6ebe8 !important;
+        }
+
+        /* Soften hard-coded navy text leftovers inside page content */
+        body.pm-v18 .page-content [style*="color:#0b1a33"],
+        body.pm-v18 .page-content [style*="color: #0b1a33"] {
+            color: #0f3d32 !important;
+        }
+
     </style>
 </head>
-<body class="pm-v16">
+<body class="pm-v16 pm-v18">
     <div id="offlineBanner"><i class="bi bi-wifi-off"></i> You are offline – showing cached data only</div>
 
     <!-- ============================================================
@@ -3584,7 +4075,7 @@ const auth = firebase.auth();
 db.enablePersistence({ synchronizeTabs: true }).catch(err => console.warn('Persistence not enabled', err));
 
 // ===== App constants =====
-const APP_VERSION = '1.4.6';
+const APP_VERSION = '1.8.0';
 const LOW_STOCK_THRESHOLD = 500; // L — single source of truth for "low stock"
 const AUTO_LOGOUT_MS = 8 * 60 * 60 * 1000; // 8 hours
 const LOGIN_MAX_ATTEMPTS = 5;
