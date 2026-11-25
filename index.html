@@ -6272,7 +6272,7 @@ async function renderDashboard() {
             { page: 'sales', label: 'Make a sale' },
             { page: 'shifts', label: 'Open / close shift' },
             { page: 'inventory', label: 'Inventory' },
-            { page: 'financials', label: 'Collect a payment' },
+            { page: 'customers', label: 'Collect a payment' },
             { page: 'stock', label: 'Receive fuel' },
             { page: 'customers', label: 'Customers' },
             { page: 'reports', label: 'Reports' }
@@ -6327,7 +6327,7 @@ async function renderDashboard() {
             { page: 'sales', label: 'New sale', icon: 'bi-cart-plus' },
             { page: 'balancing', label: 'Balance a shift', icon: 'bi-balance-scale' },
             { page: 'stock', label: 'Receive fuel', icon: 'bi-truck' },
-            { page: 'financials', label: 'Collect payment', icon: 'bi-cash-stack' },
+            { page: 'customers', label: 'Collect payment', icon: 'bi-cash-stack' },
             { page: 'reports', label: 'Reports', icon: 'bi-bar-chart' }
           ];
     const qaHtml = qaItems.map(q =>
@@ -14297,25 +14297,69 @@ async function renderReports() {
 
     function generateSalesSummary(f) {
         const rows = [];
+        let totalQty = 0, totalSales = 0, totalCost = 0, totalProfit = 0, totalCredit = 0;
         sales.forEach(s => {
             if (!isFuelSale(s)) return;
             if (f.stationId && String(s.station_id) !== String(f.stationId)) return;
             if (f.product && String(s.product_type) !== String(f.product)) return;
             if (!dateInBusinessRange(recordBusinessDate(s), f.from, f.to)) return;
+            if (s.status === 'reversed' || s.reversed === true) return;
             const cashier = users.find(u => String(u.id) === String(s.recorded_by));
+            const qty = Number(s.quantity) || 0;
+            const amount = Number(s.amount) || 0;
+            const unitCost = Number(s.cost_price) || 0;
+            const lineCost = unitCost * qty;
+            const profit = amount - lineCost;
+            const payRaw = String(s.payment_method || 'cash').toLowerCase();
+            const isCredit = payRaw === 'credit';
+            const creditAmt = isCredit ? amount : 0;
+            totalQty += qty;
+            totalSales += amount;
+            totalCost += lineCost;
+            totalProfit += profit;
+            totalCredit += creditAmt;
+            const customerLabel = isCredit
+                ? (s.customer_name || (s.customer_id ? 'Credit customer' : 'Credit'))
+                : '—';
             rows.push([
                 esc(stationName(s.station_id)),
                 esc(cashier ? (cashier.name || cashier.username) : (s.recorded_by || '—')),
                 esc(s.product_type || '—'),
-                (Number(s.quantity) || 0).toFixed(2),
-                formatMoney(s.amount),
-                esc(s.payment_method || '—'),
+                qty.toFixed(2),
+                formatMoney(amount),
+                formatMoney(lineCost),
+                formatMoney(profit),
+                isCredit
+                    ? `<span class="sale-pay pay-credit">Credit</span><div class="cell-sub">${esc(customerLabel)}</div>`
+                    : esc(s.payment_method || 'cash'),
                 formatDate(recordBusinessDate(s))
             ]);
         });
-        let body = periodBanner('Sales summary', f, '') + generateTable(
-            ['Station', 'Cashier', 'Product', 'Qty (L)', 'Amount', 'Payment', 'Date'], rows);
-        return { html: body, headers: ['Station', 'Cashier', 'Product', 'Qty (L)', 'Amount', 'Payment', 'Date'], rows, filename: 'SalesSummary' };
+        // Totals row (also exported as last data row for Excel)
+        if (rows.length) {
+            rows.push([
+                '<strong>TOTAL</strong>',
+                '',
+                '',
+                '<strong>' + totalQty.toFixed(2) + '</strong>',
+                '<strong>' + formatMoney(totalSales) + '</strong>',
+                '<strong>' + formatMoney(totalCost) + '</strong>',
+                '<strong>' + formatMoney(totalProfit) + '</strong>',
+                '<strong>Credit: ' + formatMoney(totalCredit) + '</strong>',
+                ''
+            ]);
+        }
+        const headers = ['Station', 'Cashier', 'Product', 'Qty (L)', 'Sales', 'Cost', 'Profit', 'Payment / Credit', 'Date'];
+        let body = periodBanner('Sales summary', f,
+            'Includes selling amount, cost of sales, profit, and credit sales. Totals appear in the last row.');
+        body += reportKpiRow([
+            { label: 'Total sales', value: formatMoney(totalSales), tone: 'in' },
+            { label: 'Total cost', value: formatMoney(totalCost), tone: 'out' },
+            { label: 'Total profit', value: formatMoney(totalProfit), tone: totalProfit >= 0 ? 'in' : 'out' },
+            { label: 'Credit sales', value: formatMoney(totalCredit), tone: totalCredit ? 'warn' : '' }
+        ]);
+        body += generateTable(headers, rows);
+        return { html: body, headers: headers, rows, filename: 'SalesSummary' };
     }
 
     function generateExpenseSummary(f) {
@@ -15484,9 +15528,9 @@ async function renderPayroll() {
             </div>
 
             <div class="row g-3">
-                <div class="col-lg-5">
-                    <div class="fin-action-card mb-3">
-                        <h6><i class="bi bi-wallet2 text-success"></i> Pay Employee</h6>
+                <div class="col-lg-6">
+                    <div class="fin-action-card h-100">
+                        <h6><i class="bi bi-wallet2 text-success"></i> Pay salary</h6>
                         <form id="salaryForm" class="intl-form">
                             <div class="form-section">
                                 <div class="form-section-title">Employee</div>
@@ -15555,9 +15599,10 @@ async function renderPayroll() {
                             <button type="submit" class="btn btn-intl btn-intl-success"><i class="bi bi-check2"></i> Post Salary</button>
                         </form>
                     </div>
-
-                    <div class="fin-action-card">
-                        <h6><i class="bi bi-lightning-charge text-warning"></i> Salary Advance</h6>
+                </div>
+                <div class="col-lg-6">
+                    <div class="fin-action-card h-100">
+                        <h6><i class="bi bi-lightning-charge text-warning"></i> Give advance</h6>
                         <form id="advanceForm" class="intl-form">
                             <div class="form-section">
                                 <div class="form-section-title">Advance</div>
@@ -15588,18 +15633,11 @@ async function renderPayroll() {
                             <button type="submit" class="btn btn-intl btn-intl-warning"><i class="bi bi-lightning-charge"></i> Record Advance</button>
                         </form>
                         <div id="advanceResult" class="mt-2 small"></div>
-                        <div class="intl-section-head mt-3">
-                            <h6 class="mb-0" style="font-size:0.9rem;">Recent advances</h6>
-                        </div>
-                        <div class="table-responsive intl-table-wrap" style="max-height:200px;overflow:auto;">
-                            <table class="table table-sm mb-0 align-middle">
-                                <thead style="position:sticky;top:0;z-index:2;"><tr><th>Employee</th><th class="text-end">Amount</th><th>Date</th><th>Note</th></tr></thead>
-                                <tbody id="advanceHistoryBody">${advanceHistoryRows}</tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
+            </div>
 
+            <div class="row g-3 mt-1">
                 <div class="col-lg-7">
                     <div class="fin-ledger-card">
                         <div class="intl-section-head">
@@ -15609,7 +15647,7 @@ async function renderPayroll() {
                         <div class="fin-filter-bar">
                             <input type="search" class="form-control fin-q" id="salFilterQ" placeholder="Search employee or period…">
                         </div>
-                        <div class="table-responsive intl-table-wrap" style="max-height:560px;overflow:auto;">
+                        <div class="table-responsive intl-table-wrap" style="max-height:480px;overflow:auto;">
                             <table class="table table-sm mb-0 align-middle" style="min-width:680px;width:100%;">
                                 <thead style="position:sticky;top:0;z-index:2;">
                                     <tr>
@@ -15629,6 +15667,30 @@ async function renderPayroll() {
                         <div class="fin-ledger-foot">
                             <span>Showing <strong id="salFootCount">${sortedSalaries.length}</strong></span>
                             <span>Net total <strong id="salFootTotal">${formatMoney(sortedSalaries.reduce((s,x)=>s+(Number(x.net_pay)||0),0))}</strong></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="fin-ledger-card">
+                        <div class="intl-section-head">
+                            <h6><i class="bi bi-lightning-charge"></i> Advance history</h6>
+                            <span class="meta">${salaryAdvances.length}</span>
+                        </div>
+                        <div class="table-responsive intl-table-wrap" style="max-height:480px;overflow:auto;">
+                            <table class="table table-sm mb-0 align-middle" style="width:100%;">
+                                <thead style="position:sticky;top:0;z-index:2;">
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th class="text-end">Amount</th>
+                                        <th>Date</th>
+                                        <th>Note</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="advanceHistoryBody">${advanceHistoryRows}</tbody>
+                            </table>
+                        </div>
+                        <div class="fin-ledger-foot">
+                            <span>Open advances <strong>${formatMoney(totalOutstandingAdvance)}</strong></span>
                         </div>
                     </div>
                 </div>
